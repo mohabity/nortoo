@@ -48,9 +48,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // 1. Check Auth.js JWT token
-  const token = await getToken({ req: request });
-  if (token) {
-    return NextResponse.next();
+  try {
+    const token = await getToken({ req: request });
+    if (token) {
+      return NextResponse.next();
+    }
+  } catch {
+    // getToken() throws if AUTH_SECRET is missing — fall through to cookie check
   }
 
   // 2. Fallback: legacy cookie (YouCan OAuth backward compat)
