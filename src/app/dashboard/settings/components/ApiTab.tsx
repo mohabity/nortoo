@@ -1,0 +1,313 @@
+"use client";
+
+import { useState } from "react";
+import {
+  KeyRound,
+  Copy,
+  Check,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Link2,
+  Code2,
+  Loader2,
+  AlertTriangle,
+} from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import type { BaseTabProps } from "../types";
+
+export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
+  const [showKey, setShowKey] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [copiedCurl, setCopiedCurl] = useState(false);
+  const [copiedPayload, setCopiedPayload] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+
+  const webhookUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/api/webhook/ingest`
+      : "/api/webhook/ingest";
+
+  const maskedKey = settings.apiKey
+    ? settings.apiKey.slice(0, 8) + "••••••••••••••••"
+    : "—";
+
+  const displayKey = showKey ? (settings.apiKey ?? "—") : maskedKey;
+
+  // Copy helpers
+  function copyText(text: string, setter: (v: boolean) => void) {
+    navigator.clipboard.writeText(text);
+    setter(true);
+    setTimeout(() => setter(false), 2000);
+  }
+
+  // Regenerate API key
+  async function handleRegenerate() {
+    setRegenerating(true);
+    try {
+      const res = await fetch("/api/settings/api-key/regenerate", {
+        method: "POST",
+      });
+      if (res.ok) {
+        await onRefresh();
+        onToast("success", "Nouvelle clé API générée avec succès");
+        setShowKey(true);
+      } else {
+        onToast("error", "Erreur lors de la régénération");
+      }
+    } catch {
+      onToast("error", "Erreur lors de la régénération");
+    } finally {
+      setRegenerating(false);
+      setShowRegenerateModal(false);
+    }
+  }
+
+  const curlExample = `curl -X POST ${webhookUrl} \\
+  -H "Content-Type: application/json" \\
+  -H "x-codpilot-key: ${settings.apiKey ?? "VOTRE_CLE_API"}" \\
+  -d '{
+    "ref": "#1234",
+    "customer": {
+      "phone": "0612345678",
+      "name": "Ahmed Benali",
+      "city": "Casablanca",
+      "address": "123 Rue Mohamed V, Maârif"
+    },
+    "total": 349,
+    "currency": "MAD",
+    "product": "T-shirt Nike Dri-FIT",
+    "shipping_city": "Casablanca",
+    "shipping_address": "123 Rue Mohamed V, Maârif"
+  }'`;
+
+  const payloadExample = `{
+  "ref": "#1234",
+  "customer": {
+    "phone": "0612345678",
+    "name": "Ahmed Benali",
+    "city": "Casablanca",
+    "address": "123 Rue Mohamed V, Maârif"
+  },
+  "total": 349,
+  "currency": "MAD",
+  "product": "T-shirt Nike Dri-FIT",
+  "shipping_city": "Casablanca",
+  "shipping_address": "123 Rue Mohamed V, Maârif"
+}`;
+
+  return (
+    <div className="space-y-6">
+      {/* ═══ Clé API ═══ */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-sun" />
+            <div>
+              <CardTitle className="text-base">Clé API</CardTitle>
+              <CardDescription>
+                Authentifiez vos webhooks avec cette clé
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-xs text-ink-4 mb-2">
+              Ajoutez cette clé dans le header{" "}
+              <code className="font-mono bg-sand px-1 py-0.5 rounded-xs text-ink-2">
+                x-codpilot-key
+              </code>{" "}
+              de vos webhooks
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 rounded-sm border border-border bg-sand px-3 py-2 font-mono text-sm text-ink-2 overflow-x-auto">
+                {displayKey}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowKey(!showKey)}
+                title={showKey ? "Masquer" : "Afficher"}
+              >
+                {showKey ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() =>
+                  settings.apiKey &&
+                  copyText(settings.apiKey, setCopiedKey)
+                }
+                disabled={!settings.apiKey}
+                title="Copier"
+              >
+                {copiedKey ? (
+                  <Check className="h-4 w-4 text-mint-deep" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Regenerate button */}
+          <Dialog.Root
+            open={showRegenerateModal}
+            onOpenChange={setShowRegenerateModal}
+          >
+            <Dialog.Trigger asChild>
+              <Button variant="destructive" size="sm">
+                <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                Régénérer la clé
+              </Button>
+            </Dialog.Trigger>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+              <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded bg-white p-6 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-coral-light flex items-center justify-center">
+                    <AlertTriangle className="h-5 w-5 text-coral" />
+                  </div>
+                  <Dialog.Title className="font-sora font-semibold text-ink-1 text-lg">
+                    Régénérer la clé API ?
+                  </Dialog.Title>
+                </div>
+                <Dialog.Description className="text-sm text-ink-3 mb-6">
+                  L&apos;ancienne clé cessera de fonctionner immédiatement.
+                  Tous les webhooks configurés avec cette clé devront être
+                  mis à jour avec la nouvelle.
+                </Dialog.Description>
+                <div className="flex justify-end gap-3">
+                  <Dialog.Close asChild>
+                    <Button variant="outline">Annuler</Button>
+                  </Dialog.Close>
+                  <Button
+                    variant="destructive"
+                    onClick={handleRegenerate}
+                    disabled={regenerating}
+                  >
+                    {regenerating && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Régénérer
+                  </Button>
+                </div>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
+        </CardContent>
+      </Card>
+
+      {/* ═══ URL du webhook ═══ */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Link2 className="h-5 w-5 text-ocean" />
+            <div>
+              <CardTitle className="text-base">URL du webhook</CardTitle>
+              <CardDescription>
+                Configurez cette URL comme endpoint dans votre plateforme
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-sm border border-border bg-sand px-3 py-2 font-mono text-sm text-ink-2 select-all overflow-x-auto">
+              {webhookUrl}
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => copyText(webhookUrl, setCopiedUrl)}
+              title="Copier"
+            >
+              {copiedUrl ? (
+                <Check className="h-4 w-4 text-mint-deep" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ═══ Exemples d'intégration ═══ */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Code2 className="h-5 w-5 text-violet" />
+            <div>
+              <CardTitle className="text-base">
+                Exemples d&apos;intégration
+              </CardTitle>
+              <CardDescription>
+                Testez l&apos;endpoint avec cURL ou intégrez le payload JSON
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* cURL example */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-ink-2">Exemple cURL</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyText(curlExample, setCopiedCurl)}
+              >
+                {copiedCurl ? (
+                  <Check className="mr-1.5 h-3.5 w-3.5 text-mint-deep" />
+                ) : (
+                  <Copy className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                {copiedCurl ? "Copié" : "Copier"}
+              </Button>
+            </div>
+            <pre className="bg-ink-1 text-green-400 font-mono text-xs rounded-sm p-4 overflow-x-auto whitespace-pre">
+              {curlExample}
+            </pre>
+          </div>
+
+          {/* JSON payload example */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-ink-2">Payload JSON</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyText(payloadExample, setCopiedPayload)}
+              >
+                {copiedPayload ? (
+                  <Check className="mr-1.5 h-3.5 w-3.5 text-mint-deep" />
+                ) : (
+                  <Copy className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                {copiedPayload ? "Copié" : "Copier"}
+              </Button>
+            </div>
+            <pre className="bg-ink-1 text-sun-light font-mono text-xs rounded-sm p-4 overflow-x-auto whitespace-pre">
+              {payloadExample}
+            </pre>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

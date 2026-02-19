@@ -16,8 +16,10 @@ export async function GET() {
     .select({
       name: merchants.name,
       domain: merchants.domain,
+      email: merchants.email,
       plan: merchants.plan,
       apiKey: merchants.apiKey,
+      youcanStoreId: merchants.youcanStoreId,
       verifyThreshold: merchants.verifyThreshold,
       flagThreshold: merchants.flagThreshold,
       blockThreshold: merchants.blockThreshold,
@@ -25,6 +27,8 @@ export async function GET() {
       dataRetentionMonths: merchants.dataRetentionMonths,
       cndpDeclarationRef: merchants.cndpDeclarationRef,
       consentRecordedAt: merchants.consentRecordedAt,
+      createdAt: merchants.createdAt,
+      updatedAt: merchants.updatedAt,
     })
     .from(merchants)
     .where(eq(merchants.id, merchantId))
@@ -145,8 +149,10 @@ export async function PUT(request: Request) {
     .select({
       name: merchants.name,
       domain: merchants.domain,
+      email: merchants.email,
       plan: merchants.plan,
       apiKey: merchants.apiKey,
+      youcanStoreId: merchants.youcanStoreId,
       verifyThreshold: merchants.verifyThreshold,
       flagThreshold: merchants.flagThreshold,
       blockThreshold: merchants.blockThreshold,
@@ -154,6 +160,8 @@ export async function PUT(request: Request) {
       dataRetentionMonths: merchants.dataRetentionMonths,
       cndpDeclarationRef: merchants.cndpDeclarationRef,
       consentRecordedAt: merchants.consentRecordedAt,
+      createdAt: merchants.createdAt,
+      updatedAt: merchants.updatedAt,
     })
     .from(merchants)
     .where(eq(merchants.id, merchantId))
