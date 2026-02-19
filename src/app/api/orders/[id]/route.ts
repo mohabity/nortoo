@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { orders, customers } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import { DEMO_MERCHANT_ID } from "@/lib/merchant";
+import { getMerchantId } from "@/lib/merchant";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const merchantId = await getMerchantId();
   const { id } = await params;
   const orderId = parseInt(id, 10);
   if (isNaN(orderId)) {
@@ -18,7 +19,7 @@ export async function GET(
   const [order] = await db
     .select()
     .from(orders)
-    .where(and(eq(orders.id, orderId), eq(orders.merchantId, DEMO_MERCHANT_ID)));
+    .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
 
   if (!order) {
     return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
@@ -49,7 +50,7 @@ export async function GET(
         firstSeen: customers.firstSeen,
       })
       .from(customers)
-      .where(and(eq(customers.id, order.customerId), eq(customers.merchantId, DEMO_MERCHANT_ID)));
+      .where(and(eq(customers.id, order.customerId), eq(customers.merchantId, merchantId)));
     customer = cust ?? null;
   }
 

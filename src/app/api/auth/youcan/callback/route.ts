@@ -151,22 +151,26 @@ export async function GET(request: NextRequest) {
     }
 
     // ── 4. Subscribe to order.create webhook on YouCan ──
+    // YouCan REST Hooks API: POST /resthooks/subscribe with target_url + event
     const webhookUrl = `${appUrl}/api/webhook/youcan?key=${apiKey}`;
+    let webhookOk = false;
 
     try {
-      const webhookRes = await fetch("https://api.youcan.shop/webhooks", {
+      const webhookRes = await fetch("https://api.youcan.shop/resthooks/subscribe", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          url: webhookUrl,
+          target_url: webhookUrl,
           event: "order.create",
         }),
       });
 
-      if (!webhookRes.ok) {
+      if (webhookRes.ok) {
+        webhookOk = true;
+      } else {
         // Log but don't fail — merchant can configure manually
         console.error(
           "[YouCan OAuth] Webhook subscription failed:",
@@ -189,7 +193,7 @@ export async function GET(request: NextRequest) {
         storeName,
         storeDomain,
         isNewMerchant: !existingMerchant,
-        webhookConfigured: true,
+        webhookConfigured: webhookOk,
       }),
     });
 

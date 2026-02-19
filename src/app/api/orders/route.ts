@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { orders } from "@/db/schema";
 import { and, eq, gte, lte, like, or, desc, count } from "drizzle-orm";
-import { DEMO_MERCHANT_ID } from "@/lib/merchant";
+import { getMerchantId } from "@/lib/merchant";
 
 export async function GET(request: NextRequest) {
+  const merchantId = await getMerchantId();
   const params = request.nextUrl.searchParams;
 
   const page = Math.max(1, parseInt(params.get("page") ?? "1", 10));
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   const search = params.get("search");
 
   // ── Base conditions (without decision filter) — for pill counts ──
-  const baseConditions: ReturnType<typeof eq>[] = [eq(orders.merchantId, DEMO_MERCHANT_ID)];
+  const baseConditions: ReturnType<typeof eq>[] = [eq(orders.merchantId, merchantId)];
 
   if (city && city !== "all") {
     baseConditions.push(eq(orders.shippingCity, city));

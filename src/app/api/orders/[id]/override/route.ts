@@ -3,7 +3,7 @@ import { db } from "@/db/index";
 import { orders, auditLogs } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { DEMO_MERCHANT_ID } from "@/lib/merchant";
+import { getMerchantId } from "@/lib/merchant";
 
 const overrideSchema = z.object({
   decision: z.enum(["ship", "verify", "flag", "block"]),
@@ -14,6 +14,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const merchantId = await getMerchantId();
   const { id } = await params;
   const orderId = parseInt(id, 10);
   if (isNaN(orderId)) {
@@ -40,7 +41,7 @@ export async function POST(
   const [order] = await db
     .select({ id: orders.id, decision: orders.decision })
     .from(orders)
-    .where(and(eq(orders.id, orderId), eq(orders.merchantId, DEMO_MERCHANT_ID)));
+    .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
 
   if (!order) {
     return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
@@ -61,7 +62,7 @@ export async function POST(
 
   // Art. 23 — Audit log (obligatoire)
   await db.insert(auditLogs).values({
-    merchantId: DEMO_MERCHANT_ID,
+    merchantId,
     actor: "merchant",
     action: "override",
     targetType: "order",

@@ -3,13 +3,15 @@ import { db } from "@/db/index";
 import { merchants, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { DEMO_MERCHANT_ID } from "@/lib/merchant";
+import { getMerchantId } from "@/lib/merchant";
 
 /**
  * GET /api/settings
  * Returns the current merchant's settings.
  */
 export async function GET() {
+  const merchantId = await getMerchantId();
+
   const [merchant] = await db
     .select({
       name: merchants.name,
@@ -25,7 +27,7 @@ export async function GET() {
       consentRecordedAt: merchants.consentRecordedAt,
     })
     .from(merchants)
-    .where(eq(merchants.id, DEMO_MERCHANT_ID))
+    .where(eq(merchants.id, merchantId))
     .limit(1);
 
   if (!merchant) {
@@ -60,6 +62,8 @@ const settingsSchema = z
   });
 
 export async function PUT(request: Request) {
+  const merchantId = await getMerchantId();
+
   // Parse & validate body
   let body: unknown;
   try {
@@ -94,7 +98,7 @@ export async function PUT(request: Request) {
       autoBlockEnabled: merchants.autoBlockEnabled,
     })
     .from(merchants)
-    .where(eq(merchants.id, DEMO_MERCHANT_ID))
+    .where(eq(merchants.id, merchantId))
     .limit(1);
 
   if (!current) {
@@ -116,15 +120,15 @@ export async function PUT(request: Request) {
       autoBlockEnabled: data.autoBlockEnabled,
       updatedAt: new Date(),
     })
-    .where(eq(merchants.id, DEMO_MERCHANT_ID));
+    .where(eq(merchants.id, merchantId));
 
   // Art. 23 — Audit log (obligatoire)
   await db.insert(auditLogs).values({
-    merchantId: DEMO_MERCHANT_ID,
+    merchantId: merchantId,
     actor: "merchant",
     action: "settings_change",
     targetType: "merchant",
-    targetId: String(DEMO_MERCHANT_ID),
+    targetId: String(merchantId),
     details: JSON.stringify({
       previous: {
         verifyThreshold: current.verifyThreshold,
@@ -152,7 +156,7 @@ export async function PUT(request: Request) {
       consentRecordedAt: merchants.consentRecordedAt,
     })
     .from(merchants)
-    .where(eq(merchants.id, DEMO_MERCHANT_ID))
+    .where(eq(merchants.id, merchantId))
     .limit(1);
 
   return NextResponse.json({ data: updated });
