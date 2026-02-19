@@ -12,6 +12,7 @@ import type { NextRequest } from "next/server";
 // Routes that DON'T need auth (webhooks use API key auth)
 const PUBLIC_PATHS = [
   "/login",
+  "/onboarding",
   "/api/auth/",
   "/api/webhook/",
   "/api/cron/",

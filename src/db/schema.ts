@@ -23,8 +23,9 @@ export const merchants = pgTable("merchants", {
   // API Key — merchant copies this into their webhook config
   apiKey: text("api_key").unique(),
 
-  // Platform integrations (store IDs for reference)
+  // Platform integrations
   youcanStoreId: text("youcan_store_id").unique(),
+  youcanAccessToken: text("youcan_access_token"),
   shopifyStoreId: text("shopify_store_id"),
 
   // Billing

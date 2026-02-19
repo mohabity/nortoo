@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { ConnectedBanner } from "@/components/dashboard/connected-banner";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +13,9 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="ml-64">
         <Header />
+        <Suspense fallback={null}>
+          <ConnectedBanner />
+        </Suspense>
         <main className="p-6">{children}</main>
       </div>
     </div>
