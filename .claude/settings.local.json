@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx drizzle-kit push:*)",
+      "Bash(npx dotenv:*)",
+      "Bash(powershell:*)",
+      "Bash(node -e:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(dir:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(Remove-Item -Recurse -Force C:codpilot.next)",
+      "Bash(npx next build:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx next dev:*)",
+      "Bash(xargs cat:*)",
+      "Bash(python3:*)",
+      "Bash(BASE_URL=http://localhost:3005 npm run test:webhook:*)"
+    ]
+  }
+}
