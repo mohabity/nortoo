@@ -1,12 +1,22 @@
 /**
- * YouCan Webhook payload for order.created event
- * Documentation: https://developer.youcan.shop/webhooks
+ * YouCan Webhook payload for order.create event
+ * Based on: https://developer.youcan.shop/store-admin/resthooks/subscribe
+ *           https://developer.youcan.shop/store-admin/orders/get
  */
 export interface YouCanOrderPayload {
   id: string;
   ref: string;
-  token: string;
-  customer: {
+  total: number;
+  currency: string;
+  vat?: number;
+  notes?: string | null;
+  status: number;
+  payment_status?: number;
+  extra_fields?: unknown;
+  created_at: string;
+  updated_at: string;
+
+  customer?: {
     id: string;
     first_name: string;
     last_name: string;
@@ -17,31 +27,88 @@ export interface YouCanOrderPayload {
     zip_code?: string;
     country_code?: string;
   };
-  payment: {
-    gateway: string; // "cod" | "credit_card" | etc.
-    status: string;
+
+  payment?: {
+    status: number;
+    status_text: string; // "pending" | "paid" | etc.
+    payload?: {
+      gateway: string; // "cod" | "credit_card" | etc.
+      gateway_id?: string;
+      "thank-you-message"?: string;
+      note?: string;
+    };
+    address?: Array<{
+      first_name?: string;
+      last_name?: string;
+      address?: string;
+      city?: string;
+      region?: string;
+      zip_code?: string;
+      country_code?: string;
+      phone?: string;
+    }>;
+    created_at?: string;
+    updated_at?: string;
   };
-  shipping: {
-    address: string;
-    city: string;
-    state?: string;
-    zip_code?: string;
-    country_code?: string;
+
+  shipping?: {
+    shipping_zone_id?: string;
+    status: number;
+    status_text?: string;
+    price?: number;
+    is_free?: boolean;
+    tracking_number?: string;
+    payload?: {
+      id?: string;
+      name?: string;
+      display_name?: string;
+      price?: number;
+      is_free?: boolean;
+      is_active?: boolean;
+    };
+    address?: Array<{
+      first_name?: string;
+      last_name?: string;
+      address?: string;
+      city?: string;
+      region?: string;
+      zip_code?: string;
+      country_code?: string;
+      phone?: string;
+    }>;
+    created_at?: string;
+    updated_at?: string;
   };
-  items: Array<{
+
+  variants?: Array<{
+    id: string;
+    price: number;
+    quantity: number;
+    created_at?: number | string;
+    updated_at?: number | string;
+    extra_fields?: unknown;
+    variant?: {
+      id: string;
+      price: number;
+      compare_at_price?: number;
+      weight?: number;
+      sku?: string;
+      inventory?: number;
+      product?: {
+        id: string;
+        name: string;
+        slug?: string;
+        thumbnail?: string;
+        price?: number;
+      };
+    };
+  }>;
+
+  // Legacy / sometimes present
+  items?: Array<{
     id: string;
     name: string;
     quantity: number;
     price: number;
-    variant?: {
-      id: string;
-      name: string;
-    };
   }>;
-  total: number;
-  currency: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  notes?: string;
 }
