@@ -31,8 +31,10 @@ export async function POST(request: Request) {
 
   // ── 2. Parse payload ──
   let payload: YouCanOrderPayload;
+  let rawBody: string;
   try {
-    payload = await request.json();
+    rawBody = await request.text();
+    payload = JSON.parse(rawBody);
   } catch {
     console.error("[Webhook YouCan] Invalid JSON body");
     return NextResponse.json(
@@ -41,7 +43,10 @@ export async function POST(request: Request) {
     );
   }
 
-  console.log("[Webhook YouCan] Received order:", {
+  // Log raw payload for debugging (first 2000 chars)
+  console.log("[Webhook YouCan] RAW:", rawBody.slice(0, 2000));
+
+  console.log("[Webhook YouCan] Parsed:", {
     id: payload.id,
     ref: payload.ref,
     total: payload.total,
@@ -65,9 +70,8 @@ export async function POST(request: Request) {
     });
   }
 
-  // If no gateway info at all, still process (better to score than to miss)
   if (!gateway) {
-    console.log("[Webhook YouCan] No gateway info found, processing anyway");
+    console.log("[Webhook YouCan] No gateway info, processing anyway");
   }
 
   // ── 4. Extract data from YouCan format ──
@@ -104,11 +108,12 @@ export async function POST(request: Request) {
     payload.customer?.city ||
     undefined;
 
-  // Address: from shipping address array, or customer object
-  const shippingAddress =
+  // Address: MUST be a string — YouCan shipping.address is an array of objects,
+  // but customer.address is a string. Ensure we always pass a string.
+  const rawAddr =
     payload.shipping?.address?.[0]?.address ||
-    payload.customer?.address ||
-    undefined;
+    payload.customer?.address;
+  const shippingAddress = typeof rawAddr === "string" ? rawAddr : undefined;
 
   // Product name: from variants (YouCan uses variants, not items)
   const productName =
@@ -122,6 +127,15 @@ export async function POST(request: Request) {
   const orderHour = payload.created_at
     ? new Date(payload.created_at).getHours()
     : new Date().getHours();
+
+  console.log("[Webhook YouCan] Extracted:", {
+    phone: "***" + phone.slice(-4),
+    customerName,
+    shippingCity,
+    shippingAddress: shippingAddress ? shippingAddress.slice(0, 50) : "none",
+    productName,
+    orderHour,
+  });
 
   // ── 5. Run shared pipeline ──
   try {

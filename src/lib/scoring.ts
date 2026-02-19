@@ -111,7 +111,7 @@ export function scoreOrder(
   }
 
   // ─── Address quality rules ───
-  if (input.address) {
+  if (input.address && typeof input.address === "string") {
     const addr = input.address.trim();
     if (addr.length < 15) {
       factors.push({ rule: "R9_SHORT_ADDR", points: 10, reason: "Adresse courte (< 15 caractères)" });
