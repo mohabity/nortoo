@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { BaseTabProps } from "../types";
 
-export function StoreTab({ settings, onToast }: BaseTabProps) {
+export function StoreTab({ settings, onRefresh, onToast }: BaseTabProps) {
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -60,8 +60,12 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
   async function handleDisconnect() {
     setDisconnecting(true);
     try {
-      await new Promise((r) => setTimeout(r, 500));
-      onToast("info", "Fonctionnalité bientôt disponible");
+      const res = await fetch("/api/settings/store", { method: "DELETE" });
+      if (!res.ok) throw new Error("Erreur lors de la déconnexion");
+      onToast("success", "Boutique YouCan déconnectée");
+      await onRefresh();
+    } catch {
+      onToast("error", "Erreur lors de la déconnexion");
     } finally {
       setDisconnecting(false);
       setShowDisconnectModal(false);

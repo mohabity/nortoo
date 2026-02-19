@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   ShoppingCart,
   TrendingUp,
@@ -18,6 +19,7 @@ import {
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ConnectStoreBanner } from "@/components/dashboard/connect-store-banner";
 
 // ── Mock chart data ──
 const chartData = [
@@ -107,6 +109,19 @@ const recentOrders: OrderRow[] = [
 ];
 
 export default function DashboardPage() {
+  const [isStoreConnected, setIsStoreConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((json) => {
+        setIsStoreConnected(!!json.data?.youcanStoreId);
+      })
+      .catch(() => {
+        setIsStoreConnected(false);
+      });
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Page title */}
@@ -118,6 +133,11 @@ export default function DashboardPage() {
           Résumé de votre activité anti-fraude
         </p>
       </div>
+
+      {/* Connect store banner — only shown when store is not connected */}
+      {isStoreConnected !== null && (
+        <ConnectStoreBanner isStoreConnected={isStoreConnected} />
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
