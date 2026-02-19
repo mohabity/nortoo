@@ -50,7 +50,7 @@ export function Header() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => signOut({ redirectTo: "/login" })}
+          onClick={() => signOut({ callbackUrl: "/login" })}
           title="Se déconnecter"
         >
           <LogOut className="h-4 w-4 text-ink-3" />
