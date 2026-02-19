@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -20,8 +21,27 @@ const navItems = [
   { href: "/dashboard/compliance", label: "Conformité", icon: Shield },
 ];
 
+const PLAN_LABELS: Record<string, string> = {
+  trial: "Essai gratuit",
+  starter: "Starter",
+  growth: "Growth",
+  scale: "Scale",
+};
+
+const PLAN_DESCRIPTIONS: Record<string, string> = {
+  trial: "14 jours restants",
+  starter: "299 DH/mois",
+  growth: "699 DH/mois",
+  scale: "1 499 DH/mois",
+};
+
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const plan = session?.user?.plan ?? "trial";
+  const planLabel = PLAN_LABELS[plan] ?? plan;
+  const planDescription = PLAN_DESCRIPTIONS[plan] ?? "";
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-white">
@@ -63,8 +83,10 @@ export function Sidebar() {
       <div className="absolute bottom-0 left-0 right-0 border-t border-border p-4">
         <div className="rounded-sm bg-sand p-3">
           <p className="text-xs font-medium text-ink-3">Plan actuel</p>
-          <p className="font-sora text-sm font-bold text-ink-1">Essai gratuit</p>
-          <p className="mt-1 text-xs text-ink-4">14 jours restants</p>
+          <p className="font-sora text-sm font-bold text-ink-1">{planLabel}</p>
+          {planDescription && (
+            <p className="mt-1 text-xs text-ink-4">{planDescription}</p>
+          )}
         </div>
       </div>
     </aside>

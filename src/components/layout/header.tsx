@@ -1,9 +1,23 @@
 "use client";
 
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search, User, LogOut } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
+const PLAN_LABELS: Record<string, string> = {
+  trial: "Essai",
+  starter: "Starter",
+  growth: "Growth",
+  scale: "Scale",
+};
+
 export function Header() {
+  const { data: session } = useSession();
+
+  const merchantName = session?.user?.name ?? "Ma Boutique";
+  const plan = session?.user?.plan ?? "trial";
+  const planLabel = PLAN_LABELS[plan] ?? plan;
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/80 backdrop-blur-sm px-6">
       {/* Search */}
@@ -28,10 +42,19 @@ export function Header() {
             <User className="h-4 w-4 text-sun-deep" />
           </div>
           <div>
-            <p className="text-sm font-medium text-ink-1">Ma Boutique</p>
-            <p className="text-[10px] text-ink-4">Plan Essai</p>
+            <p className="text-sm font-medium text-ink-1">{merchantName}</p>
+            <p className="text-[10px] text-ink-4">Plan {planLabel}</p>
           </div>
         </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          title="Se déconnecter"
+        >
+          <LogOut className="h-4 w-4 text-ink-3" />
+        </Button>
       </div>
     </header>
   );

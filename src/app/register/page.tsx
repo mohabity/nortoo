@@ -1,35 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Suspense } from "react";
 import Link from "next/link";
-import { Zap, Loader2, Mail, Lock } from "lucide-react";
+import { Zap, Loader2, Store, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
-export default function LoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-cream">
-          <Loader2 className="h-6 w-6 animate-spin text-ink-4" />
-        </div>
-      }
-    >
-      <LoginForm />
-    </Suspense>
-  );
-}
-
-function LoginForm() {
+export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/dashboard";
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,31 +22,54 @@ function LoginForm() {
     e.preventDefault();
     setError("");
 
+    // Client-side validation
+    if (!name.trim() || name.trim().length < 2) {
+      setError("Le nom doit contenir au moins 2 caractères");
+      return;
+    }
     if (!email.trim() || !email.includes("@")) {
       setError("Entrez une adresse email valide");
       return;
     }
-
-    if (!password) {
-      setError("Entrez votre mot de passe");
+    if (password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
       return;
     }
 
     setLoading(true);
 
     try {
-      const result = await signIn("credentials", {
+      // 1. Register
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Erreur lors de l'inscription");
+        return;
+      }
+
+      // 2. Auto sign-in after registration
+      const signInResult = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
-      if (result?.error) {
-        setError("Email ou mot de passe incorrect");
+      if (signInResult?.error) {
+        setError("Compte créé mais erreur de connexion. Essayez de vous connecter.");
         return;
       }
 
-      router.push(redirect);
+      // 3. Redirect to dashboard
+      router.push("/dashboard");
     } catch {
       setError("Erreur de connexion au serveur");
     } finally {
@@ -87,18 +95,41 @@ function LoginForm() {
           </p>
         </div>
 
-        {/* Login Card */}
+        {/* Register Card */}
         <Card>
           <CardHeader className="text-center pb-2">
             <h1 className="font-sora text-lg font-semibold text-ink-1">
-              Connexion
+              Créer un compte
             </h1>
             <p className="text-sm text-ink-3">
-              Accédez à votre tableau de bord
+              Commencez à protéger vos commandes COD
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name */}
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-ink-2 mb-1.5"
+                >
+                  Nom de la boutique
+                </label>
+                <div className="relative">
+                  <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-4" />
+                  <input
+                    id="name"
+                    type="text"
+                    placeholder="Ma Boutique"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoComplete="organization"
+                    autoFocus
+                    className="w-full rounded-sm border border-border bg-white pl-10 pr-3 py-2.5 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-sun/30 focus:border-sun"
+                  />
+                </div>
+              </div>
+
               {/* Email */}
               <div>
                 <label
@@ -116,7 +147,6 @@ function LoginForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
-                    autoFocus
                     className="w-full rounded-sm border border-border bg-white pl-10 pr-3 py-2.5 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-sun/30 focus:border-sun"
                   />
                 </div>
@@ -135,10 +165,32 @@ function LoginForm() {
                   <input
                     id="password"
                     type="password"
-                    placeholder="Votre mot de passe"
+                    placeholder="Minimum 8 caractères"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
+                    autoComplete="new-password"
+                    className="w-full rounded-sm border border-border bg-white pl-10 pr-3 py-2.5 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-sun/30 focus:border-sun"
+                  />
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label
+                  htmlFor="confirm-password"
+                  className="block text-sm font-medium text-ink-2 mb-1.5"
+                >
+                  Confirmer le mot de passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-4" />
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Retapez le mot de passe"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
                     className="w-full rounded-sm border border-border bg-white pl-10 pr-3 py-2.5 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-sun/30 focus:border-sun"
                   />
                 </div>
@@ -156,17 +208,17 @@ function LoginForm() {
                 {loading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                Se connecter
+                Créer mon compte
               </Button>
             </form>
 
             <p className="mt-4 text-center text-sm text-ink-3">
-              Pas encore de compte ?{" "}
+              Déjà un compte ?{" "}
               <Link
-                href="/register"
+                href="/login"
                 className="font-medium text-sun-deep hover:underline"
               >
-                Créer un compte
+                Se connecter
               </Link>
             </p>
           </CardContent>

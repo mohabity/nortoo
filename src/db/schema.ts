@@ -23,6 +23,10 @@ export const merchants = pgTable("merchants", {
   // API Key — merchant copies this into their webhook config
   apiKey: text("api_key").unique(),
 
+  // Auth
+  passwordHash: text("password_hash"),        // bcrypt hash — null if OAuth-only
+  emailVerified: timestamp("email_verified"), // null until verified
+
   // Platform integrations
   youcanStoreId: text("youcan_store_id").unique(),
   youcanAccessToken: text("youcan_access_token"),

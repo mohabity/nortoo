@@ -1,6 +1,6 @@
 /**
  * CODPilot Seed Script
- * Inserts: 1 merchant, 15 customers, 50 scored orders, 50 audit logs
+ * Inserts: 2 merchants (with passwords), 15 customers, 50 scored orders, 50 audit logs
  * Run: npm run db:seed
  */
 
@@ -10,6 +10,7 @@ config({ path: ".env.local" });
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq, and } from "drizzle-orm";
+import { hash } from "bcryptjs";
 import * as schema from "./schema";
 import { hashPhone, phoneLast4 } from "../lib/hash";
 import { scoreOrder } from "../lib/scoring";
@@ -21,18 +22,34 @@ const db = drizzle(sql, { schema });
 // DATA
 // ═══════════════════════════════════════════════════════════
 
-const MERCHANT = {
-  name: "TrendyShop.ma",
-  domain: "trendyshop.ma",
-  email: "contact@trendyshop.ma",
-  apiKey: "cp_live_test_1234567890abcdef1234567890abcdef",
-  plan: "growth" as const,
-  verifyThreshold: 31,
-  flagThreshold: 66,
-  blockThreshold: 86,
-  autoBlockEnabled: true,
-  dataRetentionMonths: 24,
-};
+const MERCHANTS_DATA = [
+  {
+    name: "TrendyShop.ma",
+    domain: "trendyshop.ma",
+    email: "contact@trendyshop.ma",
+    password: "password123",
+    apiKey: "cp_live_test_1234567890abcdef1234567890abcdef",
+    plan: "growth" as const,
+    verifyThreshold: 31,
+    flagThreshold: 66,
+    blockThreshold: 86,
+    autoBlockEnabled: true,
+    dataRetentionMonths: 24,
+  },
+  {
+    name: "ModaMaroc",
+    domain: "modamaroc.ma",
+    email: "admin@modamaroc.ma",
+    password: "password123",
+    apiKey: "cp_live_test_abcdef1234567890abcdef1234567890",
+    plan: "starter" as const,
+    verifyThreshold: 31,
+    flagThreshold: 66,
+    blockThreshold: 86,
+    autoBlockEnabled: true,
+    dataRetentionMonths: 24,
+  },
+];
 
 // 15 customers with varied profiles
 // phone format: +212 6XX XXX XXX
@@ -153,32 +170,44 @@ function retentionDate(): Date {
 async function seed() {
   console.log("🌱 Starting CODPilot seed...\n");
 
-  // ── 1. Upsert Merchant ──
-  console.log("📦 Upserting merchant: TrendyShop.ma");
+  // ── 1. Upsert Merchants ──
+  console.log("📦 Upserting merchants...");
 
-  const existingMerchants = await db
-    .select()
-    .from(schema.merchants)
-    .where(eq(schema.merchants.email, MERCHANT.email))
-    .limit(1);
+  const merchantIds: number[] = [];
 
-  let merchantId: number;
+  for (const merchantData of MERCHANTS_DATA) {
+    const { password, ...merchantFields } = merchantData;
+    const passwordHash = await hash(password, 12);
 
-  if (existingMerchants.length > 0) {
-    merchantId = existingMerchants[0].id;
-    await db
-      .update(schema.merchants)
-      .set({ ...MERCHANT, updatedAt: new Date() })
-      .where(eq(schema.merchants.id, merchantId));
-    console.log(`   ↳ Updated existing merchant (id: ${merchantId})`);
-  } else {
-    const [inserted] = await db
-      .insert(schema.merchants)
-      .values(MERCHANT)
-      .returning({ id: schema.merchants.id });
-    merchantId = inserted.id;
-    console.log(`   ↳ Inserted new merchant (id: ${merchantId})`);
+    const existingMerchants = await db
+      .select()
+      .from(schema.merchants)
+      .where(eq(schema.merchants.email, merchantData.email))
+      .limit(1);
+
+    let merchantId: number;
+
+    if (existingMerchants.length > 0) {
+      merchantId = existingMerchants[0].id;
+      await db
+        .update(schema.merchants)
+        .set({ ...merchantFields, passwordHash, updatedAt: new Date() })
+        .where(eq(schema.merchants.id, merchantId));
+      console.log(`   ↳ Updated existing merchant: ${merchantData.name} (id: ${merchantId})`);
+    } else {
+      const [inserted] = await db
+        .insert(schema.merchants)
+        .values({ ...merchantFields, passwordHash })
+        .returning({ id: schema.merchants.id });
+      merchantId = inserted.id;
+      console.log(`   ↳ Inserted new merchant: ${merchantData.name} (id: ${merchantId})`);
+    }
+
+    merchantIds.push(merchantId);
   }
+
+  // Use first merchant for orders/customers (TrendyShop.ma)
+  const primaryMerchantId = merchantIds[0];
 
   // ── 2. Upsert Customers ──
   console.log("\n👥 Upserting 15 customers...");
@@ -195,7 +224,7 @@ async function seed() {
       .from(schema.customers)
       .where(
         and(
-          eq(schema.customers.merchantId, merchantId),
+          eq(schema.customers.merchantId, primaryMerchantId),
           eq(schema.customers.phoneHash, phoneH)
         )
       )
@@ -203,7 +232,7 @@ async function seed() {
 
     let custId: number;
     const custValues = {
-      merchantId,
+      merchantId: primaryMerchantId,
       phoneHash: phoneH,
       phoneLast4: last4,
       name: custData.name,
@@ -237,15 +266,15 @@ async function seed() {
   }
 
   // ── 3. Delete existing seed orders for idempotency ──
-  console.log("\n🗑️  Cleaning existing orders for this merchant...");
+  console.log("\n🗑️  Cleaning existing orders for primary merchant...");
   await db
     .delete(schema.orders)
-    .where(eq(schema.orders.merchantId, merchantId));
+    .where(eq(schema.orders.merchantId, primaryMerchantId));
   await db
     .delete(schema.auditLogs)
     .where(
       and(
-        eq(schema.auditLogs.merchantId, merchantId),
+        eq(schema.auditLogs.merchantId, primaryMerchantId),
         eq(schema.auditLogs.action, "score")
       )
     );
@@ -258,7 +287,6 @@ async function seed() {
   let orderNum = 1800;
 
   // Distribution targets: ~25 ship, ~13 verify, ~7 flag, ~5 block
-  // We achieve this by carefully assigning customers + cities + amounts
   const orderConfigs: Array<{
     customerIndex: number;
     city: string;
@@ -367,7 +395,7 @@ async function seed() {
     const [insertedOrder] = await db
       .insert(schema.orders)
       .values({
-        merchantId,
+        merchantId: primaryMerchantId,
         customerId: custId,
         externalId: `yc_${orderNum}`,
         externalRef: `#${orderNum}`,
@@ -393,7 +421,7 @@ async function seed() {
 
     // Audit log for each scored order (Art. 23)
     await db.insert(schema.auditLogs).values({
-      merchantId,
+      merchantId: primaryMerchantId,
       actor: "system",
       action: "score",
       targetType: "order",
@@ -419,10 +447,13 @@ async function seed() {
   console.log(`   Block:  ${stats.block} (${Math.round(stats.block / 50 * 100)}%)`);
 
   console.log("\n✅ Seed terminé avec succès!");
-  console.log(`   • 1 marchand (TrendyShop.ma)`);
-  console.log(`   • 15 clients marocains`);
+  console.log(`   • 2 marchands (TrendyShop.ma + ModaMaroc)`);
+  console.log(`   • 15 clients marocains (pour TrendyShop.ma)`);
   console.log(`   • 50 commandes scorées`);
   console.log(`   • 50 entrées audit log`);
+  console.log(`\n🔑 Identifiants de connexion:`);
+  console.log(`   • contact@trendyshop.ma / password123 (plan Growth)`);
+  console.log(`   • admin@modamaroc.ma / password123 (plan Starter)`);
 }
 
 seed().catch((err) => {
