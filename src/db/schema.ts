@@ -459,6 +459,28 @@ export const passwordResetTokens = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// EMAIL VERIFICATION TOKENS — Verify merchant email address
+// Token stored in DB is SHA-256(rawToken). Same pattern as password reset.
+// ═══════════════════════════════════════════════════════════
+export const emailVerificationTokens = pgTable(
+  "email_verification_tokens",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    email: text("email").notNull(), // the email to verify (useful if email changes)
+    token: text("token").notNull().unique(), // SHA-256 of the raw token sent by email
+    expiresAt: timestamp("expires_at").notNull(), // 24h after creation
+    usedAt: timestamp("used_at"), // null until used
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("email_verification_merchant_idx").on(table.merchantId),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // WEBHOOK QUEUE — Retry queue for failed webhook processing
 // Stores raw payloads for retry. DB-backed queue (no Redis needed for beta).
 // ═══════════════════════════════════════════════════════════

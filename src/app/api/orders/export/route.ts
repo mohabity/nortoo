@@ -5,6 +5,7 @@ import { and, eq, gte, lte, like, or, desc } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
 import { expandSearch } from "@/lib/search";
 import { decisionLabel } from "@/lib/utils";
+import { requireVerifiedEmail } from "@/lib/email-verification";
 
 // ── Rate limiting (in-memory) ──
 const exportCounts = new Map<number, { count: number; resetAt: number }>();
@@ -61,6 +62,16 @@ function formatDate(date: Date | string | null): string {
  */
 export async function GET(request: NextRequest) {
   const merchantId = await getMerchantId();
+
+  // Email verification guard
+  const verifyCheck = await requireVerifiedEmail(merchantId);
+  if (!verifyCheck.allowed) {
+    return NextResponse.json(
+      { error: verifyCheck.error, code: verifyCheck.code },
+      { status: 403 }
+    );
+  }
+
   const params = request.nextUrl.searchParams;
 
   // Rate limit

@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { orders, cityStats, productStats, auditLogs } from "@/db/schema";
 import { eq, and, gte, desc, avg, count, sql } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
+import { requireVerifiedEmail } from "@/lib/email-verification";
 
 // ── Rate limiting (in-memory) ──
 const exportCounts = new Map<number, { count: number; resetAt: number }>();
@@ -48,6 +49,16 @@ function riskTierLabel(tier: string | null): string {
  */
 export async function GET(request: NextRequest) {
   const merchantId = await getMerchantId();
+
+  // Email verification guard
+  const verifyCheck = await requireVerifiedEmail(merchantId);
+  if (!verifyCheck.allowed) {
+    return NextResponse.json(
+      { error: verifyCheck.error, code: verifyCheck.code },
+      { status: 403 }
+    );
+  }
+
   const params = request.nextUrl.searchParams;
 
   // Rate limit

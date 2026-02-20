@@ -30,8 +30,8 @@ const TABS: TabMeta[] = [
   { id: "store", label: "Boutique", icon: Store },
   { id: "scoring", label: "Scoring", icon: Sliders },
   { id: "escalation", label: "Escalade", icon: Timer },
-  { id: "rto_costs", label: "Co\u00FBts RTO", icon: Coins },
-  { id: "api", label: "Int\u00E9gration & API", icon: KeyRound },
+  { id: "rto_costs", label: "Coûts RTO", icon: Coins },
+  { id: "api", label: "Intégration & API", icon: KeyRound },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "privacy", label: "Données & Confidentialité", icon: ShieldCheck },
 ];

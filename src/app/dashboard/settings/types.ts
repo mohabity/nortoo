@@ -23,6 +23,7 @@ export interface MerchantSettings {
   name: string;
   domain: string | null;
   email: string;
+  emailVerified: string | null;
   plan: string;
   apiKey: string | null;
   youcanStoreId: string | null;

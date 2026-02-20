@@ -4,6 +4,7 @@ import { merchants, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
 import { generateApiKey } from "@/lib/api-key";
+import { requireVerifiedEmail } from "@/lib/email-verification";
 
 /**
  * POST /api/settings/api-key/regenerate
@@ -12,6 +13,15 @@ import { generateApiKey } from "@/lib/api-key";
  */
 export async function POST() {
   const merchantId = await getMerchantId();
+
+  // Email verification guard
+  const verifyCheck = await requireVerifiedEmail(merchantId);
+  if (!verifyCheck.allowed) {
+    return NextResponse.json(
+      { error: verifyCheck.error, code: verifyCheck.code },
+      { status: 403 }
+    );
+  }
 
   // Fetch current key for audit log
   const [current] = await db

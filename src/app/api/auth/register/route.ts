@@ -5,6 +5,7 @@ import { db } from "@/db/index";
 import { merchants, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
+import { sendVerificationEmail } from "@/lib/email-verification";
 
 const registerSchema = z.object({
   name: z
@@ -90,6 +91,9 @@ export async function POST(request: Request) {
     targetId: String(newMerchant.id),
     details: JSON.stringify({ email, name }),
   });
+
+  // Send verification email (non-blocking — don't fail registration)
+  sendVerificationEmail(newMerchant.id, email).catch(() => {});
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   User,
   Lock,
@@ -8,6 +8,9 @@ import {
   Loader2,
   Save,
   AlertTriangle,
+  CheckCircle2,
+  Mail,
+  RefreshCw,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
@@ -20,12 +23,14 @@ import {
 import { Button } from "@/components/ui/button";
 import type { BaseTabProps } from "../types";
 
-export function ProfileTab({ settings, onToast }: BaseTabProps) {
+export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
   // Profile form
   const [name, setName] = useState(settings.name);
   const [email, setEmail] = useState(settings.email);
-  const [phone, setPhone] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Resend verification
+  const [resending, setResending] = useState(false);
 
   // Password form
   const [oldPassword, setOldPassword] = useState("");
@@ -37,15 +42,84 @@ export function ProfileTab({ settings, onToast }: BaseTabProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Save profile
+  // Sync form when settings change externally
+  useEffect(() => {
+    setName(settings.name);
+    setEmail(settings.email);
+  }, [settings.name, settings.email]);
+
+  const isVerified = !!settings.emailVerified;
+  const hasProfileChanges =
+    name.trim() !== settings.name || email.trim().toLowerCase() !== settings.email;
+
+  // Save profile (real API call)
   async function handleSaveProfile() {
+    const trimmedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (trimmedName.length < 2) {
+      onToast("error", "Le nom doit contenir au moins 2 caractères");
+      return;
+    }
+    if (!normalizedEmail.includes("@")) {
+      onToast("error", "Adresse e-mail invalide");
+      return;
+    }
+
     setSavingProfile(true);
     try {
-      // Mock — Phase 2
-      await new Promise((r) => setTimeout(r, 500));
-      onToast("info", "Fonctionnalité bientôt disponible");
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          _type: "profile",
+          name: trimmedName,
+          email: normalizedEmail,
+        }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        onToast("error", json.error || "Erreur lors de la sauvegarde");
+        return;
+      }
+
+      await onRefresh();
+
+      if (json.emailChanged) {
+        onToast(
+          "info",
+          "Un e-mail de vérification a été envoyé à votre nouvelle adresse"
+        );
+      } else {
+        onToast("success", "Profil mis à jour avec succès");
+      }
+    } catch {
+      onToast("error", "Erreur réseau. Réessayez plus tard.");
     } finally {
       setSavingProfile(false);
+    }
+  }
+
+  // Resend verification email
+  async function handleResendVerification() {
+    setResending(true);
+    try {
+      const res = await fetch("/api/auth/verify-email/send", {
+        method: "POST",
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        onToast("error", json.error || "Impossible d'envoyer l'e-mail");
+        return;
+      }
+
+      onToast("success", "E-mail de vérification envoyé !");
+    } catch {
+      onToast("error", "Erreur réseau. Réessayez plus tard.");
+    } finally {
+      setResending(false);
     }
   }
 
@@ -61,11 +135,27 @@ export function ProfileTab({ settings, onToast }: BaseTabProps) {
     }
     setSavingPassword(true);
     try {
-      await new Promise((r) => setTimeout(r, 500));
-      onToast("info", "Fonctionnalité bientôt disponible");
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: oldPassword,
+          newPassword,
+        }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        onToast("error", json.error || "Erreur lors du changement de mot de passe");
+        return;
+      }
+
+      onToast("success", "Mot de passe modifié avec succès");
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
+    } catch {
+      onToast("error", "Erreur réseau. Réessayez plus tard.");
     } finally {
       setSavingPassword(false);
     }
@@ -117,38 +207,60 @@ export function ProfileTab({ settings, onToast }: BaseTabProps) {
             <label className="text-sm font-medium text-slate block mb-1.5">
               Adresse e-mail
             </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-sm border border-silk bg-white px-3 py-2 text-sm text-midnight focus:outline-none focus:ring-2 focus:ring-mint/50"
-              placeholder="vous@exemple.com"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate block mb-1.5">
-              Numéro de téléphone
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full rounded-sm border border-silk bg-white px-3 py-2 text-sm text-midnight focus:outline-none focus:ring-2 focus:ring-mint/50"
-              placeholder="+212 6XX XXX XXX"
-            />
-          </div>
-          <Button
-            onClick={handleSaveProfile}
-            disabled={savingProfile}
-            className="mt-2"
-          >
-            {savingProfile ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
+            <div className="flex items-center gap-2">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 rounded-sm border border-silk bg-white px-3 py-2 text-sm text-midnight focus:outline-none focus:ring-2 focus:ring-mint/50"
+                placeholder="vous@exemple.com"
+              />
+              {isVerified ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-mint-bg px-2.5 py-1 text-xs font-medium text-mint-deep whitespace-nowrap">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Vérifié
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-sun-light px-2.5 py-1 text-xs font-medium text-sun-deep whitespace-nowrap">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Non vérifié
+                </span>
+              )}
+            </div>
+            {!isVerified && (
+              <div className="mt-2 flex items-center gap-2">
+                <p className="text-xs text-fog">
+                  Vérifiez votre adresse e-mail pour accéder à toutes les fonctionnalités.
+                </p>
+                <button
+                  onClick={handleResendVerification}
+                  disabled={resending}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-ocean hover:text-ocean/80 disabled:opacity-50 whitespace-nowrap"
+                >
+                  {resending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3" />
+                  )}
+                  Renvoyer
+                </button>
+              </div>
             )}
-            Enregistrer les modifications
-          </Button>
+          </div>
+          {hasProfileChanges && (
+            <Button
+              onClick={handleSaveProfile}
+              disabled={savingProfile}
+              className="mt-2"
+            >
+              {savingProfile ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Enregistrer les modifications
+            </Button>
+          )}
         </CardContent>
       </Card>
 

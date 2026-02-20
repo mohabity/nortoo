@@ -4,12 +4,14 @@ import { merchants, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getMerchantId } from "@/lib/merchant";
+import { sendVerificationEmail } from "@/lib/email-verification";
 
 // ── Shared select columns ──
 const merchantSelect = {
   name: merchants.name,
   domain: merchants.domain,
   email: merchants.email,
+  emailVerified: merchants.emailVerified,
   plan: merchants.plan,
   apiKey: merchants.apiKey,
   youcanStoreId: merchants.youcanStoreId,
@@ -103,6 +105,90 @@ export async function PUT(request: Request) {
       { error: "JSON invalide" },
       { status: 400 }
     );
+  }
+
+  // Try profile schema first
+  const profileSchema = z.object({
+    _type: z.literal("profile"),
+    name: z.string().min(2).max(100),
+    email: z.string().email(),
+  });
+  const profileParsed = profileSchema.safeParse(body);
+  if (profileParsed.success) {
+    const data = profileParsed.data;
+    const normalizedEmail = data.email.trim().toLowerCase();
+
+    const [current] = await db
+      .select({
+        name: merchants.name,
+        email: merchants.email,
+        emailVerified: merchants.emailVerified,
+      })
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    if (!current) {
+      return NextResponse.json({ error: "Marchand introuvable" }, { status: 404 });
+    }
+
+    // Check if new email already taken by another merchant
+    if (normalizedEmail !== current.email) {
+      const [existing] = await db
+        .select({ id: merchants.id })
+        .from(merchants)
+        .where(eq(merchants.email, normalizedEmail))
+        .limit(1);
+
+      if (existing) {
+        return NextResponse.json(
+          { error: "Un compte avec cet email existe d\u00e9j\u00e0" },
+          { status: 409 }
+        );
+      }
+    }
+
+    const emailChanged = normalizedEmail !== current.email;
+
+    await db
+      .update(merchants)
+      .set({
+        name: data.name.trim(),
+        email: normalizedEmail,
+        emailVerified: emailChanged ? null : undefined, // reset if email changed
+        updatedAt: new Date(),
+      })
+      .where(eq(merchants.id, merchantId));
+
+    await db.insert(auditLogs).values({
+      merchantId,
+      actor: "merchant",
+      action: "settings_change",
+      targetType: "merchant",
+      targetId: String(merchantId),
+      details: JSON.stringify({
+        field: "profile",
+        previous: { name: current.name, email: current.email },
+        new: { name: data.name.trim(), email: normalizedEmail },
+        emailChanged,
+      }),
+    });
+
+    // If email changed, send verification to the new email
+    if (emailChanged) {
+      sendVerificationEmail(merchantId, normalizedEmail).catch(() => {});
+    }
+
+    const [updated] = await db
+      .select(merchantSelect)
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    return NextResponse.json({
+      data: updated,
+      emailChanged,
+    });
   }
 
   // Try RTO costs schema first (smaller, no ambiguity)

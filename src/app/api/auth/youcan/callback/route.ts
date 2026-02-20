@@ -139,6 +139,7 @@ export async function GET(request: NextRequest) {
           name: storeName || existingByStore.name,
           email: storeEmail || existingByStore.email,
           domain: storeDomain || existingByStore.domain,
+          emailVerified: existingByStore.emailVerified ?? new Date(), // YouCan verified
           updatedAt: new Date(),
         })
         .where(eq(merchants.id, merchantId));
@@ -167,6 +168,7 @@ export async function GET(request: NextRequest) {
             youcanAccessToken: accessToken,
             youcanStoreName: storeName,
             domain: storeDomain || existingByEmail.domain,
+            emailVerified: existingByEmail.emailVerified ?? new Date(), // YouCan verified
             consentRecordedAt: new Date(),
             updatedAt: new Date(),
           })
@@ -335,6 +337,7 @@ async function autoCreateMerchant(opts: {
       apiKey,
       plan: "trial",
       inviteCode: opts.inviteCode || null,
+      emailVerified: new Date(), // YouCan has already verified the email
       consentRecordedAt: new Date(),
     })
     .returning({ id: merchants.id });
