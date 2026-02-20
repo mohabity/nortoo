@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════
-// CODPilot Scoring Engine v1.0
-// 12 rules, score 0-100, 4 decision levels
+// Siift Scoring Engine v1.1
+// 14 rules, score 0-100, 4 decision levels
+// v1.1: Added R12_SKU_RISK + dynamic R8_GEO_RISK
 // ═══════════════════════════════════════════════════════════
 
-export const SCORING_VERSION = "v1.0";
+export const SCORING_VERSION = "v1.1";
 
 export interface ScoringInput {
   total: number;
@@ -16,6 +17,13 @@ export interface ScoringInput {
     failedOrders: number;
   };
   networkScore?: number; // Phase 2
+  // SKU risk data (from product_stats)
+  productRtoRate?: number;      // 0.0–1.0
+  productTotalOrders?: number;  // sample size
+  // Dynamic geo data (from city_stats)
+  cityRtoRate?: number;         // 0.0–1.0
+  cityRiskTier?: string;        // "safe" | "moderate" | "risky" | "dangerous" | "unknown"
+  cityTotalOrders?: number;     // sample size
 }
 
 export interface ScoringFactor {
@@ -45,14 +53,14 @@ const DEFAULT_THRESHOLDS: Thresholds = {
   block: 86,
 };
 
-// Zones with historically high RTO rates in Morocco
-const RISKY_ZONES = [
+// Static fallback zones (used when no dynamic data available)
+const STATIC_RISKY_ZONES = [
   "taza", "ouarzazate", "errachidia", "sidi slimane",
   "khouribga", "sidi kacem", "guelmim", "tan-tan", "tiznit",
 ];
 
 /**
- * Score a COD order using 12 rules.
+ * Score a COD order using 14 rules.
  * Returns a score 0-100 and a decision (ship/verify/flag/block).
  */
 export function scoreOrder(
@@ -104,10 +112,38 @@ export function scoreOrder(
     rawScore += 10;
   }
 
-  // ─── Geography rule ───
-  if (input.city && RISKY_ZONES.includes(input.city.toLowerCase().trim())) {
-    factors.push({ rule: "R8_RISKY_ZONE", points: 15, reason: `Zone à risque (${input.city})` });
-    rawScore += 15;
+  // ─── R8: Geography risk (dynamic + static fallback) ───
+  if (input.city) {
+    const cityLower = input.city.toLowerCase().trim();
+
+    if (
+      input.cityRiskTier &&
+      input.cityRiskTier !== "unknown" &&
+      input.cityTotalOrders !== undefined &&
+      input.cityTotalOrders >= 5
+    ) {
+      // Dynamic geo scoring based on real data
+      const rtoPct = Math.round((input.cityRtoRate ?? 0) * 100);
+      if (input.cityRiskTier === "dangerous") {
+        factors.push({ rule: "R8_GEO_RISK", points: 20, reason: `Zone critique — ${input.city} (${rtoPct}% RTO)` });
+        rawScore += 20;
+      } else if (input.cityRiskTier === "risky") {
+        factors.push({ rule: "R8_GEO_RISK", points: 15, reason: `Zone risque élevé — ${input.city} (${rtoPct}% RTO)` });
+        rawScore += 15;
+      } else if (input.cityRiskTier === "moderate") {
+        factors.push({ rule: "R8_GEO_RISK", points: 8, reason: `Zone risque modéré — ${input.city} (${rtoPct}% RTO)` });
+        rawScore += 8;
+      } else if (input.cityRiskTier === "safe" && input.cityTotalOrders >= 10) {
+        factors.push({ rule: "R8_GEO_RISK", points: -5, reason: `Zone fiable — ${input.city} (${rtoPct}% RTO)` });
+        rawScore -= 5;
+      }
+    } else {
+      // Fallback: static risky zones list (for new merchants or cities with insufficient data)
+      if (STATIC_RISKY_ZONES.includes(cityLower)) {
+        factors.push({ rule: "R8_RISKY_ZONE", points: 15, reason: `Zone à risque statique (${input.city})` });
+        rawScore += 15;
+      }
+    }
   }
 
   // ─── Address quality rules ───
@@ -130,6 +166,24 @@ export function scoreOrder(
   if (input.hour !== undefined && input.hour >= 1 && input.hour <= 5) {
     factors.push({ rule: "R11_NIGHT", points: 5, reason: `Commande nocturne (${input.hour}h)` });
     rawScore += 5;
+  }
+
+  // ─── R12: Product (SKU) risk ───
+  if (input.productRtoRate !== undefined && input.productTotalOrders !== undefined) {
+    const rtoPct = Math.round(input.productRtoRate * 100);
+    if (input.productTotalOrders >= 5 && input.productRtoRate > 0.40) {
+      factors.push({ rule: "R12_SKU_RISK", points: 15, reason: `Produit à haut risque RTO (${rtoPct}%)` });
+      rawScore += 15;
+    } else if (input.productTotalOrders >= 10 && input.productRtoRate > 0.25) {
+      factors.push({ rule: "R12_SKU_RISK", points: 10, reason: `Produit à risque modéré (${rtoPct}%)` });
+      rawScore += 10;
+    } else if (input.productTotalOrders >= 20 && input.productRtoRate > 0.15) {
+      factors.push({ rule: "R12_SKU_RISK", points: 5, reason: `Produit à surveiller (${rtoPct}% RTO)` });
+      rawScore += 5;
+    } else if (input.productTotalOrders >= 10 && input.productRtoRate < 0.10) {
+      factors.push({ rule: "R12_SKU_RISK", points: -5, reason: `Produit fiable (${rtoPct}% RTO)` });
+      rawScore -= 5;
+    }
   }
 
   // ─── Network Intelligence (Phase 2) ───

@@ -9,7 +9,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ═══════════════════════════════════════════════════════════
 // MERCHANTS — Responsables du traitement (Art. 14 Loi 09-08)
@@ -110,6 +110,10 @@ export const orders = pgTable(
     customerName: text("customer_name"),
     customerPhoneLast4: text("customer_phone_last4"),
     productName: text("product_name"),
+    productId: text("product_id"),
+    productCategory: text("product_category"),
+    productPrice: real("product_price"),
+    quantity: integer("quantity").default(1),
     total: real("total").notNull(),
     currency: text("currency").notNull().default("MAD"),
     shippingCity: text("shipping_city"),
@@ -304,6 +308,80 @@ export const inviteLinks = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// PRODUCT STATS — Per-product delivery statistics
+// Aggregated data for SKU risk tracking
+// ═══════════════════════════════════════════════════════════
+export const productStats = pgTable(
+  "product_stats",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    productId: text("product_id").notNull(),
+    productName: text("product_name").notNull(),
+    productCategory: text("product_category"),
+
+    totalOrders: integer("total_orders").notNull().default(0),
+    deliveredOrders: integer("delivered_orders").notNull().default(0),
+    returnedOrders: integer("returned_orders").notNull().default(0),
+    cancelledOrders: integer("cancelled_orders").notNull().default(0),
+
+    rtoRate: real("rto_rate").notNull().default(0), // 0.0–1.0
+    avgOrderValue: real("avg_order_value").default(0),
+    totalRevenue: real("total_revenue").default(0), // DH
+
+    lastOrderAt: timestamp("last_order_at"),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("product_stats_merchant_product_idx").on(
+      table.merchantId,
+      table.productId
+    ),
+    index("product_stats_rto_idx").on(table.merchantId, table.rtoRate),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
+// CITY STATS — Per-city delivery statistics
+// Aggregated data for dynamic geographic risk scoring
+// ═══════════════════════════════════════════════════════════
+export const cityStats = pgTable(
+  "city_stats",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    cityNormalized: text("city_normalized").notNull(), // lowercase, alias-resolved
+    cityDisplay: text("city_display").notNull(), // UI display
+
+    totalOrders: integer("total_orders").notNull().default(0),
+    deliveredOrders: integer("delivered_orders").notNull().default(0),
+    returnedOrders: integer("returned_orders").notNull().default(0),
+    cancelledOrders: integer("cancelled_orders").notNull().default(0),
+
+    rtoRate: real("rto_rate").notNull().default(0), // 0.0–1.0
+    avgScore: real("avg_score").default(0),
+    avgOrderValue: real("avg_order_value").default(0),
+    riskTier: text("risk_tier").notNull().default("unknown"), // safe | moderate | risky | dangerous | unknown
+
+    lastOrderAt: timestamp("last_order_at"),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("city_stats_merchant_city_idx").on(
+      table.merchantId,
+      table.cityNormalized
+    ),
+    index("city_stats_rto_idx").on(table.merchantId, table.rtoRate),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
@@ -311,6 +389,8 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   orders: many(orders),
   auditLogs: many(auditLogs),
   notifications: many(notifications),
+  productStats: many(productStats),
+  cityStats: many(cityStats),
 }));
 
 export const inviteLinksRelations = relations(inviteLinks, ({ one }) => ({
@@ -348,5 +428,19 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   order: one(orders, {
     fields: [notifications.orderId],
     references: [orders.id],
+  }),
+}));
+
+export const productStatsRelations = relations(productStats, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [productStats.merchantId],
+    references: [merchants.id],
+  }),
+}));
+
+export const cityStatsRelations = relations(cityStats, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [cityStats.merchantId],
+    references: [merchants.id],
   }),
 }));

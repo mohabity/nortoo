@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   AreaChart,
   Area,
@@ -28,8 +28,55 @@ import {
   ChevronUp,
   ChevronDown,
   Clock,
+  Package,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// ═══════════════════════════════════════════════════════════
+// API RESPONSE TYPES
+// ═══════════════════════════════════════════════════════════
+
+interface ProductAnalytics {
+  id: number;
+  productId: string;
+  productName: string;
+  productCategory: string;
+  totalOrders: number;
+  deliveredOrders: number;
+  returnedOrders: number;
+  cancelledOrders: number;
+  rtoRate: number;
+  avgOrderValue: number;
+  totalRevenue: number;
+  lastOrderAt: string;
+  riskLevel: string;
+}
+
+interface ProductsApiResponse {
+  data: ProductAnalytics[];
+  meta: { total: number };
+}
+
+interface CityAnalytics {
+  id: number;
+  cityNormalized: string;
+  cityDisplay: string;
+  totalOrders: number;
+  deliveredOrders: number;
+  returnedOrders: number;
+  cancelledOrders: number;
+  rtoRate: number;
+  avgScore: number;
+  avgOrderValue: number;
+  riskTier: "safe" | "moderate" | "risky" | "dangerous" | "unknown";
+  lastOrderAt: string;
+}
+
+interface CitiesApiResponse {
+  data: CityAnalytics[];
+  meta: { total: number };
+}
 
 // ═══════════════════════════════════════════════════════════
 // MOCK DATA — Realistic Moroccan e-commerce over 30 days
@@ -79,20 +126,6 @@ const scoreDistribution = [
   { range: "31-65", label: "Moyen", count: 145, color: "#F59E0B" },
   { range: "66-85", label: "Élevé", count: 62, color: "#F43F5E" },
   { range: "86-100", label: "Critique", count: 23, color: "#8B5CF6" },
-];
-
-// ── City analysis data ──
-const cityData = [
-  { city: "Casablanca", orders: 186, delivered: 166, returns: 20, rtoRate: 11, avgScore: 28 },
-  { city: "Rabat", orders: 94, delivered: 85, returns: 9, rtoRate: 9, avgScore: 24 },
-  { city: "Marrakech", orders: 78, delivered: 65, returns: 13, rtoRate: 16, avgScore: 36 },
-  { city: "Fès", orders: 52, delivered: 41, returns: 11, rtoRate: 21, avgScore: 42 },
-  { city: "Tanger", orders: 48, delivered: 40, returns: 8, rtoRate: 16, avgScore: 34 },
-  { city: "Oujda", orders: 31, delivered: 21, returns: 10, rtoRate: 33, avgScore: 55 },
-  { city: "Agadir", orders: 27, delivered: 24, returns: 3, rtoRate: 12, avgScore: 29 },
-  { city: "Meknès", orders: 22, delivered: 19, returns: 3, rtoRate: 14, avgScore: 31 },
-  { city: "Taza", orders: 19, delivered: 11, returns: 8, rtoRate: 42, avgScore: 68 },
-  { city: "Errachidia", orders: 15, delivered: 8, returns: 7, rtoRate: 47, avgScore: 72 },
 ];
 
 // ── Hourly patterns data ──
@@ -211,13 +244,14 @@ function RtoTooltip({ active, payload, label }: TooltipProps<number, string>) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// SORTABLE TABLE HEADER
+// SORTABLE TABLE HEADERS
 // ═══════════════════════════════════════════════════════════
 
-type SortKey = "city" | "orders" | "delivered" | "returns" | "rtoRate" | "avgScore";
+type CitySortKey = "cityDisplay" | "totalOrders" | "deliveredOrders" | "returnedOrders" | "rtoRate" | "avgScore" | "riskTier";
+type ProductSortKey = "productName" | "productCategory" | "totalOrders" | "deliveredOrders" | "returnedOrders" | "rtoRate" | "totalRevenue";
 type SortDir = "asc" | "desc";
 
-function SortableHeader({
+function SortableHeader<T extends string>({
   label,
   sortKey,
   currentSort,
@@ -226,10 +260,10 @@ function SortableHeader({
   align = "left",
 }: {
   label: string;
-  sortKey: SortKey;
-  currentSort: SortKey;
+  sortKey: T;
+  currentSort: T;
   currentDir: SortDir;
-  onSort: (key: SortKey) => void;
+  onSort: (key: T) => void;
   align?: "left" | "right";
 }) {
   const isActive = currentSort === sortKey;
@@ -277,13 +311,129 @@ function RtoBar({ value }: { value: number }) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// RISK TIER BADGE (Cities)
+// ═══════════════════════════════════════════════════════════
+
+function RiskTierBadge({ tier }: { tier: CityAnalytics["riskTier"] }) {
+  const config: Record<CityAnalytics["riskTier"], { label: string; bg: string; text: string }> = {
+    safe: { label: "Fiable", bg: "bg-mint-bg", text: "text-mint-deep" },
+    moderate: { label: "Modéré", bg: "bg-amber-bg", text: "text-amber" },
+    risky: { label: "Risque", bg: "bg-rose-bg", text: "text-rose" },
+    dangerous: { label: "Dangereux", bg: "bg-violet-bg", text: "text-violet" },
+    unknown: { label: "Inconnu", bg: "bg-snow", text: "text-fog" },
+  };
+  const c = config[tier] ?? config.unknown;
+  return (
+    <span className={cn("inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold", c.bg, c.text)}>
+      {c.label}
+    </span>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRODUCT RISK BADGE
+// ═══════════════════════════════════════════════════════════
+
+function ProductRiskBadge({ rtoRate }: { rtoRate: number }) {
+  if (rtoRate > 0.30) {
+    return (
+      <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-rose-bg text-rose">
+        Risque élevé
+      </span>
+    );
+  }
+  if (rtoRate >= 0.15) {
+    return (
+      <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-amber-bg text-amber">
+        À surveiller
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-mint-bg text-mint-deep">
+      Fiable
+    </span>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOADING SKELETON
+// ═══════════════════════════════════════════════════════════
+
+function TableSkeleton({ rows = 5, cols = 6 }: { rows?: number; cols?: number }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="flex gap-4">
+          {Array.from({ length: cols }, (_, j) => (
+            <div key={j} className="h-4 flex-1 animate-pulse rounded bg-snow" />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
 // MAIN PAGE
 // ═══════════════════════════════════════════════════════════
 
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState<Period>("30j");
-  const [citySort, setCitySort] = useState<SortKey>("orders");
+
+  // ── City state ──
+  const [citySort, setCitySort] = useState<CitySortKey>("totalOrders");
   const [citySortDir, setCitySortDir] = useState<SortDir>("desc");
+  const [cityData, setCityData] = useState<CityAnalytics[]>([]);
+  const [cityLoading, setCityLoading] = useState(true);
+  const [cityError, setCityError] = useState<string | null>(null);
+
+  // ── Product state ──
+  const [productSort, setProductSort] = useState<ProductSortKey>("totalOrders");
+  const [productSortDir, setProductSortDir] = useState<SortDir>("desc");
+  const [productData, setProductData] = useState<ProductAnalytics[]>([]);
+  const [productLoading, setProductLoading] = useState(true);
+  const [productError, setProductError] = useState<string | null>(null);
+
+  // ── Fetch city data ──
+  useEffect(() => {
+    setCityLoading(true);
+    setCityError(null);
+    fetch("/api/analytics/cities")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Erreur ${res.status}`);
+        return res.json() as Promise<CitiesApiResponse>;
+      })
+      .then((json) => {
+        setCityData(json.data);
+      })
+      .catch((err) => {
+        setCityError(err instanceof Error ? err.message : "Erreur de chargement");
+      })
+      .finally(() => {
+        setCityLoading(false);
+      });
+  }, []);
+
+  // ── Fetch product data ──
+  useEffect(() => {
+    setProductLoading(true);
+    setProductError(null);
+    fetch("/api/analytics/products")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Erreur ${res.status}`);
+        return res.json() as Promise<ProductsApiResponse>;
+      })
+      .then((json) => {
+        setProductData(json.data);
+      })
+      .catch((err) => {
+        setProductError(err instanceof Error ? err.message : "Erreur de chargement");
+      })
+      .finally(() => {
+        setProductLoading(false);
+      });
+  }, []);
 
   // Filter daily data by period
   const dailyData = useMemo(() => {
@@ -322,14 +472,16 @@ export default function AnalyticsPage() {
   const rtoDelta = rtoRate - baseline;
 
   // ── City sort ──
-  const handleCitySort = (key: SortKey) => {
-    if (citySort === key) {
-      setCitySortDir(citySortDir === "asc" ? "desc" : "asc");
-    } else {
-      setCitySort(key);
+  const handleCitySort = useCallback((key: CitySortKey) => {
+    setCitySort((prev) => {
+      if (prev === key) {
+        setCitySortDir((d) => (d === "asc" ? "desc" : "asc"));
+        return prev;
+      }
       setCitySortDir("desc");
-    }
-  };
+      return key;
+    });
+  }, []);
 
   const sortedCities = useMemo(() => {
     return [...cityData].sort((a, b) => {
@@ -340,7 +492,49 @@ export default function AnalyticsPage() {
       }
       return citySortDir === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
     });
-  }, [citySort, citySortDir]);
+  }, [cityData, citySort, citySortDir]);
+
+  // ── Product sort ──
+  const handleProductSort = useCallback((key: ProductSortKey) => {
+    setProductSort((prev) => {
+      if (prev === key) {
+        setProductSortDir((d) => (d === "asc" ? "desc" : "asc"));
+        return prev;
+      }
+      setProductSortDir("desc");
+      return key;
+    });
+  }, []);
+
+  const sortedProducts = useMemo(() => {
+    return [...productData].sort((a, b) => {
+      const aVal = a[productSort];
+      const bVal = b[productSort];
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return productSortDir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      return productSortDir === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+    });
+  }, [productData, productSort, productSortDir]);
+
+  // ── Product KPIs ──
+  const highRiskProducts = useMemo(
+    () => productData.filter((p) => p.rtoRate > 0.30 && p.totalOrders >= 5),
+    [productData]
+  );
+
+  const revenueAtRisk = useMemo(
+    () => highRiskProducts.reduce((s, p) => s + p.totalRevenue, 0),
+    [highRiskProducts]
+  );
+
+  const top3RtoConcentration = useMemo(() => {
+    if (productData.length === 0) return 0;
+    const sorted = [...productData].sort((a, b) => b.rtoRate - a.rtoRate);
+    const top3Returns = sorted.slice(0, 3).reduce((s, p) => s + p.returnedOrders, 0);
+    const totalReturnsAll = productData.reduce((s, p) => s + p.returnedOrders, 0);
+    return totalReturnsAll > 0 ? Math.round((top3Returns / totalReturnsAll) * 100) : 0;
+  }, [productData]);
 
   return (
     <div className="space-y-6">
@@ -600,61 +794,225 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
+      {/* ═══ PRODUCTS SECTION — Produits à risque ═══ */}
+      <Card className="rounded-[18px]">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-rose" />
+            <CardTitle>Produits à risque</CardTitle>
+          </div>
+          <p className="text-xs text-fog">Analyse du taux de retour par produit</p>
+        </CardHeader>
+        <CardContent>
+          {/* ── Product mini KPIs ── */}
+          {productLoading ? (
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-20 animate-pulse rounded-xl bg-snow" />
+              ))}
+            </div>
+          ) : productError ? null : (
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {/* High-risk product count */}
+              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-rose" />
+                  <p className="text-xs font-medium text-fog">Produits à risque élevé</p>
+                </div>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {highRiskProducts.length}
+                </p>
+                <p className="text-[11px] text-fog">
+                  RTO &gt; 30%, min 5 commandes
+                </p>
+              </div>
+
+              {/* Revenue at risk */}
+              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+                <div className="flex items-center gap-2">
+                  <Coins className="h-4 w-4 text-amber" />
+                  <p className="text-xs font-medium text-fog">DH de revenus à risque</p>
+                </div>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {revenueAtRisk.toLocaleString("fr-FR")} <span className="text-sm font-semibold text-fog">DH</span>
+                </p>
+                <p className="text-[11px] text-fog">
+                  CA des produits à risque élevé
+                </p>
+              </div>
+
+              {/* Top 3 RTO concentration */}
+              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+                <div className="flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4 text-violet" />
+                  <p className="text-xs font-medium text-fog">RTO concentré sur top 3</p>
+                </div>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {top3RtoConcentration}<span className="text-sm font-semibold text-fog">%</span>
+                </p>
+                <p className="text-[11px] text-fog">
+                  % des retours sur les 3 pires produits
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Product table ── */}
+          {productLoading ? (
+            <TableSkeleton rows={6} cols={7} />
+          ) : productError ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <AlertTriangle className="h-8 w-8 text-rose mb-3" />
+              <p className="text-sm font-medium text-midnight">Erreur de chargement</p>
+              <p className="text-xs text-fog mt-1">{productError}</p>
+            </div>
+          ) : productData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Package className="h-8 w-8 text-fog mb-3" />
+              <p className="text-sm font-medium text-midnight">Aucun produit</p>
+              <p className="text-xs text-fog mt-1">Les données apparaitront ici après les premières commandes.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-silk">
+                    <SortableHeader<ProductSortKey> label="Produit" sortKey="productName" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
+                    <SortableHeader<ProductSortKey> label="Catégorie" sortKey="productCategory" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
+                    <SortableHeader<ProductSortKey> label="Commandes" sortKey="totalOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                    <SortableHeader<ProductSortKey> label="Livrées" sortKey="deliveredOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                    <SortableHeader<ProductSortKey> label="Retours" sortKey="returnedOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                    <SortableHeader<ProductSortKey> label="Taux RTO" sortKey="rtoRate" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                    <SortableHeader<ProductSortKey> label="CA Total" sortKey="totalRevenue" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedProducts.map((p) => (
+                    <tr key={p.id} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-midnight">{p.productName}</span>
+                          <ProductRiskBadge rtoRate={p.rtoRate} />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-fog">{p.productCategory}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-mono text-sm text-slate">{p.totalOrders}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-mono text-sm text-mint-deep">{p.deliveredOrders}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-mono text-sm text-rose">{p.returnedOrders}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <RtoBar value={Math.round(p.rtoRate * 100)} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-mono text-sm font-semibold text-midnight">
+                          {p.totalRevenue.toLocaleString("fr-FR")} <span className="text-xs font-normal text-fog">DH</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* ═══ 4. CITY ANALYSIS TABLE ═══ */}
       <Card className="rounded-[18px]">
         <CardHeader>
-          <CardTitle>Analyse par ville</CardTitle>
-          <p className="text-xs text-fog">Top 10 villes par volume de commandes</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Analyse par ville</CardTitle>
+              <p className="text-xs text-fog">Performance par zone géographique</p>
+            </div>
+            {!cityLoading && !cityError && cityData.length > 0 && (
+              <span className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium",
+                cityData.some((c) => c.riskTier !== "unknown")
+                  ? "bg-mint-bg text-mint-deep"
+                  : "bg-snow text-fog"
+              )}>
+                {cityData.some((c) => c.riskTier !== "unknown") ? "Données réelles" : "Estimation"}
+              </span>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-silk">
-                  <SortableHeader label="Ville" sortKey="city" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} />
-                  <SortableHeader label="Commandes" sortKey="orders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                  <SortableHeader label="Livrées" sortKey="delivered" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                  <SortableHeader label="Retours" sortKey="returns" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                  <SortableHeader label="Taux RTO" sortKey="rtoRate" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                  <SortableHeader label="Score moyen" sortKey="avgScore" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                </tr>
-              </thead>
-              <tbody>
-                {sortedCities.map((c) => (
-                  <tr key={c.city} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-midnight">{c.city}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="font-mono text-sm text-slate">{c.orders}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="font-mono text-sm text-mint-deep">{c.delivered}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="font-mono text-sm text-rose">{c.returns}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <RtoBar value={c.rtoRate} />
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
-                          c.avgScore <= 30 && "bg-mint-bg text-mint-deep",
-                          c.avgScore > 30 && c.avgScore <= 65 && "bg-amber-bg text-amber",
-                          c.avgScore > 65 && c.avgScore <= 85 && "bg-rose-bg text-rose",
-                          c.avgScore > 85 && "bg-violet-bg text-violet"
-                        )}
-                      >
-                        {c.avgScore}
-                      </span>
-                    </td>
+          {cityLoading ? (
+            <TableSkeleton rows={8} cols={7} />
+          ) : cityError ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <AlertTriangle className="h-8 w-8 text-rose mb-3" />
+              <p className="text-sm font-medium text-midnight">Erreur de chargement</p>
+              <p className="text-xs text-fog mt-1">{cityError}</p>
+            </div>
+          ) : cityData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Package className="h-8 w-8 text-fog mb-3" />
+              <p className="text-sm font-medium text-midnight">Aucune donnée de ville</p>
+              <p className="text-xs text-fog mt-1">Les données apparaitront ici après les premières commandes.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-silk">
+                    <SortableHeader<CitySortKey> label="Ville" sortKey="cityDisplay" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} />
+                    <SortableHeader<CitySortKey> label="Commandes" sortKey="totalOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                    <SortableHeader<CitySortKey> label="Livrées" sortKey="deliveredOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                    <SortableHeader<CitySortKey> label="Retours" sortKey="returnedOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                    <SortableHeader<CitySortKey> label="Taux RTO" sortKey="rtoRate" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                    <SortableHeader<CitySortKey> label="Score moyen" sortKey="avgScore" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                    <SortableHeader<CitySortKey> label="Risque" sortKey="riskTier" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {sortedCities.map((c) => (
+                    <tr key={c.id} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-medium text-midnight">{c.cityDisplay}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-mono text-sm text-slate">{c.totalOrders}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-mono text-sm text-mint-deep">{c.deliveredOrders}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-mono text-sm text-rose">{c.returnedOrders}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <RtoBar value={Math.round(c.rtoRate * 100)} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
+                            c.avgScore <= 30 && "bg-mint-bg text-mint-deep",
+                            c.avgScore > 30 && c.avgScore <= 65 && "bg-amber-bg text-amber",
+                            c.avgScore > 65 && c.avgScore <= 85 && "bg-rose-bg text-rose",
+                            c.avgScore > 85 && "bg-violet-bg text-violet"
+                          )}
+                        >
+                          {c.avgScore}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <RiskTierBadge tier={c.riskTier} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

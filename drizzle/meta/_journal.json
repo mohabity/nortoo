@@ -8,6 +8,13 @@
       "when": 1771585466288,
       "tag": "0000_lovely_living_lightning",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771591849374,
+      "tag": "0001_known_lockjaw",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
-import { orders, notifications, auditLogs } from "@/db/schema";
+import { orders, notifications, auditLogs, merchants } from "@/db/schema";
 import { and, eq, lt } from "drizzle-orm";
+import { recalculateAllProductStats } from "@/lib/product-stats";
+import { recalculateAllCityStats } from "@/lib/city-stats";
 
 /**
  * GET /api/cron/escalate
@@ -89,10 +91,34 @@ export async function GET(request: Request) {
     escalatedCount++;
   }
 
+  // ── Stats recalculation (daily consistency check) ──
+  let productsUpdated = 0;
+  let citiesUpdated = 0;
+
+  try {
+    // Get all active merchants
+    const allMerchants = await db
+      .select({ id: merchants.id })
+      .from(merchants);
+
+    for (const m of allMerchants) {
+      try {
+        productsUpdated += await recalculateAllProductStats(m.id);
+        citiesUpdated += await recalculateAllCityStats(m.id);
+      } catch (err) {
+        console.error(`[Cron Escalate] Stats recalc failed for merchant ${m.id}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error("[Cron Escalate] Stats recalculation error:", err);
+  }
+
   return NextResponse.json({
     data: {
       checked: overdueOrders.length,
       escalated: escalatedCount,
+      productsUpdated,
+      citiesUpdated,
       timestamp: now.toISOString(),
     },
   });

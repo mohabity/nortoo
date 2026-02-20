@@ -15,6 +15,8 @@ import * as schema from "./schema";
 import { hashPhone, phoneLast4 } from "../lib/hash";
 import { scoreOrder } from "../lib/scoring";
 import { executePipeline } from "../lib/pipeline";
+import { recalculateAllProductStats } from "../lib/product-stats";
+import { recalculateAllCityStats } from "../lib/city-stats";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql, { schema });
@@ -80,26 +82,26 @@ const CUSTOMERS_DATA = [
 ];
 
 const PRODUCTS = [
-  { name: "T-shirt Nike Dri-FIT", price: 349 },
-  { name: "Robe Caftan Traditionnelle", price: 890 },
-  { name: "Montre Casio G-Shock", price: 750 },
-  { name: "Baskets Puma RS-X", price: 680 },
-  { name: "Parfum Dior Sauvage", price: 950 },
-  { name: "Écouteurs Bluetooth JBL", price: 250 },
-  { name: "Coque iPhone 15 Pro", price: 89 },
-  { name: "Palette Maquillage MAC", price: 320 },
-  { name: "Sac Bandoulière Guess", price: 450 },
-  { name: "Lampe LED Smart WiFi", price: 185 },
-  { name: "Crème Nivea Coffret", price: 120 },
-  { name: "Portefeuille Tommy Hilfiger", price: 420 },
-  { name: "Lunettes Ray-Ban Aviator", price: 1100 },
-  { name: "Montre Xiaomi Band 8", price: 299 },
-  { name: "Running Adidas Ultraboost", price: 1250 },
-  { name: "Chemise Zara Slim", price: 280 },
-  { name: "Sneakers New Balance 574", price: 790 },
-  { name: "Sac à Dos Eastpak", price: 350 },
-  { name: "Tablette Samsung Galaxy Tab", price: 1500 },
-  { name: "Casque Audio Sony WH-1000", price: 1350 },
+  { id: "prod_001", name: "T-shirt Nike Dri-FIT", price: 349, category: "Vêtements" },
+  { id: "prod_002", name: "Robe Caftan Traditionnelle", price: 890, category: "Vêtements" },
+  { id: "prod_003", name: "Montre Casio G-Shock", price: 750, category: "Accessoires" },
+  { id: "prod_004", name: "Baskets Puma RS-X", price: 680, category: "Chaussures" },
+  { id: "prod_005", name: "Parfum Dior Sauvage", price: 950, category: "Beauté" },
+  { id: "prod_006", name: "Écouteurs Bluetooth JBL", price: 250, category: "Électronique" },
+  { id: "prod_007", name: "Coque iPhone 15 Pro", price: 89, category: "Accessoires" },
+  { id: "prod_008", name: "Palette Maquillage MAC", price: 320, category: "Beauté" },
+  { id: "prod_009", name: "Sac Bandoulière Guess", price: 450, category: "Accessoires" },
+  { id: "prod_010", name: "Lampe LED Smart WiFi", price: 185, category: "Maison" },
+  { id: "prod_011", name: "Crème Nivea Coffret", price: 120, category: "Beauté" },
+  { id: "prod_012", name: "Portefeuille Tommy Hilfiger", price: 420, category: "Accessoires" },
+  { id: "prod_013", name: "Lunettes Ray-Ban Aviator", price: 1100, category: "Accessoires" },
+  { id: "prod_014", name: "Montre Xiaomi Band 8", price: 299, category: "Électronique" },
+  { id: "prod_015", name: "Running Adidas Ultraboost", price: 1250, category: "Chaussures" },
+  { id: "prod_016", name: "Chemise Zara Slim", price: 280, category: "Vêtements" },
+  { id: "prod_017", name: "Sneakers New Balance 574", price: 790, category: "Chaussures" },
+  { id: "prod_018", name: "Sac à Dos Eastpak", price: 350, category: "Accessoires" },
+  { id: "prod_019", name: "Tablette Samsung Galaxy Tab", price: 1500, category: "Électronique" },
+  { id: "prod_020", name: "Casque Audio Sony WH-1000", price: 1350, category: "Électronique" },
 ];
 
 const ADDRESSES_BY_CITY: Record<string, string[]> = {
@@ -267,7 +269,7 @@ async function seed() {
   }
 
   // ── 3. Delete existing seed data for idempotency ──
-  console.log("\n🗑️  Cleaning existing orders + notifications for primary merchant...");
+  console.log("\n🗑️  Cleaning existing orders + notifications + stats for primary merchant...");
   await db
     .delete(schema.notifications)
     .where(eq(schema.notifications.merchantId, primaryMerchantId));
@@ -290,6 +292,12 @@ async function seed() {
         eq(schema.auditLogs.action, "pipeline_executed")
       )
     );
+  await db
+    .delete(schema.productStats)
+    .where(eq(schema.productStats.merchantId, primaryMerchantId));
+  await db
+    .delete(schema.cityStats)
+    .where(eq(schema.cityStats.merchantId, primaryMerchantId));
 
   // ── 4. Insert 50 orders ──
   console.log("\n📋 Inserting 50 scored orders...");
@@ -444,6 +452,10 @@ async function seed() {
         customerName: custData.name,
         customerPhoneLast4: phoneLast4(phone),
         productName: product.name,
+        productId: product.id,
+        productCategory: product.category,
+        productPrice: product.price,
+        quantity: randomInt(1, 3),
         total: product.price,
         currency: "MAD",
         shippingCity: city,
@@ -662,6 +674,13 @@ async function seed() {
   const unreadCount = notificationSeeds.filter(n => !n.read).length;
   console.log(`   ↳ ${notificationSeeds.length} notifications (${unreadCount} non lues)`);
 
+  // ── 7. Recalculate product & city stats ──
+  console.log("\n📈 Recalculating product & city stats...");
+  const productsUpdated = await recalculateAllProductStats(primaryMerchantId);
+  const citiesUpdated = await recalculateAllCityStats(primaryMerchantId);
+  console.log(`   ↳ ${productsUpdated} product stats recalculated`);
+  console.log(`   ↳ ${citiesUpdated} city stats recalculated`);
+
   console.log("\n📊 Distribution des décisions:");
   console.log(`   Ship:   ${stats.ship} (${Math.round(stats.ship / 50 * 100)}%)`);
   console.log(`   Verify: ${stats.verify} (${Math.round(stats.verify / 50 * 100)}%)`);
@@ -680,6 +699,7 @@ async function seed() {
   console.log(`   • 15 clients marocains (pour TrendyShop.ma)`);
   console.log(`   • 50 commandes scorées avec statuts pipeline`);
   console.log(`   • ${notificationSeeds.length} notifications (${unreadCount} non lues)`);
+  console.log(`   • ${productsUpdated} stats produits + ${citiesUpdated} stats villes`);
   console.log(`   • 100+ entrées audit log`);
   console.log(`\n🔑 Identifiants de connexion:`);
   console.log(`   • contact@trendyshop.ma / password123 (plan Growth)`);

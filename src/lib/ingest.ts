@@ -18,6 +18,8 @@ import { and, eq, or, isNull } from "drizzle-orm";
 import { hashPhone, phoneLast4 } from "@/lib/hash";
 import { scoreOrder, type ScoringResult } from "@/lib/scoring";
 import { executePipeline } from "@/lib/pipeline";
+import { normalizeProductId, updateProductStats, getProductRtoRate } from "@/lib/product-stats";
+import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } from "@/lib/city-stats";
 
 export interface IngestParams {
   merchantId: number;
@@ -38,6 +40,10 @@ export interface IngestParams {
   total: number;
   currency?: string;
   productName?: string;
+  productId?: string;
+  productCategory?: string;
+  productPrice?: number;
+  quantity?: number;
   shippingCity?: string;
   shippingAddress?: string;
   orderHour: number;
@@ -67,10 +73,21 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     total,
     currency = "MAD",
     productName,
+    productId: rawProductId,
+    productCategory,
+    productPrice,
+    quantity,
     shippingCity,
     shippingAddress,
     orderHour,
   } = params;
+
+  // Resolve product ID: use external ID if available, otherwise slugify name
+  const resolvedProductId = rawProductId
+    ? rawProductId
+    : productName
+      ? normalizeProductId(productName)
+      : undefined;
 
   // ── 1. Hash phone immediately — NEVER store raw (Art. 23) ──
   const phoneHash = hashPhone(phone);
@@ -108,7 +125,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
         riskLevel: "low",
         decision: "flag",
         scoringFactors: JSON.stringify([{ rule: "OPPOSITION", points: 0, reason: "Consommateur opposé (Art. 9) — scoring désactivé" }]),
-        scoringVersion: "v1.0",
+        scoringVersion: "v1.1",
         pipelineStatus: "needs_review",
         pipelineProcessedAt: now,
         merchantNotifiedAt: now,
@@ -195,6 +212,53 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     customerHistory = undefined; // New customer
   }
 
+  // ── 3b. Lookup product stats for scoring ──
+  let productRtoRate: number | undefined;
+  let productTotalOrders: number | undefined;
+  if (resolvedProductId) {
+    try {
+      const productData = await getProductRtoRate(merchantId, resolvedProductId);
+      if (productData) {
+        productRtoRate = productData.rtoRate;
+        productTotalOrders = productData.totalOrders;
+      }
+    } catch (err) {
+      console.error("[Ingest] Product stats lookup failed (non-blocking):", err);
+    }
+  }
+
+  // ── 3c. Lookup city stats for scoring ──
+  let cityRtoRate: number | undefined;
+  let cityRiskTier: string | undefined;
+  let cityTotalOrders: number | undefined;
+  if (shippingCity) {
+    try {
+      const normalized = normalizeCity(shippingCity);
+      const cityData = await getCityRiskData(merchantId, normalized);
+      if (cityData) {
+        cityRtoRate = cityData.rtoRate;
+        cityRiskTier = cityData.riskTier;
+        cityTotalOrders = cityData.totalOrders;
+      }
+      // Fallback to global stats if merchant has insufficient data
+      if (!cityData || cityData.totalOrders < 10) {
+        const globalData = await getGlobalCityStats(normalized);
+        if (globalData && (!cityData || globalData.totalOrders > cityData.totalOrders)) {
+          cityRtoRate = globalData.rtoRate;
+          cityTotalOrders = globalData.totalOrders;
+          // Compute tier from global data
+          if (globalData.totalOrders < 5) cityRiskTier = "unknown";
+          else if (globalData.rtoRate > 0.40) cityRiskTier = "dangerous";
+          else if (globalData.rtoRate > 0.25) cityRiskTier = "risky";
+          else if (globalData.rtoRate > 0.15) cityRiskTier = "moderate";
+          else cityRiskTier = "safe";
+        }
+      }
+    } catch (err) {
+      console.error("[Ingest] City stats lookup failed (non-blocking):", err);
+    }
+  }
+
   // ── 4. Score order ──
   const scoringResult: ScoringResult = scoreOrder(
     {
@@ -203,6 +267,11 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       address: shippingAddress,
       hour: orderHour,
       customer: customerHistory,
+      productRtoRate,
+      productTotalOrders,
+      cityRtoRate,
+      cityRiskTier,
+      cityTotalOrders,
     },
     {
       verify: merchant.verifyThreshold,
@@ -228,6 +297,10 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       customerName,
       customerPhoneLast4: last4,
       productName,
+      productId: resolvedProductId,
+      productCategory,
+      productPrice,
+      quantity,
       total,
       currency,
       shippingCity,
@@ -316,6 +389,34 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       .set({ decision: "block" })
       .where(eq(orders.id, insertedOrder.id));
     decision = "block";
+  }
+
+  // ── 7. Update product & city stats (fire-and-forget, non-blocking) ──
+  try {
+    if (resolvedProductId && productName) {
+      await updateProductStats({
+        merchantId,
+        productId: resolvedProductId,
+        productName,
+        productCategory,
+        orderTotal: total,
+      });
+    }
+  } catch (err) {
+    console.error("[Ingest] Product stats update failed (non-blocking):", err);
+  }
+
+  try {
+    if (shippingCity) {
+      await updateCityStats({
+        merchantId,
+        city: shippingCity,
+        orderScore: scoringResult.score,
+        orderTotal: total,
+      });
+    }
+  } catch (err) {
+    console.error("[Ingest] City stats update failed (non-blocking):", err);
   }
 
   return {

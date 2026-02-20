@@ -124,6 +124,13 @@ export async function POST(request: Request) {
     payload.items?.map((i) => i.name).join(", ") ||
     undefined;
 
+  // Product details: ID, price, quantity from variants
+  const productId = payload.variants?.[0]?.variant?.product?.id || undefined;
+  const productPrice = payload.variants?.[0]?.variant?.price ?? undefined;
+  const productQuantity = payload.variants?.reduce(
+    (sum, v) => sum + (v.quantity ?? 1), 0
+  ) ?? undefined;
+
   const orderHour = payload.created_at
     ? new Date(payload.created_at).getHours()
     : new Date().getHours();
@@ -156,6 +163,9 @@ export async function POST(request: Request) {
       total: payload.total,
       currency: payload.currency || "MAD",
       productName,
+      productId,
+      productPrice,
+      quantity: productQuantity,
       shippingCity,
       shippingAddress,
       orderHour,
