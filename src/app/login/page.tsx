@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 import Link from "next/link";
-import { Zap, Loader2, Mail, Lock } from "lucide-react";
+import { Zap, Loader2, Mail, Lock, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
@@ -28,10 +28,12 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/dashboard";
 
+  const oauthError = searchParams.get("error") ?? "";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(oauthError);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -159,6 +161,25 @@ function LoginForm() {
                 Se connecter
               </Button>
             </form>
+
+            {/* Separator */}
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-3 text-xs text-ink-4">ou</span>
+              </div>
+            </div>
+
+            {/* YouCan OAuth */}
+            <a
+              href="/api/auth/youcan?mode=login"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-[#5C6AC4] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4F5BB5]"
+            >
+              <Plug className="h-4 w-4" />
+              Se connecter avec YouCan
+            </a>
 
             <p className="mt-4 text-center text-sm text-ink-3">
               Pas encore de compte ?{" "}

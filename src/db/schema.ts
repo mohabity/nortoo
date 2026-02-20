@@ -30,10 +30,12 @@ export const merchants = pgTable("merchants", {
   // Platform integrations
   youcanStoreId: text("youcan_store_id").unique(),
   youcanAccessToken: text("youcan_access_token"),
+  youcanStoreName: text("youcan_store_name"),
   shopifyStoreId: text("shopify_store_id"),
 
   // Billing
   plan: text("plan").notNull().default("trial"), // trial | starter | growth | scale
+  inviteCode: text("invite_code"),               // invite code used at signup
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
 
@@ -279,6 +281,29 @@ export const networkProfiles = pgTable("network_profiles", {
 });
 
 // ═══════════════════════════════════════════════════════════
+// INVITE LINKS — Liens d'invitation magiques
+// ═══════════════════════════════════════════════════════════
+export const inviteLinks = pgTable(
+  "invite_links",
+  {
+    id: serial("id").primaryKey(),
+    code: text("code").notNull().unique(),
+    label: text("label").notNull(),
+    maxUses: integer("max_uses"),
+    currentUses: integer("current_uses").notNull().default(0),
+    expiresAt: timestamp("expires_at"),
+    createdBy: integer("created_by").references(() => merchants.id),
+    isActive: boolean("is_active").notNull().default(true),
+    metadata: text("metadata"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("invite_code_idx").on(table.code),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
@@ -286,6 +311,13 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   orders: many(orders),
   auditLogs: many(auditLogs),
   notifications: many(notifications),
+}));
+
+export const inviteLinksRelations = relations(inviteLinks, ({ one }) => ({
+  createdByMerchant: one(merchants, {
+    fields: [inviteLinks.createdBy],
+    references: [merchants.id],
+  }),
 }));
 
 export const customersRelations = relations(customers, ({ one, many }) => ({

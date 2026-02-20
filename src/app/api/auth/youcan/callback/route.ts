@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/index";
-import { merchants, auditLogs } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { merchants, auditLogs, inviteLinks } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
+import { encode } from "next-auth/jwt";
+import { hash } from "bcryptjs";
+import { randomBytes } from "crypto";
 
 /**
  * GET /api/auth/youcan/callback
  *
- * YouCan OAuth callback:
- * 1. Verify CSRF state
- * 2. Exchange code for access_token
- * 3. Fetch store info from /me
- * 4. Upsert merchant in DB
- * 5. Subscribe to order.create webhook
- * 6. Set auth cookie + redirect to dashboard
+ * YouCan OAuth callback — 3-case merchant resolution:
+ * A) youcanStoreId match → reconnect (update token)
+ * B) Email match (no storeId) → link YouCan store to existing account
+ * C) No match → auto-create merchant account
+ *
+ * All cases create a proper Auth.js JWT session via manual encoding.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -22,27 +24,36 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get("error");
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const errorRedirect = (msg: string) =>
+    NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent(msg)}`);
 
   // ── Handle OAuth error from YouCan ──
   if (error) {
-    return NextResponse.redirect(
-      `${appUrl}/onboarding?error=${encodeURIComponent("YouCan a refusé l'autorisation: " + error)}`
-    );
+    return errorRedirect("YouCan a refusé l'autorisation: " + error);
   }
 
-  // ── Validate code ──
   if (!code) {
-    return NextResponse.redirect(
-      `${appUrl}/onboarding?error=${encodeURIComponent("Code d'autorisation manquant")}`
-    );
+    return errorRedirect("Code d'autorisation manquant");
   }
 
-  // ── Verify CSRF state ──
-  const savedState = request.cookies.get("oauth_state")?.value;
-  if (!savedState || savedState !== state) {
-    return NextResponse.redirect(
-      `${appUrl}/onboarding?error=${encodeURIComponent("Erreur de sécurité (state CSRF invalide). Réessayez.")}`
-    );
+  // ── Parse state cookie (JSON with csrf + mode + invite) ──
+  const savedStateRaw = request.cookies.get("oauth_state")?.value;
+  let savedCsrf = "";
+  let mode = "login";
+  let inviteCode = "";
+
+  try {
+    const parsed = JSON.parse(savedStateRaw || "{}");
+    savedCsrf = parsed.csrf || "";
+    mode = parsed.mode || "login";
+    inviteCode = parsed.invite || "";
+  } catch {
+    // Backward compat: plain string state cookie
+    savedCsrf = savedStateRaw || "";
+  }
+
+  if (!savedCsrf || savedCsrf !== state) {
+    return errorRedirect("Erreur de sécurité (state CSRF invalide). Réessayez.");
   }
 
   const clientId = process.env.YOUCAN_CLIENT_ID!;
@@ -66,18 +77,14 @@ export async function GET(request: NextRequest) {
     if (!tokenRes.ok) {
       const errText = await tokenRes.text();
       console.error("[YouCan OAuth] Token exchange failed:", errText);
-      return NextResponse.redirect(
-        `${appUrl}/onboarding?error=${encodeURIComponent("Échec de l'échange du token. Réessayez.")}`
-      );
+      return errorRedirect("Échec de l'échange du token. Réessayez.");
     }
 
     const tokenData = await tokenRes.json();
     const accessToken: string = tokenData.access_token;
 
     if (!accessToken) {
-      return NextResponse.redirect(
-        `${appUrl}/onboarding?error=${encodeURIComponent("Token d'accès manquant dans la réponse YouCan.")}`
-      );
+      return errorRedirect("Token d'accès manquant dans la réponse YouCan.");
     }
 
     // ── 2. Fetch store info ──
@@ -87,9 +94,7 @@ export async function GET(request: NextRequest) {
 
     if (!meRes.ok) {
       console.error("[YouCan OAuth] /me failed:", await meRes.text());
-      return NextResponse.redirect(
-        `${appUrl}/onboarding?error=${encodeURIComponent("Impossible de récupérer les informations de votre boutique.")}`
-      );
+      return errorRedirect("Impossible de récupérer les informations de votre boutique.");
     }
 
     const storeInfo = await meRes.json();
@@ -99,59 +104,104 @@ export async function GET(request: NextRequest) {
     const storeDomain: string = storeInfo.domain || storeInfo.slug || "";
 
     if (!storeId) {
-      return NextResponse.redirect(
-        `${appUrl}/onboarding?error=${encodeURIComponent("ID boutique manquant dans la réponse YouCan.")}`
-      );
+      return errorRedirect("ID boutique manquant dans la réponse YouCan.");
     }
 
-    // ── 3. Upsert merchant ──
-    const [existingMerchant] = await db
+    // ── 3. Three-case merchant resolution ──
+    let merchantId: number;
+    let merchantName: string;
+    let merchantEmail: string;
+    let merchantPlan: string;
+    let apiKey: string;
+    let redirectParam: string;
+    let auditAction: string;
+
+    // Case A: Find by youcanStoreId (reconnect)
+    const [existingByStore] = await db
       .select()
       .from(merchants)
       .where(eq(merchants.youcanStoreId, storeId))
       .limit(1);
 
-    let merchantId: number;
-    let apiKey: string;
-
-    if (existingMerchant) {
-      // Update existing merchant with new token
-      merchantId = existingMerchant.id;
-      apiKey = existingMerchant.apiKey!;
+    if (existingByStore) {
+      // RECONNECT: Update token
+      merchantId = existingByStore.id;
+      merchantName = existingByStore.name;
+      merchantEmail = existingByStore.email;
+      merchantPlan = existingByStore.plan;
+      apiKey = existingByStore.apiKey!;
 
       await db
         .update(merchants)
         .set({
           youcanAccessToken: accessToken,
-          name: storeName,
-          email: storeEmail || existingMerchant.email,
-          domain: storeDomain || existingMerchant.domain,
+          youcanStoreName: storeName,
+          name: storeName || existingByStore.name,
+          email: storeEmail || existingByStore.email,
+          domain: storeDomain || existingByStore.domain,
           updatedAt: new Date(),
         })
         .where(eq(merchants.id, merchantId));
+
+      redirectParam = "connected=true";
+      auditAction = "youcan_reconnect";
+    } else if (storeEmail) {
+      // Case B: Find by email (link store to existing account)
+      const [existingByEmail] = await db
+        .select()
+        .from(merchants)
+        .where(eq(merchants.email, storeEmail))
+        .limit(1);
+
+      if (existingByEmail) {
+        merchantId = existingByEmail.id;
+        merchantName = existingByEmail.name;
+        merchantEmail = existingByEmail.email;
+        merchantPlan = existingByEmail.plan;
+        apiKey = existingByEmail.apiKey!;
+
+        await db
+          .update(merchants)
+          .set({
+            youcanStoreId: storeId,
+            youcanAccessToken: accessToken,
+            youcanStoreName: storeName,
+            domain: storeDomain || existingByEmail.domain,
+            consentRecordedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(merchants.id, merchantId));
+
+        redirectParam = "connected=true";
+        auditAction = "youcan_link";
+      } else {
+        // Case C: No match — auto-create
+        const result = await autoCreateMerchant({
+          storeName, storeEmail, storeDomain, storeId, accessToken, inviteCode,
+        });
+        merchantId = result.merchantId;
+        merchantName = result.merchantName;
+        merchantEmail = result.merchantEmail;
+        merchantPlan = result.merchantPlan;
+        apiKey = result.apiKey;
+        redirectParam = "welcome=true";
+        auditAction = "youcan_register";
+      }
     } else {
-      // Create new merchant
-      apiKey = generateApiKey();
-
-      const [newMerchant] = await db
-        .insert(merchants)
-        .values({
-          name: storeName,
-          email: storeEmail || "unknown@youcan.shop",
-          domain: storeDomain,
-          youcanStoreId: storeId,
-          youcanAccessToken: accessToken,
-          apiKey,
-          plan: "trial",
-          consentRecordedAt: new Date(),
-        })
-        .returning({ id: merchants.id });
-
-      merchantId = newMerchant.id;
+      // No email from YouCan — go straight to auto-create
+      const result = await autoCreateMerchant({
+        storeName, storeEmail, storeDomain, storeId, accessToken, inviteCode,
+      });
+      merchantId = result.merchantId;
+      merchantName = result.merchantName;
+      merchantEmail = result.merchantEmail;
+      merchantPlan = result.merchantPlan;
+      apiKey = result.apiKey;
+      redirectParam = "welcome=true";
+      auditAction = "youcan_register";
     }
 
-    // ── 4. Subscribe to order.create webhook on YouCan ──
-    // YouCan REST Hooks API: POST /resthooks/subscribe with target_url + event
+    // ── 4. Subscribe to order.create webhook ──
     const webhookUrl = `${appUrl}/api/webhook/youcan?key=${apiKey}`;
     let webhookOk = false;
 
@@ -171,51 +221,129 @@ export async function GET(request: NextRequest) {
       if (webhookRes.ok) {
         webhookOk = true;
       } else {
-        // Log but don't fail — merchant can configure manually
-        console.error(
-          "[YouCan OAuth] Webhook subscription failed:",
-          await webhookRes.text()
-        );
+        console.error("[YouCan OAuth] Webhook subscription failed:", await webhookRes.text());
       }
     } catch (webhookErr) {
       console.error("[YouCan OAuth] Webhook subscription error:", webhookErr);
     }
 
-    // ── 5. Audit log (Art. 23) ──
+    // ── 5. Track invite usage ──
+    if (inviteCode && auditAction !== "youcan_reconnect") {
+      try {
+        await db
+          .update(inviteLinks)
+          .set({
+            currentUses: sql`${inviteLinks.currentUses} + 1`,
+            updatedAt: new Date(),
+          })
+          .where(eq(inviteLinks.code, inviteCode));
+      } catch {
+        // Non-critical — don't fail the flow
+      }
+    }
+
+    // ── 6. Audit log (Art. 23) ──
     await db.insert(auditLogs).values({
       merchantId,
       actor: "system",
-      action: "youcan_connect",
+      action: auditAction,
       targetType: "merchant",
       targetId: String(merchantId),
       details: JSON.stringify({
         storeId,
         storeName,
         storeDomain,
-        isNewMerchant: !existingMerchant,
+        mode,
+        inviteCode: inviteCode || null,
         webhookConfigured: webhookOk,
       }),
     });
 
-    // ── 6. Set auth cookie + redirect ──
-    const response = NextResponse.redirect(`${appUrl}/dashboard?connected=true`);
+    // ── 7. Create Auth.js JWT session + set cookies ──
+    const isSecure = process.env.NODE_ENV === "production";
+    const cookieName = isSecure
+      ? "__Secure-authjs.session-token"
+      : "authjs.session-token";
+    const maxAge = 30 * 24 * 60 * 60; // 30 days
 
-    response.cookies.set("codpilot_merchant", String(merchantId), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+    const sessionToken = await encode({
+      salt: cookieName,
+      secret: process.env.AUTH_SECRET!,
+      token: {
+        sub: String(merchantId),
+        name: merchantName,
+        email: merchantEmail,
+        merchantId,
+        plan: merchantPlan,
+      },
+      maxAge,
     });
 
-    // Clear the OAuth state cookie
+    const response = NextResponse.redirect(`${appUrl}/dashboard?${redirectParam}`);
+
+    // Auth.js session cookie
+    response.cookies.set(cookieName, sessionToken, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: "lax",
+      path: "/",
+      maxAge,
+    });
+
+    // Legacy cookie (backward compat with middleware)
+    response.cookies.set("codpilot_merchant", String(merchantId), {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: "lax",
+      path: "/",
+      maxAge,
+    });
+
+    // Clear OAuth state cookie
     response.cookies.delete("oauth_state");
 
     return response;
   } catch (err) {
     console.error("[YouCan OAuth] Unexpected error:", err);
-    return NextResponse.redirect(
-      `${appUrl}/onboarding?error=${encodeURIComponent("Erreur inattendue. Veuillez réessayer.")}`
-    );
+    return errorRedirect("Erreur inattendue. Veuillez réessayer.");
   }
+}
+
+// ── Helper: auto-create merchant ──
+async function autoCreateMerchant(opts: {
+  storeName: string;
+  storeEmail: string;
+  storeDomain: string;
+  storeId: string;
+  accessToken: string;
+  inviteCode: string;
+}) {
+  const randomPassword = randomBytes(24).toString("hex");
+  const passwordHash = await hash(randomPassword, 12);
+  const apiKey = generateApiKey();
+
+  const [newMerchant] = await db
+    .insert(merchants)
+    .values({
+      name: opts.storeName,
+      email: opts.storeEmail || "unknown@youcan.shop",
+      domain: opts.storeDomain,
+      passwordHash,
+      youcanStoreId: opts.storeId,
+      youcanAccessToken: opts.accessToken,
+      youcanStoreName: opts.storeName,
+      apiKey,
+      plan: "trial",
+      inviteCode: opts.inviteCode || null,
+      consentRecordedAt: new Date(),
+    })
+    .returning({ id: merchants.id });
+
+  return {
+    merchantId: newMerchant.id,
+    merchantName: opts.storeName,
+    merchantEmail: opts.storeEmail || "unknown@youcan.shop",
+    merchantPlan: "trial",
+    apiKey,
+  };
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { Zap, Loader2, Store, Mail, Lock } from "lucide-react";
+import { Zap, Loader2, Store, Mail, Lock, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
@@ -211,6 +211,25 @@ export default function RegisterPage() {
                 Créer mon compte
               </Button>
             </form>
+
+            {/* Separator */}
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-3 text-xs text-ink-4">ou</span>
+              </div>
+            </div>
+
+            {/* YouCan OAuth */}
+            <a
+              href="/api/auth/youcan?mode=register"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-[#5C6AC4] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4F5BB5]"
+            >
+              <Plug className="h-4 w-4" />
+              S&apos;inscrire avec YouCan
+            </a>
 
             <p className="mt-4 text-center text-sm text-ink-3">
               Déjà un compte ?{" "}

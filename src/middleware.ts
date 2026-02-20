@@ -15,6 +15,7 @@ const PUBLIC_PATHS = [
   "/login",
   "/register",
   "/onboarding",
+  "/go/",
   "/api/auth/",
   "/api/webhook/",
   "/api/cron/",
