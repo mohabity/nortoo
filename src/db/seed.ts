@@ -14,6 +14,7 @@ import { hash } from "bcryptjs";
 import * as schema from "./schema";
 import { hashPhone, phoneLast4 } from "../lib/hash";
 import { scoreOrder } from "../lib/scoring";
+import { executePipeline } from "../lib/pipeline";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql, { schema });
@@ -265,8 +266,11 @@ async function seed() {
     console.log(`   ↳ ${custData.name} (${last4}) → id: ${custId}`);
   }
 
-  // ── 3. Delete existing seed orders for idempotency ──
-  console.log("\n🗑️  Cleaning existing orders for primary merchant...");
+  // ── 3. Delete existing seed data for idempotency ──
+  console.log("\n🗑️  Cleaning existing orders + notifications for primary merchant...");
+  await db
+    .delete(schema.notifications)
+    .where(eq(schema.notifications.merchantId, primaryMerchantId));
   await db
     .delete(schema.orders)
     .where(eq(schema.orders.merchantId, primaryMerchantId));
@@ -276,6 +280,14 @@ async function seed() {
       and(
         eq(schema.auditLogs.merchantId, primaryMerchantId),
         eq(schema.auditLogs.action, "score")
+      )
+    );
+  await db
+    .delete(schema.auditLogs)
+    .where(
+      and(
+        eq(schema.auditLogs.merchantId, primaryMerchantId),
+        eq(schema.auditLogs.action, "pipeline_executed")
       )
     );
 
@@ -359,6 +371,24 @@ async function seed() {
   orderConfigs.sort(() => Math.random() - 0.5);
 
   const stats = { ship: 0, verify: 0, flag: 0, block: 0 };
+  const pipelineStats = { auto_shipped: 0, needs_review: 0, escalated: 0, auto_blocked: 0, merchant_override: 0 };
+  const merchantSettings = {
+    verifyThreshold: thresholds.verify,
+    flagThreshold: thresholds.flag,
+    blockThreshold: thresholds.block,
+    autoBlockEnabled: true,
+  };
+
+  // Track orders for post-processing pipeline overrides
+  const insertedOrders: Array<{
+    id: number;
+    orderRef: string;
+    score: number;
+    decision: string;
+    customerName: string;
+    pipelineStatus: string;
+    createdAt: Date;
+  }> = [];
 
   for (const cfg of orderConfigs) {
     orderNum++;
@@ -392,13 +422,25 @@ async function seed() {
 
     stats[result.decision]++;
 
+    // Run pipeline engine for realistic statuses
+    const orderRef = `#${orderNum}`;
+    const pipelineResult = executePipeline({
+      score: result.score,
+      decision: result.decision,
+      merchantSettings,
+      orderRef,
+      customerName: custData.name,
+    });
+
+    const pipelineProcessedAt = new Date(createdAt.getTime() + 1000);
+
     const [insertedOrder] = await db
       .insert(schema.orders)
       .values({
         merchantId: primaryMerchantId,
         customerId: custId,
         externalId: `yc_${orderNum}`,
-        externalRef: `#${orderNum}`,
+        externalRef: orderRef,
         customerName: custData.name,
         customerPhoneLast4: phoneLast4(phone),
         productName: product.name,
@@ -416,10 +458,27 @@ async function seed() {
         retentionExpiresAt: retentionDate(),
         createdAt,
         scoredAt: new Date(createdAt.getTime() + 500),
+        // Pipeline fields
+        pipelineStatus: pipelineResult.status,
+        pipelineProcessedAt,
+        reviewDeadline: pipelineResult.reviewDeadline,
+        merchantNotifiedAt: pipelineProcessedAt,
       })
       .returning({ id: schema.orders.id });
 
-    // Audit log for each scored order (Art. 23)
+    insertedOrders.push({
+      id: insertedOrder.id,
+      orderRef,
+      score: result.score,
+      decision: result.decision,
+      customerName: custData.name,
+      pipelineStatus: pipelineResult.status,
+      createdAt,
+    });
+
+    pipelineStats[pipelineResult.status as keyof typeof pipelineStats]++;
+
+    // Audit log: scoring (Art. 23)
     await db.insert(schema.auditLogs).values({
       merchantId: primaryMerchantId,
       actor: "system",
@@ -435,10 +494,173 @@ async function seed() {
       createdAt,
     });
 
+    // Audit log: pipeline
+    await db.insert(schema.auditLogs).values({
+      merchantId: primaryMerchantId,
+      actor: "system",
+      action: "pipeline_executed",
+      targetType: "order",
+      targetId: String(insertedOrder.id),
+      details: JSON.stringify({
+        pipelineStatus: pipelineResult.status,
+        severity: pipelineResult.severity,
+        reviewDeadline: pipelineResult.reviewDeadline?.toISOString() ?? null,
+      }),
+      createdAt: pipelineProcessedAt,
+    });
+
     console.log(
-      `   ↳ #${orderNum} | ${custData.name.padEnd(22)} | ${city.padEnd(14)} | ${product.price.toString().padStart(5)} DH | Score: ${result.score.toString().padStart(3)} | ${result.decision.padEnd(6)} | ${cfg.deliveryStatus}`
+      `   ↳ #${orderNum} | ${custData.name.padEnd(22)} | ${city.padEnd(14)} | ${product.price.toString().padStart(5)} DH | Score: ${result.score.toString().padStart(3)} | ${result.decision.padEnd(6)} | ${pipelineResult.status.padEnd(16)} | ${cfg.deliveryStatus}`
     );
   }
+
+  // ── 5. Post-process: escalate some needs_review + override some ──
+  console.log("\n🔄 Post-processing pipeline overrides...");
+
+  // Escalate 5 needs_review orders (deadline passed)
+  const needsReview = insertedOrders.filter(o => o.pipelineStatus === "needs_review");
+  const toEscalate = needsReview.slice(0, Math.min(5, needsReview.length));
+  for (const order of toEscalate) {
+    const escalatedAt = new Date(order.createdAt.getTime() + 3 * 60 * 60 * 1000); // 3h after creation
+    await db
+      .update(schema.orders)
+      .set({
+        pipelineStatus: "escalated",
+        escalatedAt,
+        reviewDeadline: new Date(order.createdAt.getTime() + 2 * 60 * 60 * 1000), // deadline was 2h
+      })
+      .where(eq(schema.orders.id, order.id));
+    pipelineStats.escalated++;
+    pipelineStats.needs_review--;
+    order.pipelineStatus = "escalated";
+    console.log(`   ↳ Escalated: ${order.orderRef} — ${order.customerName}`);
+  }
+
+  // Override 3 orders (merchant_override)
+  const overrideCandidates = insertedOrders.filter(
+    o => o.pipelineStatus === "needs_review" || o.pipelineStatus === "escalated"
+  );
+  const toOverride = overrideCandidates.slice(0, Math.min(3, overrideCandidates.length));
+  for (const order of toOverride) {
+    const overrideAt = new Date(order.createdAt.getTime() + 1 * 60 * 60 * 1000);
+    const prevStatus = order.pipelineStatus as keyof typeof pipelineStats;
+    await db
+      .update(schema.orders)
+      .set({
+        pipelineStatus: "merchant_override",
+        overrideDecision: order.score > thresholds.flag ? "flag" : "ship",
+        overrideBy: "merchant",
+        overrideReason: "Vérification manuelle effectuée",
+        overrideAt,
+      })
+      .where(eq(schema.orders.id, order.id));
+    pipelineStats.merchant_override++;
+    pipelineStats[prevStatus]--;
+    order.pipelineStatus = "merchant_override";
+    console.log(`   ↳ Override: ${order.orderRef} — ${order.customerName}`);
+  }
+
+  // ── 6. Seed notifications ──
+  console.log("\n🔔 Inserting notifications...");
+
+  const notificationSeeds: Array<{
+    orderId: number;
+    type: string;
+    title: string;
+    message: string;
+    severity: string;
+    read: boolean;
+    createdAt: Date;
+  }> = [];
+
+  // 3 auto_shipped notifications (all read, info)
+  const autoShipped = insertedOrders.filter(o => o.pipelineStatus === "auto_shipped");
+  for (const order of autoShipped.slice(0, 3)) {
+    notificationSeeds.push({
+      orderId: order.id,
+      type: "order_auto_shipped",
+      title: `Commande ${order.orderRef} — expédition auto`,
+      message: `Score ${order.score}/100 — ${order.customerName}. Risque faible, expédition recommandée.`,
+      severity: "info",
+      read: true,
+      createdAt: new Date(order.createdAt.getTime() + 1500),
+    });
+  }
+
+  // 4 needs_review notifications (2 read, 2 unread, warning)
+  const reviewOrders = insertedOrders.filter(o => o.pipelineStatus === "needs_review");
+  for (let i = 0; i < Math.min(4, reviewOrders.length); i++) {
+    const order = reviewOrders[i];
+    notificationSeeds.push({
+      orderId: order.id,
+      type: "order_needs_review",
+      title: `Commande ${order.orderRef} à vérifier`,
+      message: `Score ${order.score}/100 — ${order.customerName}. Vérification requise.`,
+      severity: "warning",
+      read: i < 2,
+      createdAt: new Date(order.createdAt.getTime() + 1500),
+    });
+  }
+
+  // 3 escalation notifications (all unread, critical)
+  const escalated = insertedOrders.filter(o => o.pipelineStatus === "escalated");
+  for (const order of escalated.slice(0, 3)) {
+    notificationSeeds.push({
+      orderId: order.id,
+      type: "escalation",
+      title: `Commande ${order.orderRef} — escalade`,
+      message: `Délai de vérification dépassé pour ${order.customerName}. Score ${order.score}/100. Action urgente requise.`,
+      severity: "critical",
+      read: false,
+      createdAt: new Date(order.createdAt.getTime() + 3 * 60 * 60 * 1000 + 1000),
+    });
+  }
+
+  // 3 auto_blocked notifications (1 unread, 2 read, critical)
+  const blocked = insertedOrders.filter(o => o.pipelineStatus === "auto_blocked");
+  for (let i = 0; i < Math.min(3, blocked.length); i++) {
+    const order = blocked[i];
+    notificationSeeds.push({
+      orderId: order.id,
+      type: "order_auto_blocked",
+      title: `Commande ${order.orderRef} bloquée automatiquement`,
+      message: `Score ${order.score}/100 — ${order.customerName}. Blocage automatique activé.`,
+      severity: "critical",
+      read: i > 0,
+      createdAt: new Date(order.createdAt.getTime() + 1500),
+    });
+  }
+
+  // 2 merchant_override notifications (read, info — auto-marked when override happened)
+  const overridden = insertedOrders.filter(o => o.pipelineStatus === "merchant_override");
+  for (const order of overridden.slice(0, 2)) {
+    notificationSeeds.push({
+      orderId: order.id,
+      type: "order_needs_review",
+      title: `Commande ${order.orderRef} à vérifier`,
+      message: `Score ${order.score}/100 — ${order.customerName}. [Résolu par override marchand]`,
+      severity: "warning",
+      read: true,
+      createdAt: new Date(order.createdAt.getTime() + 1500),
+    });
+  }
+
+  for (const notif of notificationSeeds) {
+    await db.insert(schema.notifications).values({
+      merchantId: primaryMerchantId,
+      orderId: notif.orderId,
+      type: notif.type,
+      title: notif.title,
+      message: notif.message,
+      severity: notif.severity,
+      read: notif.read,
+      actionUrl: `/dashboard/orders?selected=${notif.orderId}`,
+      createdAt: notif.createdAt,
+    });
+  }
+
+  const unreadCount = notificationSeeds.filter(n => !n.read).length;
+  console.log(`   ↳ ${notificationSeeds.length} notifications (${unreadCount} non lues)`);
 
   console.log("\n📊 Distribution des décisions:");
   console.log(`   Ship:   ${stats.ship} (${Math.round(stats.ship / 50 * 100)}%)`);
@@ -446,11 +668,19 @@ async function seed() {
   console.log(`   Flag:   ${stats.flag} (${Math.round(stats.flag / 50 * 100)}%)`);
   console.log(`   Block:  ${stats.block} (${Math.round(stats.block / 50 * 100)}%)`);
 
+  console.log("\n🚀 Distribution pipeline:");
+  console.log(`   Auto-expédié:      ${pipelineStats.auto_shipped}`);
+  console.log(`   À vérifier:        ${pipelineStats.needs_review}`);
+  console.log(`   Escaladé:          ${pipelineStats.escalated}`);
+  console.log(`   Auto-bloqué:       ${pipelineStats.auto_blocked}`);
+  console.log(`   Override marchand: ${pipelineStats.merchant_override}`);
+
   console.log("\n✅ Seed terminé avec succès!");
   console.log(`   • 2 marchands (TrendyShop.ma + ModaMaroc)`);
   console.log(`   • 15 clients marocains (pour TrendyShop.ma)`);
-  console.log(`   • 50 commandes scorées`);
-  console.log(`   • 50 entrées audit log`);
+  console.log(`   • 50 commandes scorées avec statuts pipeline`);
+  console.log(`   • ${notificationSeeds.length} notifications (${unreadCount} non lues)`);
+  console.log(`   • 100+ entrées audit log`);
   console.log(`\n🔑 Identifiants de connexion:`);
   console.log(`   • contact@trendyshop.ma / password123 (plan Growth)`);
   console.log(`   • admin@modamaroc.ma / password123 (plan Starter)`);

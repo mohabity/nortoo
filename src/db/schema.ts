@@ -133,6 +133,14 @@ export const orders = pgTable(
     // Compliance — Art. 3e
     retentionExpiresAt: timestamp("retention_expires_at"),
 
+    // Pipeline orchestration
+    pipelineStatus: text("pipeline_status").notNull().default("pending"),
+    // values: pending | auto_shipped | needs_review | escalated | auto_blocked | merchant_override
+    pipelineProcessedAt: timestamp("pipeline_processed_at"),
+    reviewDeadline: timestamp("review_deadline"),
+    escalatedAt: timestamp("escalated_at"),
+    merchantNotifiedAt: timestamp("merchant_notified_at"),
+
     // Meta
     createdAt: timestamp("created_at").notNull().defaultNow(),
     scoredAt: timestamp("scored_at").notNull().defaultNow(),
@@ -147,6 +155,14 @@ export const orders = pgTable(
       table.decision
     ),
     index("orders_score_idx").on(table.fraudScore),
+    index("orders_merchant_pipeline_idx").on(
+      table.merchantId,
+      table.pipelineStatus
+    ),
+    index("orders_review_deadline_idx").on(
+      table.pipelineStatus,
+      table.reviewDeadline
+    ),
   ]
 );
 
@@ -216,6 +232,40 @@ export const oppositionList = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// NOTIFICATIONS — Pipeline alerts for merchants
+// ═══════════════════════════════════════════════════════════
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    orderId: integer("order_id").references(() => orders.id, {
+      onDelete: "set null",
+    }),
+
+    type: text("type").notNull(),
+    // "order_auto_shipped" | "order_needs_review" | "order_flagged" | "order_auto_blocked" | "escalation" | "daily_summary"
+
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    severity: text("severity").notNull().default("info"), // "info" | "warning" | "critical"
+    read: boolean("read").notNull().default(false),
+    actionUrl: text("action_url"),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("notifications_merchant_read_idx").on(table.merchantId, table.read),
+    index("notifications_merchant_created_idx").on(
+      table.merchantId,
+      table.createdAt
+    ),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // NETWORK PROFILES — Phase 2 (needs CNDP authorization Art. 12.1.f)
 // ⚠️ Only aggregated data — NEVER personal info cross-merchant
 // ═══════════════════════════════════════════════════════════
@@ -235,6 +285,7 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   customers: many(customers),
   orders: many(orders),
   auditLogs: many(auditLogs),
+  notifications: many(notifications),
 }));
 
 export const customersRelations = relations(customers, ({ one, many }) => ({
@@ -245,7 +296,7 @@ export const customersRelations = relations(customers, ({ one, many }) => ({
   orders: many(orders),
 }));
 
-export const ordersRelations = relations(orders, ({ one }) => ({
+export const ordersRelations = relations(orders, ({ one, many }) => ({
   merchant: one(merchants, {
     fields: [orders.merchantId],
     references: [merchants.id],
@@ -253,5 +304,17 @@ export const ordersRelations = relations(orders, ({ one }) => ({
   customer: one(customers, {
     fields: [orders.customerId],
     references: [customers.id],
+  }),
+  notifications: many(notifications),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [notifications.merchantId],
+    references: [merchants.id],
+  }),
+  order: one(orders, {
+    fields: [notifications.orderId],
+    references: [orders.id],
   }),
 }));

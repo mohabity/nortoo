@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, parseInt(params.get("page") ?? "1", 10));
   const perPage = Math.min(100, Math.max(1, parseInt(params.get("per_page") ?? "20", 10)));
   const decision = params.get("decision");
+  const pipeline = params.get("pipeline");
   const city = params.get("city");
   const status = params.get("status");
   const scoreMin = params.get("score_min");
@@ -45,10 +46,13 @@ export async function GET(request: NextRequest) {
 
   const baseWhere = and(...baseConditions);
 
-  // ── Full conditions (with decision filter) — for filtered results ──
+  // ── Full conditions (with decision + pipeline filter) — for filtered results ──
   const fullConditions = [...baseConditions];
   if (decision && decision !== "all") {
     fullConditions.push(eq(orders.decision, decision));
+  }
+  if (pipeline && pipeline !== "all") {
+    fullConditions.push(eq(orders.pipelineStatus, pipeline));
   }
   const where = and(...fullConditions);
 
@@ -81,6 +85,7 @@ export async function GET(request: NextRequest) {
         decision: orders.decision,
         overrideDecision: orders.overrideDecision,
         deliveryStatus: orders.deliveryStatus,
+        pipelineStatus: orders.pipelineStatus,
         createdAt: orders.createdAt,
       })
       .from(orders)

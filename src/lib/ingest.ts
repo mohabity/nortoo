@@ -13,10 +13,11 @@
  */
 
 import { db } from "@/db/index";
-import { customers, orders, auditLogs, oppositionList } from "@/db/schema";
+import { customers, orders, auditLogs, oppositionList, notifications } from "@/db/schema";
 import { and, eq, or, isNull } from "drizzle-orm";
 import { hashPhone, phoneLast4 } from "@/lib/hash";
 import { scoreOrder, type ScoringResult } from "@/lib/scoring";
+import { executePipeline } from "@/lib/pipeline";
 
 export interface IngestParams {
   merchantId: number;
@@ -50,6 +51,8 @@ export interface IngestResult {
   factors: { rule: string; points: number; reason: string }[];
   confidence: number;
   opposed: boolean;
+  pipelineStatus: string;
+  reviewDeadline: string | null;
 }
 
 export async function processIncomingOrder(params: IngestParams): Promise<IngestResult> {
@@ -87,6 +90,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
 
   if (opposition) {
     // Consumer has opposed — scoring disabled, flag for manual review
+    const now = new Date();
     const [insertedOrder] = await db
       .insert(orders)
       .values({
@@ -105,6 +109,9 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
         decision: "flag",
         scoringFactors: JSON.stringify([{ rule: "OPPOSITION", points: 0, reason: "Consommateur opposé (Art. 9) — scoring désactivé" }]),
         scoringVersion: "v1.0",
+        pipelineStatus: "needs_review",
+        pipelineProcessedAt: now,
+        merchantNotifiedAt: now,
         retentionExpiresAt: retentionDate(merchant.dataRetentionMonths),
       })
       .returning({ id: orders.id });
@@ -118,6 +125,16 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       details: JSON.stringify({ score: 25, decision: "flag", reason: "opposition_active" }),
     });
 
+    await db.insert(notifications).values({
+      merchantId,
+      orderId: insertedOrder.id,
+      type: "order_flagged",
+      title: `Commande ${ref} — opposition active`,
+      message: `Consommateur opposé (Art. 9). Scoring désactivé, vérification manuelle requise.`,
+      severity: "warning",
+      actionUrl: `/dashboard/orders?selected=${insertedOrder.id}`,
+    });
+
     return {
       orderId: insertedOrder.id,
       score: 25,
@@ -126,6 +143,8 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       factors: [{ rule: "OPPOSITION", points: 0, reason: "Consommateur opposé (Art. 9)" }],
       confidence: 0.5,
       opposed: true,
+      pipelineStatus: "needs_review",
+      reviewDeadline: null,
     };
   }
 
@@ -238,6 +257,67 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     }),
   });
 
+  // ── 6b. Execute pipeline ──
+  const pipelineResult = executePipeline({
+    score: scoringResult.score,
+    decision,
+    merchantSettings: {
+      verifyThreshold: merchant.verifyThreshold,
+      flagThreshold: merchant.flagThreshold,
+      blockThreshold: merchant.blockThreshold,
+      autoBlockEnabled: merchant.autoBlockEnabled,
+    },
+    orderRef: ref,
+    customerName,
+  });
+
+  const now = new Date();
+
+  // ── 6c. Update order with pipeline status ──
+  await db
+    .update(orders)
+    .set({
+      pipelineStatus: pipelineResult.status,
+      pipelineProcessedAt: now,
+      reviewDeadline: pipelineResult.reviewDeadline,
+      merchantNotifiedAt: now,
+    })
+    .where(eq(orders.id, insertedOrder.id));
+
+  // ── 6d. Insert notification ──
+  await db.insert(notifications).values({
+    merchantId,
+    orderId: insertedOrder.id,
+    type: pipelineResult.notificationType,
+    title: pipelineResult.title,
+    message: pipelineResult.message,
+    severity: pipelineResult.severity,
+    actionUrl: `/dashboard/orders?selected=${insertedOrder.id}`,
+  });
+
+  // ── 6e. Pipeline audit log (Art. 23) ──
+  await db.insert(auditLogs).values({
+    merchantId,
+    actor: "system",
+    action: "pipeline_executed",
+    targetType: "order",
+    targetId: String(insertedOrder.id),
+    details: JSON.stringify({
+      pipelineStatus: pipelineResult.status,
+      severity: pipelineResult.severity,
+      reviewDeadline: pipelineResult.reviewDeadline?.toISOString() ?? null,
+    }),
+  });
+
+  // ── 6f. If auto_blocked, ensure decision is block ──
+  if (pipelineResult.status === "auto_blocked") {
+    await db
+      .update(orders)
+      .set({ decision: "block" })
+      .where(eq(orders.id, insertedOrder.id));
+    decision = "block";
+  }
+
   return {
     orderId: insertedOrder.id,
     score: scoringResult.score,
@@ -246,6 +326,8 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     factors: scoringResult.factors,
     confidence: scoringResult.confidence,
     opposed: false,
+    pipelineStatus: pipelineResult.status,
+    reviewDeadline: pipelineResult.reviewDeadline?.toISOString() ?? null,
   };
 }
 

@@ -3,6 +3,7 @@
 import { formatDH } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
+import { PipelineBadge } from "./pipeline-badge";
 import {
   Table,
   TableBody,
@@ -24,6 +25,7 @@ export interface OrderRow {
   decision: string;
   overrideDecision?: string | null;
   deliveryStatus: string;
+  pipelineStatus: string;
   createdAt: string;
 }
 
@@ -50,6 +52,7 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
           <TableHead>Ville</TableHead>
           <TableHead className="text-right">Montant</TableHead>
           <TableHead className="text-center">Décision</TableHead>
+          <TableHead className="text-center">Pipeline</TableHead>
           <TableHead>Statut</TableHead>
           <TableHead>Produit</TableHead>
         </TableRow>
@@ -57,7 +60,7 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
       <TableBody>
         {orders.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-ink-3 py-8">
+            <TableCell colSpan={8} className="text-center text-ink-3 py-8">
               Aucune commande trouvée
             </TableCell>
           </TableRow>
@@ -86,6 +89,9 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
                 {order.overrideDecision && (
                   <span className="ml-1 text-[10px] text-ink-4" title="Override actif">*</span>
                 )}
+              </TableCell>
+              <TableCell className="text-center">
+                <PipelineBadge status={order.pipelineStatus} size="sm" />
               </TableCell>
               <TableCell className="text-sm text-ink-3">
                 {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}

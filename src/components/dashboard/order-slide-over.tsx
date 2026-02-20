@@ -8,6 +8,8 @@ import {
   Calendar,
   ShieldCheck,
   Truck,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Sheet,
@@ -19,7 +21,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
+import { PipelineBadge } from "./pipeline-badge";
 import { formatDH, riskLabel, deliveryLabel, scoreColorClass } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 // ── Types ──
 
@@ -58,6 +62,11 @@ interface OrderDetail {
   overrideReason: string | null;
   overrideAt: string | null;
   deliveryStatus: string;
+  pipelineStatus: string;
+  pipelineProcessedAt: string | null;
+  reviewDeadline: string | null;
+  escalatedAt: string | null;
+  merchantNotifiedAt: string | null;
   scoringVersion: string | null;
   createdAt: string;
   scoredAt: string;
@@ -233,7 +242,67 @@ export function OrderSlideOver({
               </div>
             )}
 
-            {/* ── C. Scoring Factors ── */}
+            {/* ── C. Pipeline Status ── */}
+            {order.pipelineStatus && order.pipelineStatus !== "pending" && (
+              <div className="mx-6 mt-4">
+                <h3 className="text-sm font-semibold text-ink-1 font-sora mb-2">
+                  Pipeline
+                </h3>
+                <div className="rounded-lg border border-border bg-white p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-ink-3">Statut</span>
+                    <PipelineBadge status={order.pipelineStatus} size="sm" />
+                  </div>
+                  {order.pipelineProcessedAt && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-ink-3">Traité à</span>
+                      <span className="text-sm text-ink-2 font-mono">
+                        {new Date(order.pipelineProcessedAt).toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  {order.reviewDeadline && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-ink-3 flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> Délai
+                      </span>
+                      <span
+                        className={cn(
+                          "text-sm font-mono font-medium",
+                          new Date(order.reviewDeadline) < new Date()
+                            ? "text-coral"
+                            : "text-sun-deep"
+                        )}
+                      >
+                        {new Date(order.reviewDeadline).toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  )}
+                  {order.escalatedAt && (
+                    <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-coral-light/50 rounded">
+                      <AlertTriangle className="h-3.5 w-3.5 text-coral" />
+                      <span className="text-xs text-terra">
+                        Escaladé le{" "}
+                        {new Date(order.escalatedAt).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── D. Scoring Factors ── */}
             {order.scoringFactors.length > 0 && (
               <div className="mx-6 mt-4">
                 <h3 className="text-sm font-semibold text-ink-1 font-sora mb-2">

@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Search, User, LogOut } from "lucide-react";
+import { Search, User, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/dashboard/notification-bell";
 
 const PLAN_LABELS: Record<string, string> = {
   trial: "Essai",
@@ -32,10 +33,7 @@ export function Header() {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-4 w-4" />
-          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-coral" />
-        </Button>
+        <NotificationBell />
 
         <div className="flex items-center gap-2 rounded-sm border border-border px-3 py-1.5">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sun-light">

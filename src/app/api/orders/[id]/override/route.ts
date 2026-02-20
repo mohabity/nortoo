@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
-import { orders, auditLogs } from "@/db/schema";
+import { orders, auditLogs, notifications } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getMerchantId } from "@/lib/merchant";
@@ -49,7 +49,7 @@ export async function POST(
 
   const now = new Date();
 
-  // Update order with override
+  // Update order with override + pipeline status
   await db
     .update(orders)
     .set({
@@ -57,8 +57,21 @@ export async function POST(
       overrideBy: "merchant",
       overrideReason: parsed.data.reason,
       overrideAt: now,
+      pipelineStatus: "merchant_override",
     })
     .where(eq(orders.id, orderId));
+
+  // Auto-mark related notifications as read
+  await db
+    .update(notifications)
+    .set({ read: true })
+    .where(
+      and(
+        eq(notifications.merchantId, merchantId),
+        eq(notifications.orderId, orderId),
+        eq(notifications.read, false)
+      )
+    );
 
   // Art. 23 — Audit log (obligatoire)
   await db.insert(auditLogs).values({
@@ -71,6 +84,7 @@ export async function POST(
       previousDecision: order.decision,
       newDecision: parsed.data.decision,
       reason: parsed.data.reason,
+      pipelineStatusChange: "merchant_override",
     }),
   });
 

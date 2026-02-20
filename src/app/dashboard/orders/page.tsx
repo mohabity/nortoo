@@ -62,6 +62,7 @@ function OrdersContent() {
   // Read filters from URL
   const currentPage = parseInt(searchParams.get("page") ?? "1", 10);
   const currentDecision = searchParams.get("decision") ?? "all";
+  const currentPipeline = searchParams.get("pipeline") ?? "all";
   const currentSearch = searchParams.get("search") ?? "";
   const selectedOrderId = searchParams.get("selected");
 
@@ -82,6 +83,7 @@ function OrdersContent() {
     params.set("page", String(currentPage));
     params.set("per_page", "20");
     if (currentDecision !== "all") params.set("decision", currentDecision);
+    if (currentPipeline !== "all") params.set("pipeline", currentPipeline);
     if (currentSearch) params.set("search", currentSearch);
 
     try {
@@ -102,7 +104,7 @@ function OrdersContent() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, currentDecision, currentSearch]);
+  }, [currentPage, currentDecision, currentPipeline, currentSearch]);
 
   useEffect(() => {
     fetchOrders();
@@ -156,7 +158,7 @@ function OrdersContent() {
         </p>
       </div>
 
-      {/* ── Filter bar: Pills + Search ── */}
+      {/* ── Filter bar: Pills + Pipeline + Search ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Decision pills */}
         <div className="flex items-center gap-2">
@@ -186,19 +188,36 @@ function OrdersContent() {
           })}
         </div>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex items-center gap-1">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" />
-            <input
-              type="text"
-              placeholder="Chercher réf, nom, ville..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="h-9 w-[220px] rounded-full border border-border bg-white pl-8 pr-3 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-sun/30"
-            />
-          </div>
-        </form>
+        <div className="flex items-center gap-2">
+          {/* Pipeline filter */}
+          <select
+            value={currentPipeline}
+            onChange={(e) => setFilter("pipeline", e.target.value)}
+            className="h-9 rounded-lg border border-border bg-white px-3 text-sm text-ink-2 focus:outline-none focus:ring-2 focus:ring-sun/30"
+          >
+            <option value="all">Pipeline: Tous</option>
+            <option value="auto_shipped">Auto-expédié</option>
+            <option value="needs_review">À vérifier</option>
+            <option value="escalated">Escaladé</option>
+            <option value="auto_blocked">Auto-bloqué</option>
+            <option value="merchant_override">Override</option>
+            <option value="pending">En attente</option>
+          </select>
+
+          {/* Search */}
+          <form onSubmit={handleSearch} className="flex items-center gap-1">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" />
+              <input
+                type="text"
+                placeholder="Chercher réf, nom, ville..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="h-9 w-[220px] rounded-full border border-border bg-white pl-8 pr-3 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-sun/30"
+              />
+            </div>
+          </form>
+        </div>
       </div>
 
       {/* ── Orders Table ── */}

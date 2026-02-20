@@ -50,6 +50,7 @@ const recentOrders: OrderRow[] = [
     fraudScore: 15,
     decision: "ship",
     deliveryStatus: "shipped",
+    pipelineStatus: "auto_shipped",
     createdAt: "2026-02-18T10:30:00Z",
   },
   {
@@ -63,6 +64,7 @@ const recentOrders: OrderRow[] = [
     fraudScore: 35,
     decision: "verify",
     deliveryStatus: "pending",
+    pipelineStatus: "needs_review",
     createdAt: "2026-02-18T09:15:00Z",
   },
   {
@@ -76,6 +78,7 @@ const recentOrders: OrderRow[] = [
     fraudScore: 75,
     decision: "flag",
     deliveryStatus: "pending",
+    pipelineStatus: "escalated",
     createdAt: "2026-02-18T08:45:00Z",
   },
   {
@@ -89,6 +92,7 @@ const recentOrders: OrderRow[] = [
     fraudScore: 25,
     decision: "ship",
     deliveryStatus: "delivered",
+    pipelineStatus: "auto_shipped",
     createdAt: "2026-02-18T07:20:00Z",
   },
   {
@@ -102,6 +106,7 @@ const recentOrders: OrderRow[] = [
     fraudScore: 92,
     decision: "block",
     deliveryStatus: "cancelled",
+    pipelineStatus: "auto_blocked",
     createdAt: "2026-02-18T03:12:00Z",
   },
 ];
