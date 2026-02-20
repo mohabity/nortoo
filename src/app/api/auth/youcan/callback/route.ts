@@ -146,6 +146,13 @@ export async function GET(request: NextRequest) {
         merchantId = currentMerchant.id;
         apiKey = currentMerchant.apiKey || generateApiKey();
 
+        // Clear youcanStoreId from any OTHER merchant that may hold it
+        // (prevents unique constraint violation from orphaned rows)
+        await db
+          .update(merchants)
+          .set({ youcanStoreId: null, youcanAccessToken: null, updatedAt: new Date() })
+          .where(eq(merchants.youcanStoreId, storeId));
+
         await db
           .update(merchants)
           .set({
@@ -272,8 +279,9 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (err) {
     console.error("[YouCan OAuth] Unexpected error:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
     return NextResponse.redirect(
-      `${appUrl}/onboarding?error=${encodeURIComponent("Erreur inattendue. Veuillez réessayer.")}`
+      `${appUrl}/onboarding?error=${encodeURIComponent("Erreur: " + errMsg)}`
     );
   }
 }
