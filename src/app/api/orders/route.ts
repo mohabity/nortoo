@@ -91,6 +91,8 @@ export async function GET(request: NextRequest) {
         deliveryStatus: orders.deliveryStatus,
         pipelineStatus: orders.pipelineStatus,
         scoreExplanation: orders.scoreExplanation,
+        reviewDeadline: orders.reviewDeadline,
+        escalationPriority: orders.escalationPriority,
         createdAt: orders.createdAt,
       })
       .from(orders)

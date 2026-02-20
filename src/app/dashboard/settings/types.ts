@@ -5,6 +5,7 @@ export type TabId =
   | "profile"
   | "store"
   | "scoring"
+  | "escalation"
   | "rto_costs"
   | "api"
   | "notifications"
@@ -29,6 +30,7 @@ export interface MerchantSettings {
   flagThreshold: number;
   blockThreshold: number;
   autoBlockEnabled: boolean;
+  escalationConfig: string | null;
   rtoCostFixed: number;
   rtoCostPercent: number;
   dataRetentionMonths: number;

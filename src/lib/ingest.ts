@@ -32,6 +32,7 @@ export interface IngestParams {
     flagThreshold: number;
     blockThreshold: number;
     autoBlockEnabled: boolean;
+    escalationConfig?: string | null;
     dataRetentionMonths: number;
   };
   // Raw phone — will be hashed immediately
@@ -400,15 +401,22 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     }),
   });
 
-  // ── 6b. Execute pipeline ──
+  // ── 6b. Execute pipeline (with dynamic escalation deadlines) ──
+  let parsedEscalationConfig = null;
+  if (merchant.escalationConfig) {
+    try { parsedEscalationConfig = JSON.parse(merchant.escalationConfig); } catch { /* use default */ }
+  }
+
   const pipelineResult = executePipeline({
     score: scoringResult.score,
     decision,
+    total,
     merchantSettings: {
       verifyThreshold: merchant.verifyThreshold,
       flagThreshold: merchant.flagThreshold,
       blockThreshold: merchant.blockThreshold,
       autoBlockEnabled: merchant.autoBlockEnabled,
+      escalationConfig: parsedEscalationConfig,
     },
     orderRef: ref,
     customerName,
@@ -416,13 +424,14 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
 
   const now = new Date();
 
-  // ── 6c. Update order with pipeline status ──
+  // ── 6c. Update order with pipeline status + escalation priority ──
   await db
     .update(orders)
     .set({
       pipelineStatus: pipelineResult.status,
       pipelineProcessedAt: now,
       reviewDeadline: pipelineResult.reviewDeadline,
+      escalationPriority: pipelineResult.escalationPriority,
       merchantNotifiedAt: now,
     })
     .where(eq(orders.id, insertedOrder.id));

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Coins,
   TrendingUp,
   Truck,
   ShieldAlert,
+  Timer,
   X,
 } from "lucide-react";
 import {
@@ -30,6 +31,19 @@ interface SavingsData {
   projectedMonthlySaved: number;
   roiMultiple: number | null;
   deltaPercent: number;
+}
+
+// ── Urgent order type ──
+interface UrgentOrder {
+  id: number;
+  externalRef: string | null;
+  customerName: string | null;
+  total: number;
+  fraudScore: number;
+  decision: string;
+  pipelineStatus: string;
+  reviewDeadline: string | null;
+  escalationPriority: number | null;
 }
 
 // ── Mock chart data ──
@@ -124,12 +138,58 @@ const recentOrders: OrderRow[] = [
   },
 ];
 
+function UrgentCountdown({ deadline }: { deadline: string }) {
+  const [label, setLabel] = useState("");
+  const [overdue, setOverdue] = useState(false);
+
+  useEffect(() => {
+    function update() {
+      const diff = new Date(deadline).getTime() - Date.now();
+      if (diff <= 0) {
+        setLabel("expir\u00E9");
+        setOverdue(true);
+        return;
+      }
+      setOverdue(false);
+      const mins = Math.floor(diff / 60000);
+      setLabel(
+        mins >= 60
+          ? `${Math.floor(mins / 60)}h${(mins % 60).toString().padStart(2, "0")}`
+          : `${mins}min`
+      );
+    }
+    update();
+    const iv = setInterval(update, 30000);
+    return () => clearInterval(iv);
+  }, [deadline]);
+
+  return (
+    <span
+      className={`text-[10px] font-mono font-medium ${
+        overdue ? "text-rose" : "text-amber"
+      }`}
+    >
+      {label}
+    </span>
+  );
+}
+
 const BANNER_DISMISS_KEY = "savings-banner-dismissed";
 const BANNER_DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export default function DashboardPage() {
   const [savings, setSavings] = useState<SavingsData | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(true); // hidden by default until checked
+  const [urgentOrders, setUrgentOrders] = useState<UrgentOrder[]>([]);
+
+  const fetchUrgent = useCallback(() => {
+    fetch("/api/dashboard/urgent")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data) setUrgentOrders(d.data);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Fetch savings
@@ -140,6 +200,10 @@ export default function DashboardPage() {
       })
       .catch(() => {});
 
+    // Fetch urgent orders + poll every 60s
+    fetchUrgent();
+    const iv = setInterval(fetchUrgent, 60000);
+
     // Check banner dismissal
     const dismissed = localStorage.getItem(BANNER_DISMISS_KEY);
     if (dismissed && Date.now() - parseInt(dismissed, 10) < BANNER_DISMISS_DURATION) {
@@ -147,7 +211,9 @@ export default function DashboardPage() {
     } else {
       setBannerDismissed(false);
     }
-  }, []);
+
+    return () => clearInterval(iv);
+  }, [fetchUrgent]);
 
   function dismissBanner() {
     localStorage.setItem(BANNER_DISMISS_KEY, String(Date.now()));
@@ -194,6 +260,66 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* ── Urgent Orders Widget ── */}
+      {urgentOrders.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Timer className="h-4 w-4 text-rose" />
+              <CardTitle className="text-sm">
+                Commandes urgentes ({urgentOrders.length})
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {urgentOrders.slice(0, 5).map((o) => (
+                <a
+                  key={o.id}
+                  href={`/dashboard/orders?selected=${o.id}`}
+                  className="flex items-center justify-between rounded-md border border-silk px-3 py-2 hover:bg-snow/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {o.escalationPriority && (
+                      <span
+                        className={`text-[10px] font-mono font-bold px-1 py-0.5 rounded ${
+                          o.escalationPriority <= 2
+                            ? "bg-rose-bg text-rose"
+                            : o.escalationPriority <= 4
+                            ? "bg-amber-bg text-amber"
+                            : "bg-snow text-fog"
+                        }`}
+                      >
+                        P{o.escalationPriority}
+                      </span>
+                    )}
+                    <span className="text-sm text-midnight truncate">
+                      {o.externalRef ?? `#${o.id}`}
+                    </span>
+                    <span className="text-xs text-fog truncate">
+                      {o.customerName ?? ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono text-xs font-semibold text-midnight">
+                      {o.total.toLocaleString("fr-FR")} DH
+                    </span>
+                    {o.reviewDeadline && (
+                      <UrgentCountdown deadline={o.reviewDeadline} />
+                    )}
+                    {o.pipelineStatus === "escalated" && (
+                      <span className="text-[10px] font-medium text-rose bg-rose-bg px-1.5 py-0.5 rounded">
+                        Escalad\u00E9
+                      </span>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* KPI Cards — horizontal scroll mobile, grid desktop */}

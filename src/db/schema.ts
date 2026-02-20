@@ -45,6 +45,9 @@ export const merchants = pgTable("merchants", {
   blockThreshold: integer("block_threshold").notNull().default(86),
   autoBlockEnabled: boolean("auto_block_enabled").notNull().default(true),
 
+  // Escalation settings (dynamic value-based escalation deadlines)
+  escalationConfig: text("escalation_config"), // JSON — EscalationConfig from src/lib/escalation.ts
+
   // RTO cost settings (savings calculation)
   rtoCostFixed: integer("rto_cost_fixed").notNull().default(65),
   rtoCostPercent: real("rto_cost_percent").notNull().default(0.05),
@@ -156,6 +159,7 @@ export const orders = pgTable(
     pipelineProcessedAt: timestamp("pipeline_processed_at"),
     reviewDeadline: timestamp("review_deadline"),
     escalatedAt: timestamp("escalated_at"),
+    escalationPriority: integer("escalation_priority"), // 1 = highest urgency
     merchantNotifiedAt: timestamp("merchant_notified_at"),
 
     // Search

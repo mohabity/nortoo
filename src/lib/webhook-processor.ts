@@ -207,6 +207,7 @@ async function getMerchantForPipeline(merchantId: number) {
       flagThreshold: merchants.flagThreshold,
       blockThreshold: merchants.blockThreshold,
       autoBlockEnabled: merchants.autoBlockEnabled,
+      escalationConfig: merchants.escalationConfig,
       dataRetentionMonths: merchants.dataRetentionMonths,
     })
     .from(merchants)

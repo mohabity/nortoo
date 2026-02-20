@@ -9,12 +9,14 @@ import {
   Bell,
   ShieldCheck,
   Coins,
+  Timer,
   Loader2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TabId, TabMeta, MerchantSettings, Toast } from "./types";
 import { ScoringTab } from "./components/ScoringTab";
+import { EscalationTab } from "./components/EscalationTab";
 import { ApiTab } from "./components/ApiTab";
 import { ProfileTab } from "./components/ProfileTab";
 import { StoreTab } from "./components/StoreTab";
@@ -27,6 +29,7 @@ const TABS: TabMeta[] = [
   { id: "profile", label: "Profil", icon: User },
   { id: "store", label: "Boutique", icon: Store },
   { id: "scoring", label: "Scoring", icon: Sliders },
+  { id: "escalation", label: "Escalade", icon: Timer },
   { id: "rto_costs", label: "Co\u00FBts RTO", icon: Coins },
   { id: "api", label: "Int\u00E9gration & API", icon: KeyRound },
   { id: "notifications", label: "Notifications", icon: Bell },
@@ -162,6 +165,7 @@ export default function SettingsPage() {
           {activeTab === "profile" && <ProfileTab {...baseProps} />}
           {activeTab === "store" && <StoreTab {...baseProps} />}
           {activeTab === "scoring" && <ScoringTab {...baseProps} />}
+          {activeTab === "escalation" && <EscalationTab {...baseProps} />}
           {activeTab === "rto_costs" && <RtoCostsTab {...baseProps} />}
           {activeTab === "api" && <ApiTab {...baseProps} />}
           {activeTab === "notifications" && <NotificationsTab {...baseProps} />}

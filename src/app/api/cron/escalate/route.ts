@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { orders, notifications, auditLogs, merchants } from "@/db/schema";
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, lt, asc, isNotNull } from "drizzle-orm";
 import { recalculateAllProductStats } from "@/lib/product-stats";
 import { recalculateAllCityStats } from "@/lib/city-stats";
 import { recalculateAllZoneStats } from "@/lib/zone-stats";
+import { getEscalationContext } from "@/lib/escalation";
 
 /**
  * GET /api/cron/escalate
  * Runs every 15 minutes via Vercel cron.
- * Finds orders with needs_review status past their reviewDeadline → escalates.
+ * Finds needs_review orders past their reviewDeadline → escalates.
+ * Orders are processed by escalationPriority (highest priority first).
  */
 export async function GET(request: Request) {
   // Verify cron secret in production
@@ -22,23 +24,28 @@ export async function GET(request: Request) {
 
   const now = new Date();
 
-  // Find orders past their review deadline that haven't been escalated
+  // Find orders past their review deadline, ordered by priority (1=highest)
   const overdueOrders = await db
     .select({
       id: orders.id,
       merchantId: orders.merchantId,
       externalRef: orders.externalRef,
       fraudScore: orders.fraudScore,
+      decision: orders.decision,
+      total: orders.total,
+      escalationPriority: orders.escalationPriority,
       reviewDeadline: orders.reviewDeadline,
     })
     .from(orders)
     .where(
       and(
         eq(orders.pipelineStatus, "needs_review"),
+        isNotNull(orders.reviewDeadline),
         lt(orders.reviewDeadline, now)
       )
     )
-    .limit(100);
+    .orderBy(asc(orders.escalationPriority))
+    .limit(50);
 
   let escalatedCount = 0;
 
@@ -63,14 +70,17 @@ export async function GET(request: Request) {
 
     const ref = order.externalRef ?? `#${order.id}`;
 
-    // Insert escalation notification
+    // Dynamic severity from escalation context
+    const escalationCtx = getEscalationContext(order.decision, order.total);
+
+    // Insert escalation notification with dynamic severity
     await db.insert(notifications).values({
       merchantId: order.merchantId,
       orderId: order.id,
       type: "escalation",
       title: `Escalade — Commande ${ref} non traitée`,
       message: `La commande (score ${order.fraudScore}/100) n'a pas été traitée dans le délai imparti. Action immédiate requise.`,
-      severity: "critical",
+      severity: escalationCtx.severity,
       actionUrl: `/dashboard/orders?selected=${order.id}`,
     });
 
@@ -84,6 +94,8 @@ export async function GET(request: Request) {
       details: JSON.stringify({
         previousStatus: "needs_review",
         newStatus: "escalated",
+        priority: order.escalationPriority,
+        severity: escalationCtx.severity,
         reviewDeadline: order.reviewDeadline?.toISOString(),
         escalatedAt: now.toISOString(),
       }),

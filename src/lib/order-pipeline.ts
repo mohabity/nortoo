@@ -14,6 +14,7 @@ interface MerchantSettings {
   flagThreshold: number;
   blockThreshold: number;
   autoBlockEnabled: boolean;
+  escalationConfig?: string | null;
   dataRetentionMonths: number;
 }
 
@@ -85,6 +86,7 @@ export function parseYouCanPayload(
       flagThreshold: merchant.flagThreshold,
       blockThreshold: merchant.blockThreshold,
       autoBlockEnabled: merchant.autoBlockEnabled,
+      escalationConfig: merchant.escalationConfig,
       dataRetentionMonths: merchant.dataRetentionMonths,
     },
     phone,
@@ -132,6 +134,7 @@ export function parseIngestPayload(
       flagThreshold: merchant.flagThreshold,
       blockThreshold: merchant.blockThreshold,
       autoBlockEnabled: merchant.autoBlockEnabled,
+      escalationConfig: merchant.escalationConfig,
       dataRetentionMonths: merchant.dataRetentionMonths,
     },
     phone: customer.phone,

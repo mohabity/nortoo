@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { formatDH } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
@@ -13,6 +14,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+function CountdownBadge({ deadline }: { deadline: string }) {
+  const [remaining, setRemaining] = useState("");
+  const [isOverdue, setIsOverdue] = useState(false);
+
+  useEffect(() => {
+    function update() {
+      const diff = new Date(deadline).getTime() - Date.now();
+      if (diff <= 0) {
+        setRemaining("expiré");
+        setIsOverdue(true);
+        return;
+      }
+      setIsOverdue(false);
+      const mins = Math.floor(diff / 60000);
+      if (mins >= 60) {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        setRemaining(`${h}h${m > 0 ? m.toString().padStart(2, "0") : ""}`);
+      } else {
+        setRemaining(`${mins}min`);
+      }
+    }
+    update();
+    const iv = setInterval(update, 30000);
+    return () => clearInterval(iv);
+  }, [deadline]);
+
+  return (
+    <span
+      className={`text-[10px] font-mono font-medium ${
+        isOverdue ? "text-rose" : "text-amber"
+      }`}
+    >
+      {remaining}
+    </span>
+  );
+}
 
 export interface OrderRow {
   id: number;
@@ -28,6 +67,8 @@ export interface OrderRow {
   deliveryStatus: string;
   pipelineStatus: string;
   scoreExplanation?: string | null;
+  reviewDeadline?: string | null;
+  escalationPriority?: number | null;
   createdAt: string;
 }
 
@@ -125,7 +166,12 @@ export function OrderTable({ orders, onRowClick, searchQuery = "" }: OrderTableP
                 )}
               </TableCell>
               <TableCell className="text-center">
-                <PipelineBadge status={order.pipelineStatus} size="sm" />
+                <div className="flex flex-col items-center gap-0.5">
+                  <PipelineBadge status={order.pipelineStatus} size="sm" />
+                  {order.pipelineStatus === "needs_review" && order.reviewDeadline && (
+                    <CountdownBadge deadline={order.reviewDeadline} />
+                  )}
+                </div>
               </TableCell>
               <TableCell className="text-sm text-fog">
                 {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}

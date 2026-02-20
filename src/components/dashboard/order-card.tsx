@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { formatDH } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
@@ -20,6 +21,34 @@ const deliveryLabels: Record<string, string> = {
   returned: "Retourn\u00E9",
   cancelled: "Annul\u00E9",
 };
+
+function CardCountdown({ deadline }: { deadline: string }) {
+  const [label, setLabel] = useState("");
+  const [overdue, setOverdue] = useState(false);
+
+  useEffect(() => {
+    function update() {
+      const diff = new Date(deadline).getTime() - Date.now();
+      if (diff <= 0) {
+        setLabel("expiré");
+        setOverdue(true);
+        return;
+      }
+      setOverdue(false);
+      const mins = Math.floor(diff / 60000);
+      setLabel(mins >= 60 ? `${Math.floor(mins / 60)}h${(mins % 60).toString().padStart(2, "0")}` : `${mins}min`);
+    }
+    update();
+    const iv = setInterval(update, 30000);
+    return () => clearInterval(iv);
+  }, [deadline]);
+
+  return (
+    <span className={`text-[10px] font-mono font-medium ${overdue ? "text-rose" : "text-amber"}`}>
+      {label}
+    </span>
+  );
+}
 
 export function OrderCard({ order, onClick, searchQuery = "" }: OrderCardProps) {
   const hl = (text: string | null | undefined) =>
@@ -72,6 +101,9 @@ export function OrderCard({ order, onClick, searchQuery = "" }: OrderCardProps) 
               size="sm"
             />
             <PipelineBadge status={order.pipelineStatus} size="sm" />
+            {order.pipelineStatus === "needs_review" && order.reviewDeadline && (
+              <CardCountdown deadline={order.reviewDeadline} />
+            )}
             <span className="text-xs text-mist">
               {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}
             </span>

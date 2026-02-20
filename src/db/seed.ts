@@ -491,6 +491,7 @@ async function seed() {
     const pipelineResult = executePipeline({
       score: result.score,
       decision: result.decision,
+      total: product.price,
       merchantSettings,
       orderRef,
       customerName: custData.name,
@@ -545,6 +546,7 @@ async function seed() {
         pipelineStatus: pipelineResult.status,
         pipelineProcessedAt,
         reviewDeadline: pipelineResult.reviewDeadline,
+        escalationPriority: pipelineResult.escalationPriority,
         merchantNotifiedAt: pipelineProcessedAt,
       })
       .returning({ id: schema.orders.id });

@@ -10,6 +10,7 @@ import {
   Truck,
   Clock,
   AlertTriangle,
+  Timer,
 } from "lucide-react";
 import {
   Sheet,
@@ -71,6 +72,7 @@ interface OrderDetail {
   pipelineProcessedAt: string | null;
   reviewDeadline: string | null;
   escalatedAt: string | null;
+  escalationPriority: number | null;
   merchantNotifiedAt: string | null;
   scoringVersion: string | null;
   scoreExplanation: {
@@ -94,6 +96,52 @@ function scoreBorderClass(score: number): string {
   if (score <= 65) return "border-amber";
   if (score <= 85) return "border-rose";
   return "border-violet";
+}
+
+// ── Escalation Progress ──
+
+function EscalationProgress({ start, deadline }: { start: string; deadline: string }) {
+  const [pct, setPct] = useState(0);
+  const [remaining, setRemaining] = useState("");
+
+  useEffect(() => {
+    function update() {
+      const s = new Date(start).getTime();
+      const d = new Date(deadline).getTime();
+      const now = Date.now();
+      const total = d - s;
+      const elapsed = now - s;
+      const p = total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 100;
+      setPct(p);
+
+      const diff = d - now;
+      if (diff <= 0) {
+        setRemaining("Expiré");
+      } else {
+        const mins = Math.floor(diff / 60000);
+        setRemaining(mins >= 60 ? `${Math.floor(mins / 60)}h${(mins % 60).toString().padStart(2, "0")} restantes` : `${mins} min restantes`);
+      }
+    }
+    update();
+    const iv = setInterval(update, 15000);
+    return () => clearInterval(iv);
+  }, [start, deadline]);
+
+  const barColor = pct >= 90 ? "bg-rose" : pct >= 60 ? "bg-amber" : "bg-mint";
+
+  return (
+    <div className="mt-1">
+      <div className="h-1.5 w-full rounded-full bg-snow overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <p className={`text-[10px] mt-0.5 font-mono ${pct >= 90 ? "text-rose" : "text-mist"}`}>
+        {remaining}
+      </p>
+    </div>
+  );
 }
 
 // ── Component ──
@@ -267,7 +315,7 @@ export function OrderSlideOver({
               </div>
             )}
 
-            {/* ── C. Pipeline Status ── */}
+            {/* ── C. Pipeline Status + Escalation ── */}
             {order.pipelineStatus && order.pipelineStatus !== "pending" && (
               <div className="mx-6 mt-4">
                 <h3 className="text-sm font-semibold text-midnight font-display mb-2">
@@ -286,6 +334,21 @@ export function OrderSlideOver({
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
+                      </span>
+                    </div>
+                  )}
+                  {order.escalationPriority && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-fog flex items-center gap-1">
+                        <Timer className="h-3 w-3" /> Priorité
+                      </span>
+                      <span className={cn(
+                        "text-xs font-mono font-bold px-1.5 py-0.5 rounded",
+                        order.escalationPriority <= 2 ? "bg-rose-bg text-rose" :
+                        order.escalationPriority <= 4 ? "bg-amber-bg text-amber" :
+                        "bg-snow text-fog"
+                      )}>
+                        P{order.escalationPriority}
                       </span>
                     </div>
                   )}
@@ -308,6 +371,13 @@ export function OrderSlideOver({
                         })}
                       </span>
                     </div>
+                  )}
+                  {/* Progress bar for needs_review orders */}
+                  {order.pipelineStatus === "needs_review" && order.reviewDeadline && order.pipelineProcessedAt && (
+                    <EscalationProgress
+                      start={order.pipelineProcessedAt}
+                      deadline={order.reviewDeadline}
+                    />
                   )}
                   {order.escalatedAt && (
                     <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-rose-bg rounded">

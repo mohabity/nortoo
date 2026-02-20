@@ -17,6 +17,7 @@ const merchantSelect = {
   flagThreshold: merchants.flagThreshold,
   blockThreshold: merchants.blockThreshold,
   autoBlockEnabled: merchants.autoBlockEnabled,
+  escalationConfig: merchants.escalationConfig,
   rtoCostFixed: merchants.rtoCostFixed,
   rtoCostPercent: merchants.rtoCostPercent,
   dataRetentionMonths: merchants.dataRetentionMonths,
@@ -75,6 +76,21 @@ const rtoCostsSchema = z.object({
   rtoCostPercent: z.number().min(0).max(0.5),
 });
 
+const escalationBracketSchema = z.object({
+  high: z.number().int().min(1).max(1440),
+  medium: z.number().int().min(1).max(1440),
+  low: z.number().int().min(1).max(1440),
+  minimal: z.number().int().min(1).max(1440),
+});
+
+const escalationConfigSchema = z.object({
+  escalationConfig: z.object({
+    block: escalationBracketSchema,
+    flag: escalationBracketSchema,
+    verify: escalationBracketSchema,
+  }),
+});
+
 export async function PUT(request: Request) {
   const merchantId = await getMerchantId();
 
@@ -127,6 +143,51 @@ export async function PUT(request: Request) {
       targetType: "merchant",
       targetId: String(merchantId),
       details: JSON.stringify({ previous: current, new: data }),
+    });
+
+    const [updated] = await db
+      .select(merchantSelect)
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    return NextResponse.json({ data: updated });
+  }
+
+  // Try escalation config schema
+  const escalationParsed = escalationConfigSchema.safeParse(body);
+  if (escalationParsed.success) {
+    const configJson = JSON.stringify(escalationParsed.data.escalationConfig);
+
+    const [currentEsc] = await db
+      .select({ escalationConfig: merchants.escalationConfig })
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    if (!currentEsc) {
+      return NextResponse.json(
+        { error: "Marchand introuvable" },
+        { status: 404 }
+      );
+    }
+
+    await db
+      .update(merchants)
+      .set({ escalationConfig: configJson, updatedAt: new Date() })
+      .where(eq(merchants.id, merchantId));
+
+    await db.insert(auditLogs).values({
+      merchantId,
+      actor: "merchant",
+      action: "settings_change",
+      targetType: "merchant",
+      targetId: String(merchantId),
+      details: JSON.stringify({
+        field: "escalationConfig",
+        previous: currentEsc.escalationConfig,
+        new: configJson,
+      }),
     });
 
     const [updated] = await db
