@@ -390,7 +390,7 @@ function OrdersContent() {
             <input
               ref={mobileSearchRef}
               type="text"
-              placeholder="Chercher par nom, ville, r\u00E9f\u00E9rence, produit..."
+              placeholder="Chercher par nom, ville, référence, produit..."
               value={searchInput}
               onChange={(e) => handleSearchInputChange(e.target.value)}
               className="h-10 w-full rounded-full border border-silk bg-white pl-9 pr-9 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
@@ -466,7 +466,7 @@ function OrdersContent() {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Chercher par nom, ville, r\u00E9f\u00E9rence, produit..."
+                placeholder="Chercher par nom, ville, référence, produit..."
                 value={searchInput}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 onFocus={handleSearchFocus}
@@ -481,7 +481,7 @@ function OrdersContent() {
                 </button>
               ) : (
                 <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-mist bg-snow border border-silk rounded px-1 py-0.5">
-                  \u2318K
+                  ⌘K
                 </kbd>
               )}
             </div>
