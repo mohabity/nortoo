@@ -3,7 +3,6 @@ import { db } from "@/db/index";
 import { merchants, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
-import { getToken } from "next-auth/jwt";
 
 /**
  * GET /api/auth/youcan/callback
@@ -106,113 +105,49 @@ export async function GET(request: NextRequest) {
     }
 
     // ── 3. Upsert merchant ──
-    // Priority:
-    //   a) If user is already authenticated (Auth.js or cookie) → link store to their account
-    //   b) If a merchant already has this YouCan store ID → update their token
-    //   c) Otherwise → create a new merchant
-    let merchantId!: number;
-    let apiKey!: string;
-    let isNewMerchant = false;
+    const [existingMerchant] = await db
+      .select()
+      .from(merchants)
+      .where(eq(merchants.youcanStoreId, storeId))
+      .limit(1);
 
-    // a) Check if user is already authenticated (JWT token or legacy cookie)
-    let currentMerchantId: number | null = null;
-    try {
-      const token = await getToken({ req: request });
-      if (token?.merchantId) {
-        currentMerchantId = token.merchantId as number;
-      }
-    } catch {
-      // getToken may fail — that's fine
-    }
-    if (!currentMerchantId) {
-      const cookieVal = request.cookies.get("codpilot_merchant")?.value;
-      if (cookieVal) {
-        const parsed = parseInt(cookieVal, 10);
-        if (!isNaN(parsed) && parsed > 0) {
-          currentMerchantId = parsed;
-        }
-      }
-    }
+    let merchantId: number;
+    let apiKey: string;
 
-    if (currentMerchantId) {
-      // User is logged in — link YouCan store to their existing account
-      const [currentMerchant] = await db
-        .select()
-        .from(merchants)
-        .where(eq(merchants.id, currentMerchantId))
-        .limit(1);
+    if (existingMerchant) {
+      // Update existing merchant with new token
+      merchantId = existingMerchant.id;
+      apiKey = existingMerchant.apiKey!;
 
-      if (currentMerchant) {
-        merchantId = currentMerchant.id;
-        apiKey = currentMerchant.apiKey || generateApiKey();
+      await db
+        .update(merchants)
+        .set({
+          youcanAccessToken: accessToken,
+          name: storeName,
+          email: storeEmail || existingMerchant.email,
+          domain: storeDomain || existingMerchant.domain,
+          updatedAt: new Date(),
+        })
+        .where(eq(merchants.id, merchantId));
+    } else {
+      // Create new merchant
+      apiKey = generateApiKey();
 
-        // Clear youcanStoreId from any OTHER merchant that may hold it
-        // (prevents unique constraint violation from orphaned rows)
-        await db
-          .update(merchants)
-          .set({ youcanStoreId: null, youcanAccessToken: null, updatedAt: new Date() })
-          .where(eq(merchants.youcanStoreId, storeId));
+      const [newMerchant] = await db
+        .insert(merchants)
+        .values({
+          name: storeName,
+          email: storeEmail || "unknown@youcan.shop",
+          domain: storeDomain,
+          youcanStoreId: storeId,
+          youcanAccessToken: accessToken,
+          apiKey,
+          plan: "trial",
+          consentRecordedAt: new Date(),
+        })
+        .returning({ id: merchants.id });
 
-        await db
-          .update(merchants)
-          .set({
-            youcanStoreId: storeId,
-            youcanAccessToken: accessToken,
-            domain: storeDomain || currentMerchant.domain,
-            apiKey,
-            consentRecordedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(merchants.id, merchantId));
-      } else {
-        // Shouldn't happen, but fallback to store ID lookup
-        currentMerchantId = null;
-      }
-    }
-
-    if (!currentMerchantId) {
-      // b) Not authenticated — look up by YouCan store ID
-      const [existingMerchant] = await db
-        .select()
-        .from(merchants)
-        .where(eq(merchants.youcanStoreId, storeId))
-        .limit(1);
-
-      if (existingMerchant) {
-        merchantId = existingMerchant.id;
-        apiKey = existingMerchant.apiKey!;
-
-        await db
-          .update(merchants)
-          .set({
-            youcanAccessToken: accessToken,
-            name: storeName,
-            email: storeEmail || existingMerchant.email,
-            domain: storeDomain || existingMerchant.domain,
-            updatedAt: new Date(),
-          })
-          .where(eq(merchants.id, merchantId));
-      } else {
-        // c) Create new merchant
-        isNewMerchant = true;
-        apiKey = generateApiKey();
-
-        const [newMerchant] = await db
-          .insert(merchants)
-          .values({
-            name: storeName,
-            email: storeEmail || "unknown@youcan.shop",
-            domain: storeDomain,
-            youcanStoreId: storeId,
-            youcanAccessToken: accessToken,
-            apiKey,
-            plan: "trial",
-            consentRecordedAt: new Date(),
-          })
-          .returning({ id: merchants.id });
-
-        merchantId = newMerchant.id;
-      }
+      merchantId = newMerchant.id;
     }
 
     // ── 4. Subscribe to order.create webhook on YouCan ──
@@ -257,7 +192,7 @@ export async function GET(request: NextRequest) {
         storeId,
         storeName,
         storeDomain,
-        isNewMerchant,
+        isNewMerchant: !existingMerchant,
         webhookConfigured: webhookOk,
       }),
     });
@@ -279,9 +214,8 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (err) {
     console.error("[YouCan OAuth] Unexpected error:", err);
-    const errMsg = err instanceof Error ? err.message : String(err);
     return NextResponse.redirect(
-      `${appUrl}/onboarding?error=${encodeURIComponent("Erreur: " + errMsg)}`
+      `${appUrl}/onboarding?error=${encodeURIComponent("Erreur inattendue. Veuillez réessayer.")}`
     );
   }
 }
