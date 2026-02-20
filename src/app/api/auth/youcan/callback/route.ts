@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { merchants, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
+import { getToken } from "next-auth/jwt";
 
 /**
  * GET /api/auth/youcan/callback
@@ -113,16 +114,24 @@ export async function GET(request: NextRequest) {
     let apiKey!: string;
     let isNewMerchant = false;
 
-    // a) Check if user is already authenticated
-    const { getMerchantId, DEMO_MERCHANT_ID } = await import("@/lib/merchant");
+    // a) Check if user is already authenticated (JWT token or legacy cookie)
     let currentMerchantId: number | null = null;
     try {
-      const resolvedId = await getMerchantId();
-      if (resolvedId !== DEMO_MERCHANT_ID) {
-        currentMerchantId = resolvedId;
+      const token = await getToken({ req: request });
+      if (token?.merchantId) {
+        currentMerchantId = token.merchantId as number;
       }
     } catch {
-      // Not authenticated — that's fine
+      // getToken may fail — that's fine
+    }
+    if (!currentMerchantId) {
+      const cookieVal = request.cookies.get("codpilot_merchant")?.value;
+      if (cookieVal) {
+        const parsed = parseInt(cookieVal, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          currentMerchantId = parsed;
+        }
+      }
     }
 
     if (currentMerchantId) {
