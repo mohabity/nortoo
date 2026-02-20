@@ -4,6 +4,7 @@ import { Search, User, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
+import { WebhookHealthDot } from "@/components/dashboard/webhook-health-dot";
 
 const PLAN_LABELS: Record<string, string> = {
   trial: "Essai",
@@ -33,6 +34,7 @@ export function Header() {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
+        <WebhookHealthDot />
         <NotificationBell />
 
         <div className="flex items-center gap-2 rounded-sm border border-silk px-3 py-1.5">

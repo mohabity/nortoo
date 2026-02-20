@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(orders.merchantId, merchantId),
+          eq(orders.isTest, false),
           like(orders.searchIndex, `%${normalized}%`),
           sql`${orders.customerName} is not null`
         )
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(orders.merchantId, merchantId),
+          eq(orders.isTest, false),
           like(orders.searchIndex, `%${normalized}%`),
           sql`${orders.shippingCity} is not null`
         )
@@ -65,6 +67,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(orders.merchantId, merchantId),
+          eq(orders.isTest, false),
           like(orders.searchIndex, `%${normalized}%`),
           sql`${orders.productName} is not null`
         )

@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(orders.merchantId, merchantId),
+          eq(orders.isTest, false),
           gte(orders.createdAt, since)
         )
       ),

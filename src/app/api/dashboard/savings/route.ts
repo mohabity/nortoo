@@ -70,6 +70,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(orders.merchantId, merchantId),
+          eq(orders.isTest, false),
           gte(orders.createdAt, since),
           qualifyingConditions
         )
@@ -84,6 +85,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(orders.merchantId, merchantId),
+          eq(orders.isTest, false),
           gte(orders.createdAt, prevSince),
           lte(orders.createdAt, since),
           qualifyingConditions

@@ -31,6 +31,7 @@ export async function GET() {
     .where(
       and(
         eq(orders.merchantId, merchantId),
+        eq(orders.isTest, false),
         or(
           eq(orders.pipelineStatus, "needs_review"),
           eq(orders.pipelineStatus, "escalated")

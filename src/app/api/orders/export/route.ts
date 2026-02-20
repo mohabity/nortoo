@@ -92,7 +92,10 @@ export async function GET(request: NextRequest) {
   const to = params.get("to");
   const search = params.get("search");
 
-  const conditions: ReturnType<typeof eq>[] = [eq(orders.merchantId, merchantId)];
+  const conditions: ReturnType<typeof eq>[] = [
+    eq(orders.merchantId, merchantId),
+    eq(orders.isTest, false),
+  ];
 
   if (decision && decision !== "all") {
     conditions.push(eq(orders.decision, decision));

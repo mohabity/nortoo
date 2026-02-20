@@ -117,6 +117,7 @@ export async function recalculateAllProductStats(merchantId: number): Promise<nu
     .where(
       and(
         eq(orders.merchantId, merchantId),
+        eq(orders.isTest, false),
         sql`${orders.productId} is not null`
       )
     )

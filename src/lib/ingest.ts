@@ -52,6 +52,7 @@ export interface IngestParams {
   shippingCity?: string;
   shippingAddress?: string;
   orderHour: number;
+  isTest?: boolean;
 }
 
 export interface IngestResult {
@@ -64,6 +65,7 @@ export interface IngestResult {
   opposed: boolean;
   pipelineStatus: string;
   reviewDeadline: string | null;
+  isTest: boolean;
 }
 
 export async function processIncomingOrder(params: IngestParams): Promise<IngestResult> {
@@ -134,6 +136,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
         pipelineStatus: "needs_review",
         pipelineProcessedAt: now,
         merchantNotifiedAt: now,
+        isTest: params.isTest ?? false,
         retentionExpiresAt: retentionDate(merchant.dataRetentionMonths),
       })
       .returning({ id: orders.id });
@@ -147,15 +150,17 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       details: JSON.stringify({ score: 25, decision: "flag", reason: "opposition_active" }),
     });
 
-    await db.insert(notifications).values({
-      merchantId,
-      orderId: insertedOrder.id,
-      type: "order_flagged",
-      title: `Commande ${ref} — opposition active`,
-      message: `Consommateur opposé (Art. 9). Scoring désactivé, vérification manuelle requise.`,
-      severity: "warning",
-      actionUrl: `/dashboard/orders?selected=${insertedOrder.id}`,
-    });
+    if (!params.isTest) {
+      await db.insert(notifications).values({
+        merchantId,
+        orderId: insertedOrder.id,
+        type: "order_flagged",
+        title: `Commande ${ref} — opposition active`,
+        message: `Consommateur opposé (Art. 9). Scoring désactivé, vérification manuelle requise.`,
+        severity: "warning",
+        actionUrl: `/dashboard/orders?selected=${insertedOrder.id}`,
+      });
+    }
 
     return {
       orderId: insertedOrder.id,
@@ -167,6 +172,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       opposed: true,
       pipelineStatus: "needs_review",
       reviewDeadline: null,
+      isTest: params.isTest ?? false,
     };
   }
 
@@ -187,12 +193,12 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       successfulOrders: existingCustomer.successfulOrders,
       failedOrders: existingCustomer.failedOrders,
     };
-    // Update last seen + increment total orders
+    // Update last seen + increment total orders (skip for test orders)
     await db
       .update(customers)
       .set({
         lastSeen: new Date(),
-        totalOrders: existingCustomer.totalOrders + 1,
+        totalOrders: params.isTest ? existingCustomer.totalOrders : existingCustomer.totalOrders + 1,
         name: customerName ?? existingCustomer.name,
         city: customerCity ?? existingCustomer.city,
         retentionExpiresAt: retentionDate(merchant.dataRetentionMonths),
@@ -207,7 +213,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
         phoneLast4: last4,
         name: customerName,
         city: customerCity,
-        totalOrders: 1,
+        totalOrders: params.isTest ? 0 : 1,
         successfulOrders: 0,
         failedOrders: 0,
         retentionExpiresAt: retentionDate(merchant.dataRetentionMonths),
@@ -381,6 +387,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
         total,
         customerPhoneLast4: last4,
       }),
+      isTest: params.isTest ?? false,
       retentionExpiresAt: retentionDate(merchant.dataRetentionMonths),
     })
     .returning({ id: orders.id });
@@ -436,16 +443,18 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     })
     .where(eq(orders.id, insertedOrder.id));
 
-  // ── 6d. Insert notification ──
-  await db.insert(notifications).values({
-    merchantId,
-    orderId: insertedOrder.id,
-    type: pipelineResult.notificationType,
-    title: pipelineResult.title,
-    message: pipelineResult.message,
-    severity: pipelineResult.severity,
-    actionUrl: `/dashboard/orders?selected=${insertedOrder.id}`,
-  });
+  // ── 6d. Insert notification (skip for test orders) ──
+  if (!params.isTest) {
+    await db.insert(notifications).values({
+      merchantId,
+      orderId: insertedOrder.id,
+      type: pipelineResult.notificationType,
+      title: pipelineResult.title,
+      message: pipelineResult.message,
+      severity: pipelineResult.severity,
+      actionUrl: `/dashboard/orders?selected=${insertedOrder.id}`,
+    });
+  }
 
   // ── 6e. Pipeline audit log (Art. 23) ──
   await db.insert(auditLogs).values({
@@ -470,46 +479,48 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     decision = "block";
   }
 
-  // ── 7. Update product & city stats (fire-and-forget, non-blocking) ──
-  try {
-    if (resolvedProductId && productName) {
-      await updateProductStats({
-        merchantId,
-        productId: resolvedProductId,
-        productName,
-        productCategory,
-        orderTotal: total,
-      });
+  // ── 7. Update product & city stats (fire-and-forget, non-blocking, skip for test orders) ──
+  if (!params.isTest) {
+    try {
+      if (resolvedProductId && productName) {
+        await updateProductStats({
+          merchantId,
+          productId: resolvedProductId,
+          productName,
+          productCategory,
+          orderTotal: total,
+        });
+      }
+    } catch (err) {
+      console.error("[Ingest] Product stats update failed (non-blocking):", err);
     }
-  } catch (err) {
-    console.error("[Ingest] Product stats update failed (non-blocking):", err);
-  }
 
-  try {
-    if (shippingCity) {
-      await updateCityStats({
-        merchantId,
-        city: shippingCity,
-        orderScore: scoringResult.score,
-        orderTotal: total,
-      });
+    try {
+      if (shippingCity) {
+        await updateCityStats({
+          merchantId,
+          city: shippingCity,
+          orderScore: scoringResult.score,
+          orderTotal: total,
+        });
+      }
+    } catch (err) {
+      console.error("[Ingest] City stats update failed (non-blocking):", err);
     }
-  } catch (err) {
-    console.error("[Ingest] City stats update failed (non-blocking):", err);
-  }
 
-  try {
-    if (parsedZone && parsedCity) {
-      await updateZoneStats({
-        merchantId,
-        city: parsedCity,
-        zone: parsedZone,
-        postalCode: parsedPostalCode ?? undefined,
-        orderScore: scoringResult.score,
-      });
+    try {
+      if (parsedZone && parsedCity) {
+        await updateZoneStats({
+          merchantId,
+          city: parsedCity,
+          zone: parsedZone,
+          postalCode: parsedPostalCode ?? undefined,
+          orderScore: scoringResult.score,
+        });
+      }
+    } catch (err) {
+      console.error("[Ingest] Zone stats update failed (non-blocking):", err);
     }
-  } catch (err) {
-    console.error("[Ingest] Zone stats update failed (non-blocking):", err);
   }
 
   return {
@@ -522,6 +533,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     opposed: false,
     pipelineStatus: pipelineResult.status,
     reviewDeadline: pipelineResult.reviewDeadline?.toISOString() ?? null,
+    isTest: params.isTest ?? false,
   };
 }
 

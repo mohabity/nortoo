@@ -176,6 +176,7 @@ export async function recalculateAllZoneStats(merchantId: number): Promise<numbe
     .where(
       and(
         eq(orders.merchantId, merchantId),
+        eq(orders.isTest, false),
         sql`${orders.parsedCity} is not null`,
         sql`${orders.parsedZone} is not null`
       )

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
+import { WebhookHealthDot } from "@/components/dashboard/webhook-health-dot";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Vue d'ensemble",
@@ -49,8 +50,9 @@ export function MobileHeader() {
         {title}
       </h1>
 
-      {/* Notification bell */}
-      <div className="shrink-0">
+      {/* Actions */}
+      <div className="flex items-center gap-1 shrink-0">
+        <WebhookHealthDot />
         <NotificationBell />
       </div>
     </header>

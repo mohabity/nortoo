@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   User,
   Store,
@@ -69,9 +70,20 @@ function ToastItem({
   );
 }
 
-// ── Page ──
-export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<TabId>("scoring");
+// ── Tab resolver from URL ──
+const TAB_IDS = TABS.map((t) => t.id);
+
+function useInitialTab(): TabId {
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get("tab") as TabId | null;
+  if (urlTab && TAB_IDS.includes(urlTab)) return urlTab;
+  return "scoring";
+}
+
+// ── Inner page (needs Suspense for useSearchParams) ──
+function SettingsPageInner() {
+  const initialTab = useInitialTab();
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [settings, setSettings] = useState<MerchantSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -180,5 +192,21 @@ export default function SettingsPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+// ── Page (Suspense boundary for useSearchParams) ──
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-mist" />
+          <span className="ml-2 text-sm text-fog">Chargement...</span>
+        </div>
+      }
+    >
+      <SettingsPageInner />
+    </Suspense>
   );
 }

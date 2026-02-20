@@ -165,6 +165,9 @@ export const orders = pgTable(
     // Search
     searchIndex: text("search_index"),
 
+    // Test orders (excluded from all stats)
+    isTest: boolean("is_test").notNull().default(false),
+
     // Meta
     createdAt: timestamp("created_at").notNull().defaultNow(),
     scoredAt: timestamp("scored_at").notNull().defaultNow(),
@@ -270,7 +273,8 @@ export const notifications = pgTable(
     }),
 
     type: text("type").notNull(),
-    // "order_auto_shipped" | "order_needs_review" | "order_flagged" | "order_auto_blocked" | "escalation" | "daily_summary"
+    // "order_auto_shipped" | "order_needs_review" | "order_flagged" | "order_auto_blocked"
+    // | "escalation" | "daily_summary" | "webhook_failed" | "webhook_silent" | "webhook_dead"
 
     title: text("title").notNull(),
     message: text("message").notNull(),

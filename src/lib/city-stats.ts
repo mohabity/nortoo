@@ -241,6 +241,7 @@ export async function recalculateAllCityStats(merchantId: number): Promise<numbe
     .where(
       and(
         eq(orders.merchantId, merchantId),
+        eq(orders.isTest, false),
         sql`${orders.shippingCity} is not null`
       )
     )

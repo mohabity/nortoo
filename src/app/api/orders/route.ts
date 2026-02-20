@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
   const search = params.get("search");
 
   // ── Base conditions (without decision filter) — for pill counts ──
-  const baseConditions: ReturnType<typeof eq>[] = [eq(orders.merchantId, merchantId)];
+  const baseConditions: ReturnType<typeof eq>[] = [
+    eq(orders.merchantId, merchantId),
+    eq(orders.isTest, false),
+  ];
 
   if (city && city !== "all") {
     baseConditions.push(eq(orders.shippingCity, city));

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { orders, notifications, auditLogs, merchants } from "@/db/schema";
-import { and, eq, lt, asc, isNotNull } from "drizzle-orm";
+import { and, eq, lt, gte, asc, isNotNull, or, sql, desc } from "drizzle-orm";
 import { recalculateAllProductStats } from "@/lib/product-stats";
 import { recalculateAllCityStats } from "@/lib/city-stats";
 import { recalculateAllZoneStats } from "@/lib/zone-stats";
@@ -128,6 +128,85 @@ export async function GET(request: Request) {
     console.error("[Cron Escalate] Stats recalculation error:", err);
   }
 
+  // ── Webhook silence detection ──
+  let webhookAlerts = 0;
+
+  try {
+    // Get merchants with a connected store or API key
+    const connectedMerchants = await db
+      .select({ id: merchants.id, name: merchants.name })
+      .from(merchants)
+      .where(
+        or(
+          isNotNull(merchants.youcanStoreId),
+          isNotNull(merchants.apiKey)
+        )
+      );
+
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+
+    for (const m of connectedMerchants) {
+      try {
+        // Find last real order for this merchant
+        const [lastOrder] = await db
+          .select({ createdAt: orders.createdAt })
+          .from(orders)
+          .where(
+            and(
+              eq(orders.merchantId, m.id),
+              eq(orders.isTest, false)
+            )
+          )
+          .orderBy(desc(orders.createdAt))
+          .limit(1);
+
+        // Skip if merchant has recent webhooks
+        if (lastOrder && new Date(lastOrder.createdAt) > twentyFourHoursAgo) continue;
+
+        // Check if we already sent a webhook alert in the last 24h
+        const [recentAlert] = await db
+          .select({ id: notifications.id })
+          .from(notifications)
+          .where(
+            and(
+              eq(notifications.merchantId, m.id),
+              or(
+                eq(notifications.type, "webhook_silent"),
+                eq(notifications.type, "webhook_dead")
+              ),
+              gte(notifications.createdAt, twentyFourHoursAgo)
+            )
+          )
+          .limit(1);
+
+        if (recentAlert) continue;
+
+        // Determine severity
+        const isDead = !lastOrder || new Date(lastOrder.createdAt) < seventyTwoHoursAgo;
+
+        await db.insert(notifications).values({
+          merchantId: m.id,
+          type: isDead ? "webhook_dead" : "webhook_silent",
+          title: isDead
+            ? "Webhook inactif depuis +72h"
+            : "Aucun webhook reçu depuis 24h",
+          message: isDead
+            ? "Aucune commande reçue depuis plus de 72 heures. Vérifiez votre connexion webhook dans les paramètres."
+            : "Aucune commande reçue depuis 24 heures. Vérifiez que votre webhook est actif.",
+          severity: isDead ? "critical" : "warning",
+          actionUrl: "/dashboard/settings?tab=store",
+        });
+
+        webhookAlerts++;
+      } catch (err) {
+        console.error(`[Cron Escalate] Webhook check failed for merchant ${m.id}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error("[Cron Escalate] Webhook silence detection error:", err);
+  }
+
   return NextResponse.json({
     data: {
       checked: overdueOrders.length,
@@ -135,6 +214,7 @@ export async function GET(request: Request) {
       productsUpdated,
       citiesUpdated,
       zonesUpdated,
+      webhookAlerts,
       timestamp: now.toISOString(),
     },
   });
