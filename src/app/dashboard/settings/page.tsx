@@ -8,6 +8,7 @@ import {
   KeyRound,
   Bell,
   ShieldCheck,
+  Coins,
   Loader2,
   X,
 } from "lucide-react";
@@ -19,13 +20,15 @@ import { ProfileTab } from "./components/ProfileTab";
 import { StoreTab } from "./components/StoreTab";
 import { NotificationsTab } from "./components/NotificationsTab";
 import { PrivacyTab } from "./components/PrivacyTab";
+import { RtoCostsTab } from "./components/RtoCostsTab";
 
 // ── Tab definitions ──
 const TABS: TabMeta[] = [
   { id: "profile", label: "Profil", icon: User },
   { id: "store", label: "Boutique", icon: Store },
   { id: "scoring", label: "Scoring", icon: Sliders },
-  { id: "api", label: "Intégration & API", icon: KeyRound },
+  { id: "rto_costs", label: "Co\u00FBts RTO", icon: Coins },
+  { id: "api", label: "Int\u00E9gration & API", icon: KeyRound },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "privacy", label: "Données & Confidentialité", icon: ShieldCheck },
 ];
@@ -159,6 +162,7 @@ export default function SettingsPage() {
           {activeTab === "profile" && <ProfileTab {...baseProps} />}
           {activeTab === "store" && <StoreTab {...baseProps} />}
           {activeTab === "scoring" && <ScoringTab {...baseProps} />}
+          {activeTab === "rto_costs" && <RtoCostsTab {...baseProps} />}
           {activeTab === "api" && <ApiTab {...baseProps} />}
           {activeTab === "notifications" && <NotificationsTab {...baseProps} />}
           {activeTab === "privacy" && <PrivacyTab {...baseProps} />}

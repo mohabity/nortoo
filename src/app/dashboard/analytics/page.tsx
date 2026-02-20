@@ -36,6 +36,25 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// ── Savings API response type ──
+interface SavingsApiData {
+  totalSaved: number;
+  ordersSaved: number;
+  avgSavedPerOrder: number;
+  projectedMonthlySaved: number;
+  projectedYearlySaved: number;
+  roiMultiple: number | null;
+  deltaPercent: number;
+  breakdown: {
+    autoBlocked: { count: number; amount: number };
+    merchantBlocked: { count: number; amount: number };
+    flaggedNotShipped: { count: number; amount: number };
+  };
+  topProducts: { name: string; saved: number; count: number }[];
+  topCities: { name: string; saved: number; count: number }[];
+  period: { days: number; from: string; to: string };
+}
+
 // ═══════════════════════════════════════════════════════════
 // API RESPONSE TYPES
 // ═══════════════════════════════════════════════════════════
@@ -462,6 +481,23 @@ export default function AnalyticsPage() {
   const [zoneCityFilter, setZoneCityFilter] = useState<string>("");
   const [exportLoading, setExportLoading] = useState(false);
 
+  // ── Savings state ──
+  const [savingsData, setSavingsData] = useState<SavingsApiData | null>(null);
+  const [savingsLoading, setSavingsLoading] = useState(true);
+
+  // ── Fetch savings data (period-aware) ──
+  useEffect(() => {
+    setSavingsLoading(true);
+    const days = period === "7j" ? 7 : period === "30j" ? 30 : 90;
+    fetch(`/api/dashboard/savings?period=${days}d`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data) setSavingsData(json.data);
+      })
+      .catch(() => {})
+      .finally(() => setSavingsLoading(false));
+  }, [period]);
+
   // ── Fetch city data ──
   useEffect(() => {
     setCityLoading(true);
@@ -538,24 +574,10 @@ export default function AnalyticsPage() {
   const deliveryRate = 100 - rtoRate;
   const baseline = 35;
 
-  // Returns avoided = (baseline% - actual%) × total orders
-  const returnsAvoided = Math.max(0, Math.round(totalOrders * (baseline - rtoRate) / 100));
-  const savings = returnsAvoided * 45; // 45 DH per avoided return
-
-  // Previous period comparison
-  const days = period === "7j" ? 7 : period === "30j" ? 30 : 90;
-  const prevData = DAILY_DATA_90.slice(-(days * 2), -days);
-  const prevReturns = prevData.reduce((s, d) => s + d.returns, 0);
-  const prevOrders = prevData.reduce((s, d) => s + d.orders, 0);
-  const prevRtoRate = prevOrders > 0 ? Math.round((prevReturns / prevOrders) * 100) : 0;
-  const prevReturnsAvoided = Math.max(0, Math.round(prevOrders * (baseline - prevRtoRate) / 100));
-  const prevSavings = prevReturnsAvoided * 45;
-  const savingsChange = prevSavings > 0 ? Math.round(((savings - prevSavings) / prevSavings) * 100) : 0;
-
-  // ROI
-  const subscriptionCost = 699;
-  const roi = subscriptionCost > 0 ? (savings - subscriptionCost) / subscriptionCost : 0;
-  const roiDisplay = roi > 0 ? `${roi.toFixed(1)}×` : "—";
+  // Savings from API
+  const savings = savingsData?.totalSaved ?? 0;
+  const savingsChange = savingsData?.deltaPercent ?? 0;
+  const roiDisplay = savingsData?.roiMultiple ? `${savingsData.roiMultiple}\u00D7` : "\u2014";
 
   // RTO delta vs baseline
   const rtoDelta = rtoRate - baseline;
@@ -774,11 +796,141 @@ export default function AnalyticsPage() {
           <div className="mt-3">
             <p className="font-display text-2xl font-bold text-midnight">{roiDisplay}</p>
             <p className="mt-1 text-xs font-medium text-fog">
-              ({savings.toLocaleString("fr-FR")} − {subscriptionCost}) / {subscriptionCost} DH
+              {savingsData?.projectedMonthlySaved
+                ? `${savingsData.projectedMonthlySaved.toLocaleString("fr-FR")} DH/mois projet\u00E9`
+                : "\u2014"}
             </p>
           </div>
         </div>
       </div>
+
+      {/* ═══ IMPACT FINANCIER ═══ */}
+      {savingsData && !savingsLoading && (
+        <Card className="rounded-[18px]">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Coins className="h-5 w-5 text-amber" />
+              <CardTitle>Impact financier</CardTitle>
+            </div>
+            <p className="text-xs text-fog">D\u00E9tail des \u00E9conomies g\u00E9n\u00E9r\u00E9es par Siift</p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Mini KPIs */}
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+                <p className="text-xs font-medium text-fog">Commandes \u00E9vit\u00E9es</p>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {savingsData.ordersSaved}
+                </p>
+              </div>
+              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+                <p className="text-xs font-medium text-fog">\u00C9conomie moy./commande</p>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {savingsData.avgSavedPerOrder} <span className="text-sm font-semibold text-fog">DH</span>
+                </p>
+              </div>
+              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+                <p className="text-xs font-medium text-fog">Projection mensuelle</p>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {savingsData.projectedMonthlySaved.toLocaleString("fr-FR")} <span className="text-sm font-semibold text-fog">DH</span>
+                </p>
+              </div>
+              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+                <p className="text-xs font-medium text-fog">ROI Siift</p>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {savingsData.roiMultiple ? `${savingsData.roiMultiple}\u00D7` : "\u2014"}
+                </p>
+              </div>
+            </div>
+
+            {/* Breakdown */}
+            <div>
+              <p className="text-sm font-medium text-midnight mb-3">R\u00E9partition des \u00E9conomies</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-violet" />
+                    <span className="text-sm text-slate">Auto-bloqu\u00E9es</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-fog">{savingsData.breakdown.autoBlocked.count} commandes</span>
+                    <span className="font-mono text-sm font-bold text-midnight">
+                      {savingsData.breakdown.autoBlocked.amount.toLocaleString("fr-FR")} DH
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-rose" />
+                    <span className="text-sm text-slate">Bloqu\u00E9es (marchand)</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-fog">{savingsData.breakdown.merchantBlocked.count} commandes</span>
+                    <span className="font-mono text-sm font-bold text-midnight">
+                      {savingsData.breakdown.merchantBlocked.amount.toLocaleString("fr-FR")} DH
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber" />
+                    <span className="text-sm text-slate">Signal\u00E9es / escalad\u00E9es</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-fog">{savingsData.breakdown.flaggedNotShipped.count} commandes</span>
+                    <span className="font-mono text-sm font-bold text-midnight">
+                      {savingsData.breakdown.flaggedNotShipped.amount.toLocaleString("fr-FR")} DH
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Top products & cities */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Top products by savings */}
+              {savingsData.topProducts.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-midnight mb-3">Top produits (par \u00E9conomies)</p>
+                  <div className="space-y-1.5">
+                    {savingsData.topProducts.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-sm bg-snow px-3 py-2">
+                        <span className="text-sm text-slate truncate max-w-[60%]">{p.name}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-fog">{p.count} cmd</span>
+                          <span className="font-mono text-sm font-bold text-midnight">
+                            {p.saved.toLocaleString("fr-FR")} DH
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Top cities by savings */}
+              {savingsData.topCities.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-midnight mb-3">Top villes (par \u00E9conomies)</p>
+                  <div className="space-y-1.5">
+                    {savingsData.topCities.map((c, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-sm bg-snow px-3 py-2">
+                        <span className="text-sm text-slate">{c.name}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-fog">{c.count} cmd</span>
+                          <span className="font-mono text-sm font-bold text-midnight">
+                            {c.saved.toLocaleString("fr-FR")} DH
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ═══ 2. RTO TREND LINE CHART ═══ */}
       <Card className="rounded-[18px]">

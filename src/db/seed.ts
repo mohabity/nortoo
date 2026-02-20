@@ -40,6 +40,8 @@ const MERCHANTS_DATA = [
     flagThreshold: 66,
     blockThreshold: 86,
     autoBlockEnabled: true,
+    rtoCostFixed: 65,
+    rtoCostPercent: 0.05,
     dataRetentionMonths: 24,
   },
   {
@@ -53,6 +55,8 @@ const MERCHANTS_DATA = [
     flagThreshold: 66,
     blockThreshold: 86,
     autoBlockEnabled: true,
+    rtoCostFixed: 65,
+    rtoCostPercent: 0.05,
     dataRetentionMonths: 24,
   },
 ];

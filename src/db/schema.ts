@@ -45,6 +45,10 @@ export const merchants = pgTable("merchants", {
   blockThreshold: integer("block_threshold").notNull().default(86),
   autoBlockEnabled: boolean("auto_block_enabled").notNull().default(true),
 
+  // RTO cost settings (savings calculation)
+  rtoCostFixed: integer("rto_cost_fixed").notNull().default(65),
+  rtoCostPercent: real("rto_cost_percent").notNull().default(0.05),
+
   // Compliance — Loi 09-08
   cndpDeclarationRef: text("cndp_declaration_ref"),
   consentRecordedAt: timestamp("consent_recorded_at"),

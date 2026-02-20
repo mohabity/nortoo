@@ -5,6 +5,7 @@ export type TabId =
   | "profile"
   | "store"
   | "scoring"
+  | "rto_costs"
   | "api"
   | "notifications"
   | "privacy";
@@ -28,6 +29,8 @@ export interface MerchantSettings {
   flagThreshold: number;
   blockThreshold: number;
   autoBlockEnabled: boolean;
+  rtoCostFixed: number;
+  rtoCostPercent: number;
   dataRetentionMonths: number;
   cndpDeclarationRef: string | null;
   consentRecordedAt: string | null;
