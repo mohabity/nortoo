@@ -281,7 +281,12 @@ export async function GET(request: NextRequest) {
       maxAge,
     });
 
-    const response = NextResponse.redirect(`${appUrl}/dashboard?${redirectParam}`);
+    // New accounts go to onboarding; reconnects go to dashboard
+    const redirectUrl =
+      redirectParam === "welcome=true"
+        ? `${appUrl}/onboarding?step=3&connected=true`
+        : `${appUrl}/dashboard?${redirectParam}`;
+    const response = NextResponse.redirect(redirectUrl);
 
     // Auth.js session cookie
     response.cookies.set(cookieName, sessionToken, {

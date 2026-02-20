@@ -6,6 +6,7 @@ import { MobileHeader } from "@/components/layout/mobile-header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { ConnectedBanner } from "@/components/dashboard/connected-banner";
 import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
+import { OnboardingRedirect } from "@/components/dashboard/onboarding-redirect";
 
 export default function DashboardLayout({
   children,
@@ -14,6 +15,7 @@ export default function DashboardLayout({
 }) {
   return (
     <SessionProvider>
+      <OnboardingRedirect />
       <div className="min-h-screen bg-snow">
         <Sidebar />
         <MobileHeader />

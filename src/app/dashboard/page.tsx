@@ -22,6 +22,7 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
 import { OrderCard } from "@/components/dashboard/order-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { QuickStartChecklist } from "@/components/dashboard/quick-start-checklist";
 
 // ── Savings data type ──
 interface SavingsData {
@@ -233,6 +234,9 @@ export default function DashboardPage() {
           Résumé de votre activité anti-fraude
         </p>
       </div>
+
+      {/* ── Quick Start Checklist ── */}
+      <QuickStartChecklist />
 
       {/* ── Savings Banner ── */}
       {showBanner && (

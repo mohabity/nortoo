@@ -57,6 +57,10 @@ export const merchants = pgTable("merchants", {
   consentRecordedAt: timestamp("consent_recorded_at"),
   dataRetentionMonths: integer("data_retention_months").notNull().default(24),
 
+  // Onboarding
+  onboardingStep: integer("onboarding_step").notNull().default(0),
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
+
   // Meta
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
