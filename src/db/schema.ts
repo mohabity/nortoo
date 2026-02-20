@@ -119,6 +119,12 @@ export const orders = pgTable(
     shippingCity: text("shipping_city"),
     shippingAddress: text("shipping_address"),
 
+    // Parsed address (quartier-level geo scoring)
+    parsedCity: text("parsed_city"),
+    parsedZone: text("parsed_zone"),
+    parsedPostalCode: text("parsed_postal_code"),
+    addressConfidence: real("address_confidence"),
+
     // Scoring
     fraudScore: integer("fraud_score").notNull().default(25),
     riskLevel: text("risk_level").notNull().default("low"),
@@ -382,6 +388,44 @@ export const cityStats = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// ZONE STATS — Per-quartier delivery statistics
+// Aggregated data for quartier-level geographic risk scoring
+// ═══════════════════════════════════════════════════════════
+export const zoneStats = pgTable(
+  "zone_stats",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    city: text("city").notNull(), // normalized city name
+    zone: text("zone").notNull(), // normalized quartier name
+    postalCode: text("postal_code"),
+
+    totalOrders: integer("total_orders").notNull().default(0),
+    deliveredOrders: integer("delivered_orders").notNull().default(0),
+    returnedOrders: integer("returned_orders").notNull().default(0),
+    blockedOrders: integer("blocked_orders").notNull().default(0),
+
+    rtoRate: real("rto_rate").notNull().default(0), // 0.0–1.0
+    avgScore: real("avg_score").default(0),
+    avgDeliveryAttempts: real("avg_delivery_attempts").default(1),
+
+    lastOrderAt: timestamp("last_order_at"),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("zone_stats_merchant_city_zone_idx").on(
+      table.merchantId,
+      table.city,
+      table.zone
+    ),
+    index("zone_stats_city_zone_idx").on(table.city, table.zone),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
@@ -391,6 +435,7 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   notifications: many(notifications),
   productStats: many(productStats),
   cityStats: many(cityStats),
+  zoneStats: many(zoneStats),
 }));
 
 export const inviteLinksRelations = relations(inviteLinks, ({ one }) => ({
@@ -441,6 +486,13 @@ export const productStatsRelations = relations(productStats, ({ one }) => ({
 export const cityStatsRelations = relations(cityStats, ({ one }) => ({
   merchant: one(merchants, {
     fields: [cityStats.merchantId],
+    references: [merchants.id],
+  }),
+}));
+
+export const zoneStatsRelations = relations(zoneStats, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [zoneStats.merchantId],
     references: [merchants.id],
   }),
 }));

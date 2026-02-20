@@ -30,6 +30,7 @@ import {
   Clock,
   Package,
   AlertTriangle,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,26 @@ interface ProductAnalytics {
 interface ProductsApiResponse {
   data: ProductAnalytics[];
   meta: { total: number };
+}
+
+interface ZoneAnalytics {
+  id: number;
+  city: string;
+  zone: string;
+  postalCode: string | null;
+  totalOrders: number;
+  deliveredOrders: number;
+  returnedOrders: number;
+  blockedOrders: number;
+  rtoRate: number;
+  avgScore: number;
+  avgDeliveryAttempts: number | null;
+  lastOrderAt: string | null;
+}
+
+interface ZonesApiResponse {
+  data: ZoneAnalytics[];
+  meta: { total: number; highRiskZones: number };
 }
 
 interface CityAnalytics {
@@ -249,6 +270,7 @@ function RtoTooltip({ active, payload, label }: TooltipProps<number, string>) {
 
 type CitySortKey = "cityDisplay" | "totalOrders" | "deliveredOrders" | "returnedOrders" | "rtoRate" | "avgScore" | "riskTier";
 type ProductSortKey = "productName" | "productCategory" | "totalOrders" | "deliveredOrders" | "returnedOrders" | "rtoRate" | "totalRevenue";
+type ZoneSortKey = "city" | "zone" | "totalOrders" | "deliveredOrders" | "returnedOrders" | "rtoRate" | "avgScore";
 type SortDir = "asc" | "desc";
 
 function SortableHeader<T extends string>({
@@ -357,6 +379,40 @@ function ProductRiskBadge({ rtoRate }: { rtoRate: number }) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// ZONE RISK BADGE
+// ═══════════════════════════════════════════════════════════
+
+function ZoneRiskBadge({ rtoRate }: { rtoRate: number }) {
+  if (rtoRate > 0.35) {
+    return (
+      <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-rose-bg text-rose">
+        Critique
+      </span>
+    );
+  }
+  if (rtoRate > 0.20) {
+    return (
+      <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-amber-bg text-amber">
+        Risque
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-mint-bg text-mint-deep">
+      Fiable
+    </span>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// CAPITALIZE HELPER
+// ═══════════════════════════════════════════════════════════
+
+function capitalize(s: string): string {
+  return s.split(/[\s-]+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
+// ═══════════════════════════════════════════════════════════
 // LOADING SKELETON
 // ═══════════════════════════════════════════════════════════
 
@@ -394,6 +450,14 @@ export default function AnalyticsPage() {
   const [productData, setProductData] = useState<ProductAnalytics[]>([]);
   const [productLoading, setProductLoading] = useState(true);
   const [productError, setProductError] = useState<string | null>(null);
+
+  // ── Zone state ──
+  const [zoneSort, setZoneSort] = useState<ZoneSortKey>("totalOrders");
+  const [zoneSortDir, setZoneSortDir] = useState<SortDir>("desc");
+  const [zoneData, setZoneData] = useState<ZoneAnalytics[]>([]);
+  const [zoneLoading, setZoneLoading] = useState(true);
+  const [zoneError, setZoneError] = useState<string | null>(null);
+  const [zoneCityFilter, setZoneCityFilter] = useState<string>("");
 
   // ── Fetch city data ──
   useEffect(() => {
@@ -434,6 +498,28 @@ export default function AnalyticsPage() {
         setProductLoading(false);
       });
   }, []);
+
+  // ── Fetch zone data ──
+  useEffect(() => {
+    setZoneLoading(true);
+    setZoneError(null);
+    const params = new URLSearchParams();
+    if (zoneCityFilter) params.set("city", zoneCityFilter);
+    fetch(`/api/analytics/zones?${params.toString()}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Erreur ${res.status}`);
+        return res.json() as Promise<ZonesApiResponse>;
+      })
+      .then((json) => {
+        setZoneData(json.data);
+      })
+      .catch((err) => {
+        setZoneError(err instanceof Error ? err.message : "Erreur de chargement");
+      })
+      .finally(() => {
+        setZoneLoading(false);
+      });
+  }, [zoneCityFilter]);
 
   // Filter daily data by period
   const dailyData = useMemo(() => {
@@ -527,6 +613,34 @@ export default function AnalyticsPage() {
     () => highRiskProducts.reduce((s, p) => s + p.totalRevenue, 0),
     [highRiskProducts]
   );
+
+  // ── Zone sort ──
+  const handleZoneSort = useCallback((key: ZoneSortKey) => {
+    setZoneSort((prev) => {
+      if (prev === key) {
+        setZoneSortDir((d) => (d === "asc" ? "desc" : "asc"));
+        return prev;
+      }
+      setZoneSortDir("desc");
+      return key;
+    });
+  }, []);
+
+  const sortedZones = useMemo(() => {
+    return [...zoneData].sort((a, b) => {
+      const aVal = a[zoneSort];
+      const bVal = b[zoneSort];
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return zoneSortDir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      return zoneSortDir === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+    });
+  }, [zoneData, zoneSort, zoneSortDir]);
+
+  // ── Zone KPIs ──
+  const zoneCities = useMemo(() => [...new Set(zoneData.map((z) => z.city))].sort(), [zoneData]);
+  const criticalZones = useMemo(() => zoneData.filter((z) => z.rtoRate > 0.35).length, [zoneData]);
+  const safeZones = useMemo(() => zoneData.filter((z) => z.rtoRate < 0.15 && z.totalOrders >= 5).length, [zoneData]);
 
   const top3RtoConcentration = useMemo(() => {
     if (productData.length === 0) return 0;
@@ -1096,6 +1210,212 @@ export default function AnalyticsPage() {
                           )}
                         >
                           {c.avgScore}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ═══ 4b. ZONE (QUARTIER) ANALYSIS ═══ */}
+      <Card className="rounded-[18px]">
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-ocean" />
+                <CardTitle>Analyse par quartier</CardTitle>
+              </div>
+              <p className="text-xs text-fog mt-1">
+                Score géographique auto-ajusté · Plus précis que la ville
+              </p>
+            </div>
+            {/* City filter */}
+            {!zoneLoading && zoneCities.length > 0 && (
+              <select
+                value={zoneCityFilter}
+                onChange={(e) => setZoneCityFilter(e.target.value)}
+                className="rounded-sm border border-silk bg-white px-3 py-2 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint min-h-[44px]"
+              >
+                <option value="">Toutes les villes</option>
+                {zoneCities.map((city) => (
+                  <option key={city} value={city}>{capitalize(city)}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* ── Zone mini KPIs ── */}
+          {zoneLoading ? (
+            <div className="mb-6 flex gap-3 overflow-x-auto no-scrollbar snap-x-mandatory pb-2 -mx-4 px-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:mx-0 lg:px-0 lg:pb-0 lg:overflow-visible">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="min-w-[200px] snap-start lg:min-w-0 h-20 animate-pulse rounded-xl bg-snow" />
+              ))}
+            </div>
+          ) : zoneError ? null : (
+            <div className="mb-6 flex gap-3 overflow-x-auto no-scrollbar snap-x-mandatory pb-2 -mx-4 px-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:mx-0 lg:px-0 lg:pb-0 lg:overflow-visible">
+              <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-ocean" />
+                  <p className="text-xs font-medium text-fog">Quartiers trackés</p>
+                </div>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {zoneData.length}
+                </p>
+                <p className="text-[11px] text-fog">
+                  zones avec données suffisantes
+                </p>
+              </div>
+
+              <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-rose" />
+                  <p className="text-xs font-medium text-fog">Quartiers critiques</p>
+                </div>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {criticalZones}
+                </p>
+                <p className="text-[11px] text-fog">
+                  RTO &gt; 35%
+                </p>
+              </div>
+
+              <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-mint-deep" />
+                  <p className="text-xs font-medium text-fog">Quartiers fiables</p>
+                </div>
+                <p className="mt-2 font-display text-xl font-bold text-midnight">
+                  {safeZones}
+                </p>
+                <p className="text-[11px] text-fog">
+                  RTO &lt; 15%, min 5 commandes
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Zone table ── */}
+          {zoneLoading ? (
+            <TableSkeleton rows={8} cols={7} />
+          ) : zoneError ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <AlertTriangle className="h-8 w-8 text-rose mb-3" />
+              <p className="text-sm font-medium text-midnight">Erreur de chargement</p>
+              <p className="text-xs text-fog mt-1">{zoneError}</p>
+            </div>
+          ) : zoneData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <MapPin className="h-8 w-8 text-fog mb-3" />
+              <p className="text-sm font-medium text-midnight">Aucune donnée de quartier</p>
+              <p className="text-xs text-fog mt-1">Les données apparaitront ici après les premières commandes avec adresse détaillée.</p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-silk">
+                      <SortableHeader<ZoneSortKey> label="Ville" sortKey="city" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} />
+                      <SortableHeader<ZoneSortKey> label="Quartier" sortKey="zone" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} />
+                      <SortableHeader<ZoneSortKey> label="Commandes" sortKey="totalOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label="Livrées" sortKey="deliveredOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label="Retours" sortKey="returnedOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label="Taux RTO" sortKey="rtoRate" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label="Score moyen" sortKey="avgScore" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedZones.map((z) => (
+                      <tr key={z.id} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-medium text-midnight">{capitalize(z.city)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-slate">{capitalize(z.zone)}</span>
+                            <ZoneRiskBadge rtoRate={z.rtoRate} />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-slate">{z.totalOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-mint-deep">{z.deliveredOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-rose">{z.returnedOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <RtoBar value={Math.round(z.rtoRate * 100)} />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
+                              z.avgScore <= 30 && "bg-mint-bg text-mint-deep",
+                              z.avgScore > 30 && z.avgScore <= 65 && "bg-amber-bg text-amber",
+                              z.avgScore > 65 && z.avgScore <= 85 && "bg-rose-bg text-rose",
+                              z.avgScore > 85 && "bg-violet-bg text-violet"
+                            )}
+                          >
+                            {Math.round(z.avgScore)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="lg:hidden space-y-3">
+                {sortedZones.map((z) => (
+                  <div key={z.id} className="rounded-sm border border-silk bg-white p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-body text-sm font-semibold text-midnight">{capitalize(z.zone)}</p>
+                        <p className="text-xs text-fog mt-0.5">{capitalize(z.city)}</p>
+                      </div>
+                      <ZoneRiskBadge rtoRate={z.rtoRate} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-fog">Taux RTO</span>
+                        <RtoBar value={Math.round(z.rtoRate * 100)} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 border-t border-silk pt-3">
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Commandes</p>
+                        <p className="font-mono text-sm font-bold text-slate">{z.totalOrders}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Livrées</p>
+                        <p className="font-mono text-sm font-bold text-mint-deep">{z.deliveredOrders}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Retours</p>
+                        <p className="font-mono text-sm font-bold text-rose">{z.returnedOrders}</p>
+                      </div>
+                      <div className="flex-1 text-right">
+                        <p className="text-[11px] text-fog">Score</p>
+                        <span
+                          className={cn(
+                            "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
+                            z.avgScore <= 30 && "bg-mint-bg text-mint-deep",
+                            z.avgScore > 30 && z.avgScore <= 65 && "bg-amber-bg text-amber",
+                            z.avgScore > 65 && z.avgScore <= 85 && "bg-rose-bg text-rose",
+                            z.avgScore > 85 && "bg-violet-bg text-violet"
+                          )}
+                        >
+                          {Math.round(z.avgScore)}
                         </span>
                       </div>
                     </div>

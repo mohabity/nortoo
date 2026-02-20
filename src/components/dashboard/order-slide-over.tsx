@@ -55,6 +55,10 @@ interface OrderDetail {
   currency: string;
   shippingCity: string | null;
   shippingAddress: string | null;
+  parsedCity: string | null;
+  parsedZone: string | null;
+  parsedPostalCode: string | null;
+  addressConfidence: number | null;
   fraudScore: number;
   riskLevel: string;
   decision: string;
@@ -401,6 +405,30 @@ export function OrderSlideOver({
                       {order.shippingCity}
                       {order.shippingAddress ? ` — ${order.shippingAddress}` : ""}
                     </span>
+                  </div>
+                )}
+                {(order.parsedCity || order.parsedZone) && (
+                  <div className="flex flex-wrap items-center gap-1.5 ml-6 mt-1">
+                    {order.parsedCity && (
+                      <span className="rounded-xs px-2 py-0.5 text-[11px] font-medium bg-ocean-bg text-ocean">
+                        {order.parsedCity.split(/[\s-]+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                      </span>
+                    )}
+                    {order.parsedZone && (
+                      <span className="rounded-xs px-2 py-0.5 text-[11px] font-medium bg-amber-bg text-amber">
+                        {order.parsedZone.split(/[\s-]+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                      </span>
+                    )}
+                    {order.parsedPostalCode && (
+                      <span className="rounded-xs px-2 py-0.5 text-[11px] font-mono bg-snow text-fog">
+                        {order.parsedPostalCode}
+                      </span>
+                    )}
+                    {order.addressConfidence != null && (
+                      <span className="text-[10px] text-mist ml-1">
+                        {Math.round(order.addressConfidence * 100)}% confiance
+                      </span>
+                    )}
                   </div>
                 )}
                 <div className="flex items-center gap-2">

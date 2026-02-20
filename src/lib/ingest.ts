@@ -20,6 +20,8 @@ import { scoreOrder, type ScoringResult } from "@/lib/scoring";
 import { executePipeline } from "@/lib/pipeline";
 import { normalizeProductId, updateProductStats, getProductRtoRate } from "@/lib/product-stats";
 import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } from "@/lib/city-stats";
+import { parseAddress } from "@/lib/address-parser";
+import { updateZoneStats, getZoneStats, getGlobalZoneStats } from "@/lib/zone-stats";
 
 export interface IngestParams {
   merchantId: number;
@@ -259,6 +261,46 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     }
   }
 
+  // ── 3d. Parse address for zone-level data ──
+  let parsedCity: string | null = null;
+  let parsedZone: string | null = null;
+  let parsedPostalCode: string | null = null;
+  let addressConfidence: number | null = null;
+  let zoneRtoRate: number | undefined;
+  let zoneTotalOrders: number | undefined;
+  let zoneDataSource: "merchant" | "network" | "static" | undefined;
+
+  if (shippingAddress) {
+    try {
+      const parsed = parseAddress(shippingAddress);
+      parsedCity = parsed.city;
+      parsedZone = parsed.zone;
+      parsedPostalCode = parsed.postalCode;
+      addressConfidence = parsed.confidence;
+
+      if (parsedZone && parsedCity) {
+        // Try merchant-level zone stats first
+        const merchantZone = await getZoneStats(merchantId, parsedCity, parsedZone);
+        if (merchantZone && merchantZone.totalOrders >= 5) {
+          zoneRtoRate = merchantZone.rtoRate;
+          zoneTotalOrders = merchantZone.totalOrders;
+          zoneDataSource = "merchant";
+        }
+        // Fallback to global (cross-merchant) zone stats
+        if (!merchantZone || merchantZone.totalOrders < 10) {
+          const globalZone = await getGlobalZoneStats(parsedCity, parsedZone);
+          if (globalZone && (!merchantZone || globalZone.totalOrders > merchantZone.totalOrders)) {
+            zoneRtoRate = globalZone.rtoRate;
+            zoneTotalOrders = globalZone.totalOrders;
+            zoneDataSource = "network";
+          }
+        }
+      }
+    } catch (err) {
+      console.error("[Ingest] Address parsing / zone lookup failed (non-blocking):", err);
+    }
+  }
+
   // ── 4. Score order ──
   const scoringResult: ScoringResult = scoreOrder(
     {
@@ -272,6 +314,9 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       cityRtoRate,
       cityRiskTier,
       cityTotalOrders,
+      zoneRtoRate,
+      zoneTotalOrders,
+      zoneDataSource,
     },
     {
       verify: merchant.verifyThreshold,
@@ -305,6 +350,10 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       currency,
       shippingCity,
       shippingAddress,
+      parsedCity,
+      parsedZone,
+      parsedPostalCode,
+      addressConfidence,
       fraudScore: scoringResult.score,
       riskLevel: scoringResult.riskLevel,
       decision,
@@ -417,6 +466,20 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     }
   } catch (err) {
     console.error("[Ingest] City stats update failed (non-blocking):", err);
+  }
+
+  try {
+    if (parsedZone && parsedCity) {
+      await updateZoneStats({
+        merchantId,
+        city: parsedCity,
+        zone: parsedZone,
+        postalCode: parsedPostalCode ?? undefined,
+        orderScore: scoringResult.score,
+      });
+    }
+  } catch (err) {
+    console.error("[Ingest] Zone stats update failed (non-blocking):", err);
   }
 
   return {

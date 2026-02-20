@@ -17,6 +17,8 @@ import { scoreOrder } from "../lib/scoring";
 import { executePipeline } from "../lib/pipeline";
 import { recalculateAllProductStats } from "../lib/product-stats";
 import { recalculateAllCityStats } from "../lib/city-stats";
+import { recalculateAllZoneStats } from "../lib/zone-stats";
+import { parseAddress } from "../lib/address-parser";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql, { schema });
@@ -106,31 +108,65 @@ const PRODUCTS = [
 
 const ADDRESSES_BY_CITY: Record<string, string[]> = {
   "Casablanca": [
-    "123 Bd Zerktouni, Maârif, Casablanca",
+    "123 Bd Zerktouni, Maarif, Casablanca 20100",
     "45 Rue Ibnou Rochd, Gauthier, Casablanca",
     "78 Av Hassan II, Centre Ville, Casablanca",
+    "Residence Atlas, hay hassani, Casablanca 20200",
+    "14 Rue Ahmed El Bidaoui, Sidi Moumen, Casablanca",
+    "Lot 23 Ain Sebaa, Casablanca 20250",
+    "67 Bd Moulay Youssef, Derb Sultan, Casablanca",
+    "Hay Mohammadi, Nr Marjane, Casablanca 20350",
+    "32 Rue Anfa, Anfa Superieur, Casablanca 20050",
+    "11 Lotissement Bernoussi, Casablanca 20600",
   ],
   "Rabat": [
-    "12 Av Mohammed V, Agdal, Rabat",
-    "56 Rue Oukaimeden, Hassan, Rabat",
+    "12 Av Mohammed V, Agdal, Rabat 10000",
+    "56 Rue Oukaimeden, Hassan, Rabat 10020",
+    "Hay Riad, Nr Mega Mall, Rabat 10100",
+    "23 Rue Ouezzane, Souissi, Rabat 10170",
+    "Quartier Ocean, Rabat 10050",
   ],
   "Marrakech": [
-    "34 Derb Moulay Abdallah, Guéliz, Marrakech",
+    "34 Derb Moulay Abdallah, Gueliz, Marrakech 40000",
     "89 Av Mohammed VI, Hivernage, Marrakech",
+    "Hay Hassani, Nr Carrefour, Marrakech 40020",
+    "Lot 56, Targa, Marrakech 40150",
+    "12 Rue Bab Doukkala, Medina, Marrakech",
   ],
   "Tanger": [
-    "23 Rue de la Liberté, Tanger",
+    "23 Rue de la Liberté, Tanger 90000",
     "67 Bd Pasteur, Centre, Tanger",
+    "Hay Benkirane, Tanger 90040",
+    "Quartier Moujahidine, Tanger 90020",
+    "Lot 78 Boukhalef, Tanger 90060",
   ],
   "Fès": [
-    "11 Rue Talaa Kbira, Médina, Fès",
-    "45 Av des FAR, Ville Nouvelle, Fès",
+    "11 Rue Talaa Kbira, Medina, Fes 30000",
+    "45 Av des FAR, Ville Nouvelle, Fes",
+    "Hay Saada, Route Sefrou, Fes 30050",
+    "Quartier Narjiss, Fes 30006",
   ],
-  "Agadir": ["78 Av Hassan II, Talborjt, Agadir"],
-  "Meknès": ["34 Av Moulay Ismaïl, Meknès"],
-  "Kénitra": ["56 Rue Mohammed V, Kénitra"],
-  "Oujda": ["12 Bd Allal Ben Abdallah, Oujda"],
-  "Tétouan": ["23 Av Mohammed V, Tétouan"],
+  "Agadir": [
+    "78 Av Hassan II, Talborjt, Agadir 80000",
+    "Hay Mohammadi, Agadir 80020",
+    "Cite Dakhla, Agadir 80060",
+  ],
+  "Meknès": [
+    "34 Av Moulay Ismail, Meknes 50000",
+    "Hay Salam, Meknes 50050",
+  ],
+  "Kénitra": [
+    "56 Rue Mohammed V, Kenitra 14000",
+    "Hay Oulad Oujih, Kenitra 14020",
+  ],
+  "Oujda": [
+    "12 Bd Allal Ben Abdallah, Oujda 60000",
+    "Hay El Qods, Oujda 60020",
+  ],
+  "Tétouan": [
+    "23 Av Mohammed V, Tetouan 93000",
+    "Quartier Saniat Rmel, Tetouan 93020",
+  ],
   "Taza": ["rue taza", "taza centre"],
   "Ouarzazate": ["centre ouarzazate"],
   "Khouribga": ["hay mohammadi khouribga"],
@@ -298,6 +334,9 @@ async function seed() {
   await db
     .delete(schema.cityStats)
     .where(eq(schema.cityStats.merchantId, primaryMerchantId));
+  await db
+    .delete(schema.zoneStats)
+    .where(eq(schema.zoneStats.merchantId, primaryMerchantId));
 
   // ── 4. Insert 50 orders ──
   console.log("\n📋 Inserting 50 scored orders...");
@@ -408,6 +447,9 @@ async function seed() {
     const address = randomItem(addresses);
     const createdAt = daysAgo(cfg.daysBack, cfg.hour);
 
+    // Parse address for zone-level data
+    const parsed = parseAddress(address);
+
     // Build scoring input
     const customerHistory = custData.totalOrders > 0
       ? {
@@ -460,6 +502,10 @@ async function seed() {
         currency: "MAD",
         shippingCity: city,
         shippingAddress: address,
+        parsedCity: parsed.city,
+        parsedZone: parsed.zone,
+        parsedPostalCode: parsed.postalCode,
+        addressConfidence: parsed.confidence,
         fraudScore: result.score,
         riskLevel: result.riskLevel,
         decision: result.decision,
@@ -674,12 +720,14 @@ async function seed() {
   const unreadCount = notificationSeeds.filter(n => !n.read).length;
   console.log(`   ↳ ${notificationSeeds.length} notifications (${unreadCount} non lues)`);
 
-  // ── 7. Recalculate product & city stats ──
-  console.log("\n📈 Recalculating product & city stats...");
+  // ── 7. Recalculate product, city & zone stats ──
+  console.log("\n📈 Recalculating product, city & zone stats...");
   const productsUpdated = await recalculateAllProductStats(primaryMerchantId);
   const citiesUpdated = await recalculateAllCityStats(primaryMerchantId);
+  const zonesUpdated = await recalculateAllZoneStats(primaryMerchantId);
   console.log(`   ↳ ${productsUpdated} product stats recalculated`);
   console.log(`   ↳ ${citiesUpdated} city stats recalculated`);
+  console.log(`   ↳ ${zonesUpdated} zone stats recalculated`);
 
   console.log("\n📊 Distribution des décisions:");
   console.log(`   Ship:   ${stats.ship} (${Math.round(stats.ship / 50 * 100)}%)`);
@@ -699,7 +747,7 @@ async function seed() {
   console.log(`   • 15 clients marocains (pour TrendyShop.ma)`);
   console.log(`   • 50 commandes scorées avec statuts pipeline`);
   console.log(`   • ${notificationSeeds.length} notifications (${unreadCount} non lues)`);
-  console.log(`   • ${productsUpdated} stats produits + ${citiesUpdated} stats villes`);
+  console.log(`   • ${productsUpdated} stats produits + ${citiesUpdated} stats villes + ${zonesUpdated} stats quartiers`);
   console.log(`   • 100+ entrées audit log`);
   console.log(`\n🔑 Identifiants de connexion:`);
   console.log(`   • contact@trendyshop.ma / password123 (plan Growth)`);

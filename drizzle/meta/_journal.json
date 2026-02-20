@@ -15,6 +15,13 @@
       "when": 1771591849374,
       "tag": "0001_known_lockjaw",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771602368421,
+      "tag": "0002_strange_pretty_boy",
+      "breakpoints": true
     }
   ]
 }

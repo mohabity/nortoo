@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════
-// Siift Scoring Engine v1.1
-// 14 rules, score 0-100, 4 decision levels
+// Siift Scoring Engine v1.2
+// 15 rules, score 0-100, 4 decision levels
 // v1.1: Added R12_SKU_RISK + dynamic R8_GEO_RISK
+// v1.2: Added R8b_ZONE_RISK (quartier-level geo scoring)
 // ═══════════════════════════════════════════════════════════
 
-export const SCORING_VERSION = "v1.1";
+export const SCORING_VERSION = "v1.2";
 
 export interface ScoringInput {
   total: number;
@@ -24,6 +25,10 @@ export interface ScoringInput {
   cityRtoRate?: number;         // 0.0–1.0
   cityRiskTier?: string;        // "safe" | "moderate" | "risky" | "dangerous" | "unknown"
   cityTotalOrders?: number;     // sample size
+  // Zone (quartier) risk data (from zone_stats)
+  zoneRtoRate?: number;         // 0.0–1.0
+  zoneTotalOrders?: number;     // sample size
+  zoneDataSource?: "merchant" | "network" | "static";
 }
 
 export interface ScoringFactor {
@@ -112,8 +117,40 @@ export function scoreOrder(
     rawScore += 10;
   }
 
-  // ─── R8: Geography risk (dynamic + static fallback) ───
-  if (input.city) {
+  // ─── R8b: Zone (quartier) risk — more granular, takes precedence over city ───
+  let zoneRuleApplied = false;
+  if (
+    input.zoneRtoRate !== undefined &&
+    input.zoneTotalOrders !== undefined &&
+    input.zoneTotalOrders >= 5
+  ) {
+    const rtoPct = Math.round(input.zoneRtoRate * 100);
+    const src = input.zoneDataSource === "network" ? " (réseau)" : "";
+    if (input.zoneRtoRate > 0.40) {
+      factors.push({ rule: "R8b_ZONE_RISK", points: 25, reason: `Quartier critique (${rtoPct}% RTO)${src}` });
+      rawScore += 25;
+      zoneRuleApplied = true;
+    } else if (input.zoneRtoRate > 0.30) {
+      factors.push({ rule: "R8b_ZONE_RISK", points: 18, reason: `Quartier risque élevé (${rtoPct}% RTO)${src}` });
+      rawScore += 18;
+      zoneRuleApplied = true;
+    } else if (input.zoneRtoRate > 0.20) {
+      factors.push({ rule: "R8b_ZONE_RISK", points: 10, reason: `Quartier risque modéré (${rtoPct}% RTO)${src}` });
+      rawScore += 10;
+      zoneRuleApplied = true;
+    } else if (input.zoneRtoRate > 0.10) {
+      factors.push({ rule: "R8b_ZONE_RISK", points: 5, reason: `Quartier à surveiller (${rtoPct}% RTO)${src}` });
+      rawScore += 5;
+      zoneRuleApplied = true;
+    } else if (input.zoneTotalOrders >= 10 && input.zoneRtoRate <= 0.08) {
+      factors.push({ rule: "R8b_ZONE_RISK", points: -8, reason: `Quartier fiable (${rtoPct}% RTO)${src}` });
+      rawScore -= 8;
+      zoneRuleApplied = true;
+    }
+  }
+
+  // ─── R8: Geography risk — city level (only if zone rule did NOT apply) ───
+  if (!zoneRuleApplied && input.city) {
     const cityLower = input.city.toLowerCase().trim();
 
     if (

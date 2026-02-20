@@ -4,6 +4,7 @@ import { orders, notifications, auditLogs, merchants } from "@/db/schema";
 import { and, eq, lt } from "drizzle-orm";
 import { recalculateAllProductStats } from "@/lib/product-stats";
 import { recalculateAllCityStats } from "@/lib/city-stats";
+import { recalculateAllZoneStats } from "@/lib/zone-stats";
 
 /**
  * GET /api/cron/escalate
@@ -94,6 +95,7 @@ export async function GET(request: Request) {
   // ── Stats recalculation (daily consistency check) ──
   let productsUpdated = 0;
   let citiesUpdated = 0;
+  let zonesUpdated = 0;
 
   try {
     // Get all active merchants
@@ -105,6 +107,7 @@ export async function GET(request: Request) {
       try {
         productsUpdated += await recalculateAllProductStats(m.id);
         citiesUpdated += await recalculateAllCityStats(m.id);
+        zonesUpdated += await recalculateAllZoneStats(m.id);
       } catch (err) {
         console.error(`[Cron Escalate] Stats recalc failed for merchant ${m.id}:`, err);
       }
@@ -119,6 +122,7 @@ export async function GET(request: Request) {
       escalated: escalatedCount,
       productsUpdated,
       citiesUpdated,
+      zonesUpdated,
       timestamp: now.toISOString(),
     },
   });

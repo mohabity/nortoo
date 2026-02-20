@@ -13,7 +13,7 @@ import { eq, and, sql } from "drizzle-orm";
 // Handles Darija, French, and common misspellings
 // ═══════════════════════════════════════════════════════════
 
-const CITY_ALIASES: Record<string, string> = {
+export const CITY_ALIASES: Record<string, string> = {
   // Casablanca variants
   "casa": "casablanca",
   "casa blanca": "casablanca",
