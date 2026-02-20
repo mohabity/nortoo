@@ -112,6 +112,13 @@ export default function DashboardPage() {
   const [isStoreConnected, setIsStoreConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // If ?connected=true in URL, store was just connected via OAuth
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("connected") === "true") {
+      setIsStoreConnected(true);
+      return;
+    }
+
     fetch("/api/settings")
       .then((res) => res.json())
       .then((json) => {
