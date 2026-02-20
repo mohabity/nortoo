@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { orders, auditLogs } from "@/db/schema";
 import { and, eq, gte, lte, like, or, desc } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
+import { expandSearch } from "@/lib/search";
 import { decisionLabel } from "@/lib/utils";
 
 // ── Rate limiting (in-memory) ──
@@ -104,14 +105,16 @@ export async function GET(request: NextRequest) {
     conditions.push(lte(orders.createdAt, new Date(to)));
   }
   if (search) {
-    const pattern = `%${search}%`;
-    conditions.push(
-      or(
-        like(orders.externalRef, pattern),
-        like(orders.customerName, pattern),
-        like(orders.shippingCity, pattern)
-      )!
-    );
+    const groups = expandSearch(search);
+    for (const group of groups) {
+      if (group.length === 1) {
+        conditions.push(like(orders.searchIndex, `%${group[0]}%`));
+      } else {
+        conditions.push(
+          or(...group.map((term) => like(orders.searchIndex, `%${term}%`)))!
+        );
+      }
+    }
   }
 
   const where = and(...conditions);

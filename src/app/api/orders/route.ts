@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { orders } from "@/db/schema";
 import { and, eq, gte, lte, like, or, desc, count } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
+import { expandSearch } from "@/lib/search";
 
 export async function GET(request: NextRequest) {
   const merchantId = await getMerchantId();
@@ -34,14 +35,17 @@ export async function GET(request: NextRequest) {
     baseConditions.push(lte(orders.fraudScore, parseInt(scoreMax, 10)));
   }
   if (search) {
-    const pattern = `%${search}%`;
-    baseConditions.push(
-      or(
-        like(orders.externalRef, pattern),
-        like(orders.customerName, pattern),
-        like(orders.shippingCity, pattern)
-      )!
-    );
+    const groups = expandSearch(search);
+    for (const group of groups) {
+      if (group.length === 1) {
+        baseConditions.push(like(orders.searchIndex, `%${group[0]}%`));
+      } else {
+        // OR across aliases within a group
+        baseConditions.push(
+          or(...group.map((term) => like(orders.searchIndex, `%${term}%`)))!
+        );
+      }
+    }
   }
 
   const baseWhere = and(...baseConditions);

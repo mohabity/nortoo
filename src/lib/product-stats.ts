@@ -111,7 +111,7 @@ export async function recalculateAllProductStats(merchantId: number): Promise<nu
       totalRevenue: sql<number>`coalesce(sum(${orders.total}), 0)::real`,
       avgOrderValue: sql<number>`coalesce(avg(${orders.total}), 0)::real`,
       avgScore: sql<number>`coalesce(avg(${orders.fraudScore}), 0)::real`,
-      lastOrderAt: sql<Date>`max(${orders.createdAt})`,
+      lastOrderAt: sql<string | null>`max(${orders.createdAt})`,
     })
     .from(orders)
     .where(
@@ -144,7 +144,7 @@ export async function recalculateAllProductStats(merchantId: number): Promise<nu
         rtoRate,
         totalRevenue: agg.totalRevenue,
         avgOrderValue: agg.avgOrderValue,
-        lastOrderAt: agg.lastOrderAt,
+        lastOrderAt: agg.lastOrderAt ? new Date(agg.lastOrderAt) : null,
       })
       .onConflictDoUpdate({
         target: [productStats.merchantId, productStats.productId],
@@ -158,7 +158,7 @@ export async function recalculateAllProductStats(merchantId: number): Promise<nu
           rtoRate,
           totalRevenue: agg.totalRevenue,
           avgOrderValue: agg.avgOrderValue,
-          lastOrderAt: agg.lastOrderAt,
+          lastOrderAt: agg.lastOrderAt ? new Date(agg.lastOrderAt) : null,
           updatedAt: new Date(),
         },
       });

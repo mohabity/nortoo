@@ -170,7 +170,7 @@ export async function recalculateAllZoneStats(merchantId: number): Promise<numbe
       returnedOrders: sql<number>`count(*) filter (where ${orders.deliveryStatus} = 'returned')::int`,
       blockedOrders: sql<number>`count(*) filter (where ${orders.decision} = 'block')::int`,
       avgScore: sql<number>`coalesce(avg(${orders.fraudScore}), 0)::real`,
-      lastOrderAt: sql<Date>`max(${orders.createdAt})`,
+      lastOrderAt: sql<string | null>`max(${orders.createdAt})`,
     })
     .from(orders)
     .where(
@@ -202,7 +202,7 @@ export async function recalculateAllZoneStats(merchantId: number): Promise<numbe
         blockedOrders: agg.blockedOrders,
         rtoRate,
         avgScore: agg.avgScore,
-        lastOrderAt: agg.lastOrderAt,
+        lastOrderAt: agg.lastOrderAt ? new Date(agg.lastOrderAt) : null,
       })
       .onConflictDoUpdate({
         target: [zoneStats.merchantId, zoneStats.city, zoneStats.zone],
@@ -213,7 +213,7 @@ export async function recalculateAllZoneStats(merchantId: number): Promise<numbe
           blockedOrders: agg.blockedOrders,
           rtoRate,
           avgScore: agg.avgScore,
-          lastOrderAt: agg.lastOrderAt,
+          lastOrderAt: agg.lastOrderAt ? new Date(agg.lastOrderAt) : null,
           updatedAt: new Date(),
         },
       });

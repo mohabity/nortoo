@@ -1,8 +1,18 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ChevronLeft, ChevronRight, Search, Download } from "lucide-react";
+import {
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Download,
+  X,
+  User,
+  MapPin,
+  Package,
+} from "lucide-react";
 import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
 import { OrderCard } from "@/components/dashboard/order-card";
 import { OrderSlideOver } from "@/components/dashboard/order-slide-over";
@@ -27,17 +37,69 @@ interface OrdersMeta {
   counts: OrdersCounts;
 }
 
-const EMPTY_COUNTS: OrdersCounts = { all: 0, ship: 0, verify: 0, flag: 0, block: 0 };
+interface SearchSuggestion {
+  type: "client" | "city" | "product";
+  value: string;
+  count: number;
+}
+
+interface RecentSearch {
+  query: string;
+  resultCount: number;
+}
+
+const EMPTY_COUNTS: OrdersCounts = {
+  all: 0,
+  ship: 0,
+  verify: 0,
+  flag: 0,
+  block: 0,
+};
 
 // ── Pills config ──
 
 const DECISION_PILLS = [
   { key: "all", label: "Toutes", activeClass: "bg-midnight text-white" },
-  { key: "ship", label: "Expédier", activeClass: "bg-mint text-white" },
-  { key: "verify", label: "Vérifier", activeClass: "bg-amber text-white" },
+  { key: "ship", label: "Exp\u00E9dier", activeClass: "bg-mint text-white" },
+  { key: "verify", label: "V\u00E9rifier", activeClass: "bg-amber text-white" },
   { key: "flag", label: "Signaler", activeClass: "bg-rose text-white" },
   { key: "block", label: "Bloquer", activeClass: "bg-violet text-white" },
 ] as const;
+
+const SUGGESTION_ICONS = {
+  client: User,
+  city: MapPin,
+  product: Package,
+} as const;
+
+// ── Recent searches helpers ──
+
+const RECENT_SEARCHES_KEY = "codpilot-recent-searches";
+const MAX_RECENT = 5;
+
+function getRecentSearches(): RecentSearch[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(sessionStorage.getItem(RECENT_SEARCHES_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearch(query: string, resultCount: number) {
+  if (!query.trim()) return;
+  const recent = getRecentSearches().filter((r) => r.query !== query);
+  recent.unshift({ query, resultCount });
+  sessionStorage.setItem(
+    RECENT_SEARCHES_KEY,
+    JSON.stringify(recent.slice(0, MAX_RECENT))
+  );
+}
+
+function removeRecentSearch(query: string) {
+  const recent = getRecentSearches().filter((r) => r.query !== query);
+  sessionStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent));
+}
 
 // ── Page ──
 
@@ -79,6 +141,17 @@ function OrdersContent() {
   const [searchInput, setSearchInput] = useState(currentSearch);
   const [exportLoading, setExportLoading] = useState(false);
 
+  // Search UI state
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const suggestDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -101,6 +174,10 @@ function OrdersContent() {
           counts: EMPTY_COUNTS,
         }
       );
+      // Save to recent searches
+      if (currentSearch) {
+        saveRecentSearch(currentSearch, json.meta?.total ?? 0);
+      }
     } catch {
       setOrders([]);
     } finally {
@@ -117,6 +194,42 @@ function OrdersContent() {
     setSearchInput(currentSearch);
   }, [currentSearch]);
 
+  // Keyboard shortcuts: Ctrl+K or / to focus search
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (
+        (e.key === "k" && (e.metaKey || e.ctrlKey)) ||
+        (e.key === "/" &&
+          !["INPUT", "TEXTAREA", "SELECT"].includes(
+            (e.target as HTMLElement).tagName
+          ))
+      ) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === "Escape" && searchFocused) {
+        clearSearch();
+        searchInputRef.current?.blur();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [searchFocused]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setSearchFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // ── URL helpers ──
 
   function setFilter(key: string, value: string) {
@@ -126,14 +239,62 @@ function OrdersContent() {
     } else {
       params.set(key, value);
     }
-    // Reset to page 1 when changing filters (not when changing page or selected)
     if (key !== "page" && key !== "selected") params.delete("page");
     router.push(`/dashboard/orders?${params.toString()}`);
   }
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    setFilter("search", searchInput);
+  // ── Search with debounce ──
+
+  function handleSearchInputChange(value: string) {
+    setSearchInput(value);
+
+    // Debounce search
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setFilter("search", value);
+    }, 400);
+
+    // Debounce suggestions
+    if (suggestDebounceRef.current) clearTimeout(suggestDebounceRef.current);
+    if (value.trim().length >= 2) {
+      suggestDebounceRef.current = setTimeout(() => {
+        fetchSuggestions(value);
+      }, 300);
+    } else {
+      setSuggestions([]);
+    }
+  }
+
+  async function fetchSuggestions(q: string) {
+    try {
+      const res = await fetch(
+        `/api/orders/search-suggest?q=${encodeURIComponent(q)}`
+      );
+      const json = await res.json();
+      setSuggestions(json.suggestions ?? []);
+    } catch {
+      setSuggestions([]);
+    }
+  }
+
+  function clearSearch() {
+    setSearchInput("");
+    setSuggestions([]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setFilter("search", "");
+  }
+
+  function applySearch(value: string) {
+    setSearchInput(value);
+    setSuggestions([]);
+    setSearchFocused(false);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setFilter("search", value);
+  }
+
+  function handleSearchFocus() {
+    setSearchFocused(true);
+    setRecentSearches(getRecentSearches());
   }
 
   function handleRowClick(orderId: number) {
@@ -152,8 +313,10 @@ function OrdersContent() {
     setExportLoading(true);
     try {
       const exportParams = new URLSearchParams();
-      if (currentDecision !== "all") exportParams.set("decision", currentDecision);
-      if (currentPipeline !== "all") exportParams.set("pipeline", currentPipeline);
+      if (currentDecision !== "all")
+        exportParams.set("decision", currentDecision);
+      if (currentPipeline !== "all")
+        exportParams.set("pipeline", currentPipeline);
       if (currentSearch) exportParams.set("search", currentSearch);
       const res = await fetch(`/api/orders/export?${exportParams}`);
       if (!res.ok) {
@@ -166,8 +329,9 @@ function OrdersContent() {
       const a = document.createElement("a");
       a.href = url;
       a.download =
-        res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] ??
-        "commandes.csv";
+        res.headers
+          .get("Content-Disposition")
+          ?.match(/filename="(.+)"/)?.[1] ?? "commandes.csv";
       a.click();
       window.URL.revokeObjectURL(url);
       if (res.headers.get("X-Truncated") === "true") {
@@ -178,21 +342,80 @@ function OrdersContent() {
     }
   }
 
+  // Mobile search
+  function openMobileSearch() {
+    setMobileSearchOpen(true);
+    setTimeout(() => mobileSearchRef.current?.focus(), 100);
+  }
+
+  function closeMobileSearch() {
+    setMobileSearchOpen(false);
+    if (!searchInput) clearSearch();
+  }
+
   const counts = meta.counts ?? EMPTY_COUNTS;
+  const showDropdown =
+    searchFocused &&
+    (suggestions.length > 0 ||
+      (searchInput === "" && recentSearches.length > 0));
 
   return (
     <div className="space-y-5">
       {/* ── Header ── */}
-      <div>
-        <h1 className="font-display text-2xl font-bold text-midnight">Commandes</h1>
-        <p className="text-sm text-fog">
-          {counts.all} commande{counts.all !== 1 ? "s" : ""} au total
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-midnight">
+            Commandes
+          </h1>
+          <p className="text-sm text-fog">
+            {counts.all} commande{counts.all !== 1 ? "s" : ""} au total
+          </p>
+        </div>
+
+        {/* Mobile search trigger */}
+        <button
+          onClick={openMobileSearch}
+          className="lg:hidden h-10 w-10 flex items-center justify-center rounded-full border border-silk bg-white text-slate hover:bg-snow transition-colors"
+          aria-label="Rechercher"
+        >
+          <Search className="h-4 w-4" />
+        </button>
       </div>
+
+      {/* ── Mobile search bar (expanded) ── */}
+      {mobileSearchOpen && (
+        <div className="lg:hidden flex items-center gap-2 animate-in slide-in-from-right-4 duration-200">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mist" />
+            <input
+              ref={mobileSearchRef}
+              type="text"
+              placeholder="Chercher par nom, ville, r\u00E9f\u00E9rence, produit..."
+              value={searchInput}
+              onChange={(e) => handleSearchInputChange(e.target.value)}
+              className="h-10 w-full rounded-full border border-silk bg-white pl-9 pr-9 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
+            />
+            {searchInput && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-mist hover:text-slate"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={closeMobileSearch}
+            className="text-sm text-ocean font-medium shrink-0"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
 
       {/* ── Filter bar: Pills + Pipeline + Search ── */}
       <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
-        {/* Decision pills — horizontal scroll on mobile */}
+        {/* Decision pills */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
           {DECISION_PILLS.map((pill) => {
             const isActive = currentDecision === pill.key;
@@ -228,27 +451,103 @@ function OrdersContent() {
             className="h-10 lg:h-9 rounded-lg border border-silk bg-white px-3 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30"
           >
             <option value="all">Pipeline: Tous</option>
-            <option value="auto_shipped">Auto-expédié</option>
-            <option value="needs_review">À vérifier</option>
-            <option value="escalated">Escaladé</option>
-            <option value="auto_blocked">Auto-bloqué</option>
+            <option value="auto_shipped">Auto-exp\u00E9di\u00E9</option>
+            <option value="needs_review">\u00C0 v\u00E9rifier</option>
+            <option value="escalated">Escalad\u00E9</option>
+            <option value="auto_blocked">Auto-bloqu\u00E9</option>
             <option value="merchant_override">Override</option>
             <option value="pending">En attente</option>
           </select>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex items-center gap-1">
-            <div className="relative w-full sm:w-auto">
+          {/* Desktop search */}
+          <div className="relative hidden lg:block" ref={dropdownRef}>
+            <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-mist" />
               <input
+                ref={searchInputRef}
                 type="text"
-                placeholder="Chercher réf, nom, ville..."
+                placeholder="Chercher par nom, ville, r\u00E9f\u00E9rence, produit..."
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="h-10 lg:h-9 w-full sm:w-[220px] rounded-full border border-silk bg-white pl-8 pr-3 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                onFocus={handleSearchFocus}
+                className="h-9 w-[320px] rounded-full border border-silk bg-white pl-8 pr-8 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
               />
+              {searchInput ? (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-mist hover:text-slate"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : (
+                <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-mist bg-snow border border-silk rounded px-1 py-0.5">
+                  \u2318K
+                </kbd>
+              )}
             </div>
-          </form>
+
+            {/* Search dropdown: suggestions + recent */}
+            {showDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-silk bg-white shadow-lg z-50 overflow-hidden">
+                {/* Suggestions */}
+                {suggestions.length > 0 && (
+                  <div className="py-1">
+                    {suggestions.map((s, i) => {
+                      const Icon = SUGGESTION_ICONS[s.type];
+                      return (
+                        <button
+                          key={`${s.type}-${i}`}
+                          onClick={() => applySearch(s.value)}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate hover:bg-snow transition-colors text-left"
+                        >
+                          <Icon className="h-3.5 w-3.5 text-mist shrink-0" />
+                          <span className="truncate">{s.value}</span>
+                          <span className="ml-auto text-xs text-mist shrink-0">
+                            {s.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Recent searches */}
+                {searchInput === "" && recentSearches.length > 0 && (
+                  <div className="py-1">
+                    <p className="px-3 py-1 text-[10px] font-medium text-mist uppercase tracking-wider">
+                      R\u00E9cents
+                    </p>
+                    {recentSearches.map((r) => (
+                      <div
+                        key={r.query}
+                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-snow transition-colors group"
+                      >
+                        <button
+                          onClick={() => applySearch(r.query)}
+                          className="flex-1 text-left text-sm text-slate truncate"
+                        >
+                          {r.query}
+                        </button>
+                        <span className="text-xs text-mist">
+                          {r.resultCount}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRecentSearch(r.query);
+                            setRecentSearches(getRecentSearches());
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-mist hover:text-slate transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Export CSV */}
           <button
@@ -272,30 +571,49 @@ function OrdersContent() {
           <Loader2 className="h-6 w-6 animate-spin text-mist" />
           <span className="ml-2 text-sm text-fog">Chargement...</span>
         </div>
+      ) : orders.length === 0 ? (
+        <div className="text-center py-16">
+          <Search className="h-8 w-8 text-mist mx-auto mb-3" />
+          <p className="text-fog font-medium">
+            Aucune commande trouv\u00E9e
+            {currentSearch && (
+              <>
+                {" "}
+                pour &laquo;&nbsp;
+                <span className="text-midnight">{currentSearch}</span>
+                &nbsp;&raquo;
+              </>
+            )}
+          </p>
+          {currentSearch && (
+            <p className="text-sm text-mist mt-1">
+              Essayez avec moins de mots-cl\u00E9s
+            </p>
+          )}
+        </div>
       ) : (
         <>
           {/* Desktop table */}
           <Card className="hidden lg:block">
             <CardContent className="p-0">
-              <OrderTable orders={orders} onRowClick={handleRowClick} />
+              <OrderTable
+                orders={orders}
+                onRowClick={handleRowClick}
+                searchQuery={currentSearch}
+              />
             </CardContent>
           </Card>
 
           {/* Mobile cards */}
           <div className="flex flex-col gap-2 lg:hidden">
-            {orders.length === 0 ? (
-              <p className="text-center text-fog py-8">
-                Aucune commande trouvée
-              </p>
-            ) : (
-              orders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  onClick={handleRowClick}
-                />
-              ))
-            )}
+            {orders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onClick={handleRowClick}
+                searchQuery={currentSearch}
+              />
+            ))}
           </div>
         </>
       )}
@@ -317,7 +635,7 @@ function OrdersContent() {
               onClick={() => setFilter("page", String(meta.page - 1))}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Précédente</span>
+              <span className="hidden sm:inline ml-1">Pr\u00E9c\u00E9dente</span>
             </Button>
             <Button
               variant="outline"

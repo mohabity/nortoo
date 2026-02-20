@@ -20,6 +20,7 @@ import { recalculateAllCityStats } from "../lib/city-stats";
 import { recalculateAllZoneStats } from "../lib/zone-stats";
 import { parseAddress } from "../lib/address-parser";
 import { generateExplanation } from "../lib/score-explanation";
+import { buildSearchIndex } from "../lib/search";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql, { schema });
@@ -525,6 +526,16 @@ async function seed() {
         scoringFactors: JSON.stringify(result.factors),
         scoreExplanation: JSON.stringify(explanation),
         scoringVersion: result.version,
+        searchIndex: buildSearchIndex({
+          externalRef: orderRef,
+          customerName: custData.name,
+          shippingCity: city,
+          parsedZone: parsed.zone,
+          shippingAddress: address,
+          productName: product.name,
+          total: product.price,
+          customerPhoneLast4: phoneLast4(phone),
+        }),
         deliveryStatus: cfg.deliveryStatus,
         deliveredAt: cfg.deliveryStatus === "delivered" ? daysAgo(cfg.daysBack - 2) : null,
         retentionExpiresAt: retentionDate(),

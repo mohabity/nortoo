@@ -4,22 +4,27 @@ import { formatDH } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { PipelineBadge } from "./pipeline-badge";
+import { highlightText } from "@/lib/highlight";
 import type { OrderRow } from "./order-table";
 
 interface OrderCardProps {
   order: OrderRow;
   onClick?: (orderId: number) => void;
+  searchQuery?: string;
 }
 
 const deliveryLabels: Record<string, string> = {
   pending: "En attente",
-  shipped: "Expédié",
-  delivered: "Livré",
-  returned: "Retourné",
-  cancelled: "Annulé",
+  shipped: "Exp\u00E9di\u00E9",
+  delivered: "Livr\u00E9",
+  returned: "Retourn\u00E9",
+  cancelled: "Annul\u00E9",
 };
 
-export function OrderCard({ order, onClick }: OrderCardProps) {
+export function OrderCard({ order, onClick, searchQuery = "" }: OrderCardProps) {
+  const hl = (text: string | null | undefined) =>
+    searchQuery ? highlightText(text, searchQuery) : (text ?? "");
+
   return (
     <button
       onClick={() => onClick?.(order.id)}
@@ -35,7 +40,7 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <p className="font-medium text-midnight truncate">
-              {order.customerName ?? "Client inconnu"}
+              {hl(order.customerName) || "Client inconnu"}
             </p>
             <span className="font-mono text-sm font-semibold text-midnight shrink-0">
               {formatDH(order.total)}
@@ -44,18 +49,18 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
 
           <div className="mt-1 flex items-center gap-2 text-xs text-fog">
             {order.externalRef && (
-              <span className="font-mono">{order.externalRef}</span>
+              <span className="font-mono">{hl(order.externalRef)}</span>
             )}
             {order.shippingCity && (
               <>
-                <span className="text-mist">·</span>
-                <span>{order.shippingCity}</span>
+                <span className="text-mist">\u00B7</span>
+                <span>{hl(order.shippingCity)}</span>
               </>
             )}
             {order.productName && (
               <>
-                <span className="text-mist">·</span>
-                <span className="truncate">{order.productName}</span>
+                <span className="text-mist">\u00B7</span>
+                <span className="truncate">{hl(order.productName)}</span>
               </>
             )}
           </div>
@@ -75,7 +80,13 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
           {/* Explanation summary */}
           {order.scoreExplanation && (
             <p className="mt-1.5 text-[11px] text-fog line-clamp-1">
-              {(() => { try { return JSON.parse(order.scoreExplanation).summary; } catch { return null; } })()}
+              {(() => {
+                try {
+                  return JSON.parse(order.scoreExplanation).summary;
+                } catch {
+                  return null;
+                }
+              })()}
             </p>
           )}
         </div>

@@ -23,6 +23,7 @@ import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } f
 import { parseAddress } from "@/lib/address-parser";
 import { updateZoneStats, getZoneStats, getGlobalZoneStats } from "@/lib/zone-stats";
 import { generateExplanation } from "@/lib/score-explanation";
+import { buildSearchIndex } from "@/lib/search";
 
 export interface IngestParams {
   merchantId: number;
@@ -369,6 +370,16 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       scoringFactors: JSON.stringify(scoringResult.factors),
       scoreExplanation: JSON.stringify(explanation),
       scoringVersion: scoringResult.version,
+      searchIndex: buildSearchIndex({
+        externalRef: ref,
+        customerName,
+        shippingCity,
+        parsedZone,
+        shippingAddress,
+        productName,
+        total,
+        customerPhoneLast4: last4,
+      }),
       retentionExpiresAt: retentionDate(merchant.dataRetentionMonths),
     })
     .returning({ id: orders.id });

@@ -235,7 +235,7 @@ export async function recalculateAllCityStats(merchantId: number): Promise<numbe
       cancelledOrders: sql<number>`count(*) filter (where ${orders.deliveryStatus} = 'cancelled')::int`,
       avgScore: sql<number>`coalesce(avg(${orders.fraudScore}), 0)::real`,
       avgOrderValue: sql<number>`coalesce(avg(${orders.total}), 0)::real`,
-      lastOrderAt: sql<Date>`max(${orders.createdAt})`,
+      lastOrderAt: sql<string | null>`max(${orders.createdAt})`,
     })
     .from(orders)
     .where(
@@ -271,7 +271,7 @@ export async function recalculateAllCityStats(merchantId: number): Promise<numbe
         avgScore: agg.avgScore,
         avgOrderValue: agg.avgOrderValue,
         riskTier,
-        lastOrderAt: agg.lastOrderAt,
+        lastOrderAt: agg.lastOrderAt ? new Date(agg.lastOrderAt) : null,
       })
       .onConflictDoUpdate({
         target: [cityStats.merchantId, cityStats.cityNormalized],
@@ -285,7 +285,7 @@ export async function recalculateAllCityStats(merchantId: number): Promise<numbe
           avgScore: agg.avgScore,
           avgOrderValue: agg.avgOrderValue,
           riskTier,
-          lastOrderAt: agg.lastOrderAt,
+          lastOrderAt: agg.lastOrderAt ? new Date(agg.lastOrderAt) : null,
           updatedAt: new Date(),
         },
       });

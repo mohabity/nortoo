@@ -158,6 +158,9 @@ export const orders = pgTable(
     escalatedAt: timestamp("escalated_at"),
     merchantNotifiedAt: timestamp("merchant_notified_at"),
 
+    // Search
+    searchIndex: text("search_index"),
+
     // Meta
     createdAt: timestamp("created_at").notNull().defaultNow(),
     scoredAt: timestamp("scored_at").notNull().defaultNow(),
