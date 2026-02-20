@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { ConnectedBanner } from "@/components/dashboard/connected-banner";
 import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
 import { OnboardingRedirect } from "@/components/dashboard/onboarding-redirect";
+import { ToastProvider } from "@/components/ui/toast";
 
 export default function DashboardLayout({
   children,
@@ -27,7 +28,9 @@ export default function DashboardLayout({
           <Suspense fallback={null}>
             <EmailVerificationBanner />
           </Suspense>
-          <main className="px-4 py-4 pb-24 lg:p-6 lg:pb-6">{children}</main>
+          <ToastProvider>
+            <main className="px-4 py-4 pb-24 lg:p-6 lg:pb-6">{children}</main>
+          </ToastProvider>
         </div>
         <BottomNav />
       </div>

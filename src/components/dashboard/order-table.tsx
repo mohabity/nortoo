@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { formatDH } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { PipelineBadge } from "./pipeline-badge";
 import { highlightText } from "@/lib/highlight";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -76,17 +77,61 @@ interface OrderTableProps {
   orders: OrderRow[];
   onRowClick?: (orderId: number) => void;
   searchQuery?: string;
+  // Selection props (optional — component works without them)
+  selectedIds?: Set<number>;
+  onToggle?: (id: number) => void;
+  onToggleAll?: () => void;
+  onRangeSelect?: (id: number) => void;
+  selectAllState?: "none" | "some" | "all";
 }
 
 const deliveryLabels: Record<string, string> = {
   pending: "En attente",
-  shipped: "Exp\u00E9di\u00E9",
-  delivered: "Livr\u00E9",
-  returned: "Retourn\u00E9",
-  cancelled: "Annul\u00E9",
+  shipped: "Expédié",
+  delivered: "Livré",
+  returned: "Retourné",
+  cancelled: "Annulé",
 };
 
-export function OrderTable({ orders, onRowClick, searchQuery = "" }: OrderTableProps) {
+function SelectAllCheckbox({
+  state,
+  onChange,
+}: {
+  state: "none" | "some" | "all";
+  onChange: () => void;
+}) {
+  const setRef = useCallback(
+    (el: HTMLInputElement | null) => {
+      if (el) el.indeterminate = state === "some";
+    },
+    [state]
+  );
+
+  return (
+    <input
+      ref={setRef}
+      type="checkbox"
+      checked={state === "all"}
+      onChange={onChange}
+      className="h-4 w-4 rounded border-silk accent-mint-deep cursor-pointer"
+      aria-label="Sélectionner toutes les commandes"
+    />
+  );
+}
+
+export function OrderTable({
+  orders,
+  onRowClick,
+  searchQuery = "",
+  selectedIds,
+  onToggle,
+  onToggleAll,
+  onRangeSelect,
+  selectAllState = "none",
+}: OrderTableProps) {
+  const hasSelection = !!onToggle;
+  const colSpan = hasSelection ? 10 : 9;
+
   const hl = (text: string | null | undefined) =>
     searchQuery ? highlightText(text, searchQuery) : (text ?? "\u2014");
 
@@ -94,6 +139,14 @@ export function OrderTable({ orders, onRowClick, searchQuery = "" }: OrderTableP
     <Table>
       <TableHeader>
         <TableRow>
+          {hasSelection && (
+            <TableHead className="w-[44px] text-center px-2">
+              <SelectAllCheckbox
+                state={selectAllState}
+                onChange={() => onToggleAll?.()}
+              />
+            </TableHead>
+          )}
           <TableHead className="text-center w-[70px]">Score</TableHead>
           <TableHead>Analyse</TableHead>
           <TableHead>Client</TableHead>
@@ -108,79 +161,107 @@ export function OrderTable({ orders, onRowClick, searchQuery = "" }: OrderTableP
       <TableBody>
         {orders.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={9} className="text-center text-fog py-8">
+            <TableCell colSpan={colSpan} className="text-center text-fog py-8">
               Aucune commande trouvée
             </TableCell>
           </TableRow>
         ) : (
-          orders.map((order) => (
-            <TableRow
-              key={order.id}
-              className="cursor-pointer hover:bg-snow/50 transition-colors"
-              onClick={() => onRowClick?.(order.id)}
-            >
-              <TableCell className="text-center">
-                <ScoreBadge score={order.fraudScore} size="sm" />
-              </TableCell>
-              <TableCell className="max-w-[180px]">
-                <p className="text-xs text-fog truncate">
-                  {order.scoreExplanation
-                    ? (() => {
-                        try {
-                          return JSON.parse(order.scoreExplanation).summary;
-                        } catch {
-                          return "\u2014";
-                        }
-                      })()
-                    : "\u2014"}
-                </p>
-              </TableCell>
-              <TableCell>
-                <div>
-                  <p className="font-medium text-midnight">
-                    {hl(order.customerName)}
-                  </p>
-                  {order.customerPhoneLast4 && (
-                    <p className="text-xs text-mist">
-                      ***{order.customerPhoneLast4}
-                    </p>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>{hl(order.shippingCity)}</TableCell>
-              <TableCell className="text-right font-mono">
-                {formatDH(order.total)}
-              </TableCell>
-              <TableCell className="text-center">
-                <DecisionBadge
-                  decision={order.overrideDecision ?? order.decision}
-                  size="sm"
-                />
-                {order.overrideDecision && (
-                  <span
-                    className="ml-1 text-[10px] text-mist"
-                    title="Override actif"
-                  >
-                    *
-                  </span>
+          orders.map((order) => {
+            const isChecked = selectedIds?.has(order.id) ?? false;
+            return (
+              <TableRow
+                key={order.id}
+                className={cn(
+                  "cursor-pointer hover:bg-snow/50 transition-colors",
+                  isChecked && "bg-mint-bg/50"
                 )}
-              </TableCell>
-              <TableCell className="text-center">
-                <div className="flex flex-col items-center gap-0.5">
-                  <PipelineBadge status={order.pipelineStatus} size="sm" />
-                  {order.pipelineStatus === "needs_review" && order.reviewDeadline && (
-                    <CountdownBadge deadline={order.reviewDeadline} />
+                onClick={() => onRowClick?.(order.id)}
+              >
+                {hasSelection && (
+                  <TableCell
+                    className="text-center px-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => onToggle?.(order.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (e.shiftKey) {
+                          e.preventDefault();
+                          onRangeSelect?.(order.id);
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-silk accent-mint-deep cursor-pointer"
+                      aria-label={`Sélectionner commande ${order.externalRef ?? order.id}`}
+                    />
+                  </TableCell>
+                )}
+                <TableCell className="text-center">
+                  <ScoreBadge score={order.fraudScore} size="sm" />
+                </TableCell>
+                <TableCell className="max-w-[180px]">
+                  <p className="text-xs text-fog truncate">
+                    {order.scoreExplanation
+                      ? (() => {
+                          try {
+                            return JSON.parse(order.scoreExplanation).summary;
+                          } catch {
+                            return "\u2014";
+                          }
+                        })()
+                      : "\u2014"}
+                  </p>
+                </TableCell>
+                <TableCell>
+                  <div>
+                    <p className="font-medium text-midnight">
+                      {hl(order.customerName)}
+                    </p>
+                    {order.customerPhoneLast4 && (
+                      <p className="text-xs text-mist">
+                        ***{order.customerPhoneLast4}
+                      </p>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>{hl(order.shippingCity)}</TableCell>
+                <TableCell className="text-right font-mono">
+                  {formatDH(order.total)}
+                </TableCell>
+                <TableCell className="text-center">
+                  <DecisionBadge
+                    decision={order.overrideDecision ?? order.decision}
+                    size="sm"
+                  />
+                  {order.overrideDecision && (
+                    <span
+                      className="ml-1 text-[10px] text-mist"
+                      title="Override actif"
+                    >
+                      *
+                    </span>
                   )}
-                </div>
-              </TableCell>
-              <TableCell className="text-sm text-fog">
-                {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}
-              </TableCell>
-              <TableCell className="max-w-[160px] truncate text-sm text-fog">
-                {hl(order.productName)}
-              </TableCell>
-            </TableRow>
-          ))
+                </TableCell>
+                <TableCell className="text-center">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <PipelineBadge status={order.pipelineStatus} size="sm" />
+                    {order.pipelineStatus === "needs_review" &&
+                      order.reviewDeadline && (
+                        <CountdownBadge deadline={order.reviewDeadline} />
+                      )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm text-fog">
+                  {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}
+                </TableCell>
+                <TableCell className="max-w-[160px] truncate text-sm text-fog">
+                  {hl(order.productName)}
+                </TableCell>
+              </TableRow>
+            );
+          })
         )}
       </TableBody>
     </Table>

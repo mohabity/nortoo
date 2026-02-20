@@ -16,8 +16,12 @@ import {
 import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
 import { OrderCard } from "@/components/dashboard/order-card";
 import { OrderSlideOver } from "@/components/dashboard/order-slide-over";
+import { BulkActionBar } from "@/components/dashboard/bulk-action-bar";
+import { BulkConfirmModal } from "@/components/dashboard/bulk-confirm-modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
+import { useSelection } from "@/hooks/use-selection";
 
 // ── Types ──
 
@@ -60,8 +64,8 @@ const EMPTY_COUNTS: OrdersCounts = {
 
 const DECISION_PILLS = [
   { key: "all", label: "Toutes", activeClass: "bg-midnight text-white" },
-  { key: "ship", label: "Exp\u00E9dier", activeClass: "bg-mint text-white" },
-  { key: "verify", label: "V\u00E9rifier", activeClass: "bg-amber text-white" },
+  { key: "ship", label: "Expédier", activeClass: "bg-mint text-white" },
+  { key: "verify", label: "Vérifier", activeClass: "bg-amber text-white" },
   { key: "flag", label: "Signaler", activeClass: "bg-rose text-white" },
   { key: "block", label: "Bloquer", activeClass: "bg-violet text-white" },
 ] as const;
@@ -141,6 +145,26 @@ function OrdersContent() {
   const [searchInput, setSearchInput] = useState(currentSearch);
   const [exportLoading, setExportLoading] = useState(false);
 
+  // Toast
+  const { addToast } = useToast();
+
+  // Selection
+  const {
+    selectedIds,
+    isSelected,
+    toggle,
+    toggleAll,
+    rangeSelect,
+    clearSelection,
+    selectAllState,
+    selectionCount,
+    isSelectionMode,
+  } = useSelection(orders, 50);
+
+  // Bulk action state
+  const [bulkAction, setBulkAction] = useState<"SHIP" | "BLOCK" | null>(null);
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+
   // Search UI state
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -194,27 +218,44 @@ function OrdersContent() {
     setSearchInput(currentSearch);
   }, [currentSearch]);
 
-  // Keyboard shortcuts: Ctrl+K or / to focus search
+  // Keyboard shortcuts: Ctrl+K or / to focus search, Ctrl+A select all, Escape deselect
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(tag);
+
+      // Ctrl+A — select all (only when not in input)
+      if (e.key === "a" && (e.metaKey || e.ctrlKey) && !isInput) {
+        e.preventDefault();
+        toggleAll();
+        return;
+      }
+
+      // Escape — deselect first, then blur search
+      if (e.key === "Escape") {
+        if (selectionCount > 0) {
+          clearSelection();
+          return;
+        }
+        if (searchFocused) {
+          clearSearch();
+          searchInputRef.current?.blur();
+          return;
+        }
+      }
+
+      // Ctrl+K or / — focus search
       if (
         (e.key === "k" && (e.metaKey || e.ctrlKey)) ||
-        (e.key === "/" &&
-          !["INPUT", "TEXTAREA", "SELECT"].includes(
-            (e.target as HTMLElement).tagName
-          ))
+        (e.key === "/" && !isInput)
       ) {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
-      if (e.key === "Escape" && searchFocused) {
-        clearSearch();
-        searchInputRef.current?.blur();
-      }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [searchFocused]);
+  }, [searchFocused, selectionCount, toggleAll, clearSelection]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -233,6 +274,10 @@ function OrdersContent() {
   // ── URL helpers ──
 
   function setFilter(key: string, value: string) {
+    // Clear selection on filter/page change (not on slide-over open)
+    if (key !== "selected" && selectionCount > 0) {
+      clearSelection();
+    }
     const params = new URLSearchParams(searchParams.toString());
     if (value === "all" || value === "") {
       params.delete(key);
@@ -335,11 +380,77 @@ function OrdersContent() {
       a.click();
       window.URL.revokeObjectURL(url);
       if (res.headers.get("X-Truncated") === "true") {
-        alert("Export limit\u00E9 aux 10 000 premi\u00E8res commandes.");
+        alert("Export limité aux 10 000 premières commandes.");
       }
     } finally {
       setExportLoading(false);
     }
+  }
+
+  // ── Bulk override ──
+
+  async function handleBulkConfirm(reason: string) {
+    if (!bulkAction) return;
+    setBulkSubmitting(true);
+
+    const orderIds = Array.from(selectedIds);
+    try {
+      const res = await fetch("/api/orders/bulk-override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderIds, action: bulkAction, reason: reason || undefined }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        addToast({ type: "error", message: json.error ?? "Erreur lors de l'override" });
+        return;
+      }
+
+      const { processed, previousDecisions } = json.data;
+      const label = bulkAction === "SHIP" ? "expédiées" : "bloquées";
+
+      setBulkAction(null);
+      clearSelection();
+      fetchOrders();
+
+      addToast({
+        type: "success",
+        message: `${processed} commande${processed > 1 ? "s" : ""} ${label}`,
+        action: {
+          label: "Annuler",
+          onClick: () => handleBulkUndo(previousDecisions),
+        },
+      });
+    } catch {
+      addToast({ type: "error", message: "Erreur réseau" });
+    } finally {
+      setBulkSubmitting(false);
+    }
+  }
+
+  async function handleBulkUndo(
+    previousDecisions: { orderId: number; previousDecision: string }[]
+  ) {
+    // Undo by restoring each order to its previous decision
+    for (const { orderId, previousDecision } of previousDecisions) {
+      const action = previousDecision === "block" ? "BLOCK" : "SHIP";
+      try {
+        await fetch("/api/orders/bulk-override", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderIds: [orderId],
+            action,
+            reason: "Annulation de l'override en masse",
+          }),
+        });
+      } catch {
+        // Best effort
+      }
+    }
+    fetchOrders();
+    addToast({ type: "info", message: "Override annulé" });
   }
 
   // Mobile search
@@ -600,6 +711,11 @@ function OrdersContent() {
                 orders={orders}
                 onRowClick={handleRowClick}
                 searchQuery={currentSearch}
+                selectedIds={selectedIds}
+                onToggle={toggle}
+                onToggleAll={toggleAll}
+                onRangeSelect={rangeSelect}
+                selectAllState={selectAllState}
               />
             </CardContent>
           </Card>
@@ -610,8 +726,12 @@ function OrdersContent() {
               <OrderCard
                 key={order.id}
                 order={order}
-                onClick={handleRowClick}
+                onClick={isSelectionMode ? () => toggle(order.id) : () => handleRowClick(order.id)}
                 searchQuery={currentSearch}
+                isSelected={isSelected(order.id)}
+                isSelectionMode={isSelectionMode}
+                onToggle={toggle}
+                onLongPress={toggle}
               />
             ))}
           </div>
@@ -649,6 +769,27 @@ function OrdersContent() {
           </div>
         </div>
       )}
+
+      {/* ── Bulk action bar ── */}
+      {selectionCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectionCount}
+          maxExceeded={selectionCount > 50}
+          onForceShip={() => setBulkAction("SHIP")}
+          onForceBlock={() => setBulkAction("BLOCK")}
+          onClear={clearSelection}
+        />
+      )}
+
+      {/* ── Bulk confirm modal ── */}
+      <BulkConfirmModal
+        open={bulkAction !== null}
+        onOpenChange={(o) => { if (!o) setBulkAction(null); }}
+        action={bulkAction ?? "SHIP"}
+        selectedOrders={orders.filter((o) => selectedIds.has(o.id))}
+        onConfirm={handleBulkConfirm}
+        isSubmitting={bulkSubmitting}
+      />
 
       {/* ── Slide-over ── */}
       <OrderSlideOver
