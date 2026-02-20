@@ -105,49 +105,98 @@ export async function GET(request: NextRequest) {
     }
 
     // ── 3. Upsert merchant ──
-    const [existingMerchant] = await db
-      .select()
-      .from(merchants)
-      .where(eq(merchants.youcanStoreId, storeId))
-      .limit(1);
+    // Priority:
+    //   a) If user is already authenticated (Auth.js or cookie) → link store to their account
+    //   b) If a merchant already has this YouCan store ID → update their token
+    //   c) Otherwise → create a new merchant
+    let merchantId!: number;
+    let apiKey!: string;
+    let isNewMerchant = false;
 
-    let merchantId: number;
-    let apiKey: string;
+    // a) Check if user is already authenticated
+    const { getMerchantId, DEMO_MERCHANT_ID } = await import("@/lib/merchant");
+    let currentMerchantId: number | null = null;
+    try {
+      const resolvedId = await getMerchantId();
+      if (resolvedId !== DEMO_MERCHANT_ID) {
+        currentMerchantId = resolvedId;
+      }
+    } catch {
+      // Not authenticated — that's fine
+    }
 
-    if (existingMerchant) {
-      // Update existing merchant with new token
-      merchantId = existingMerchant.id;
-      apiKey = existingMerchant.apiKey!;
+    if (currentMerchantId) {
+      // User is logged in — link YouCan store to their existing account
+      const [currentMerchant] = await db
+        .select()
+        .from(merchants)
+        .where(eq(merchants.id, currentMerchantId))
+        .limit(1);
 
-      await db
-        .update(merchants)
-        .set({
-          youcanAccessToken: accessToken,
-          name: storeName,
-          email: storeEmail || existingMerchant.email,
-          domain: storeDomain || existingMerchant.domain,
-          updatedAt: new Date(),
-        })
-        .where(eq(merchants.id, merchantId));
-    } else {
-      // Create new merchant
-      apiKey = generateApiKey();
+      if (currentMerchant) {
+        merchantId = currentMerchant.id;
+        apiKey = currentMerchant.apiKey || generateApiKey();
 
-      const [newMerchant] = await db
-        .insert(merchants)
-        .values({
-          name: storeName,
-          email: storeEmail || "unknown@youcan.shop",
-          domain: storeDomain,
-          youcanStoreId: storeId,
-          youcanAccessToken: accessToken,
-          apiKey,
-          plan: "trial",
-          consentRecordedAt: new Date(),
-        })
-        .returning({ id: merchants.id });
+        await db
+          .update(merchants)
+          .set({
+            youcanStoreId: storeId,
+            youcanAccessToken: accessToken,
+            domain: storeDomain || currentMerchant.domain,
+            apiKey,
+            consentRecordedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(merchants.id, merchantId));
+      } else {
+        // Shouldn't happen, but fallback to store ID lookup
+        currentMerchantId = null;
+      }
+    }
 
-      merchantId = newMerchant.id;
+    if (!currentMerchantId) {
+      // b) Not authenticated — look up by YouCan store ID
+      const [existingMerchant] = await db
+        .select()
+        .from(merchants)
+        .where(eq(merchants.youcanStoreId, storeId))
+        .limit(1);
+
+      if (existingMerchant) {
+        merchantId = existingMerchant.id;
+        apiKey = existingMerchant.apiKey!;
+
+        await db
+          .update(merchants)
+          .set({
+            youcanAccessToken: accessToken,
+            name: storeName,
+            email: storeEmail || existingMerchant.email,
+            domain: storeDomain || existingMerchant.domain,
+            updatedAt: new Date(),
+          })
+          .where(eq(merchants.id, merchantId));
+      } else {
+        // c) Create new merchant
+        isNewMerchant = true;
+        apiKey = generateApiKey();
+
+        const [newMerchant] = await db
+          .insert(merchants)
+          .values({
+            name: storeName,
+            email: storeEmail || "unknown@youcan.shop",
+            domain: storeDomain,
+            youcanStoreId: storeId,
+            youcanAccessToken: accessToken,
+            apiKey,
+            plan: "trial",
+            consentRecordedAt: new Date(),
+          })
+          .returning({ id: merchants.id });
+
+        merchantId = newMerchant.id;
+      }
     }
 
     // ── 4. Subscribe to order.create webhook on YouCan ──
@@ -192,7 +241,7 @@ export async function GET(request: NextRequest) {
         storeId,
         storeName,
         storeDomain,
-        isNewMerchant: !existingMerchant,
+        isNewMerchant,
         webhookConfigured: webhookOk,
       }),
     });
