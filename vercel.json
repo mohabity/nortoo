@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/cron/escalate",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }
