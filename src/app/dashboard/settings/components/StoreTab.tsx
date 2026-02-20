@@ -74,7 +74,7 @@ type PingStatus = "idle" | "loading" | "ok" | "expired" | "unreachable" | "no_to
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "\u00C0 l'instant";
+  if (minutes < 1) return "À l'instant";
   if (minutes < 60) return `Il y a ${minutes} min`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `Il y a ${hours}h`;
@@ -91,8 +91,8 @@ function webhookFreshness(dateStr: string | null): "ok" | "warning" | "critical"
 }
 
 const DECISION_LABELS: Record<string, string> = {
-  ship: "Exp\u00E9dier",
-  verify: "V\u00E9rifier",
+  ship: "Expédier",
+  verify: "Vérifier",
   flag: "Signaler",
   block: "Bloquer",
 };
@@ -169,7 +169,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
     setDisconnecting(true);
     try {
       await new Promise((r) => setTimeout(r, 500));
-      onToast("info", "Fonctionnalit\u00E9 bient\u00F4t disponible");
+      onToast("info", "Fonctionnalité bientôt disponible");
     } finally {
       setDisconnecting(false);
       setShowDisconnectModal(false);
@@ -201,7 +201,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
       }, 10_000);
     } catch {
       setTestState("error");
-      setTestError("Erreur r\u00E9seau. V\u00E9rifiez votre connexion.");
+      setTestError("Erreur réseau. Vérifiez votre connexion.");
     }
   }
 
@@ -231,12 +231,12 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
               <div>
                 <CardTitle className="text-base">YouCan</CardTitle>
                 <CardDescription>
-                  Connexion \u00E0 votre boutique YouCan
+                  Connexion à votre boutique YouCan
                 </CardDescription>
               </div>
             </div>
             <Badge variant={isConnected ? "mint" : "default"}>
-              {isConnected ? "Connect\u00E9e" : "Non connect\u00E9e"}
+              {isConnected ? "Connectée" : "Non connectée"}
             </Badge>
           </div>
         </CardHeader>
@@ -260,7 +260,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                 {connectedDate && (
                   <div className="flex items-center justify-between px-4 py-3">
                     <span className="text-sm text-fog">
-                      Connect\u00E9e depuis
+                      Connectée depuis
                     </span>
                     <span className="text-sm text-slate">{connectedDate}</span>
                   </div>
@@ -289,7 +289,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                 <Dialog.Trigger asChild>
                   <Button variant="outline" size="sm" className="text-rose">
                     <Unplug className="mr-2 h-3.5 w-3.5" />
-                    D\u00E9connecter la boutique
+                    Déconnecter la boutique
                   </Button>
                 </Dialog.Trigger>
                 <Dialog.Portal>
@@ -300,12 +300,12 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                         <AlertTriangle className="h-5 w-5 text-rose" />
                       </div>
                       <Dialog.Title className="font-display font-semibold text-midnight text-lg">
-                        D\u00E9connecter YouCan ?
+                        Déconnecter YouCan ?
                       </Dialog.Title>
                     </div>
                     <Dialog.Description className="text-sm text-fog mb-6">
-                      Voulez-vous vraiment d\u00E9connecter votre boutique YouCan ?
-                      Les nouveaux webhooks ne seront plus re\u00E7us et le scoring
+                      Voulez-vous vraiment déconnecter votre boutique YouCan ?
+                      Les nouveaux webhooks ne seront plus reçus et le scoring
                       automatique sera interrompu.
                     </Dialog.Description>
                     <div className="flex justify-end gap-3">
@@ -320,7 +320,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                         {disconnecting && (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
-                        D\u00E9connecter
+                        Déconnecter
                       </Button>
                     </div>
                   </Dialog.Content>
@@ -354,7 +354,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
               <div>
                 <CardTitle className="text-base">Webhook</CardTitle>
                 <CardDescription>
-                  Statut de r\u00E9ception des commandes
+                  Statut de réception des commandes
                 </CardDescription>
               </div>
             </div>
@@ -394,7 +394,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   ? "Chargement..."
                   : diagnostics?.lastRealWebhookAt
                     ? timeAgo(diagnostics.lastRealWebhookAt)
-                    : "Aucun re\u00E7u"}
+                    : "Aucun reçu"}
               </p>
             </div>
           )}
@@ -410,7 +410,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
               <div>
                 <CardTitle className="text-base">Test de connexion</CardTitle>
                 <CardDescription>
-                  Envoyez une commande test pour v\u00E9rifier le scoring
+                  Envoyez une commande test pour vérifier le scoring
                 </CardDescription>
               </div>
             </div>
@@ -441,13 +441,13 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-mint-deep" />
                   <p className="text-sm font-semibold text-mint-deep">
-                    Test r\u00E9ussi en {testResult.durationMs}ms
+                    Test réussi en {testResult.durationMs}ms
                   </p>
                 </div>
 
                 <div className="rounded-sm border border-silk bg-white divide-y divide-silk">
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">R\u00E9f\u00E9rence</span>
+                    <span className="text-xs text-fog">Référence</span>
                     <span className="text-xs font-mono font-medium text-midnight">
                       {testResult.testOrder.ref}
                     </span>
@@ -459,7 +459,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                     </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">D\u00E9cision</span>
+                    <span className="text-xs text-fog">Décision</span>
                     <span className={cn(
                       "text-xs font-medium px-2 py-0.5 rounded",
                       DECISION_COLORS[testResult.decision] || "text-slate bg-snow"
@@ -509,14 +509,14 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
               <div className="rounded-sm border border-rose bg-rose-bg/30 p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-rose" />
-                  <p className="text-sm font-semibold text-rose">\u00C9chec du test</p>
+                  <p className="text-sm font-semibold text-rose">Échec du test</p>
                 </div>
                 <p className="text-sm text-fog">{testError}</p>
                 <div className="text-xs text-fog space-y-1">
                   <p>Suggestions :</p>
                   <ul className="list-disc pl-4 space-y-0.5">
-                    <li>V\u00E9rifiez que votre cl\u00E9 API est configur\u00E9e</li>
-                    <li>V\u00E9rifiez votre connexion internet</li>
+                    <li>Vérifiez que votre clé API est configurée</li>
+                    <li>Vérifiez votre connexion internet</li>
                     <li>Limite : 5 tests par heure</li>
                   </ul>
                 </div>
@@ -526,7 +526,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   onClick={handleTestWebhook}
                 >
                   <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                  R\u00E9essayer
+                  Réessayer
                 </Button>
               </div>
             )}
@@ -543,7 +543,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
               <div>
                 <CardTitle className="text-base">Diagnostics</CardTitle>
                 <CardDescription>
-                  \u00C9tat de votre connexion webhook
+                  État de votre connexion webhook
                 </CardDescription>
               </div>
             </div>
@@ -564,7 +564,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                     ) : (
                       <XCircle className="h-4 w-4 text-rose" />
                     )}
-                    <span className="text-sm text-slate">Boutique connect\u00E9e</span>
+                    <span className="text-sm text-slate">Boutique connectée</span>
                   </div>
                   <span className="text-sm text-fog">
                     {diagnostics.storeConnected ? diagnostics.storeName : "Non"}
@@ -579,10 +579,10 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                     ) : (
                       <XCircle className="h-4 w-4 text-rose" />
                     )}
-                    <span className="text-sm text-slate">Cl\u00E9 API</span>
+                    <span className="text-sm text-slate">Clé API</span>
                   </div>
                   <span className="text-sm text-fog">
-                    {diagnostics.hasApiKey ? "Configur\u00E9e" : "Absente"}
+                    {diagnostics.hasApiKey ? "Configurée" : "Absente"}
                   </span>
                 </div>
 
@@ -595,7 +595,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                       if (freshness === "warning") return <Clock className="h-4 w-4 text-amber-500" />;
                       return <XCircle className="h-4 w-4 text-rose" />;
                     })()}
-                    <span className="text-sm text-slate">Dernier webhook re\u00E7u</span>
+                    <span className="text-sm text-slate">Dernier webhook reçu</span>
                   </div>
                   <span className={cn(
                     "text-sm",
@@ -632,7 +632,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                       </span>
                     )}
                     {pingStatus === "expired" && (
-                      <span className="text-sm text-rose font-medium">Expir\u00E9</span>
+                      <span className="text-sm text-rose font-medium">Expiré</span>
                     )}
                     {pingStatus === "unreachable" && (
                       <span className="text-sm text-rose font-medium">Injoignable</span>
@@ -647,7 +647,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                         onClick={handlePing}
                         className="h-7 text-xs"
                       >
-                        V\u00E9rifier
+                        Vérifier
                       </Button>
                     )}
                   </div>
@@ -661,13 +661,13 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             {diagnostics && (
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-sm bg-snow px-3 py-2">
-                  <p className="text-xs text-fog">Total re\u00E7us</p>
+                  <p className="text-xs text-fog">Total reçus</p>
                   <p className="text-sm font-mono font-semibold text-midnight">
                     {diagnostics.totalWebhooksReceived}
                   </p>
                 </div>
                 <div className="rounded-sm bg-snow px-3 py-2">
-                  <p className="text-xs text-fog">Derni\u00E8res 24h</p>
+                  <p className="text-xs text-fog">Dernières 24h</p>
                   <p className="text-sm font-mono font-semibold text-midnight">
                     {diagnostics.totalWebhooksLast24h}
                   </p>
@@ -694,7 +694,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             <div>
               <CardTitle className="text-base">Autres plateformes</CardTitle>
               <CardDescription>
-                Int\u00E9grations \u00E0 venir
+                Intégrations à venir
               </CardDescription>
             </div>
           </div>
@@ -714,7 +714,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   <p className="text-xs text-mist">E-commerce international</p>
                 </div>
               </div>
-              <Badge>Bient\u00F4t</Badge>
+              <Badge>Bientôt</Badge>
             </div>
             <div className={cn(
               "flex items-center justify-between rounded-sm border border-silk p-4",
@@ -729,7 +729,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   <p className="text-xs text-mist">WordPress e-commerce</p>
                 </div>
               </div>
-              <Badge>Bient\u00F4t</Badge>
+              <Badge>Bientôt</Badge>
             </div>
           </div>
         </CardContent>

@@ -55,14 +55,14 @@ export function QuickStartChecklist() {
   if (!data.completed || data.realOrderCount >= 10) return null;
 
   const items: CheckItem[] = [
-    { label: "Boutique connect\u00E9e", done: data.storeConnected },
-    { label: "Scoring configur\u00E9", done: data.scoringConfigured },
-    { label: "Commande test envoy\u00E9e", done: data.testOrderSent },
+    { label: "Boutique connectée", done: data.storeConnected },
+    { label: "Scoring configuré", done: data.scoringConfigured },
+    { label: "Commande test envoyée", done: data.testOrderSent },
     {
-      label: "Recevoir votre premi\u00E8re vraie commande",
+      label: "Recevoir votre première vraie commande",
       done: data.realOrderCount > 0,
       pending:
-        "En attente... Les commandes COD seront scor\u00E9es automatiquement d\u00E8s qu\u2019un client passe commande.",
+        "En attente... Les commandes COD seront scorées automatiquement dès qu'un client passe commande.",
     },
   ];
 
@@ -92,11 +92,11 @@ export function QuickStartChecklist() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Rocket className="h-4 w-4 text-mint-deep" />
-            <CardTitle className="text-sm">D\u00E9marrage rapide</CardTitle>
+            <CardTitle className="text-sm">Démarrage rapide</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium bg-mint-bg text-mint-deep px-2 py-0.5 rounded-full">
-              {completedCount}/{items.length} compl\u00E9t\u00E9
+              {completedCount}/{items.length} complété
             </span>
             <button
               onClick={handleDismiss}

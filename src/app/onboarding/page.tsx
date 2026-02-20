@@ -52,36 +52,36 @@ const PRESETS: {
 }[] = [
   {
     key: "permissive",
-    emoji: "\uD83D\uDFE2",
+    emoji: "🟢",
     label: "Permissif",
     description:
-      "Laisser passer un maximum de commandes. Id\u00E9al si vous avez peu de retours.",
-    thresholds: "Exp\u00E9dier < 45 \u00B7 Bloquer > 95",
+      "Laisser passer un maximum de commandes. Idéal si vous avez peu de retours.",
+    thresholds: "Expédier < 45 · Bloquer > 95",
   },
   {
     key: "balanced",
-    emoji: "\uD83D\uDFE1",
-    label: "\u00C9quilibr\u00E9",
+    emoji: "🟡",
+    label: "Équilibré",
     recommended: true,
     description:
-      "Bon compromis entre ventes et protection. Id\u00E9al pour la plupart des boutiques.",
-    thresholds: "Exp\u00E9dier < 31 \u00B7 Bloquer > 86",
+      "Bon compromis entre ventes et protection. Idéal pour la plupart des boutiques.",
+    thresholds: "Expédier < 31 · Bloquer > 86",
   },
   {
     key: "conservative",
-    emoji: "\uD83D\uDD34",
+    emoji: "🔴",
     label: "Strict",
     description:
-      "Filtrer agressivement les commandes. Id\u00E9al si vous avez un taux de retour \u00E9lev\u00E9.",
-    thresholds: "Exp\u00E9dier < 25 \u00B7 Bloquer > 75",
+      "Filtrer agressivement les commandes. Idéal si vous avez un taux de retour élevé.",
+    thresholds: "Expédier < 25 · Bloquer > 75",
   },
 ];
 
 const STEP_COUNT = 5;
 
 const DECISION_LABELS: Record<string, string> = {
-  ship: "Exp\u00E9dier",
-  verify: "V\u00E9rifier",
+  ship: "Expédier",
+  verify: "Vérifier",
   flag: "Signaler",
   block: "Bloquer",
 };
@@ -253,7 +253,7 @@ function OnboardingWizard() {
       clearTimeout(t1);
       clearTimeout(t2);
       setTestState("error");
-      setTestError("Erreur r\u00E9seau. V\u00E9rifiez votre connexion.");
+      setTestError("Erreur réseau. Vérifiez votre connexion.");
     }
   }
 
@@ -329,7 +329,7 @@ function OnboardingWizard() {
 
         {/* Step counter */}
         <p className="mb-4 text-center font-mono text-[0.55rem] text-mist uppercase tracking-wider">
-          \u00C9tape {step}/{STEP_COUNT}
+          Étape {step}/{STEP_COUNT}
         </p>
 
         {/* Card body */}
@@ -386,13 +386,13 @@ function OnboardingWizard() {
             onClick={handleSkipAll}
             className="text-xs text-mist hover:text-fog transition-colors"
           >
-            Passer la configuration \u2192
+            {"Passer la configuration →"}
           </button>
         </div>
 
         {/* Footer */}
         <p className="mt-6 text-center text-[11px] text-mist">
-          Donn\u00E9es h\u00E9berg\u00E9es en \uD83C\uDDEA\uD83C\uDDFA Frankfurt — Conforme Loi 09-08
+          {"Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08"}
         </p>
       </div>
     </div>
@@ -406,22 +406,22 @@ function OnboardingWizard() {
 function StepWelcome({ name, onNext }: { name: string; onNext: () => void }) {
   return (
     <div className="text-center space-y-5">
-      <div className="text-5xl">{"\uD83C\uDFAF"}</div>
+      <div className="text-5xl">{"🎯"}</div>
       <div>
         <h2 className="font-display text-xl sm:text-[1.4rem] font-bold text-midnight">
           Bienvenue sur Siift{name ? `, ${name}` : ""} !
         </h2>
         <p className="mt-2 text-sm text-fog">
-          Scorez vos commandes COD en temps r\u00E9el et r\u00E9duisez vos retours de 40%.
+          Scorez vos commandes COD en temps réel et réduisez vos retours de 40%.
         </p>
       </div>
 
       {/* Mini features */}
       <div className="flex flex-wrap justify-center gap-2">
         {[
-          { emoji: "\uD83D\uDD0D", label: "Score instantan\u00E9" },
-          { emoji: "\uD83D\uDCCA", label: "Dashboard live" },
-          { emoji: "\uD83D\uDEE1\uFE0F", label: "Anti-fraude auto" },
+          { emoji: "🔍", label: "Score instantané" },
+          { emoji: "📊", label: "Dashboard live" },
+          { emoji: "🛡️", label: "Anti-fraude auto" },
         ].map((f) => (
           <div
             key={f.label}
@@ -474,7 +474,7 @@ function StepConnectStore({
       <div className="text-center space-y-4 py-4">
         <CheckCircle2 className="h-12 w-12 text-mint-deep mx-auto" />
         <h2 className="font-display text-lg font-bold text-mint-deep">
-          Boutique connect\u00E9e !
+          Boutique connectée !
         </h2>
         <p className="text-sm text-fog">Redirection en cours...</p>
       </div>
@@ -483,13 +483,13 @@ function StepConnectStore({
 
   return (
     <div className="text-center space-y-5">
-      <div className="text-5xl">{"\uD83C\uDFEA"}</div>
+      <div className="text-5xl">{"🏪"}</div>
       <div>
         <h2 className="font-display text-xl font-bold text-midnight">
           Connectez votre boutique YouCan
         </h2>
         <p className="mt-2 text-sm text-fog">
-          Siift s&apos;installe automatiquement. Vos commandes COD seront scor\u00E9es en temps r\u00E9el.
+          Siift s&apos;installe automatiquement. Vos commandes COD seront scorées en temps réel.
         </p>
       </div>
 
@@ -505,11 +505,11 @@ function StepConnectStore({
         <p className="text-xs text-fog">
           Pas de boutique YouCan ?{" "}
           <button onClick={onNext} className="text-ocean hover:underline">
-            Int\u00E9gration manuelle via API \u2192
+            {"Intégration manuelle via API →"}
           </button>
         </p>
         <p className="font-mono text-[0.55rem] text-mist">
-          {"\uD83D\uDD12"} Connexion s\u00E9curis\u00E9e OAuth — Siift ne stocke pas vos identifiants YouCan
+          {"🔒 Connexion sécurisée OAuth — Siift ne stocke pas vos identifiants YouCan"}
         </p>
       </div>
     </div>
@@ -534,12 +534,12 @@ function StepConfigureScoring({
   return (
     <div className="space-y-5">
       <div className="text-center">
-        <div className="text-5xl mb-3">{"\u2699\uFE0F"}</div>
+        <div className="text-5xl mb-3">{"⚙️"}</div>
         <h2 className="font-display text-xl font-bold text-midnight">
           Choisissez votre niveau de filtrage
         </h2>
         <p className="mt-2 text-sm text-fog">
-          Comment voulez-vous traiter les commandes \u00E0 risque ?
+          Comment voulez-vous traiter les commandes à risque ?
         </p>
       </div>
 
@@ -566,7 +566,7 @@ function StepConfigureScoring({
                     </span>
                     {p.recommended && (
                       <span className="text-[10px] font-medium bg-mint-bg text-mint-deep px-1.5 py-0.5 rounded">
-                        recommand\u00E9
+                        recommandé
                       </span>
                     )}
                   </div>
@@ -592,7 +592,7 @@ function StepConfigureScoring({
           Continuer <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
         <button onClick={onSkip} className="text-xs text-mist hover:text-fog block mx-auto">
-          Garder les r\u00E9glages par d\u00E9faut \u2192
+          {"Garder les réglages par défaut →"}
         </button>
       </div>
     </div>
@@ -621,22 +621,22 @@ function StepTestWebhook({
   onSkip: () => void;
 }) {
   const phases = [
-    "Commande envoy\u00E9e",
-    testResult ? `Score calcul\u00E9 : ${testResult.score}/100` : "Score en cours...",
+    "Commande envoyée",
+    testResult ? `Score calculé : ${testResult.score}/100` : "Score en cours...",
     testResult
-      ? `D\u00E9cision : ${DECISION_LABELS[testResult.decision] || testResult.decision}`
-      : "D\u00E9cision en cours...",
+      ? `Décision : ${DECISION_LABELS[testResult.decision] || testResult.decision}`
+      : "Décision en cours...",
   ];
 
   return (
     <div className="space-y-5">
       <div className="text-center">
-        <div className="text-5xl mb-3">{"\uD83E\uDDEA"}</div>
+        <div className="text-5xl mb-3">{"🧪"}</div>
         <h2 className="font-display text-xl font-bold text-midnight">
           Testez la connexion
         </h2>
         <p className="mt-2 text-sm text-fog">
-          On envoie une fausse commande pour v\u00E9rifier que tout fonctionne.
+          On envoie une fausse commande pour vérifier que tout fonctionne.
         </p>
       </div>
 
@@ -647,7 +647,7 @@ function StepTestWebhook({
             onClick={onTest}
             className="w-full max-w-[320px] bg-mint hover:bg-mint-deep text-midnight font-semibold py-5"
           >
-            Envoyer une commande test {"\uD83D\uDE80"}
+            {"Envoyer une commande test 🚀"}
           </Button>
         </div>
       )}
@@ -683,7 +683,7 @@ function StepTestWebhook({
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-mint-deep" />
               <span className="text-sm font-semibold text-mint-deep">
-                Test r\u00E9ussi en {testResult.durationMs}ms
+                Test réussi en {testResult.durationMs}ms
               </span>
             </div>
 
@@ -703,11 +703,11 @@ function StepTestWebhook({
                     DECISION_COLORS[testResult.decision] || "text-slate"
                   )}
                 >
-                  {"\u2705"} {DECISION_LABELS[testResult.decision] || testResult.decision}
+                  {"✅"} {DECISION_LABELS[testResult.decision] || testResult.decision}
                 </span>
               </div>
               <p className="text-xs text-fog">
-                Client: {testResult.testOrder.customer} \u00B7{" "}
+                Client: {testResult.testOrder.customer} ·{" "}
                 {testResult.testOrder.city}
               </p>
               <p className="text-xs text-fog">
@@ -734,7 +734,7 @@ function StepTestWebhook({
             <div className="flex items-center gap-2 mb-2">
               <XCircle className="h-5 w-5 text-rose" />
               <span className="text-sm font-semibold text-rose">
-                La connexion a \u00E9chou\u00E9
+                La connexion a échoué
               </span>
             </div>
             <p className="text-xs text-fog">{testError}</p>
@@ -742,7 +742,7 @@ function StepTestWebhook({
           <div className="text-center">
             <Button onClick={onTest} variant="outline" className="w-full max-w-[320px]">
               <RefreshCw className="mr-2 h-4 w-4" />
-              R\u00E9essayer
+              Réessayer
             </Button>
           </div>
         </div>
@@ -752,7 +752,7 @@ function StepTestWebhook({
       {(testState === "idle" || testState === "error") && (
         <div className="text-center">
           <button onClick={onSkip} className="text-xs text-mist hover:text-fog">
-            Passer cette \u00E9tape \u2192
+            {"Passer cette étape →"}
           </button>
         </div>
       )}
@@ -767,25 +767,25 @@ function StepTestWebhook({
 function StepDashboardReady({ onFinish }: { onFinish: () => void }) {
   return (
     <div className="text-center space-y-5">
-      <div className="text-5xl">{"\uD83C\uDF89"}</div>
+      <div className="text-5xl">{"🎉"}</div>
       <div>
         <h2 className="font-display text-xl font-bold text-midnight">
-          Votre dashboard est pr\u00EAt !
+          Votre dashboard est prêt !
         </h2>
         <p className="mt-2 text-sm text-fog">
-          La prochaine commande COD de votre boutique sera scor\u00E9e automatiquement.
+          La prochaine commande COD de votre boutique sera scorée automatiquement.
         </p>
       </div>
 
       {/* Tips */}
       <div className="text-left space-y-3 rounded-lg bg-snow border border-silk p-4">
         {[
-          "Chaque commande est scor\u00E9e de 0 (safe) \u00E0 100 (risque maximum)",
-          "Les commandes \u00E0 risque sont signal\u00E9es avec une notification",
-          "Vous pouvez override n\u2019importe quelle d\u00E9cision manuellement",
+          "Chaque commande est scorée de 0 (safe) à 100 (risque maximum)",
+          "Les commandes à risque sont signalées avec une notification",
+          "Vous pouvez override n'importe quelle décision manuellement",
         ].map((tip, i) => (
           <div key={i} className="flex items-start gap-2.5">
-            <span className="text-sm shrink-0">{"\uD83D\uDCA1"}</span>
+            <span className="text-sm shrink-0">{"💡"}</span>
             <p className="text-[0.82rem] text-slate">{tip}</p>
           </div>
         ))}
@@ -802,7 +802,7 @@ function StepDashboardReady({ onFinish }: { onFinish: () => void }) {
           href="/dashboard/settings"
           className="inline-block text-xs text-mist hover:text-fog"
         >
-          Personnaliser mes r\u00E9glages
+          Personnaliser mes réglages
         </a>
       </div>
     </div>
