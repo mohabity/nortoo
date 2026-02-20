@@ -16,15 +16,14 @@ export function ConnectStoreBanner({
   const [dismissed, setDismissed] = useState(true); // Start hidden to avoid flash
 
   useEffect(() => {
-    // Check sessionStorage only on client
-    const wasDismissed = sessionStorage.getItem(STORAGE_KEY) === "true";
+    const wasDismissed = localStorage.getItem(STORAGE_KEY) === "true";
     setDismissed(wasDismissed);
   }, []);
 
   if (isStoreConnected || dismissed) return null;
 
   function handleDismiss() {
-    sessionStorage.setItem(STORAGE_KEY, "true");
+    localStorage.setItem(STORAGE_KEY, "true");
     setDismissed(true);
   }
 
