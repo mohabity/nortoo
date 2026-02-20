@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractApiKey, validateApiKey } from "@/lib/api-key";
-import { processIncomingOrder } from "@/lib/ingest";
+import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
 
 /**
- * Universal ingest payload schema.
- * Works with any source: YouCan, Shopify, WooCommerce, or custom.
+ * Universal ingest payload schema — quick validation before enqueue.
  */
 const ingestSchema = z.object({
   ref: z.string().min(1, "ref is required"),
@@ -30,81 +29,88 @@ const ingestSchema = z.object({
  * POST /api/webhook/ingest
  * Universal order ingestion endpoint.
  * Auth: x-codpilot-key header or ?key= query param.
- * Accepts a simplified JSON payload and runs the full scoring pipeline.
+ *
+ * New flow: Validate → Enqueue → 200 OK → process optimistically.
  */
 export async function POST(request: Request) {
-  // ── 1. Auth by API key ──
-  const apiKey = extractApiKey(request);
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "Missing API key. Set x-codpilot-key header or ?key= param." },
-      { status: 401 }
-    );
-  }
-
-  const merchant = await validateApiKey(apiKey);
-  if (!merchant) {
-    return NextResponse.json(
-      { error: "Invalid API key" },
-      { status: 401 }
-    );
-  }
-
-  // ── 2. Parse & validate payload ──
-  let body: unknown;
   try {
-    body = await request.json();
-  } catch {
+    // ── 1. Auth by API key ──
+    const apiKey = extractApiKey(request);
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Missing API key. Set x-codpilot-key header or ?key= param." },
+        { status: 401 }
+      );
+    }
+
+    const merchant = await validateApiKey(apiKey);
+    if (!merchant) {
+      return NextResponse.json(
+        { error: "Invalid API key" },
+        { status: 401 }
+      );
+    }
+
+    // ── 2. Parse & validate payload ──
+    let rawBody: string;
+    let body: unknown;
+    try {
+      rawBody = await request.text();
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON payload" },
+        { status: 400 }
+      );
+    }
+
+    const parsed = ingestSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "Validation error",
+          details: parsed.error.issues.map((i) => ({
+            path: i.path.join("."),
+            message: i.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
+    // ── 3. Enqueue webhook (fast INSERT) ──
+    const relevantHeaders = JSON.stringify({
+      "content-type": request.headers.get("content-type"),
+    });
+
+    const queueId = await enqueueWebhook({
+      merchantId: merchant.id,
+      source: "ingest",
+      payload: rawBody,
+      headers: relevantHeaders,
+    });
+
+    if (queueId === null) {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
+    // ── 4. Process immediately (optimistic) ──
+    try {
+      await processWebhook(queueId);
+    } catch (error) {
+      console.error(
+        `[Webhook Ingest] Immediate processing failed for queue ${queueId}, will retry:`,
+        error
+      );
+    }
+
+    // ── 5. Always return 200 ──
+    return NextResponse.json({ received: true, queueId });
+  } catch (error) {
+    console.error("[Webhook Ingest] Critical failure:", error);
     return NextResponse.json(
-      { error: "Invalid JSON payload" },
-      { status: 400 }
+      { error: "Internal error" },
+      { status: 500 }
     );
   }
-
-  const parsed = ingestSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: "Validation error",
-        details: parsed.error.issues.map((i) => ({
-          path: i.path.join("."),
-          message: i.message,
-        })),
-      },
-      { status: 400 }
-    );
-  }
-
-  const data = parsed.data;
-
-  // ── 3. Run shared pipeline ──
-  const shippingCity = data.shipping_city || data.customer.city || undefined;
-  const shippingAddress = data.shipping_address || data.customer.address || undefined;
-
-  const result = await processIncomingOrder({
-    merchantId: merchant.id,
-    merchant: {
-      verifyThreshold: merchant.verifyThreshold,
-      flagThreshold: merchant.flagThreshold,
-      blockThreshold: merchant.blockThreshold,
-      autoBlockEnabled: merchant.autoBlockEnabled,
-      dataRetentionMonths: merchant.dataRetentionMonths,
-    },
-    phone: data.customer.phone,
-    customerName: data.customer.name,
-    customerCity: data.customer.city,
-    ref: data.ref,
-    total: data.total,
-    currency: data.currency,
-    productName: data.product,
-    productId: data.product_id,
-    productCategory: data.product_category,
-    productPrice: data.product_price,
-    quantity: data.quantity,
-    shippingCity,
-    shippingAddress,
-    orderHour: new Date().getHours(),
-  });
-
-  return NextResponse.json({ data: result });
 }

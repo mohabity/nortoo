@@ -452,6 +452,43 @@ export const passwordResetTokens = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// WEBHOOK QUEUE — Retry queue for failed webhook processing
+// Stores raw payloads for retry. DB-backed queue (no Redis needed for beta).
+// ═══════════════════════════════════════════════════════════
+export const webhookQueue = pgTable(
+  "webhook_queue",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    source: text("source").notNull(), // "youcan" | "ingest"
+    payload: text("payload").notNull(), // Full JSON body
+    headers: text("headers"), // JSON of relevant headers
+    status: text("status").notNull().default("pending"), // pending | processing | completed | failed | dead
+    attempts: integer("attempts").notNull().default(0),
+    maxAttempts: integer("max_attempts").notNull().default(5),
+    lastAttemptAt: timestamp("last_attempt_at"),
+    nextRetryAt: timestamp("next_retry_at"),
+    errorMessage: text("error_message"),
+    errorStack: text("error_stack"),
+    completedAt: timestamp("completed_at"),
+    orderId: integer("order_id"), // ref to created order on success
+    payloadHash: text("payload_hash"), // SHA-256 for deduplication
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("webhook_queue_status_retry_idx").on(table.status, table.nextRetryAt),
+    index("webhook_queue_merchant_idx").on(table.merchantId),
+    index("webhook_queue_dedup_idx").on(
+      table.merchantId,
+      table.payloadHash,
+      table.createdAt
+    ),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
