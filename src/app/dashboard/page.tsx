@@ -116,10 +116,10 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Page title */}
       <div>
-        <h1 className="font-sora text-2xl font-bold text-ink-1">
+        <h1 className="font-display text-2xl font-bold text-midnight">
           Vue d&apos;ensemble
         </h1>
-        <p className="text-sm text-ink-3">
+        <p className="text-sm text-fog">
           Résumé de votre activité anti-fraude
         </p>
       </div>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
           change="-3 pts vs semaine passée"
           changeType="positive"
           icon={TrendingUp}
-          iconColor="text-sun"
+          iconColor="text-mint"
         />
         <KpiCard
           title="Taux de livraison"
@@ -171,28 +171,28 @@ export default function DashboardPage() {
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorCommandes" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#00E5A0" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#00E5A0" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#0EA5E9" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E7E0D8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 12, fill: "#78716C" }}
-                  axisLine={{ stroke: "#E7E0D8" }}
+                  tick={{ fontSize: 12, fill: "#64748B" }}
+                  axisLine={{ stroke: "#E2E8F0" }}
                 />
                 <YAxis
-                  tick={{ fontSize: 12, fill: "#78716C" }}
-                  axisLine={{ stroke: "#E7E0D8" }}
+                  tick={{ fontSize: 12, fill: "#64748B" }}
+                  axisLine={{ stroke: "#E2E8F0" }}
                 />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#fff",
-                    border: "1px solid #E7E0D8",
+                    border: "1px solid #E2E8F0",
                     borderRadius: "8px",
                     fontSize: "12px",
                   }}
@@ -200,7 +200,7 @@ export default function DashboardPage() {
                 <Area
                   type="monotone"
                   dataKey="commandes"
-                  stroke="#F59E0B"
+                  stroke="#00E5A0"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorCommandes)"
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                 <Area
                   type="monotone"
                   dataKey="score"
-                  stroke="#0EA5E9"
+                  stroke="#3B82F6"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorScore)"

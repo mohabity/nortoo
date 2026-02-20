@@ -11,7 +11,7 @@ export default function DashboardLayout({
 }) {
   return (
     <SessionProvider>
-      <div className="min-h-screen bg-cream">
+      <div className="min-h-screen bg-snow">
         <Sidebar />
         <div className="ml-64">
           <Header />

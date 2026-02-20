@@ -136,16 +136,16 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-ink-2">
-            CODPilot est conforme à la Loi 09-08 relative à la protection des
+          <p className="text-sm text-slate">
+            Siift est conforme à la Loi 09-08 relative à la protection des
             personnes physiques à l&apos;égard du traitement des données à
             caractère personnel.
           </p>
 
-          <div className="rounded-sm border border-border divide-y divide-border">
+          <div className="rounded-sm border border-silk divide-y divide-silk">
             {settings.cndpDeclarationRef && (
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-ink-3">
+                <span className="text-sm text-fog">
                   N° récépissé CNDP
                 </span>
                 <Badge variant="mint">{settings.cndpDeclarationRef}</Badge>
@@ -153,17 +153,17 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
             )}
             {connectedDate && (
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-ink-3">
+                <span className="text-sm text-fog">
                   Consentement enregistré le
                 </span>
-                <span className="text-sm text-ink-2">{connectedDate}</span>
+                <span className="text-sm text-slate">{connectedDate}</span>
               </div>
             )}
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-ink-3">
+              <span className="text-sm text-fog">
                 Durée de conservation
               </span>
-              <span className="text-sm font-medium text-ink-1">
+              <span className="text-sm font-medium text-midnight">
                 {settings.dataRetentionMonths} mois
               </span>
             </div>
@@ -194,22 +194,22 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
               return (
                 <div
                   key={right.title}
-                  className="flex items-start justify-between gap-4 rounded-sm border border-border p-4"
+                  className="flex items-start justify-between gap-4 rounded-sm border border-silk p-4"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-8 w-8 rounded-xs bg-sand flex items-center justify-center shrink-0">
-                      <Icon className="h-4 w-4 text-ink-3" />
+                    <div className="mt-0.5 h-8 w-8 rounded-xs bg-snow flex items-center justify-center shrink-0">
+                      <Icon className="h-4 w-4 text-fog" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-ink-1">
+                        <p className="text-sm font-medium text-midnight">
                           {right.title}
                         </p>
                         <Badge variant="ocean" className="text-[10px]">
                           {right.article}
                         </Badge>
                       </div>
-                      <p className="text-xs text-ink-3 mt-0.5">
+                      <p className="text-xs text-fog mt-0.5">
                         {right.description}
                       </p>
                     </div>
@@ -249,7 +249,7 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-ink-2">
+          <p className="text-sm text-slate">
             Les données personnelles liées aux commandes sont conservées pendant{" "}
             <span className="font-mono font-bold">
               {settings.dataRetentionMonths} mois
@@ -257,7 +257,7 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
             après la dernière commande, conformément à l&apos;Article 3e de la
             Loi 09-08.
           </p>
-          <p className="text-sm text-ink-3">
+          <p className="text-sm text-fog">
             Un processus automatique supprime les données expirées
             quotidiennement à 3h du matin. Les journaux d&apos;audit sont
             conservés 36 mois pour répondre aux obligations légales.
@@ -269,7 +269,7 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Server className="h-5 w-5 text-ink-3" />
+            <Server className="h-5 w-5 text-fog" />
             <div>
               <CardTitle className="text-base">
                 Sous-traitants (Art. 25)
@@ -284,41 +284,41 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="pb-2 text-left font-medium text-ink-3">
+                <tr className="border-b border-silk">
+                  <th className="pb-2 text-left font-medium text-fog">
                     Sous-traitant
                   </th>
-                  <th className="pb-2 text-left font-medium text-ink-3">
+                  <th className="pb-2 text-left font-medium text-fog">
                     Service
                   </th>
-                  <th className="pb-2 text-left font-medium text-ink-3">
+                  <th className="pb-2 text-left font-medium text-fog">
                     Localisation
                   </th>
-                  <th className="pb-2 text-left font-medium text-ink-3">
+                  <th className="pb-2 text-left font-medium text-fog">
                     Finalité
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-silk">
                 {SUB_PROCESSORS.map((sp) => (
                   <tr key={sp.name}>
-                    <td className="py-2.5 font-medium text-ink-1">
+                    <td className="py-2.5 font-medium text-midnight">
                       {sp.name}
                     </td>
-                    <td className="py-2.5 text-ink-2">{sp.service}</td>
+                    <td className="py-2.5 text-slate">{sp.service}</td>
                     <td className="py-2.5">
                       <Badge variant="mint" className="text-[10px]">
                         {sp.location}
                       </Badge>
                     </td>
-                    <td className="py-2.5 text-ink-3">{sp.purpose}</td>
+                    <td className="py-2.5 text-fog">{sp.purpose}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="mt-4 rounded-xs bg-sand/50 px-3 py-2">
-            <p className="text-xs text-ink-3">
+          <div className="mt-4 rounded-xs bg-snow px-3 py-2">
+            <p className="text-xs text-fog">
               Tous les sous-traitants sont localisés dans l&apos;Union
               Européenne conformément à l&apos;Article 43 de la Loi 09-08
               relatif aux transferts de données.

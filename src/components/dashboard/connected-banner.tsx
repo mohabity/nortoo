@@ -10,7 +10,7 @@ const DISMISS_KEY_WELCOME = "codpilot_dismiss_welcome";
 /**
  * Shows a success toast when ?connected=true or ?welcome=true is in the URL.
  * - connected=true: green mint banner (reconnect/link)
- * - welcome=true: warm sun banner (new account)
+ * - welcome=true: warm mint banner (new account)
  * Auto-dismisses after 6s / 10s. Persists dismiss in localStorage.
  */
 export function ConnectedBanner() {
@@ -53,29 +53,29 @@ export function ConnectedBanner() {
     <div
       className={`mx-6 mt-4 flex items-center gap-3 rounded-sm border px-4 py-3 shadow-sm animate-in slide-in-from-top-2 ${
         isWelcome
-          ? "border-sun/30 bg-sun-light"
-          : "border-mint/30 bg-mint-light"
+          ? "border-mint/30 bg-mint-bg"
+          : "border-mint/30 bg-mint-bg"
       }`}
     >
       {isWelcome ? (
-        <Rocket className="h-5 w-5 flex-shrink-0 text-sun-deep" />
+        <Rocket className="h-5 w-5 flex-shrink-0 text-mint-deep" />
       ) : (
         <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-mint-deep" />
       )}
       <p
         className={`flex-1 text-sm font-medium ${
-          isWelcome ? "text-sun-deep" : "text-mint-deep"
+          isWelcome ? "text-mint-deep" : "text-mint-deep"
         }`}
       >
         {isWelcome
-          ? "Bienvenue sur CODPilot ! Votre boutique est connectée et prête à scorer vos commandes COD."
+          ? "Bienvenue sur Siift ! Votre boutique est connectée et prête à scorer vos commandes COD."
           : "Boutique connectée avec succès ! Les commandes COD seront scorées automatiquement."}
       </p>
       <button
         onClick={() => dismiss(variant)}
         className={`rounded-xs p-1 transition-colors ${
           isWelcome
-            ? "text-sun-deep/60 hover:bg-sun/20 hover:text-sun-deep"
+            ? "text-mint-deep/60 hover:bg-mint/20 hover:text-mint-deep"
             : "text-mint-deep/60 hover:bg-mint/20 hover:text-mint-deep"
         }`}
         aria-label="Fermer"

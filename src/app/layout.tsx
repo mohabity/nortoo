@@ -1,28 +1,28 @@
 import type { Metadata } from "next";
-import { Sora, DM_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const sora = Sora({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-sora",
+  variable: "--f-display",
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--f-body",
   display: "swap",
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-ibm-plex-mono",
+  weight: ["400", "500", "600", "700"],
+  variable: "--f-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "CODPilot — Anti-Fraude RTO Intelligence",
+  title: "Siift — Anti-Fraude RTO Intelligence",
   description:
     "Scorez vos commandes COD en temps réel. Réduisez vos retours de 35% à 10%.",
 };
@@ -35,9 +35,9 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${sora.variable} ${dmSans.variable} ${ibmPlexMono.variable}`}
+      className={`${outfit.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="font-sans">{children}</body>
+      <body className="font-body">{children}</body>
     </html>
   );
 }

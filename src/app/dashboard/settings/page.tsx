@@ -48,14 +48,14 @@ function ToastItem({
       className={cn(
         "flex items-center gap-3 rounded-sm border bg-white px-4 py-3 shadow-lg animate-in slide-in-from-right-5",
         toast.type === "success" && "border-l-4 border-l-mint",
-        toast.type === "error" && "border-l-4 border-l-coral",
+        toast.type === "error" && "border-l-4 border-l-rose",
         toast.type === "info" && "border-l-4 border-l-ocean"
       )}
     >
-      <p className="text-sm text-ink-2 flex-1">{toast.message}</p>
+      <p className="text-sm text-slate flex-1">{toast.message}</p>
       <button
         onClick={() => onDismiss(toast.id)}
-        className="text-ink-4 hover:text-ink-2"
+        className="text-mist hover:text-slate"
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -106,8 +106,8 @@ export default function SettingsPage() {
   if (loading || !settings) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-ink-4" />
-        <span className="ml-2 text-sm text-ink-3">Chargement...</span>
+        <Loader2 className="h-6 w-6 animate-spin text-mist" />
+        <span className="ml-2 text-sm text-fog">Chargement...</span>
       </div>
     );
   }
@@ -122,8 +122,8 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-sora text-2xl font-bold text-ink-1">Paramètres</h1>
-        <p className="text-sm text-ink-3">
+        <h1 className="font-display text-2xl font-bold text-midnight">Paramètres</h1>
+        <p className="text-sm text-fog">
           Configuration de votre compte et intégrations
         </p>
       </div>
@@ -143,8 +143,8 @@ export default function SettingsPage() {
                   "flex items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 text-sm font-medium text-left transition-colors",
                   "lg:border-l-[3px]",
                   isActive
-                    ? "bg-sun-light text-sun-deep lg:border-l-sun"
-                    : "text-ink-3 hover:bg-sand hover:text-ink-2 lg:border-l-transparent"
+                    ? "bg-mint-bg text-mint-deep lg:border-l-mint"
+                    : "text-fog hover:bg-snow hover:text-slate lg:border-l-transparent"
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />

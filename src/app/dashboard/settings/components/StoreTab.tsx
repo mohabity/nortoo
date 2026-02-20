@@ -75,7 +75,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Store className="h-5 w-5 text-sun" />
+              <Store className="h-5 w-5 text-mint" />
               <div>
                 <CardTitle className="text-base">YouCan</CardTitle>
                 <CardDescription>
@@ -92,30 +92,30 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
           {isConnected ? (
             <div className="space-y-4">
               {/* Store details */}
-              <div className="rounded-sm border border-border divide-y divide-border">
+              <div className="rounded-sm border border-silk divide-y divide-silk">
                 <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-ink-3">Nom boutique</span>
-                  <span className="text-sm font-medium text-ink-1">
+                  <span className="text-sm text-fog">Nom boutique</span>
+                  <span className="text-sm font-medium text-midnight">
                     {settings.name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-ink-3">Store ID</span>
-                  <span className="text-sm font-mono text-ink-2">
+                  <span className="text-sm text-fog">Store ID</span>
+                  <span className="text-sm font-mono text-slate">
                     {settings.youcanStoreId}
                   </span>
                 </div>
                 {connectedDate && (
                   <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-sm text-ink-3">
+                    <span className="text-sm text-fog">
                       Connectée depuis
                     </span>
-                    <span className="text-sm text-ink-2">{connectedDate}</span>
+                    <span className="text-sm text-slate">{connectedDate}</span>
                   </div>
                 )}
                 {storeUrl && (
                   <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-sm text-ink-3">URL de la boutique</span>
+                    <span className="text-sm text-fog">URL de la boutique</span>
                     <a
                       href={storeUrl}
                       target="_blank"
@@ -135,7 +135,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                 onOpenChange={setShowDisconnectModal}
               >
                 <Dialog.Trigger asChild>
-                  <Button variant="outline" size="sm" className="text-coral">
+                  <Button variant="outline" size="sm" className="text-rose">
                     <Unplug className="mr-2 h-3.5 w-3.5" />
                     Déconnecter la boutique
                   </Button>
@@ -144,14 +144,14 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
                   <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded bg-white p-6 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="h-10 w-10 rounded-full bg-coral-light flex items-center justify-center">
-                        <AlertTriangle className="h-5 w-5 text-coral" />
+                      <div className="h-10 w-10 rounded-full bg-rose-bg flex items-center justify-center">
+                        <AlertTriangle className="h-5 w-5 text-rose" />
                       </div>
-                      <Dialog.Title className="font-sora font-semibold text-ink-1 text-lg">
+                      <Dialog.Title className="font-display font-semibold text-midnight text-lg">
                         Déconnecter YouCan ?
                       </Dialog.Title>
                     </div>
-                    <Dialog.Description className="text-sm text-ink-3 mb-6">
+                    <Dialog.Description className="text-sm text-fog mb-6">
                       Voulez-vous vraiment déconnecter votre boutique YouCan ?
                       Les nouveaux webhooks ne seront plus reçus et le scoring
                       automatique sera interrompu.
@@ -177,8 +177,8 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             </div>
           ) : (
             <div className="text-center py-6">
-              <Globe className="h-10 w-10 text-ink-4 mx-auto mb-3" />
-              <p className="text-sm text-ink-3 mb-4">
+              <Globe className="h-10 w-10 text-mist mx-auto mb-3" />
+              <p className="text-sm text-fog mb-4">
                 Connectez votre boutique YouCan pour activer le scoring
                 automatique des commandes COD.
               </p>
@@ -213,11 +213,11 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-ink-2 block mb-1.5">
+            <label className="text-sm font-medium text-slate block mb-1.5">
               URL du webhook
             </label>
             <div className="flex items-center gap-2">
-              <div className="flex-1 rounded-sm border border-border bg-sand px-3 py-2 font-mono text-sm text-ink-2 select-all overflow-x-auto">
+              <div className="flex-1 rounded-sm border border-silk bg-snow px-3 py-2 font-mono text-sm text-slate select-all overflow-x-auto">
                 {webhookUrl}
               </div>
               <Button
@@ -235,8 +235,8 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             </div>
           </div>
           {isConnected && (
-            <div className="rounded-xs bg-sand/50 px-3 py-2">
-              <p className="text-xs text-ink-3">
+            <div className="rounded-xs bg-snow px-3 py-2">
+              <p className="text-xs text-fog">
                 <span className="font-medium text-mint-deep">Dernier ping :</span>{" "}
                 il y a 3 minutes
               </p>
@@ -249,7 +249,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5 text-ink-4" />
+            <ShoppingBag className="h-5 w-5 text-mist" />
             <div>
               <CardTitle className="text-base">Autres plateformes</CardTitle>
               <CardDescription>
@@ -261,31 +261,31 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
         <CardContent>
           <div className="space-y-3">
             <div className={cn(
-              "flex items-center justify-between rounded-sm border border-border p-4",
+              "flex items-center justify-between rounded-sm border border-silk p-4",
               "opacity-60"
             )}>
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-xs bg-sand flex items-center justify-center">
-                  <ShoppingBag className="h-4 w-4 text-ink-4" />
+                <div className="h-8 w-8 rounded-xs bg-snow flex items-center justify-center">
+                  <ShoppingBag className="h-4 w-4 text-mist" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-ink-2">Shopify</p>
-                  <p className="text-xs text-ink-4">E-commerce international</p>
+                  <p className="text-sm font-medium text-slate">Shopify</p>
+                  <p className="text-xs text-mist">E-commerce international</p>
                 </div>
               </div>
               <Badge>Bientôt</Badge>
             </div>
             <div className={cn(
-              "flex items-center justify-between rounded-sm border border-border p-4",
+              "flex items-center justify-between rounded-sm border border-silk p-4",
               "opacity-60"
             )}>
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-xs bg-sand flex items-center justify-center">
-                  <ShoppingBag className="h-4 w-4 text-ink-4" />
+                <div className="h-8 w-8 rounded-xs bg-snow flex items-center justify-center">
+                  <ShoppingBag className="h-4 w-4 text-mist" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-ink-2">WooCommerce</p>
-                  <p className="text-xs text-ink-4">WordPress e-commerce</p>
+                  <p className="text-sm font-medium text-slate">WooCommerce</p>
+                  <p className="text-xs text-mist">WordPress e-commerce</p>
                 </div>
               </div>
               <Badge>Bientôt</Badge>

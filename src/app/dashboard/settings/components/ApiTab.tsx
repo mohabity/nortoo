@@ -112,7 +112,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-sun" />
+            <KeyRound className="h-5 w-5 text-mint" />
             <div>
               <CardTitle className="text-base">Clé API</CardTitle>
               <CardDescription>
@@ -123,15 +123,15 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <p className="text-xs text-ink-4 mb-2">
+            <p className="text-xs text-mist mb-2">
               Ajoutez cette clé dans le header{" "}
-              <code className="font-mono bg-sand px-1 py-0.5 rounded-xs text-ink-2">
+              <code className="font-mono bg-snow px-1 py-0.5 rounded-xs text-slate">
                 x-codpilot-key
               </code>{" "}
               de vos webhooks
             </p>
             <div className="flex items-center gap-2">
-              <div className="flex-1 rounded-sm border border-border bg-sand px-3 py-2 font-mono text-sm text-ink-2 overflow-x-auto">
+              <div className="flex-1 rounded-sm border border-silk bg-snow px-3 py-2 font-mono text-sm text-slate overflow-x-auto">
                 {displayKey}
               </div>
               <Button
@@ -180,14 +180,14 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
               <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
               <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded bg-white p-6 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-coral-light flex items-center justify-center">
-                    <AlertTriangle className="h-5 w-5 text-coral" />
+                  <div className="h-10 w-10 rounded-full bg-rose-bg flex items-center justify-center">
+                    <AlertTriangle className="h-5 w-5 text-rose" />
                   </div>
-                  <Dialog.Title className="font-sora font-semibold text-ink-1 text-lg">
+                  <Dialog.Title className="font-display font-semibold text-midnight text-lg">
                     Régénérer la clé API ?
                   </Dialog.Title>
                 </div>
-                <Dialog.Description className="text-sm text-ink-3 mb-6">
+                <Dialog.Description className="text-sm text-fog mb-6">
                   L&apos;ancienne clé cessera de fonctionner immédiatement.
                   Tous les webhooks configurés avec cette clé devront être
                   mis à jour avec la nouvelle.
@@ -228,7 +228,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <div className="flex-1 rounded-sm border border-border bg-sand px-3 py-2 font-mono text-sm text-ink-2 select-all overflow-x-auto">
+            <div className="flex-1 rounded-sm border border-silk bg-snow px-3 py-2 font-mono text-sm text-slate select-all overflow-x-auto">
               {webhookUrl}
             </div>
             <Button
@@ -266,7 +266,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
           {/* cURL example */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-ink-2">Exemple cURL</p>
+              <p className="text-sm font-medium text-slate">Exemple cURL</p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -280,7 +280,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 {copiedCurl ? "Copié" : "Copier"}
               </Button>
             </div>
-            <pre className="bg-ink-1 text-green-400 font-mono text-xs rounded-sm p-4 overflow-x-auto whitespace-pre">
+            <pre className="bg-midnight text-green-400 font-mono text-xs rounded-sm p-4 overflow-x-auto whitespace-pre">
               {curlExample}
             </pre>
           </div>
@@ -288,7 +288,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
           {/* JSON payload example */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-ink-2">Payload JSON</p>
+              <p className="text-sm font-medium text-slate">Payload JSON</p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -302,7 +302,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 {copiedPayload ? "Copié" : "Copier"}
               </Button>
             </div>
-            <pre className="bg-ink-1 text-sun-light font-mono text-xs rounded-sm p-4 overflow-x-auto whitespace-pre">
+            <pre className="bg-midnight text-mint font-mono text-xs rounded-sm p-4 overflow-x-auto whitespace-pre">
               {payloadExample}
             </pre>
           </div>

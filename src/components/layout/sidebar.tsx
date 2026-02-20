@@ -9,7 +9,6 @@ import {
   BarChart3,
   Settings,
   Shield,
-  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,12 +43,16 @@ export function Sidebar() {
   const planDescription = PLAN_DESCRIPTIONS[plan] ?? "";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-white">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-silk bg-white">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-        <Zap className="h-6 w-6 text-sun" />
-        <span className="font-sora text-lg font-bold text-ink-1">
-          COD<span className="text-sun">Pilot</span>
+      <div className="flex h-16 items-center gap-2 border-b border-silk px-6">
+        <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-mint">
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="#0B0F1A" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M3 6h18M7 12h10M10 18h4"/>
+          </svg>
+        </div>
+        <span className="font-display text-lg font-black tracking-[-0.06em] text-midnight">
+          Siift
         </span>
       </div>
 
@@ -68,8 +71,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-sun-light text-sun-deep"
-                  : "text-ink-3 hover:bg-sand hover:text-ink-2"
+                  ? "bg-mint-bg text-mint-deep"
+                  : "text-fog hover:bg-snow hover:text-slate"
               )}
             >
               <item.icon className="h-4 w-4" />
@@ -80,12 +83,12 @@ export function Sidebar() {
       </nav>
 
       {/* Plan info */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-border p-4">
-        <div className="rounded-sm bg-sand p-3">
-          <p className="text-xs font-medium text-ink-3">Plan actuel</p>
-          <p className="font-sora text-sm font-bold text-ink-1">{planLabel}</p>
+      <div className="absolute bottom-0 left-0 right-0 border-t border-silk p-4">
+        <div className="rounded-sm bg-snow p-3">
+          <p className="text-xs font-medium text-fog">Plan actuel</p>
+          <p className="font-display text-sm font-bold text-midnight">{planLabel}</p>
           {planDescription && (
-            <p className="mt-1 text-xs text-ink-4">{planDescription}</p>
+            <p className="mt-1 text-xs text-mist">{planDescription}</p>
           )}
         </div>
       </div>

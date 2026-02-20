@@ -21,28 +21,28 @@ export function ThresholdBar({ verify, flag, block }: ThresholdBarProps) {
         </div>
         {/* Verify zone */}
         <div
-          className="bg-sun-light flex items-center justify-center text-xs font-medium text-sun-deep"
+          className="bg-amber-bg flex items-center justify-center text-xs font-medium text-amber"
           style={{ width: `${flag - verify}%` }}
         >
           Vérifier
         </div>
         {/* Flag zone */}
         <div
-          className="bg-coral-light flex items-center justify-center text-xs font-medium text-terra"
+          className="bg-rose-bg flex items-center justify-center text-xs font-medium text-rose"
           style={{ width: `${block - flag}%` }}
         >
           Signaler
         </div>
         {/* Block zone */}
         <div
-          className="bg-violet-light flex items-center justify-center text-xs font-medium text-violet"
+          className="bg-violet-bg flex items-center justify-center text-xs font-medium text-violet"
           style={{ width: `${100 - block}%` }}
         >
           Bloquer
         </div>
       </div>
       {/* Threshold markers */}
-      <div className="relative h-4 text-[10px] font-mono text-ink-3">
+      <div className="relative h-4 text-[10px] font-mono text-fog">
         <span className="absolute left-0">0</span>
         <span className="absolute" style={{ left: `${verify}%`, transform: "translateX(-50%)" }}>{verify}</span>
         <span className="absolute" style={{ left: `${flag}%`, transform: "translateX(-50%)" }}>{flag}</span>

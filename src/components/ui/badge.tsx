@@ -7,12 +7,12 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-sand text-ink-2",
+        default: "bg-snow text-slate",
         mint: "bg-mint/15 text-mint-deep",
-        sun: "bg-sun-light text-sun-deep",
-        coral: "bg-coral-light text-terra",
-        violet: "bg-violet-light text-violet",
-        ocean: "bg-ocean-light text-ocean",
+        amber: "bg-amber-bg text-amber",
+        rose: "bg-rose-bg text-rose",
+        violet: "bg-violet-bg text-violet",
+        ocean: "bg-ocean-bg text-ocean",
       },
     },
     defaultVariants: {

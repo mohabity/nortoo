@@ -7,15 +7,15 @@ interface DecisionBadgeProps {
 
 const decisionConfig: Record<string, { label: string; classes: string }> = {
   ship: { label: "Expédier", classes: "bg-mint/15 text-mint-deep" },
-  verify: { label: "Vérifier", classes: "bg-sun-light text-sun-deep" },
-  flag: { label: "Signaler", classes: "bg-coral-light text-terra" },
-  block: { label: "Bloquer", classes: "bg-violet-light text-violet" },
+  verify: { label: "Vérifier", classes: "bg-amber-bg text-amber" },
+  flag: { label: "Signaler", classes: "bg-rose-bg text-rose" },
+  block: { label: "Bloquer", classes: "bg-violet-bg text-violet" },
 };
 
 export function DecisionBadge({ decision, size = "md" }: DecisionBadgeProps) {
   const config = decisionConfig[decision] ?? {
     label: decision,
-    classes: "bg-sand text-ink-3",
+    classes: "bg-snow text-fog",
   };
 
   return (

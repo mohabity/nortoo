@@ -18,14 +18,14 @@ interface Notification {
 
 const SEVERITY_BORDER: Record<string, string> = {
   info: "border-l-mint",
-  warning: "border-l-sun",
-  critical: "border-l-coral",
+  warning: "border-l-amber",
+  critical: "border-l-rose",
 };
 
 const SEVERITY_DOT: Record<string, string> = {
   info: "bg-mint",
-  warning: "bg-sun",
-  critical: "bg-coral",
+  warning: "bg-amber",
+  critical: "bg-rose",
 };
 
 function timeAgo(dateStr: string): string {
@@ -115,17 +115,17 @@ export function NotificationBell() {
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-coral text-[10px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose text-[10px] font-bold text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[380px] max-h-[480px] overflow-hidden rounded-lg border border-border bg-white shadow-lg z-50 flex flex-col">
+        <div className="absolute right-0 top-full mt-2 w-[380px] max-h-[480px] overflow-hidden rounded-lg border border-silk bg-white shadow-lg z-50 flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <h3 className="font-sora text-sm font-semibold text-ink-1">
+          <div className="flex items-center justify-between border-b border-silk px-4 py-3">
+            <h3 className="font-display text-sm font-semibold text-midnight">
               Notifications
             </h3>
             {unreadCount > 0 && (
@@ -143,7 +143,7 @@ export function NotificationBell() {
           {/* List */}
           <div className="overflow-y-auto flex-1">
             {items.length === 0 ? (
-              <div className="py-8 text-center text-sm text-ink-4">
+              <div className="py-8 text-center text-sm text-mist">
                 Aucune notification
               </div>
             ) : (
@@ -152,9 +152,9 @@ export function NotificationBell() {
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
                   className={cn(
-                    "w-full text-left px-4 py-3 border-b border-border/50 hover:bg-sand/50 transition-colors border-l-[3px]",
+                    "w-full text-left px-4 py-3 border-b border-silk/50 hover:bg-snow/50 transition-colors border-l-[3px]",
                     SEVERITY_BORDER[n.severity] ?? "border-l-transparent",
-                    !n.read && "bg-sun-light/20"
+                    !n.read && "bg-amber-bg"
                   )}
                 >
                   <div className="flex items-start gap-2">
@@ -162,7 +162,7 @@ export function NotificationBell() {
                       <span
                         className={cn(
                           "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                          SEVERITY_DOT[n.severity] ?? "bg-ink-4"
+                          SEVERITY_DOT[n.severity] ?? "bg-mist"
                         )}
                       />
                     )}
@@ -170,20 +170,20 @@ export function NotificationBell() {
                       <p
                         className={cn(
                           "text-sm",
-                          n.read ? "text-ink-3" : "font-medium text-ink-1"
+                          n.read ? "text-fog" : "font-medium text-midnight"
                         )}
                       >
                         {n.title}
                       </p>
-                      <p className="mt-0.5 text-xs text-ink-4 line-clamp-2">
+                      <p className="mt-0.5 text-xs text-mist line-clamp-2">
                         {n.message}
                       </p>
-                      <p className="mt-1 text-[11px] text-ink-4">
+                      <p className="mt-1 text-[11px] text-mist">
                         {timeAgo(n.createdAt)}
                       </p>
                     </div>
                     {n.actionUrl && (
-                      <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-ink-4" />
+                      <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-mist" />
                     )}
                   </div>
                 </button>

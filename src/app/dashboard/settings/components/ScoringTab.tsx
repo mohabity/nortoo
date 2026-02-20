@@ -130,14 +130,14 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-ink-2">
+                  <p className="text-sm font-medium text-slate">
                     Seuil Vérifier
                   </p>
-                  <p className="text-xs text-ink-4">
+                  <p className="text-xs text-mist">
                     Score au-dessus → vérification requise
                   </p>
                 </div>
-                <span className="font-mono text-lg font-bold text-sun-deep w-10 text-right">
+                <span className="font-mono text-lg font-bold text-amber w-10 text-right">
                   {verify}
                 </span>
               </div>
@@ -147,7 +147,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 max={flag - 1}
                 value={verify}
                 onChange={(e) => handleVerifyChange(Number(e.target.value))}
-                className="slider slider-sun w-full"
+                className="slider slider-amber w-full"
               />
             </div>
 
@@ -155,14 +155,14 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-ink-2">
+                  <p className="text-sm font-medium text-slate">
                     Seuil Signaler
                   </p>
-                  <p className="text-xs text-ink-4">
+                  <p className="text-xs text-mist">
                     Score au-dessus → commande signalée
                   </p>
                 </div>
-                <span className="font-mono text-lg font-bold text-coral w-10 text-right">
+                <span className="font-mono text-lg font-bold text-rose w-10 text-right">
                   {flag}
                 </span>
               </div>
@@ -172,7 +172,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 max={block - 1}
                 value={flag}
                 onChange={(e) => handleFlagChange(Number(e.target.value))}
-                className="slider slider-coral w-full"
+                className="slider slider-rose w-full"
               />
             </div>
 
@@ -180,10 +180,10 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-ink-2">
+                  <p className="text-sm font-medium text-slate">
                     Seuil Bloquer
                   </p>
-                  <p className="text-xs text-ink-4">
+                  <p className="text-xs text-mist">
                     Score au-dessus → commande bloquée
                   </p>
                 </div>
@@ -208,7 +208,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-sun" />
+            <Zap className="h-5 w-5 text-mint" />
             <div>
               <CardTitle className="text-base">Préréglages</CardTitle>
               <CardDescription>
@@ -230,20 +230,20 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
                   className={cn(
                     "rounded-sm border p-4 text-left transition-all",
                     active
-                      ? "border-sun ring-2 ring-sun/20 bg-sun-light/30"
-                      : "border-border hover:bg-sand"
+                      ? "border-mint ring-2 ring-mint/20 bg-mint-bg"
+                      : "border-silk hover:bg-snow"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-ink-1 text-sm">
+                    <p className="font-medium text-midnight text-sm">
                       {preset.name}
                     </p>
-                    {active && <Check className="h-4 w-4 text-sun-deep" />}
+                    {active && <Check className="h-4 w-4 text-mint-deep" />}
                   </div>
-                  <p className="mt-1 text-xs text-ink-3">
+                  <p className="mt-1 text-xs text-fog">
                     {preset.description}
                   </p>
-                  <p className="mt-2 font-mono text-xs text-ink-4">
+                  <p className="mt-2 font-mono text-xs text-mist">
                     {preset.verify} / {preset.flag} / {preset.block}
                   </p>
                 </button>
@@ -269,12 +269,12 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
         <CardContent>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <p className="text-sm text-ink-2">
+              <p className="text-sm text-slate">
                 Les commandes avec un score ≥{" "}
                 <span className="font-mono font-bold">{block}</span> (seuil
                 bloquer) seront automatiquement annulées.
               </p>
-              <p className="mt-1 text-xs text-ink-4">
+              <p className="mt-1 text-xs text-mist">
                 Désactivez pour les convertir en signalements manuels à
                 vérifier.
               </p>
@@ -283,7 +283,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
               onClick={() => setAutoBlock(!autoBlock)}
               className={cn(
                 "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-                autoBlock ? "bg-mint" : "bg-ink-4"
+                autoBlock ? "bg-mint" : "bg-mist"
               )}
             >
               <span
@@ -294,8 +294,8 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
               />
             </button>
           </div>
-          <div className="mt-3 rounded-xs bg-sand/50 px-3 py-2">
-            <p className="text-xs text-ink-3">
+          <div className="mt-3 rounded-xs bg-snow px-3 py-2">
+            <p className="text-xs text-fog">
               {autoBlock ? (
                 <>
                   <span className="font-medium text-mint-deep">Actif</span> —
@@ -303,7 +303,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 </>
               ) : (
                 <>
-                  <span className="font-medium text-ink-4">Inactif</span> —
+                  <span className="font-medium text-mist">Inactif</span> —
                   Les commandes à risque critique sont signalées pour revue
                   manuelle
                 </>
@@ -314,11 +314,11 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
       </Card>
 
       {/* ═══ Sticky Save Bar ═══ */}
-      <div className="sticky bottom-0 border-t border-border bg-white/80 backdrop-blur-sm px-6 py-4 -mx-1 rounded-b">
+      <div className="sticky bottom-0 border-t border-silk bg-white/80 backdrop-blur-sm px-6 py-4 -mx-1 rounded-b">
         <div className="flex items-center justify-between">
           <div>
             {hasChanges && (
-              <p className="text-sm text-ink-3">
+              <p className="text-sm text-fog">
                 Modifications non sauvegardées
               </p>
             )}
@@ -345,7 +345,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
           appearance: none;
           height: 8px;
           border-radius: 4px;
-          background: #e7e0d8;
+          background: #E2E8F0;
           outline: none;
           cursor: pointer;
         }
@@ -367,17 +367,17 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
           border: 2px solid white;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
-        .slider-sun::-webkit-slider-thumb {
+        .slider-amber::-webkit-slider-thumb {
           background: #f59e0b;
         }
-        .slider-sun::-moz-range-thumb {
+        .slider-amber::-moz-range-thumb {
           background: #f59e0b;
         }
-        .slider-coral::-webkit-slider-thumb {
-          background: #f97066;
+        .slider-rose::-webkit-slider-thumb {
+          background: #F43F5E;
         }
-        .slider-coral::-moz-range-thumb {
-          background: #f97066;
+        .slider-rose::-moz-range-thumb {
+          background: #F43F5E;
         }
         .slider-violet::-webkit-slider-thumb {
           background: #8b5cf6;

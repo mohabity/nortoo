@@ -7,9 +7,9 @@ interface ScoreBadgeProps {
 
 function scoreColor(score: number) {
   if (score <= 30) return "bg-mint/15 text-mint-deep";
-  if (score <= 65) return "bg-sun-light text-sun-deep";
-  if (score <= 85) return "bg-coral-light text-terra";
-  return "bg-violet-light text-violet";
+  if (score <= 65) return "bg-amber-bg text-amber";
+  if (score <= 85) return "bg-rose-bg text-rose";
+  return "bg-violet-bg text-violet";
 }
 
 export function ScoreBadge({ score, size = "md" }: ScoreBadgeProps) {

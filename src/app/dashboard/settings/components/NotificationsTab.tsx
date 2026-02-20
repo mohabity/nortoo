@@ -30,7 +30,7 @@ function Toggle({
       disabled={disabled}
       className={cn(
         "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-        enabled ? "bg-mint" : "bg-ink-4",
+        enabled ? "bg-mint" : "bg-mist",
         disabled && "cursor-not-allowed"
       )}
     >
@@ -63,10 +63,10 @@ function ToggleRow({
   return (
     <div className="flex items-start justify-between gap-4 py-3">
       <div className="flex-1">
-        <p className={cn("text-sm font-medium", disabled ? "text-ink-4" : "text-ink-2")}>
+        <p className={cn("text-sm font-medium", disabled ? "text-mist" : "text-slate")}>
           {label}
         </p>
-        <p className={cn("text-xs mt-0.5", disabled ? "text-ink-4" : "text-ink-3")}>
+        <p className={cn("text-xs mt-0.5", disabled ? "text-mist" : "text-fog")}>
           {description}
         </p>
         {children}
@@ -106,7 +106,7 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-sun" />
+            <Bell className="h-5 w-5 text-mint" />
             <div>
               <CardTitle className="text-base">
                 Notifications par e-mail
@@ -118,7 +118,7 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-silk">
             <ToggleRow
               label="Commandes bloquées"
               description="Recevez un e-mail à chaque commande bloquée automatiquement"
@@ -145,16 +145,16 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
             >
               {rtoAlert && (
                 <div className="mt-2 flex items-center gap-2">
-                  <label className="text-xs text-ink-3">Seuil :</label>
+                  <label className="text-xs text-fog">Seuil :</label>
                   <input
                     type="number"
                     min={10}
                     max={80}
                     value={rtoThreshold}
                     onChange={(e) => setRtoThreshold(Number(e.target.value))}
-                    className="w-16 rounded-xs border border-border bg-white px-2 py-1 text-sm font-mono text-ink-1 focus:outline-none focus:ring-2 focus:ring-sun/50"
+                    className="w-16 rounded-xs border border-silk bg-white px-2 py-1 text-sm font-mono text-midnight focus:outline-none focus:ring-2 focus:ring-mint/50"
                   />
-                  <span className="text-xs text-ink-3">%</span>
+                  <span className="text-xs text-fog">%</span>
                 </div>
               )}
             </ToggleRow>
@@ -180,7 +180,7 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-ink-4" />
+              <MessageSquare className="h-5 w-5 text-mist" />
               <div>
                 <CardTitle className="text-base">
                   Notifications WhatsApp
@@ -194,7 +194,7 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
           </div>
         </CardHeader>
         <CardContent className="opacity-50 pointer-events-none">
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-silk">
             <ToggleRow
               label="Vérification client"
               description="Envoyer un message de vérification aux commandes suspectes"

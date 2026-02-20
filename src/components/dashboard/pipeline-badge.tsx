@@ -6,18 +6,18 @@ interface PipelineBadgeProps {
 }
 
 const pipelineConfig: Record<string, { label: string; classes: string }> = {
-  pending: { label: "En attente", classes: "bg-sand text-ink-3" },
+  pending: { label: "En attente", classes: "bg-snow text-fog" },
   auto_shipped: { label: "Auto-expédié", classes: "bg-mint/15 text-mint-deep" },
-  needs_review: { label: "À vérifier", classes: "bg-sun-light text-sun-deep" },
-  escalated: { label: "Escaladé", classes: "bg-coral-light text-terra" },
-  auto_blocked: { label: "Auto-bloqué", classes: "bg-violet-light text-violet" },
-  merchant_override: { label: "Override", classes: "bg-ocean-light text-ocean" },
+  needs_review: { label: "À vérifier", classes: "bg-amber-bg text-amber" },
+  escalated: { label: "Escaladé", classes: "bg-rose-bg text-rose" },
+  auto_blocked: { label: "Auto-bloqué", classes: "bg-violet-bg text-violet" },
+  merchant_override: { label: "Override", classes: "bg-ocean-bg text-ocean" },
 };
 
 export function PipelineBadge({ status, size = "md" }: PipelineBadgeProps) {
   const config = pipelineConfig[status] ?? {
     label: status,
-    classes: "bg-sand text-ink-3",
+    classes: "bg-snow text-fog",
   };
 
   return (

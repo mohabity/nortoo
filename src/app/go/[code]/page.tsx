@@ -3,7 +3,7 @@ import { db } from "@/db/index";
 import { inviteLinks } from "@/db/schema";
 import { eq, and, gt, or, isNull } from "drizzle-orm";
 import Link from "next/link";
-import { Zap, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 /**
  * /go/[code] — Magic invite link page.
@@ -39,24 +39,26 @@ export default async function InvitePage({
 
   // Invalid or exhausted — show error page
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream px-4">
+    <div className="flex min-h-screen items-center justify-center bg-snow px-4">
       <div className="w-full max-w-sm text-center">
         {/* Logo */}
         <div className="mb-8 inline-flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-sun">
-            <Zap className="h-6 w-6 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-mint">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="#0B0F1A" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M3 6h18M7 12h10M10 18h4"/>
+            </svg>
           </div>
-          <span className="font-sora text-2xl font-bold text-ink-1">
-            COD<span className="text-sun">Pilot</span>
+          <span className="font-display text-2xl font-black tracking-[-0.06em] text-midnight">
+            Siift
           </span>
         </div>
 
-        <div className="rounded-sm border border-coral/30 bg-coral-light p-6">
-          <AlertCircle className="mx-auto h-10 w-10 text-coral" />
-          <h1 className="mt-3 font-sora text-lg font-semibold text-ink-1">
+        <div className="rounded-sm border border-rose/30 bg-rose-bg p-6">
+          <AlertCircle className="mx-auto h-10 w-10 text-rose" />
+          <h1 className="mt-3 font-display text-lg font-semibold text-midnight">
             Lien d&apos;invitation invalide
           </h1>
-          <p className="mt-2 text-sm text-ink-3">
+          <p className="mt-2 text-sm text-fog">
             Ce lien est expiré, a atteint sa limite d&apos;utilisation, ou n&apos;existe pas.
           </p>
         </div>
@@ -64,13 +66,13 @@ export default async function InvitePage({
         <div className="mt-6 flex flex-col gap-3">
           <Link
             href="/register"
-            className="inline-flex items-center justify-center rounded-sm bg-sun px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sun-deep"
+            className="inline-flex items-center justify-center rounded-sm bg-mint px-4 py-2.5 text-sm font-medium text-midnight transition-colors hover:bg-mint-dark"
           >
             Créer un compte
           </Link>
           <Link
             href="/login"
-            className="text-sm font-medium text-ink-3 hover:text-ink-2 transition-colors"
+            className="text-sm font-medium text-fog hover:text-slate transition-colors"
           >
             Se connecter
           </Link>

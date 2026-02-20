@@ -16,23 +16,23 @@ export function KpiCard({
   change,
   changeType = "neutral",
   icon: Icon,
-  iconColor = "text-sun",
+  iconColor = "text-mint",
 }: KpiCardProps) {
   return (
-    <div className="rounded bg-white border border-border shadow-[0_2px_8px_rgba(0,0,0,.06)] p-6">
+    <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-ink-3">{title}</p>
+        <p className="text-sm font-medium text-fog">{title}</p>
         <Icon className={cn("h-5 w-5", iconColor)} />
       </div>
       <div className="mt-3">
-        <p className="text-2xl font-sora font-bold text-ink-1">{value}</p>
+        <p className="text-2xl font-display font-bold text-midnight">{value}</p>
         {change && (
           <p
             className={cn(
               "mt-1 text-xs font-medium",
               changeType === "positive" && "text-mint-deep",
-              changeType === "negative" && "text-coral",
-              changeType === "neutral" && "text-ink-3"
+              changeType === "negative" && "text-rose",
+              changeType === "neutral" && "text-fog"
             )}
           >
             {change}

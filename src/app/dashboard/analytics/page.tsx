@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
 
 // ═══════════════════════════════════════════════════════════
 // MOCK DATA — Realistic Moroccan e-commerce over 30 days
-// RTO trend: 35% → 28% → 20% → 13% to show CODPilot impact
+// RTO trend: 35% → 28% → 20% → 13% to show Siift impact
 // ═══════════════════════════════════════════════════════════
 
 function generateDailyData(days: number) {
@@ -75,9 +75,9 @@ const DAILY_DATA_90 = generateDailyData(90);
 
 // ── Score distribution data ──
 const scoreDistribution = [
-  { range: "0-30", label: "Bas", count: 312, color: "#34D399" },
+  { range: "0-30", label: "Bas", count: 312, color: "#00E5A0" },
   { range: "31-65", label: "Moyen", count: 145, color: "#F59E0B" },
-  { range: "66-85", label: "Élevé", count: 62, color: "#F97066" },
+  { range: "66-85", label: "Élevé", count: 62, color: "#F43F5E" },
   { range: "86-100", label: "Critique", count: 23, color: "#8B5CF6" },
 ];
 
@@ -127,9 +127,9 @@ const hourlyData = Array.from({ length: 24 }, (_, h) => {
 
 // ── Decision breakdown data ──
 const decisionData = [
-  { name: "Expédier", value: 312, pct: 57.6, color: "#34D399" },
+  { name: "Expédier", value: 312, pct: 57.6, color: "#00E5A0" },
   { name: "Vérifier", value: 145, pct: 26.8, color: "#F59E0B" },
-  { name: "Signaler", value: 62, pct: 11.4, color: "#F97066" },
+  { name: "Signaler", value: 62, pct: 11.4, color: "#F43F5E" },
   { name: "Bloquer", value: 23, pct: 4.2, color: "#8B5CF6" },
 ];
 
@@ -147,7 +147,7 @@ function PeriodSelector({
   onChange: (p: Period) => void;
 }) {
   return (
-    <div className="flex items-center rounded-sm border border-border bg-sand/50 p-0.5">
+    <div className="flex items-center rounded-sm border border-silk bg-snow/50 p-0.5">
       {(["7j", "30j", "90j"] as const).map((p) => (
         <button
           key={p}
@@ -155,8 +155,8 @@ function PeriodSelector({
           className={cn(
             "rounded-xs px-3 py-1.5 text-xs font-medium transition-all",
             value === p
-              ? "bg-white text-ink-1 shadow-sm"
-              : "text-ink-3 hover:text-ink-2"
+              ? "bg-white text-midnight shadow-sm"
+              : "text-fog hover:text-slate"
           )}
         >
           {p}
@@ -172,7 +172,7 @@ function PeriodSelector({
 
 const tooltipStyle = {
   backgroundColor: "#fff",
-  border: "1px solid #E7E0D8",
+  border: "1px solid #E2E8F0",
   borderRadius: "12px",
   fontSize: "12px",
   boxShadow: "0 4px 16px rgba(0,0,0,.08)",
@@ -184,26 +184,26 @@ function RtoTooltip({ active, payload, label }: TooltipProps<number, string>) {
   const d = payload[0]?.payload;
   return (
     <div style={tooltipStyle}>
-      <p className="font-medium text-ink-1 text-xs mb-1.5">{d?.fullDate}</p>
+      <p className="font-medium text-midnight text-xs mb-1.5">{d?.fullDate}</p>
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-xs">
-          <span className="h-2 w-2 rounded-full bg-ink-3 inline-block" />
-          <span className="text-ink-3">Commandes:</span>
-          <span className="font-mono font-bold text-ink-1">{d?.orders}</span>
+          <span className="h-2 w-2 rounded-full bg-fog inline-block" />
+          <span className="text-fog">Commandes:</span>
+          <span className="font-mono font-bold text-midnight">{d?.orders}</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <span className="h-2 w-2 rounded-full bg-mint inline-block" />
-          <span className="text-ink-3">Livrées:</span>
+          <span className="text-fog">Livrées:</span>
           <span className="font-mono font-bold text-mint-deep">{d?.delivered}</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="h-2 w-2 rounded-full bg-coral inline-block" />
-          <span className="text-ink-3">Retours:</span>
-          <span className="font-mono font-bold text-coral">{d?.returns}</span>
+          <span className="h-2 w-2 rounded-full bg-rose inline-block" />
+          <span className="text-fog">Retours:</span>
+          <span className="font-mono font-bold text-rose">{d?.returns}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs border-t border-border pt-1 mt-1">
-          <span className="text-ink-3">Taux RTO:</span>
-          <span className="font-mono font-bold text-coral">{d?.rtoRate}%</span>
+        <div className="flex items-center gap-2 text-xs border-t border-silk pt-1 mt-1">
+          <span className="text-fog">Taux RTO:</span>
+          <span className="font-mono font-bold text-rose">{d?.rtoRate}%</span>
         </div>
       </div>
     </div>
@@ -236,7 +236,7 @@ function SortableHeader({
   return (
     <th
       className={cn(
-        "cursor-pointer select-none whitespace-nowrap px-4 py-3 text-xs font-medium text-ink-3 transition-colors hover:text-ink-1",
+        "cursor-pointer select-none whitespace-nowrap px-4 py-3 text-xs font-medium text-fog transition-colors hover:text-midnight",
         align === "right" ? "text-right" : "text-left"
       )}
       onClick={() => onSort(sortKey)}
@@ -245,10 +245,10 @@ function SortableHeader({
         {label}
         <span className="inline-flex flex-col -space-y-1">
           <ChevronUp
-            className={cn("h-2.5 w-2.5", isActive && currentDir === "asc" ? "text-sun" : "text-ink-4")}
+            className={cn("h-2.5 w-2.5", isActive && currentDir === "asc" ? "text-mint" : "text-mist")}
           />
           <ChevronDown
-            className={cn("h-2.5 w-2.5", isActive && currentDir === "desc" ? "text-sun" : "text-ink-4")}
+            className={cn("h-2.5 w-2.5", isActive && currentDir === "desc" ? "text-mint" : "text-mist")}
           />
         </span>
       </span>
@@ -262,16 +262,16 @@ function SortableHeader({
 
 function RtoBar({ value }: { value: number }) {
   const color =
-    value <= 15 ? "bg-mint" : value <= 25 ? "bg-sun" : value <= 40 ? "bg-coral" : "bg-violet";
+    value <= 15 ? "bg-mint" : value <= 25 ? "bg-amber" : value <= 40 ? "bg-rose" : "bg-violet";
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 w-20 rounded-full bg-sand">
+      <div className="h-1.5 w-20 rounded-full bg-snow">
         <div
           className={cn("h-1.5 rounded-full transition-all", color)}
           style={{ width: `${Math.min(value, 100)}%` }}
         />
       </div>
-      <span className="font-mono text-xs font-bold text-ink-1">{value}%</span>
+      <span className="font-mono text-xs font-bold text-midnight">{value}%</span>
     </div>
   );
 }
@@ -347,8 +347,8 @@ export default function AnalyticsPage() {
       {/* ── Header ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-sora text-2xl font-bold text-ink-1">Analytique</h1>
-          <p className="text-sm text-ink-3">
+          <h1 className="font-display text-2xl font-bold text-midnight">Analytique</h1>
+          <p className="text-sm text-fog">
             Performance anti-fraude, tendances RTO et ROI
           </p>
         </div>
@@ -358,18 +358,18 @@ export default function AnalyticsPage() {
       {/* ═══ 1. KPI ROW ═══ */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Économies estimées */}
-        <div className="rounded-[18px] border border-border bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
+        <div className="rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-ink-3">Économies estimées</p>
-            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-sun-light">
-              <Coins className="h-4.5 w-4.5 text-sun" />
+            <p className="text-sm font-medium text-fog">Économies estimées</p>
+            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-amber-bg">
+              <Coins className="h-4.5 w-4.5 text-amber" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="font-sora text-2xl font-bold text-ink-1">
-              {savings.toLocaleString("fr-FR")} <span className="text-base font-semibold text-ink-3">DH</span>
+            <p className="font-display text-2xl font-bold text-midnight">
+              {savings.toLocaleString("fr-FR")} <span className="text-base font-semibold text-fog">DH</span>
             </p>
-            <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", savingsChange >= 0 ? "text-mint-deep" : "text-coral")}>
+            <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", savingsChange >= 0 ? "text-mint-deep" : "text-rose")}>
               {savingsChange >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
               {savingsChange >= 0 ? "+" : ""}{savingsChange}% vs période précédente
             </p>
@@ -377,18 +377,18 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Taux RTO actuel */}
-        <div className="rounded-[18px] border border-border bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
+        <div className="rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-ink-3">Taux RTO actuel</p>
-            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-coral-light">
-              <TrendingDown className="h-4.5 w-4.5 text-coral" />
+            <p className="text-sm font-medium text-fog">Taux RTO actuel</p>
+            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-rose-bg">
+              <TrendingDown className="h-4.5 w-4.5 text-rose" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="font-sora text-2xl font-bold text-ink-1">
-              {rtoRate}<span className="text-base font-semibold text-ink-3">%</span>
+            <p className="font-display text-2xl font-bold text-midnight">
+              {rtoRate}<span className="text-base font-semibold text-fog">%</span>
             </p>
-            <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", rtoDelta <= 0 ? "text-mint-deep" : "text-coral")}>
+            <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", rtoDelta <= 0 ? "text-mint-deep" : "text-rose")}>
               {rtoDelta <= 0 ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
               {rtoDelta} pts vs baseline ({baseline}%)
             </p>
@@ -396,16 +396,16 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Taux de livraison */}
-        <div className="rounded-[18px] border border-border bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
+        <div className="rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-ink-3">Taux de livraison</p>
-            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-mint-light">
+            <p className="text-sm font-medium text-fog">Taux de livraison</p>
+            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-mint-bg">
               <Truck className="h-4.5 w-4.5 text-mint-deep" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="font-sora text-2xl font-bold text-ink-1">
-              {deliveryRate}<span className="text-base font-semibold text-ink-3">%</span>
+            <p className="font-display text-2xl font-bold text-midnight">
+              {deliveryRate}<span className="text-base font-semibold text-fog">%</span>
             </p>
             <p className="mt-1 flex items-center gap-1 text-xs font-medium text-mint-deep">
               <ArrowUpRight className="h-3 w-3" />
@@ -414,17 +414,17 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ROI CODPilot */}
-        <div className="rounded-[18px] border border-border bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
+        {/* ROI Siift */}
+        <div className="rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-ink-3">ROI CODPilot</p>
-            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-violet-light">
+            <p className="text-sm font-medium text-fog">ROI Siift</p>
+            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-violet-bg">
               <Flame className="h-4.5 w-4.5 text-violet" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="font-sora text-2xl font-bold text-ink-1">{roiDisplay}</p>
-            <p className="mt-1 text-xs font-medium text-ink-3">
+            <p className="font-display text-2xl font-bold text-midnight">{roiDisplay}</p>
+            <p className="mt-1 text-xs font-medium text-fog">
               ({savings.toLocaleString("fr-FR")} − {subscriptionCost}) / {subscriptionCost} DH
             </p>
           </div>
@@ -436,7 +436,7 @@ export default function AnalyticsPage() {
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle>Tendance du taux RTO</CardTitle>
-            <p className="mt-1 text-xs text-ink-3">
+            <p className="mt-1 text-xs text-fog">
               Taux de retour quotidien vs baseline ({baseline}%)
             </p>
           </div>
@@ -447,20 +447,20 @@ export default function AnalyticsPage() {
               <AreaChart data={dailyData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
                 <defs>
                   <linearGradient id="rtoGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#F97066" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="#F97066" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#F43F5E" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#F43F5E" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E7E0D8" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11, fill: "#78716C" }}
+                  tick={{ fontSize: 11, fill: "#64748B" }}
                   axisLine={false}
                   tickLine={false}
                   interval={period === "7j" ? 0 : period === "30j" ? 4 : 13}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "#78716C" }}
+                  tick={{ fontSize: 11, fill: "#64748B" }}
                   axisLine={false}
                   tickLine={false}
                   domain={[0, 50]}
@@ -469,23 +469,23 @@ export default function AnalyticsPage() {
                 <Tooltip content={<RtoTooltip />} />
                 <ReferenceLine
                   y={baseline}
-                  stroke="#A8A29E"
+                  stroke="#94A3B8"
                   strokeDasharray="6 4"
                   label={{
                     value: `Baseline ${baseline}%`,
                     position: "right",
                     fontSize: 11,
-                    fill: "#A8A29E",
+                    fill: "#94A3B8",
                   }}
                 />
                 <Area
                   type="monotone"
                   dataKey="rtoRate"
-                  stroke="#F97066"
+                  stroke="#F43F5E"
                   strokeWidth={2.5}
                   fill="url(#rtoGradient)"
                   dot={false}
-                  activeDot={{ r: 5, fill: "#F97066", stroke: "#fff", strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: "#F43F5E", stroke: "#fff", strokeWidth: 2 }}
                   name="Taux RTO"
                 />
               </AreaChart>
@@ -500,21 +500,21 @@ export default function AnalyticsPage() {
         <Card className="rounded-[18px]">
           <CardHeader>
             <CardTitle>Distribution des scores</CardTitle>
-            <p className="text-xs text-ink-3">Volume de commandes par tranche de risque</p>
+            <p className="text-xs text-fog">Volume de commandes par tranche de risque</p>
           </CardHeader>
           <CardContent>
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={scoreDistribution} barSize={48} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E7E0D8" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                   <XAxis
                     dataKey="range"
-                    tick={{ fontSize: 12, fill: "#78716C" }}
+                    tick={{ fontSize: 12, fill: "#64748B" }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 12, fill: "#78716C" }}
+                    tick={{ fontSize: 12, fill: "#64748B" }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -536,8 +536,8 @@ export default function AnalyticsPage() {
               {scoreDistribution.map((s) => (
                 <div key={s.range} className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                  <span className="text-xs text-ink-3">{s.range}</span>
-                  <span className="font-mono text-xs font-bold text-ink-2">{s.count}</span>
+                  <span className="text-xs text-fog">{s.range}</span>
+                  <span className="font-mono text-xs font-bold text-slate">{s.count}</span>
                 </div>
               ))}
             </div>
@@ -548,7 +548,7 @@ export default function AnalyticsPage() {
         <Card className="rounded-[18px]">
           <CardHeader>
             <CardTitle>Répartition des décisions</CardTitle>
-            <p className="text-xs text-ink-3">Actions automatiques sur les commandes</p>
+            <p className="text-xs text-fog">Actions automatiques sur les commandes</p>
           </CardHeader>
           <CardContent>
             <div className="flex h-[280px] items-center gap-8">
@@ -577,8 +577,8 @@ export default function AnalyticsPage() {
                 </ResponsiveContainer>
                 {/* Center label */}
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="font-mono text-2xl font-bold text-ink-1">542</p>
-                  <p className="text-[10px] text-ink-3">total</p>
+                  <p className="font-mono text-2xl font-bold text-midnight">542</p>
+                  <p className="text-[10px] text-fog">total</p>
                 </div>
               </div>
               <div className="flex flex-col gap-3">
@@ -586,9 +586,9 @@ export default function AnalyticsPage() {
                   <div key={d.name} className="flex items-center gap-3">
                     <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
                     <div>
-                      <p className="text-sm font-medium text-ink-2">{d.name}</p>
-                      <p className="text-xs text-ink-3">
-                        <span className="font-mono font-bold text-ink-1">{d.value}</span>
+                      <p className="text-sm font-medium text-slate">{d.name}</p>
+                      <p className="text-xs text-fog">
+                        <span className="font-mono font-bold text-midnight">{d.value}</span>
                         {" "}· {d.pct}%
                       </p>
                     </div>
@@ -604,13 +604,13 @@ export default function AnalyticsPage() {
       <Card className="rounded-[18px]">
         <CardHeader>
           <CardTitle>Analyse par ville</CardTitle>
-          <p className="text-xs text-ink-3">Top 10 villes par volume de commandes</p>
+          <p className="text-xs text-fog">Top 10 villes par volume de commandes</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-silk">
                   <SortableHeader label="Ville" sortKey="city" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} />
                   <SortableHeader label="Commandes" sortKey="orders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
                   <SortableHeader label="Livrées" sortKey="delivered" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
@@ -621,18 +621,18 @@ export default function AnalyticsPage() {
               </thead>
               <tbody>
                 {sortedCities.map((c) => (
-                  <tr key={c.city} className="border-b border-border/50 transition-colors hover:bg-sand/30">
+                  <tr key={c.city} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
                     <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-ink-1">{c.city}</span>
+                      <span className="text-sm font-medium text-midnight">{c.city}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-mono text-sm text-ink-2">{c.orders}</span>
+                      <span className="font-mono text-sm text-slate">{c.orders}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className="font-mono text-sm text-mint-deep">{c.delivered}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="font-mono text-sm text-coral">{c.returns}</span>
+                      <span className="font-mono text-sm text-rose">{c.returns}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <RtoBar value={c.rtoRate} />
@@ -641,10 +641,10 @@ export default function AnalyticsPage() {
                       <span
                         className={cn(
                           "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
-                          c.avgScore <= 30 && "bg-mint-light text-mint-deep",
-                          c.avgScore > 30 && c.avgScore <= 65 && "bg-sun-light text-sun-deep",
-                          c.avgScore > 65 && c.avgScore <= 85 && "bg-coral-light text-coral",
-                          c.avgScore > 85 && "bg-violet-light text-violet"
+                          c.avgScore <= 30 && "bg-mint-bg text-mint-deep",
+                          c.avgScore > 30 && c.avgScore <= 65 && "bg-amber-bg text-amber",
+                          c.avgScore > 65 && c.avgScore <= 85 && "bg-rose-bg text-rose",
+                          c.avgScore > 85 && "bg-violet-bg text-violet"
                         )}
                       >
                         {c.avgScore}
@@ -663,10 +663,10 @@ export default function AnalyticsPage() {
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-ink-3" />
+              <Clock className="h-4 w-4 text-fog" />
               Patterns temporels
             </CardTitle>
-            <p className="mt-1 text-xs text-ink-3">
+            <p className="mt-1 text-xs text-fog">
               Volume de commandes et taux de risque par heure — les commandes nocturnes (1h-5h) sont 2× plus risquées
             </p>
           </div>
@@ -675,23 +675,23 @@ export default function AnalyticsPage() {
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={hourlyData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E7E0D8" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
                 <XAxis
                   dataKey="hour"
-                  tick={{ fontSize: 10, fill: "#78716C" }}
+                  tick={{ fontSize: 10, fill: "#64748B" }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   yAxisId="orders"
-                  tick={{ fontSize: 11, fill: "#78716C" }}
+                  tick={{ fontSize: 11, fill: "#64748B" }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   yAxisId="risk"
                   orientation="right"
-                  tick={{ fontSize: 11, fill: "#78716C" }}
+                  tick={{ fontSize: 11, fill: "#64748B" }}
                   axisLine={false}
                   tickLine={false}
                   domain={[0, 60]}
@@ -714,7 +714,7 @@ export default function AnalyticsPage() {
                   {hourlyData.map((entry, i) => (
                     <Cell
                       key={i}
-                      fill={entry.hourNum >= 1 && entry.hourNum <= 5 ? "#F97066" : "#0EA5E9"}
+                      fill={entry.hourNum >= 1 && entry.hourNum <= 5 ? "#F43F5E" : "#3B82F6"}
                       fillOpacity={0.7}
                     />
                   ))}
@@ -730,7 +730,7 @@ export default function AnalyticsPage() {
                   {hourlyData.map((entry, i) => (
                     <Cell
                       key={i}
-                      fill={entry.hourNum >= 1 && entry.hourNum <= 5 ? "#F97066" : "#A8A29E"}
+                      fill={entry.hourNum >= 1 && entry.hourNum <= 5 ? "#F43F5E" : "#94A3B8"}
                     />
                   ))}
                 </Bar>
@@ -738,18 +738,18 @@ export default function AnalyticsPage() {
             </ResponsiveContainer>
           </div>
           {/* Legend */}
-          <div className="mt-3 flex flex-wrap items-center gap-5 border-t border-border pt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-5 border-t border-silk pt-3">
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-6 rounded-full bg-ocean/70" />
-              <span className="text-xs text-ink-3">Commandes (jour)</span>
+              <span className="text-xs text-fog">Commandes (jour)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2.5 w-6 rounded-full bg-coral/70" />
-              <span className="text-xs text-ink-3">Commandes (nuit 1h-5h)</span>
+              <span className="h-2.5 w-6 rounded-full bg-rose/70" />
+              <span className="text-xs text-fog">Commandes (nuit 1h-5h)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2.5 w-6 rounded-full bg-ink-4/25" />
-              <span className="text-xs text-ink-3">Taux de risque (%)</span>
+              <span className="h-2.5 w-6 rounded-full bg-mist/25" />
+              <span className="text-xs text-fog">Taux de risque (%)</span>
             </div>
           </div>
         </CardContent>

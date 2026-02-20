@@ -1,27 +1,29 @@
 import Link from "next/link";
-import { Zap, Shield, TrendingUp, Plug } from "lucide-react";
+import { Shield, TrendingUp, Plug } from "lucide-react";
 
 /**
  * Landing page — minimal CTA to YouCan OAuth or login.
  */
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-cream px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-snow px-4">
       <div className="w-full max-w-md text-center">
         {/* Logo */}
         <div className="mb-6 inline-flex items-center gap-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-sun">
-            <Zap className="h-7 w-7 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-mint">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="#0B0F1A" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M3 6h18M7 12h10M10 18h4"/>
+            </svg>
           </div>
-          <span className="font-sora text-3xl font-bold text-ink-1">
-            COD<span className="text-sun">Pilot</span>
+          <span className="font-display text-2xl font-black tracking-[-0.06em] text-midnight">
+            Siift
           </span>
         </div>
 
-        <h1 className="font-sora text-2xl font-bold text-ink-1">
+        <h1 className="font-display text-2xl font-bold text-midnight">
           Anti-Fraude RTO Intelligence
         </h1>
-        <p className="mt-2 text-ink-3">
+        <p className="mt-2 text-fog">
           Scorez vos commandes COD en temps réel. Expédiez en confiance, bloquez la fraude.
         </p>
 
@@ -29,15 +31,15 @@ export default function Home() {
         <div className="mt-8 grid grid-cols-3 gap-4 text-center">
           <div>
             <Shield className="mx-auto h-6 w-6 text-mint" />
-            <p className="mt-1.5 text-xs font-medium text-ink-2">Score 0-100</p>
+            <p className="mt-1.5 text-xs font-medium text-slate">Score 0-100</p>
           </div>
           <div>
-            <TrendingUp className="mx-auto h-6 w-6 text-sun" />
-            <p className="mt-1.5 text-xs font-medium text-ink-2">Réduire RTO</p>
+            <TrendingUp className="mx-auto h-6 w-6 text-mint" />
+            <p className="mt-1.5 text-xs font-medium text-slate">Réduire RTO</p>
           </div>
           <div>
             <Plug className="mx-auto h-6 w-6 text-[#5C6AC4]" />
-            <p className="mt-1.5 text-xs font-medium text-ink-2">YouCan intégré</p>
+            <p className="mt-1.5 text-xs font-medium text-slate">YouCan intégré</p>
           </div>
         </div>
 
@@ -52,14 +54,14 @@ export default function Home() {
           </a>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center rounded-sm border border-border bg-white px-5 py-3 text-sm font-medium text-ink-2 transition-colors hover:bg-sand"
+            className="inline-flex items-center justify-center rounded-sm border border-silk bg-white px-5 py-3 text-sm font-medium text-slate transition-colors hover:bg-snow"
           >
             Se connecter
           </Link>
         </div>
 
         {/* Compliance footer */}
-        <p className="mt-10 text-xs text-ink-4">
+        <p className="mt-10 text-xs text-mist">
           Conforme Loi 09-08 — Données hébergées en UE (Frankfurt)
         </p>
       </div>

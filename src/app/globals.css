@@ -4,18 +4,17 @@
 
 @layer base {
   :root {
-    --sun: 245 158 11;
-    --coral: 249 112 102;
-    --mint: 52 211 153;
-    --ocean: 14 165 233;
+    --mint: 0 229 160;
+    --amber: 245 158 11;
+    --rose: 244 63 94;
+    --ocean: 59 130 246;
     --violet: 139 92 246;
   }
 
   body {
-    @apply bg-cream text-ink-2 antialiased;
+    @apply bg-snow text-slate antialiased;
   }
 
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
@@ -28,10 +27,10 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #E7E0D8;
+    background: #CBD5E1;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #A8A29E;
+    background: #94A3B8;
   }
 }

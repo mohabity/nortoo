@@ -60,7 +60,7 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
       <TableBody>
         {orders.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center text-ink-3 py-8">
+            <TableCell colSpan={8} className="text-center text-fog py-8">
               Aucune commande trouvée
             </TableCell>
           </TableRow>
@@ -68,7 +68,7 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
           orders.map((order) => (
             <TableRow
               key={order.id}
-              className="cursor-pointer hover:bg-sand/50 transition-colors"
+              className="cursor-pointer hover:bg-snow/50 transition-colors"
               onClick={() => onRowClick?.(order.id)}
             >
               <TableCell className="text-center">
@@ -76,9 +76,9 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
               </TableCell>
               <TableCell>
                 <div>
-                  <p className="font-medium text-ink-1">{order.customerName ?? "—"}</p>
+                  <p className="font-medium text-midnight">{order.customerName ?? "—"}</p>
                   {order.customerPhoneLast4 && (
-                    <p className="text-xs text-ink-4">***{order.customerPhoneLast4}</p>
+                    <p className="text-xs text-mist">***{order.customerPhoneLast4}</p>
                   )}
                 </div>
               </TableCell>
@@ -87,16 +87,16 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
               <TableCell className="text-center">
                 <DecisionBadge decision={order.overrideDecision ?? order.decision} size="sm" />
                 {order.overrideDecision && (
-                  <span className="ml-1 text-[10px] text-ink-4" title="Override actif">*</span>
+                  <span className="ml-1 text-[10px] text-mist" title="Override actif">*</span>
                 )}
               </TableCell>
               <TableCell className="text-center">
                 <PipelineBadge status={order.pipelineStatus} size="sm" />
               </TableCell>
-              <TableCell className="text-sm text-ink-3">
+              <TableCell className="text-sm text-fog">
                 {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}
               </TableCell>
-              <TableCell className="max-w-[160px] truncate text-sm text-ink-3">
+              <TableCell className="max-w-[160px] truncate text-sm text-fog">
                 {order.productName ?? "—"}
               </TableCell>
             </TableRow>

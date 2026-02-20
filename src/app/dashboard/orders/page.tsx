@@ -31,10 +31,10 @@ const EMPTY_COUNTS: OrdersCounts = { all: 0, ship: 0, verify: 0, flag: 0, block:
 // ── Pills config ──
 
 const DECISION_PILLS = [
-  { key: "all", label: "Toutes", activeClass: "bg-ink-1 text-white" },
+  { key: "all", label: "Toutes", activeClass: "bg-midnight text-white" },
   { key: "ship", label: "Expédier", activeClass: "bg-mint text-white" },
-  { key: "verify", label: "Vérifier", activeClass: "bg-sun text-white" },
-  { key: "flag", label: "Signaler", activeClass: "bg-coral text-white" },
+  { key: "verify", label: "Vérifier", activeClass: "bg-amber text-white" },
+  { key: "flag", label: "Signaler", activeClass: "bg-rose text-white" },
   { key: "block", label: "Bloquer", activeClass: "bg-violet text-white" },
 ] as const;
 
@@ -45,8 +45,8 @@ export default function OrdersPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-ink-4" />
-          <span className="ml-2 text-sm text-ink-3">Chargement...</span>
+          <Loader2 className="h-6 w-6 animate-spin text-mist" />
+          <span className="ml-2 text-sm text-fog">Chargement...</span>
         </div>
       }
     >
@@ -152,8 +152,8 @@ function OrdersContent() {
     <div className="space-y-5">
       {/* ── Header ── */}
       <div>
-        <h1 className="font-sora text-2xl font-bold text-ink-1">Commandes</h1>
-        <p className="text-sm text-ink-3">
+        <h1 className="font-display text-2xl font-bold text-midnight">Commandes</h1>
+        <p className="text-sm text-fog">
           {counts.all} commande{counts.all !== 1 ? "s" : ""} au total
         </p>
       </div>
@@ -172,13 +172,13 @@ function OrdersContent() {
                 className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                   isActive
                     ? pill.activeClass
-                    : "bg-white border border-border text-ink-2 hover:bg-sand"
+                    : "bg-white border border-silk text-slate hover:bg-snow"
                 }`}
               >
                 {pill.label}
                 <span
                   className={`font-mono text-xs ${
-                    isActive ? "opacity-80" : "text-ink-4"
+                    isActive ? "opacity-80" : "text-mist"
                   }`}
                 >
                   ({pillCount})
@@ -193,7 +193,7 @@ function OrdersContent() {
           <select
             value={currentPipeline}
             onChange={(e) => setFilter("pipeline", e.target.value)}
-            className="h-9 rounded-lg border border-border bg-white px-3 text-sm text-ink-2 focus:outline-none focus:ring-2 focus:ring-sun/30"
+            className="h-9 rounded-lg border border-silk bg-white px-3 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30"
           >
             <option value="all">Pipeline: Tous</option>
             <option value="auto_shipped">Auto-expédié</option>
@@ -207,13 +207,13 @@ function OrdersContent() {
           {/* Search */}
           <form onSubmit={handleSearch} className="flex items-center gap-1">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-4" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-mist" />
               <input
                 type="text"
                 placeholder="Chercher réf, nom, ville..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="h-9 w-[220px] rounded-full border border-border bg-white pl-8 pr-3 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-sun/30"
+                className="h-9 w-[220px] rounded-full border border-silk bg-white pl-8 pr-3 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
               />
             </div>
           </form>
@@ -225,8 +225,8 @@ function OrdersContent() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-ink-4" />
-              <span className="ml-2 text-sm text-ink-3">Chargement...</span>
+              <Loader2 className="h-6 w-6 animate-spin text-mist" />
+              <span className="ml-2 text-sm text-fog">Chargement...</span>
             </div>
           ) : (
             <OrderTable orders={orders} onRowClick={handleRowClick} />
@@ -237,7 +237,7 @@ function OrdersContent() {
       {/* ── Pagination ── */}
       {meta.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-ink-3">
+          <p className="text-sm text-fog">
             Page {meta.page} sur {meta.totalPages}
           </p>
           <div className="flex items-center gap-2">

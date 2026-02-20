@@ -51,11 +51,11 @@ const rightTypeLabels: Record<string, { label: string; icon: typeof Eye }> = {
   opposition: { label: "Droit d'opposition (Art. 9)", icon: Ban },
 };
 
-const statusLabels: Record<string, { label: string; variant: "mint" | "sun" | "default" | "coral" }> = {
-  pending: { label: "En attente", variant: "sun" },
-  processing: { label: "En cours", variant: "sun" },
+const statusLabels: Record<string, { label: string; variant: "mint" | "amber" | "default" | "rose" }> = {
+  pending: { label: "En attente", variant: "amber" },
+  processing: { label: "En cours", variant: "amber" },
   completed: { label: "Traité", variant: "mint" },
-  refused: { label: "Refusé", variant: "coral" },
+  refused: { label: "Refusé", variant: "rose" },
 };
 
 const actionLabels: Record<string, string> = {
@@ -79,45 +79,45 @@ export default function CompliancePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-sora text-2xl font-bold text-ink-1">Conformité</h1>
-        <p className="text-sm text-ink-3">
+        <h1 className="font-display text-2xl font-bold text-midnight">Conformité</h1>
+        <p className="text-sm text-fog">
           Gestion des droits des données — Loi 09-08
         </p>
       </div>
 
       {/* Compliance Status Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded bg-white border border-border shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
+        <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-mint" />
-            <p className="text-xs font-medium text-ink-3">Hachage Art. 23</p>
+            <p className="text-xs font-medium text-fog">Hachage Art. 23</p>
           </div>
-          <p className="mt-2 font-sora text-lg font-bold text-mint-deep">Actif</p>
-          <p className="text-xs text-ink-4">SHA-256 + sel</p>
+          <p className="mt-2 font-display text-lg font-bold text-mint-deep">Actif</p>
+          <p className="text-xs text-mist">SHA-256 + sel</p>
         </div>
-        <div className="rounded bg-white border border-border shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
+        <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-sun" />
-            <p className="text-xs font-medium text-ink-3">Rétention Art. 3e</p>
+            <Clock className="h-4 w-4 text-amber" />
+            <p className="text-xs font-medium text-fog">Rétention Art. 3e</p>
           </div>
-          <p className="mt-2 font-sora text-lg font-bold text-ink-1">24 mois</p>
-          <p className="text-xs text-ink-4">Purge auto à 3h</p>
+          <p className="mt-2 font-display text-lg font-bold text-midnight">24 mois</p>
+          <p className="text-xs text-mist">Purge auto à 3h</p>
         </div>
-        <div className="rounded bg-white border border-border shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
+        <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-ocean" />
-            <p className="text-xs font-medium text-ink-3">Journal audit</p>
+            <p className="text-xs font-medium text-fog">Journal audit</p>
           </div>
-          <p className="mt-2 font-sora text-lg font-bold text-ink-1">1 247</p>
-          <p className="text-xs text-ink-4">Entrées ce mois</p>
+          <p className="mt-2 font-display text-lg font-bold text-midnight">1 247</p>
+          <p className="text-xs text-mist">Entrées ce mois</p>
         </div>
-        <div className="rounded bg-white border border-border shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
+        <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
           <div className="flex items-center gap-2">
             <Ban className="h-4 w-4 text-violet" />
-            <p className="text-xs font-medium text-ink-3">Oppositions Art. 9</p>
+            <p className="text-xs font-medium text-fog">Oppositions Art. 9</p>
           </div>
-          <p className="mt-2 font-sora text-lg font-bold text-ink-1">3</p>
-          <p className="text-xs text-ink-4">Consommateurs opposés</p>
+          <p className="mt-2 font-display text-lg font-bold text-midnight">3</p>
+          <p className="text-xs text-mist">Consommateurs opposés</p>
         </div>
       </div>
 
@@ -138,16 +138,16 @@ export default function CompliancePage() {
                 return (
                   <div
                     key={req.id}
-                    className="flex items-center justify-between rounded-sm border border-border p-3"
+                    className="flex items-center justify-between rounded-sm border border-silk p-3"
                   >
                     <div className="flex items-center gap-3">
-                      <RightIcon className="h-4 w-4 text-ink-3" />
+                      <RightIcon className="h-4 w-4 text-fog" />
                       <div>
-                        <p className="text-sm font-medium text-ink-1">
+                        <p className="text-sm font-medium text-midnight">
                           {rightConfig?.label ?? req.rightType}
                         </p>
-                        <p className="font-mono text-xs text-ink-4">{req.phoneHash}</p>
-                        <p className="text-xs text-ink-4">
+                        <p className="font-mono text-xs text-mist">{req.phoneHash}</p>
+                        <p className="text-xs text-mist">
                           {new Date(req.createdAt).toLocaleDateString("fr-FR")}
                         </p>
                       </div>
@@ -173,21 +173,21 @@ export default function CompliancePage() {
               {recentAuditLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between rounded-xs px-3 py-2 hover:bg-sand/50"
+                  className="flex items-center justify-between rounded-xs px-3 py-2 hover:bg-snow/50"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <Badge variant="default" className="shrink-0">
                       {actorLabels[log.actor] ?? log.actor}
                     </Badge>
                     <div className="min-w-0">
-                      <p className="text-sm text-ink-2 truncate">
+                      <p className="text-sm text-slate truncate">
                         <span className="font-medium">{actionLabels[log.action] ?? log.action}</span>
                         {" — "}
                         {log.target}
                       </p>
                     </div>
                   </div>
-                  <span className="shrink-0 text-xs text-ink-4 ml-2">
+                  <span className="shrink-0 text-xs text-mist ml-2">
                     {new Date(log.createdAt).toLocaleDateString("fr-FR", {
                       day: "2-digit",
                       month: "short",

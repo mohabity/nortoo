@@ -79,8 +79,8 @@ interface OrderDetail {
 
 function scoreBorderClass(score: number): string {
   if (score <= 30) return "border-mint";
-  if (score <= 65) return "border-sun";
-  if (score <= 85) return "border-coral";
+  if (score <= 65) return "border-amber";
+  if (score <= 85) return "border-rose";
   return "border-violet";
 }
 
@@ -169,12 +169,12 @@ export function OrderSlideOver({
       <SheetContent side="right" className="overflow-y-auto p-0">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin text-ink-4" />
-            <span className="ml-2 text-sm text-ink-3">Chargement...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-mist" />
+            <span className="ml-2 text-sm text-fog">Chargement...</span>
           </div>
         ) : error || !order ? (
           <div className="flex flex-col items-center justify-center h-full gap-3">
-            <p className="text-sm text-ink-3">{error ?? "Commande introuvable"}</p>
+            <p className="text-sm text-fog">{error ?? "Commande introuvable"}</p>
             <Button variant="outline" size="sm" onClick={onClose}>
               Fermer
             </Button>
@@ -182,7 +182,7 @@ export function OrderSlideOver({
         ) : (
           <div className="flex flex-col">
             {/* ── A. Header ── */}
-            <SheetHeader className="border-b border-border px-6 py-5">
+            <SheetHeader className="border-b border-silk px-6 py-5">
               <div className="flex items-center gap-4">
                 <div
                   className={`relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 ${scoreBorderClass(order.fraudScore)}`}
@@ -197,7 +197,7 @@ export function OrderSlideOver({
                   </SheetTitle>
                   <div className="flex items-center gap-2 mt-1">
                     <DecisionBadge decision={effectiveDecision} />
-                    <span className="text-xs text-ink-4">
+                    <span className="text-xs text-mist">
                       Risque {riskLabel(order.riskLevel).toLowerCase()}
                     </span>
                   </div>
@@ -216,20 +216,20 @@ export function OrderSlideOver({
 
             {/* ── B. Override Banner ── */}
             {order.overrideDecision && (
-              <div className="mx-6 mt-4 flex items-center gap-3 rounded-lg border border-sun/30 bg-sun-light/50 px-4 py-3">
-                <ShieldCheck className="h-5 w-5 shrink-0 text-sun-deep" />
+              <div className="mx-6 mt-4 flex items-center gap-3 rounded-lg border border-amber/30 bg-amber-bg px-4 py-3">
+                <ShieldCheck className="h-5 w-5 shrink-0 text-amber" />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-ink-1">
+                  <p className="text-sm font-medium text-midnight">
                     Décision modifiée par le marchand
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <DecisionBadge decision={order.overrideDecision} size="sm" />
                     {order.overrideReason && (
-                      <span className="text-xs text-ink-3 truncate">{order.overrideReason}</span>
+                      <span className="text-xs text-fog truncate">{order.overrideReason}</span>
                     )}
                   </div>
                   {order.overrideAt && (
-                    <p className="text-[11px] text-ink-4 mt-0.5">
+                    <p className="text-[11px] text-mist mt-0.5">
                       {new Date(order.overrideAt).toLocaleDateString("fr-FR", {
                         day: "2-digit",
                         month: "short",
@@ -245,18 +245,18 @@ export function OrderSlideOver({
             {/* ── C. Pipeline Status ── */}
             {order.pipelineStatus && order.pipelineStatus !== "pending" && (
               <div className="mx-6 mt-4">
-                <h3 className="text-sm font-semibold text-ink-1 font-sora mb-2">
+                <h3 className="text-sm font-semibold text-midnight font-display mb-2">
                   Pipeline
                 </h3>
-                <div className="rounded-lg border border-border bg-white p-4 space-y-2">
+                <div className="rounded-lg border border-silk bg-white p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-ink-3">Statut</span>
+                    <span className="text-sm text-fog">Statut</span>
                     <PipelineBadge status={order.pipelineStatus} size="sm" />
                   </div>
                   {order.pipelineProcessedAt && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-ink-3">Traité à</span>
-                      <span className="text-sm text-ink-2 font-mono">
+                      <span className="text-sm text-fog">Traité à</span>
+                      <span className="text-sm text-slate font-mono">
                         {new Date(order.pipelineProcessedAt).toLocaleTimeString("fr-FR", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -266,15 +266,15 @@ export function OrderSlideOver({
                   )}
                   {order.reviewDeadline && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-ink-3 flex items-center gap-1">
+                      <span className="text-sm text-fog flex items-center gap-1">
                         <Clock className="h-3 w-3" /> Délai
                       </span>
                       <span
                         className={cn(
                           "text-sm font-mono font-medium",
                           new Date(order.reviewDeadline) < new Date()
-                            ? "text-coral"
-                            : "text-sun-deep"
+                            ? "text-rose"
+                            : "text-amber"
                         )}
                       >
                         {new Date(order.reviewDeadline).toLocaleTimeString("fr-FR", {
@@ -285,9 +285,9 @@ export function OrderSlideOver({
                     </div>
                   )}
                   {order.escalatedAt && (
-                    <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-coral-light/50 rounded">
-                      <AlertTriangle className="h-3.5 w-3.5 text-coral" />
-                      <span className="text-xs text-terra">
+                    <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-rose-bg rounded">
+                      <AlertTriangle className="h-3.5 w-3.5 text-rose" />
+                      <span className="text-xs text-rose">
                         Escaladé le{" "}
                         {new Date(order.escalatedAt).toLocaleDateString("fr-FR", {
                           day: "2-digit",
@@ -305,32 +305,32 @@ export function OrderSlideOver({
             {/* ── D. Scoring Factors ── */}
             {order.scoringFactors.length > 0 && (
               <div className="mx-6 mt-4">
-                <h3 className="text-sm font-semibold text-ink-1 font-sora mb-2">
+                <h3 className="text-sm font-semibold text-midnight font-display mb-2">
                   Analyse du scoring
                 </h3>
-                <div className="rounded-lg border border-border overflow-hidden">
+                <div className="rounded-lg border border-silk overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-sand/50">
-                        <th className="px-3 py-2 text-left font-medium text-ink-3 text-xs">Règle</th>
-                        <th className="px-3 py-2 text-center font-medium text-ink-3 text-xs w-[60px]">Pts</th>
-                        <th className="px-3 py-2 text-left font-medium text-ink-3 text-xs">Raison</th>
+                      <tr className="bg-snow/50">
+                        <th className="px-3 py-2 text-left font-medium text-fog text-xs">Règle</th>
+                        <th className="px-3 py-2 text-center font-medium text-fog text-xs w-[60px]">Pts</th>
+                        <th className="px-3 py-2 text-left font-medium text-fog text-xs">Raison</th>
                       </tr>
                     </thead>
                     <tbody>
                       {order.scoringFactors.map((factor) => (
-                        <tr key={factor.rule} className="border-t border-border">
-                          <td className="px-3 py-2 font-mono text-xs text-ink-2">
+                        <tr key={factor.rule} className="border-t border-silk">
+                          <td className="px-3 py-2 font-mono text-xs text-slate">
                             {factor.rule}
                           </td>
                           <td className="px-3 py-2 text-center">
                             <span
                               className={
                                 factor.points > 0
-                                  ? "font-mono font-bold text-coral text-xs"
+                                  ? "font-mono font-bold text-rose text-xs"
                                   : factor.points < 0
                                   ? "font-mono font-bold text-mint-deep text-xs"
-                                  : "font-mono text-ink-4 text-xs"
+                                  : "font-mono text-mist text-xs"
                               }
                             >
                               {factor.points > 0
@@ -340,11 +340,11 @@ export function OrderSlideOver({
                                 : factor.points}
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-xs text-ink-3">{factor.reason}</td>
+                          <td className="px-3 py-2 text-xs text-fog">{factor.reason}</td>
                         </tr>
                       ))}
-                      <tr className="border-t-2 border-border bg-sand/30">
-                        <td className="px-3 py-2 font-mono font-bold text-ink-1 text-xs">TOTAL</td>
+                      <tr className="border-t-2 border-silk bg-snow">
+                        <td className="px-3 py-2 font-mono font-bold text-midnight text-xs">TOTAL</td>
                         <td className="px-3 py-2 text-center">
                           <ScoreBadge score={order.fraudScore} size="sm" />
                         </td>
@@ -353,7 +353,7 @@ export function OrderSlideOver({
                     </tbody>
                   </table>
                 </div>
-                <p className="text-[11px] text-ink-4 mt-1.5">
+                <p className="text-[11px] text-mist mt-1.5">
                   {order.scoringVersion ?? "v1.0"} — Confiance {Math.round(order.confidence * 100)}%
                 </p>
               </div>
@@ -361,37 +361,37 @@ export function OrderSlideOver({
 
             {/* ── D. Order Info ── */}
             <div className="mx-6 mt-4">
-              <h3 className="text-sm font-semibold text-ink-1 font-sora mb-2">
+              <h3 className="text-sm font-semibold text-midnight font-display mb-2">
                 Commande
               </h3>
-              <div className="rounded-lg border border-border bg-white p-4 space-y-2.5">
+              <div className="rounded-lg border border-silk bg-white p-4 space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-ink-4 shrink-0" />
-                  <span className="text-sm text-ink-2">{order.productName ?? "—"}</span>
+                  <Package className="h-4 w-4 text-mist shrink-0" />
+                  <span className="text-sm text-slate">{order.productName ?? "—"}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-ink-3">Montant</span>
-                  <span className="font-mono font-bold text-ink-1">{formatDH(order.total)}</span>
+                  <span className="text-sm text-fog">Montant</span>
+                  <span className="font-mono font-bold text-midnight">{formatDH(order.total)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-ink-3">Livraison</span>
-                  <span className="text-sm text-ink-2">
-                    <Truck className="inline h-3.5 w-3.5 mr-1 text-ink-4" />
+                  <span className="text-sm text-fog">Livraison</span>
+                  <span className="text-sm text-slate">
+                    <Truck className="inline h-3.5 w-3.5 mr-1 text-mist" />
                     {deliveryLabel(order.deliveryStatus)}
                   </span>
                 </div>
                 {order.shippingCity && (
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-ink-4 shrink-0" />
-                    <span className="text-sm text-ink-3">
+                    <MapPin className="h-4 w-4 text-mist shrink-0" />
+                    <span className="text-sm text-fog">
                       {order.shippingCity}
                       {order.shippingAddress ? ` — ${order.shippingAddress}` : ""}
                     </span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-ink-4 shrink-0" />
-                  <span className="text-sm text-ink-3">
+                  <Calendar className="h-4 w-4 text-mist shrink-0" />
+                  <span className="text-sm text-fog">
                     {new Date(order.createdAt).toLocaleDateString("fr-FR", {
                       day: "2-digit",
                       month: "long",
@@ -405,28 +405,28 @@ export function OrderSlideOver({
             {/* ── E. Customer History ── */}
             {order.customer && (
               <div className="mx-6 mt-4">
-                <h3 className="text-sm font-semibold text-ink-1 font-sora mb-2">
+                <h3 className="text-sm font-semibold text-midnight font-display mb-2">
                   Historique client
                 </h3>
-                <div className="rounded-lg border border-border bg-sand/30 p-4">
+                <div className="rounded-lg border border-silk bg-snow p-4">
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <p className="font-mono text-xl font-bold text-ink-1">
+                      <p className="font-mono text-xl font-bold text-midnight">
                         {order.customer.totalOrders}
                       </p>
-                      <p className="text-[11px] text-ink-4">Commandes</p>
+                      <p className="text-[11px] text-mist">Commandes</p>
                     </div>
                     <div>
                       <p className="font-mono text-xl font-bold text-mint-deep">
                         {order.customer.successfulOrders}
                       </p>
-                      <p className="text-[11px] text-ink-4">Succès</p>
+                      <p className="text-[11px] text-mist">Succès</p>
                     </div>
                     <div>
-                      <p className="font-mono text-xl font-bold text-coral">
+                      <p className="font-mono text-xl font-bold text-rose">
                         {order.customer.failedOrders}
                       </p>
-                      <p className="text-[11px] text-ink-4">Échecs</p>
+                      <p className="text-[11px] text-mist">Échecs</p>
                     </div>
                   </div>
                 </div>
@@ -461,20 +461,20 @@ export function OrderSlideOver({
                   </Button>
                 </div>
               ) : (
-                <div className="rounded-lg border border-border bg-sand/30 p-4 space-y-3">
-                  <p className="text-sm font-medium text-ink-1">
+                <div className="rounded-lg border border-silk bg-snow p-4 space-y-3">
+                  <p className="text-sm font-medium text-midnight">
                     Override →{" "}
                     <DecisionBadge decision={overrideDecision} size="sm" />
                   </p>
                   <div>
-                    <label className="text-xs text-ink-3">
+                    <label className="text-xs text-fog">
                       Raison (optionnelle — tracée Art. 23)
                     </label>
                     <textarea
                       value={overrideReason}
                       onChange={(e) => setOverrideReason(e.target.value)}
                       placeholder="Raison de l'override..."
-                      className="mt-1 w-full rounded-md border border-border bg-white px-3 py-2 text-sm placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-sun/30"
+                      className="mt-1 w-full rounded-md border border-silk bg-white px-3 py-2 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
                       rows={2}
                     />
                   </div>
@@ -502,7 +502,7 @@ export function OrderSlideOver({
                   </div>
                 </div>
               )}
-              <p className="text-[11px] text-ink-4 mt-2">
+              <p className="text-[11px] text-mist mt-2">
                 Les overrides sont tracés dans le journal d&apos;audit (Art. 23)
               </p>
             </div>
