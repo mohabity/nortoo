@@ -431,6 +431,27 @@ export const zoneStats = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// PASSWORD RESET TOKENS — Forgot password flow
+// Token stored in DB is SHA-256(rawToken). If DB leaks, tokens are unusable.
+// ═══════════════════════════════════════════════════════════
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(), // SHA-256 of the raw token sent by email
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"), // null until used
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("password_reset_merchant_idx").on(table.merchantId),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
