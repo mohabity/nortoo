@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { SessionProvider } from "next-auth/react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { MobileHeader } from "@/components/layout/mobile-header";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { ConnectedBanner } from "@/components/dashboard/connected-banner";
 
 export default function DashboardLayout({
@@ -13,13 +15,15 @@ export default function DashboardLayout({
     <SessionProvider>
       <div className="min-h-screen bg-snow">
         <Sidebar />
-        <div className="ml-64">
+        <MobileHeader />
+        <div className="lg:ml-64">
           <Header />
           <Suspense fallback={null}>
             <ConnectedBanner />
           </Suspense>
-          <main className="p-6">{children}</main>
+          <main className="px-4 py-4 pb-24 lg:p-6 lg:pb-6">{children}</main>
         </div>
+        <BottomNav />
       </div>
     </SessionProvider>
   );

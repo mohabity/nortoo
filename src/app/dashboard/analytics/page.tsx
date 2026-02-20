@@ -549,10 +549,10 @@ export default function AnalyticsPage() {
         <PeriodSelector value={period} onChange={setPeriod} />
       </div>
 
-      {/* ═══ 1. KPI ROW ═══ */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ═══ 1. KPI ROW — horizontal scroll mobile, grid desktop ═══ */}
+      <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x-mandatory pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 lg:overflow-visible lg:grid lg:grid-cols-4 lg:gap-4">
         {/* Économies estimées */}
-        <div className="rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
+        <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-fog">Économies estimées</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-amber-bg">
@@ -571,7 +571,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Taux RTO actuel */}
-        <div className="rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
+        <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-fog">Taux RTO actuel</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-rose-bg">
@@ -590,7 +590,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Taux de livraison */}
-        <div className="rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
+        <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-fog">Taux de livraison</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-mint-bg">
@@ -609,7 +609,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* ROI Siift */}
-        <div className="rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
+        <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-fog">ROI Siift</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-violet-bg">
@@ -636,7 +636,7 @@ export default function AnalyticsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[340px]">
+          <div className="h-[200px] lg:h-[340px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dailyData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
                 <defs>
@@ -697,7 +697,7 @@ export default function AnalyticsPage() {
             <p className="text-xs text-fog">Volume de commandes par tranche de risque</p>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
+            <div className="h-[200px] lg:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={scoreDistribution} barSize={48} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
@@ -745,8 +745,8 @@ export default function AnalyticsPage() {
             <p className="text-xs text-fog">Actions automatiques sur les commandes</p>
           </CardHeader>
           <CardContent>
-            <div className="flex h-[280px] items-center gap-8">
-              <div className="relative h-full flex-1">
+            <div className="flex flex-col lg:flex-row h-auto lg:h-[280px] items-center gap-4 lg:gap-8">
+              <div className="relative h-[200px] lg:h-full w-full lg:w-auto flex-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -775,7 +775,7 @@ export default function AnalyticsPage() {
                   <p className="text-[10px] text-fog">total</p>
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap justify-center gap-3 lg:flex-col lg:flex-nowrap lg:justify-start">
                 {decisionData.map((d) => (
                   <div key={d.name} className="flex items-center gap-3">
                     <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
@@ -806,15 +806,15 @@ export default function AnalyticsPage() {
         <CardContent>
           {/* ── Product mini KPIs ── */}
           {productLoading ? (
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mb-6 flex gap-3 overflow-x-auto no-scrollbar snap-x-mandatory pb-2 -mx-4 px-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:mx-0 lg:px-0 lg:pb-0 lg:overflow-visible">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 animate-pulse rounded-xl bg-snow" />
+                <div key={i} className="min-w-[200px] snap-start lg:min-w-0 h-20 animate-pulse rounded-xl bg-snow" />
               ))}
             </div>
           ) : productError ? null : (
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mb-6 flex gap-3 overflow-x-auto no-scrollbar snap-x-mandatory pb-2 -mx-4 px-4 lg:grid lg:grid-cols-3 lg:gap-4 lg:mx-0 lg:px-0 lg:pb-0 lg:overflow-visible">
               {/* High-risk product count */}
-              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+              <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-rose" />
                   <p className="text-xs font-medium text-fog">Produits à risque élevé</p>
@@ -828,7 +828,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Revenue at risk */}
-              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+              <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <Coins className="h-4 w-4 text-amber" />
                   <p className="text-xs font-medium text-fog">DH de revenus à risque</p>
@@ -842,7 +842,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Top 3 RTO concentration */}
-              <div className="rounded-xl border border-silk bg-snow/50 p-4">
+              <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <TrendingDown className="h-4 w-4 text-violet" />
                   <p className="text-xs font-medium text-fog">RTO concentré sur top 3</p>
@@ -873,53 +873,95 @@ export default function AnalyticsPage() {
               <p className="text-xs text-fog mt-1">Les données apparaitront ici après les premières commandes.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-silk">
-                    <SortableHeader<ProductSortKey> label="Produit" sortKey="productName" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
-                    <SortableHeader<ProductSortKey> label="Catégorie" sortKey="productCategory" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
-                    <SortableHeader<ProductSortKey> label="Commandes" sortKey="totalOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                    <SortableHeader<ProductSortKey> label="Livrées" sortKey="deliveredOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                    <SortableHeader<ProductSortKey> label="Retours" sortKey="returnedOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                    <SortableHeader<ProductSortKey> label="Taux RTO" sortKey="rtoRate" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                    <SortableHeader<ProductSortKey> label="CA Total" sortKey="totalRevenue" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedProducts.map((p) => (
-                    <tr key={p.id} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-midnight">{p.productName}</span>
-                          <ProductRiskBadge rtoRate={p.rtoRate} />
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-fog">{p.productCategory}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-mono text-sm text-slate">{p.totalOrders}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-mono text-sm text-mint-deep">{p.deliveredOrders}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-mono text-sm text-rose">{p.returnedOrders}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <RtoBar value={Math.round(p.rtoRate * 100)} />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-mono text-sm font-semibold text-midnight">
-                          {p.totalRevenue.toLocaleString("fr-FR")} <span className="text-xs font-normal text-fog">DH</span>
-                        </span>
-                      </td>
+            <>
+              {/* Desktop table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-silk">
+                      <SortableHeader<ProductSortKey> label="Produit" sortKey="productName" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
+                      <SortableHeader<ProductSortKey> label="Catégorie" sortKey="productCategory" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
+                      <SortableHeader<ProductSortKey> label="Commandes" sortKey="totalOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label="Livrées" sortKey="deliveredOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label="Retours" sortKey="returnedOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label="Taux RTO" sortKey="rtoRate" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label="CA Total" sortKey="totalRevenue" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {sortedProducts.map((p) => (
+                      <tr key={p.id} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-midnight">{p.productName}</span>
+                            <ProductRiskBadge rtoRate={p.rtoRate} />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-fog">{p.productCategory}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-slate">{p.totalOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-mint-deep">{p.deliveredOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-rose">{p.returnedOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <RtoBar value={Math.round(p.rtoRate * 100)} />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm font-semibold text-midnight">
+                            {p.totalRevenue.toLocaleString("fr-FR")} <span className="text-xs font-normal text-fog">DH</span>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="lg:hidden space-y-3">
+                {sortedProducts.map((p) => (
+                  <div key={p.id} className="rounded-sm border border-silk bg-white p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-body text-sm font-semibold text-midnight">{p.productName}</p>
+                        <p className="text-xs text-fog mt-0.5">{p.productCategory}</p>
+                      </div>
+                      <ProductRiskBadge rtoRate={p.rtoRate} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-fog">Taux RTO</span>
+                        <RtoBar value={Math.round(p.rtoRate * 100)} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 border-t border-silk pt-3">
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Commandes</p>
+                        <p className="font-mono text-sm font-bold text-slate">{p.totalOrders}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Livrées</p>
+                        <p className="font-mono text-sm font-bold text-mint-deep">{p.deliveredOrders}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Retours</p>
+                        <p className="font-mono text-sm font-bold text-rose">{p.returnedOrders}</p>
+                      </div>
+                      <div className="flex-1 text-right">
+                        <p className="text-[11px] text-fog">CA</p>
+                        <p className="font-mono text-sm font-bold text-midnight">{p.totalRevenue.toLocaleString("fr-FR")} <span className="text-[11px] font-normal text-fog">DH</span></p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -960,38 +1002,90 @@ export default function AnalyticsPage() {
               <p className="text-xs text-fog mt-1">Les données apparaitront ici après les premières commandes.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-silk">
-                    <SortableHeader<CitySortKey> label="Ville" sortKey="cityDisplay" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} />
-                    <SortableHeader<CitySortKey> label="Commandes" sortKey="totalOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                    <SortableHeader<CitySortKey> label="Livrées" sortKey="deliveredOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                    <SortableHeader<CitySortKey> label="Retours" sortKey="returnedOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                    <SortableHeader<CitySortKey> label="Taux RTO" sortKey="rtoRate" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                    <SortableHeader<CitySortKey> label="Score moyen" sortKey="avgScore" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                    <SortableHeader<CitySortKey> label="Risque" sortKey="riskTier" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedCities.map((c) => (
-                    <tr key={c.id} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-medium text-midnight">{c.cityDisplay}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-mono text-sm text-slate">{c.totalOrders}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-mono text-sm text-mint-deep">{c.deliveredOrders}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="font-mono text-sm text-rose">{c.returnedOrders}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
+            <>
+              {/* Desktop table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-silk">
+                      <SortableHeader<CitySortKey> label="Ville" sortKey="cityDisplay" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} />
+                      <SortableHeader<CitySortKey> label="Commandes" sortKey="totalOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label="Livrées" sortKey="deliveredOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label="Retours" sortKey="returnedOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label="Taux RTO" sortKey="rtoRate" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label="Score moyen" sortKey="avgScore" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label="Risque" sortKey="riskTier" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedCities.map((c) => (
+                      <tr key={c.id} className="border-b border-silk/50 transition-colors hover:bg-snow/30">
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-medium text-midnight">{c.cityDisplay}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-slate">{c.totalOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-mint-deep">{c.deliveredOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-mono text-sm text-rose">{c.returnedOrders}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <RtoBar value={Math.round(c.rtoRate * 100)} />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
+                              c.avgScore <= 30 && "bg-mint-bg text-mint-deep",
+                              c.avgScore > 30 && c.avgScore <= 65 && "bg-amber-bg text-amber",
+                              c.avgScore > 65 && c.avgScore <= 85 && "bg-rose-bg text-rose",
+                              c.avgScore > 85 && "bg-violet-bg text-violet"
+                            )}
+                          >
+                            {c.avgScore}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <RiskTierBadge tier={c.riskTier} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="lg:hidden space-y-3">
+                {sortedCities.map((c) => (
+                  <div key={c.id} className="rounded-sm border border-silk bg-white p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-body text-sm font-semibold text-midnight">{c.cityDisplay}</p>
+                      <RiskTierBadge tier={c.riskTier} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-fog">Taux RTO</span>
                         <RtoBar value={Math.round(c.rtoRate * 100)} />
-                      </td>
-                      <td className="px-4 py-3 text-right">
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 border-t border-silk pt-3">
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Commandes</p>
+                        <p className="font-mono text-sm font-bold text-slate">{c.totalOrders}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Livrées</p>
+                        <p className="font-mono text-sm font-bold text-mint-deep">{c.deliveredOrders}</p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] text-fog">Retours</p>
+                        <p className="font-mono text-sm font-bold text-rose">{c.returnedOrders}</p>
+                      </div>
+                      <div className="flex-1 text-right">
+                        <p className="text-[11px] text-fog">Score</p>
                         <span
                           className={cn(
                             "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
@@ -1003,15 +1097,12 @@ export default function AnalyticsPage() {
                         >
                           {c.avgScore}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <RiskTierBadge tier={c.riskTier} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -1030,7 +1121,7 @@ export default function AnalyticsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
+          <div className="h-[200px] lg:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={hourlyData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />

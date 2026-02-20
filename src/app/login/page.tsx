@@ -91,8 +91,8 @@ function LoginForm() {
           </p>
         </div>
 
-        {/* Login Card */}
-        <Card>
+        {/* Login Card — borderless on mobile for full-viewport feel */}
+        <Card className="border-0 shadow-none sm:border sm:border-silk sm:shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <CardHeader className="text-center pb-2">
             <h1 className="font-display text-lg font-semibold text-midnight">
               Connexion
@@ -121,7 +121,7 @@ function LoginForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
                     autoFocus
-                    className="w-full rounded-sm border border-silk bg-white pl-10 pr-3 py-2.5 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
+                    className="w-full min-h-[44px] rounded-sm border border-silk bg-white pl-10 pr-3 py-2.5 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
                   />
                 </div>
               </div>
@@ -143,7 +143,7 @@ function LoginForm() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
-                    className="w-full rounded-sm border border-silk bg-white pl-10 pr-3 py-2.5 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
+                    className="w-full min-h-[44px] rounded-sm border border-silk bg-white pl-10 pr-3 py-2.5 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
                   />
                 </div>
               </div>
@@ -154,7 +154,7 @@ function LoginForm() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full min-h-[48px]"
                 disabled={loading}
               >
                 {loading ? (
@@ -177,7 +177,7 @@ function LoginForm() {
             {/* YouCan OAuth */}
             <a
               href="/api/auth/youcan?mode=login"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-[#5C6AC4] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4F5BB5]"
+              className="inline-flex w-full min-h-[48px] items-center justify-center gap-2 rounded-sm bg-[#5C6AC4] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4F5BB5]"
             >
               <Plug className="h-4 w-4" />
               Se connecter avec YouCan
@@ -195,7 +195,7 @@ function LoginForm() {
           </CardContent>
         </Card>
 
-        <p className="mt-6 text-center text-xs text-mist">
+        <p className="mt-6 pb-4 text-center text-xs text-mist" style={{ paddingBottom: "max(1rem, var(--safe-bottom))" }}>
           Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08
         </p>
       </div>

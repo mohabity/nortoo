@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
+import { OrderCard } from "@/components/dashboard/order-card";
 import { OrderSlideOver } from "@/components/dashboard/order-slide-over";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -159,9 +160,9 @@ function OrdersContent() {
       </div>
 
       {/* ── Filter bar: Pills + Pipeline + Search ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Decision pills */}
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
+        {/* Decision pills — horizontal scroll on mobile */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
           {DECISION_PILLS.map((pill) => {
             const isActive = currentDecision === pill.key;
             const pillCount = counts[pill.key as keyof OrdersCounts] ?? 0;
@@ -169,7 +170,7 @@ function OrdersContent() {
               <button
                 key={pill.key}
                 onClick={() => setFilter("decision", pill.key)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                   isActive
                     ? pill.activeClass
                     : "bg-white border border-silk text-slate hover:bg-snow"
@@ -188,12 +189,12 @@ function OrdersContent() {
           })}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           {/* Pipeline filter */}
           <select
             value={currentPipeline}
             onChange={(e) => setFilter("pipeline", e.target.value)}
-            className="h-9 rounded-lg border border-silk bg-white px-3 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30"
+            className="h-10 lg:h-9 rounded-lg border border-silk bg-white px-3 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30"
           >
             <option value="all">Pipeline: Tous</option>
             <option value="auto_shipped">Auto-expédié</option>
@@ -206,39 +207,62 @@ function OrdersContent() {
 
           {/* Search */}
           <form onSubmit={handleSearch} className="flex items-center gap-1">
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-mist" />
               <input
                 type="text"
                 placeholder="Chercher réf, nom, ville..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="h-9 w-[220px] rounded-full border border-silk bg-white pl-8 pr-3 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
+                className="h-10 lg:h-9 w-full sm:w-[220px] rounded-full border border-silk bg-white pl-8 pr-3 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
               />
             </div>
           </form>
         </div>
       </div>
 
-      {/* ── Orders Table ── */}
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-mist" />
-              <span className="ml-2 text-sm text-fog">Chargement...</span>
-            </div>
-          ) : (
-            <OrderTable orders={orders} onRowClick={handleRowClick} />
-          )}
-        </CardContent>
-      </Card>
+      {/* ── Orders Table (desktop) / Cards (mobile) ── */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-mist" />
+          <span className="ml-2 text-sm text-fog">Chargement...</span>
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <Card className="hidden lg:block">
+            <CardContent className="p-0">
+              <OrderTable orders={orders} onRowClick={handleRowClick} />
+            </CardContent>
+          </Card>
+
+          {/* Mobile cards */}
+          <div className="flex flex-col gap-2 lg:hidden">
+            {orders.length === 0 ? (
+              <p className="text-center text-fog py-8">
+                Aucune commande trouvée
+              </p>
+            ) : (
+              orders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onClick={handleRowClick}
+                />
+              ))
+            )}
+          </div>
+        </>
+      )}
 
       {/* ── Pagination ── */}
       {meta.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-fog">
+          <p className="text-sm text-fog hidden sm:block">
             Page {meta.page} sur {meta.totalPages}
+          </p>
+          <p className="text-sm text-fog sm:hidden">
+            {meta.page}/{meta.totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -247,8 +271,8 @@ function OrdersContent() {
               disabled={meta.page <= 1}
               onClick={() => setFilter("page", String(meta.page - 1))}
             >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Précédente
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Précédente</span>
             </Button>
             <Button
               variant="outline"
@@ -256,8 +280,8 @@ function OrdersContent() {
               disabled={meta.page >= meta.totalPages}
               onClick={() => setFilter("page", String(meta.page + 1))}
             >
-              Suivante
-              <ChevronRight className="ml-1 h-4 w-4" />
+              <span className="hidden sm:inline mr-1">Suivante</span>
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

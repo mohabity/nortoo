@@ -43,7 +43,7 @@ export function Sidebar() {
   const planDescription = PLAN_DESCRIPTIONS[plan] ?? "";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-silk bg-white">
+    <aside className="hidden lg:block fixed left-0 top-0 z-40 h-screen w-64 border-r border-silk bg-white">
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 border-b border-silk px-6">
         <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-mint">

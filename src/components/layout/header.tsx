@@ -20,7 +20,7 @@ export function Header() {
   const planLabel = PLAN_LABELS[plan] ?? plan;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-silk bg-white/80 backdrop-blur-sm px-6">
+    <header className="hidden lg:flex sticky top-0 z-30 h-16 items-center justify-between border-b border-silk bg-white/80 backdrop-blur-sm px-6">
       {/* Search */}
       <div className="flex items-center gap-2 rounded-sm border border-silk bg-snow/50 px-3 py-2 w-80">
         <Search className="h-4 w-4 text-mist" />

@@ -131,7 +131,7 @@ export default function SettingsPage() {
       {/* Tab Layout */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar / Tab Navigation */}
-        <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible lg:w-[220px] lg:shrink-0 pb-2 lg:pb-0">
+        <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto no-scrollbar lg:overflow-x-visible lg:w-[220px] lg:shrink-0 pb-2 lg:pb-0">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -140,7 +140,7 @@ export default function SettingsPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 text-sm font-medium text-left transition-colors",
+                  "flex items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 min-h-[44px] text-sm font-medium text-left transition-colors",
                   "lg:border-l-[3px]",
                   isActive
                     ? "bg-mint-bg text-mint-deep lg:border-l-mint"
@@ -165,8 +165,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Toast container */}
-      <div className="fixed bottom-6 right-6 z-50 space-y-2 w-[340px]">
+      {/* Toast container — above bottom nav on mobile */}
+      <div className="fixed bottom-20 left-4 right-4 lg:bottom-6 lg:right-6 lg:left-auto z-50 space-y-2 lg:w-[340px]">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onDismiss={removeToast} />
         ))}

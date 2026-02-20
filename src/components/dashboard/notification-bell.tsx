@@ -3,7 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Bell, CheckCheck, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Notification {
   id: number;
@@ -45,6 +52,7 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -65,8 +73,9 @@ export function NotificationBell() {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Close on click outside
+  // Close on click outside (desktop only)
   useEffect(() => {
+    if (isMobile) return;
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
@@ -76,7 +85,7 @@ export function NotificationBell() {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [open]);
+  }, [open, isMobile]);
 
   async function markAsRead(id: number) {
     await fetch(`/api/notifications/${id}/read`, { method: "PUT" });
@@ -102,6 +111,79 @@ export function NotificationBell() {
     setOpen(false);
   }
 
+  // ── Shared notification list ──
+  const notificationList = (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-silk px-4 py-3">
+        <h3 className="font-display text-sm font-semibold text-midnight">
+          Notifications
+        </h3>
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllRead}
+            disabled={loading}
+            className="flex items-center gap-1 text-xs text-ocean hover:text-ocean/80"
+          >
+            <CheckCheck className="h-3 w-3" />
+            Tout marquer lu
+          </button>
+        )}
+      </div>
+
+      {/* List */}
+      <div className="overflow-y-auto flex-1">
+        {items.length === 0 ? (
+          <div className="py-8 text-center text-sm text-mist">
+            Aucune notification
+          </div>
+        ) : (
+          items.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => handleNotificationClick(n)}
+              className={cn(
+                "w-full text-left px-4 py-3 border-b border-silk/50 hover:bg-snow/50 transition-colors border-l-[3px]",
+                SEVERITY_BORDER[n.severity] ?? "border-l-transparent",
+                !n.read && "bg-amber-bg"
+              )}
+            >
+              <div className="flex items-start gap-2">
+                {!n.read && (
+                  <span
+                    className={cn(
+                      "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                      SEVERITY_DOT[n.severity] ?? "bg-mist"
+                    )}
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={cn(
+                      "text-sm",
+                      n.read ? "text-fog" : "font-medium text-midnight"
+                    )}
+                  >
+                    {n.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-mist line-clamp-2">
+                    {n.message}
+                  </p>
+                  <p className="mt-1 text-[11px] text-mist">
+                    {timeAgo(n.createdAt)}
+                  </p>
+                </div>
+                {n.actionUrl && (
+                  <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-mist" />
+                )}
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
@@ -121,76 +203,31 @@ export function NotificationBell() {
         )}
       </Button>
 
-      {open && (
+      {/* Desktop: dropdown */}
+      {!isMobile && open && (
         <div className="absolute right-0 top-full mt-2 w-[380px] max-h-[480px] overflow-hidden rounded-lg border border-silk bg-white shadow-lg z-50 flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-silk px-4 py-3">
-            <h3 className="font-display text-sm font-semibold text-midnight">
-              Notifications
-            </h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllRead}
-                disabled={loading}
-                className="flex items-center gap-1 text-xs text-ocean hover:text-ocean/80"
-              >
-                <CheckCheck className="h-3 w-3" />
-                Tout marquer lu
-              </button>
-            )}
-          </div>
-
-          {/* List */}
-          <div className="overflow-y-auto flex-1">
-            {items.length === 0 ? (
-              <div className="py-8 text-center text-sm text-mist">
-                Aucune notification
-              </div>
-            ) : (
-              items.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => handleNotificationClick(n)}
-                  className={cn(
-                    "w-full text-left px-4 py-3 border-b border-silk/50 hover:bg-snow/50 transition-colors border-l-[3px]",
-                    SEVERITY_BORDER[n.severity] ?? "border-l-transparent",
-                    !n.read && "bg-amber-bg"
-                  )}
-                >
-                  <div className="flex items-start gap-2">
-                    {!n.read && (
-                      <span
-                        className={cn(
-                          "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                          SEVERITY_DOT[n.severity] ?? "bg-mist"
-                        )}
-                      />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "text-sm",
-                          n.read ? "text-fog" : "font-medium text-midnight"
-                        )}
-                      >
-                        {n.title}
-                      </p>
-                      <p className="mt-0.5 text-xs text-mist line-clamp-2">
-                        {n.message}
-                      </p>
-                      <p className="mt-1 text-[11px] text-mist">
-                        {timeAgo(n.createdAt)}
-                      </p>
-                    </div>
-                    {n.actionUrl && (
-                      <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-mist" />
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+          {notificationList}
         </div>
+      )}
+
+      {/* Mobile: bottom sheet */}
+      {isMobile && (
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent
+            side="bottom"
+            className="max-h-[80vh] rounded-t-2xl flex flex-col"
+            style={{ paddingBottom: "var(--safe-bottom)" }}
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center py-2">
+              <div className="h-1 w-10 rounded-full bg-silk" />
+            </div>
+            <SheetHeader className="sr-only">
+              <SheetTitle>Notifications</SheetTitle>
+            </SheetHeader>
+            {notificationList}
+          </SheetContent>
+        </Sheet>
       )}
     </div>
   );

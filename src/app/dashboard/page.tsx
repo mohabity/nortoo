@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
+import { OrderCard } from "@/components/dashboard/order-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 // ── Mock chart data ──
@@ -124,40 +125,48 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          title="Commandes aujourd'hui"
-          value="58"
-          change="+12% vs hier"
-          changeType="positive"
-          icon={ShoppingCart}
-          iconColor="text-ocean"
-        />
-        <KpiCard
-          title="Score moyen"
-          value="38"
-          change="-3 pts vs semaine passée"
-          changeType="positive"
-          icon={TrendingUp}
-          iconColor="text-mint"
-        />
-        <KpiCard
-          title="Taux de livraison"
-          value="78%"
-          change="+5% ce mois"
-          changeType="positive"
-          icon={Truck}
-          iconColor="text-mint"
-        />
-        <KpiCard
-          title="Bloquées"
-          value="4"
-          change="6.9% du total"
-          changeType="neutral"
-          icon={ShieldAlert}
-          iconColor="text-violet"
-        />
+      {/* KPI Cards — horizontal scroll mobile, grid desktop */}
+      <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x-mandatory pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 lg:overflow-visible lg:grid lg:grid-cols-4 lg:gap-4">
+        <div className="min-w-[240px] snap-start lg:min-w-0">
+          <KpiCard
+            title="Commandes aujourd'hui"
+            value="58"
+            change="+12% vs hier"
+            changeType="positive"
+            icon={ShoppingCart}
+            iconColor="text-ocean"
+          />
+        </div>
+        <div className="min-w-[240px] snap-start lg:min-w-0">
+          <KpiCard
+            title="Score moyen"
+            value="38"
+            change="-3 pts vs semaine passée"
+            changeType="positive"
+            icon={TrendingUp}
+            iconColor="text-mint"
+          />
+        </div>
+        <div className="min-w-[240px] snap-start lg:min-w-0">
+          <KpiCard
+            title="Taux de livraison"
+            value="78%"
+            change="+5% ce mois"
+            changeType="positive"
+            icon={Truck}
+            iconColor="text-mint"
+          />
+        </div>
+        <div className="min-w-[240px] snap-start lg:min-w-0">
+          <KpiCard
+            title="Bloquées"
+            value="4"
+            change="6.9% du total"
+            changeType="neutral"
+            icon={ShieldAlert}
+            iconColor="text-violet"
+          />
+        </div>
       </div>
 
       {/* Chart */}
@@ -166,7 +175,7 @@ export default function DashboardPage() {
           <CardTitle>Tendance des commandes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
+          <div className="h-[200px] lg:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -227,7 +236,16 @@ export default function DashboardPage() {
           <CardTitle>Commandes récentes</CardTitle>
         </CardHeader>
         <CardContent>
-          <OrderTable orders={recentOrders} />
+          {/* Desktop: table */}
+          <div className="hidden lg:block">
+            <OrderTable orders={recentOrders} />
+          </div>
+          {/* Mobile: cards */}
+          <div className="flex flex-col gap-2 lg:hidden">
+            {recentOrders.map((order) => (
+              <OrderCard key={order.id} order={order} />
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

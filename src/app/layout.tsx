@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -21,10 +21,24 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0B0F1A",
+};
+
 export const metadata: Metadata = {
   title: "Siift — Anti-Fraude RTO Intelligence",
   description:
     "Scorez vos commandes COD en temps réel. Réduisez vos retours de 35% à 10%.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Siift",
+  },
 };
 
 export default function RootLayout({

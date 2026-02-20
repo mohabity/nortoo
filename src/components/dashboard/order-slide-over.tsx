@@ -24,6 +24,7 @@ import { DecisionBadge } from "./decision-badge";
 import { PipelineBadge } from "./pipeline-badge";
 import { formatDH, riskLabel, deliveryLabel, scoreColorClass } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ── Types ──
 
@@ -163,10 +164,23 @@ export function OrderSlideOver({
   }
 
   const effectiveDecision = order?.overrideDecision ?? order?.decision ?? "";
+  const isMobile = useIsMobile();
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent side="right" className="overflow-y-auto p-0">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn(
+          "overflow-y-auto p-0",
+          isMobile && "h-[95vh] rounded-t-2xl"
+        )}
+      >
+        {/* Drag handle on mobile */}
+        {isMobile && (
+          <div className="flex justify-center py-2">
+            <div className="h-1 w-10 rounded-full bg-silk" />
+          </div>
+        )}
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-6 w-6 animate-spin text-mist" />
