@@ -311,7 +311,7 @@ export default function DashboardPage() {
                     )}
                     {o.pipelineStatus === "escalated" && (
                       <span className="text-[10px] font-medium text-rose bg-rose-bg px-1.5 py-0.5 rounded">
-                        Escalad\u00E9
+                        Escaladé
                       </span>
                     )}
                   </div>

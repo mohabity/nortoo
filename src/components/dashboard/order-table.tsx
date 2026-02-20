@@ -99,7 +99,7 @@ export function OrderTable({ orders, onRowClick, searchQuery = "" }: OrderTableP
           <TableHead>Client</TableHead>
           <TableHead>Ville</TableHead>
           <TableHead className="text-right">Montant</TableHead>
-          <TableHead className="text-center">D\u00E9cision</TableHead>
+          <TableHead className="text-center">Décision</TableHead>
           <TableHead className="text-center">Pipeline</TableHead>
           <TableHead>Statut</TableHead>
           <TableHead>Produit</TableHead>
@@ -109,7 +109,7 @@ export function OrderTable({ orders, onRowClick, searchQuery = "" }: OrderTableP
         {orders.length === 0 ? (
           <TableRow>
             <TableCell colSpan={9} className="text-center text-fog py-8">
-              Aucune commande trouv\u00E9e
+              Aucune commande trouvée
             </TableCell>
           </TableRow>
         ) : (

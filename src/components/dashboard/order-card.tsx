@@ -82,13 +82,13 @@ export function OrderCard({ order, onClick, searchQuery = "" }: OrderCardProps) 
             )}
             {order.shippingCity && (
               <>
-                <span className="text-mist">\u00B7</span>
+                <span className="text-mist">·</span>
                 <span>{hl(order.shippingCity)}</span>
               </>
             )}
             {order.productName && (
               <>
-                <span className="text-mist">\u00B7</span>
+                <span className="text-mist">·</span>
                 <span className="truncate">{hl(order.productName)}</span>
               </>
             )}

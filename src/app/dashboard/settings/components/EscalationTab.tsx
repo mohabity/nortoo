@@ -28,7 +28,7 @@ const BRACKET_LABELS: Record<string, string> = {
 const DECISION_LABELS: Record<string, string> = {
   block: "Bloquer",
   flag: "Signaler",
-  verify: "V\u00E9rifier",
+  verify: "Vérifier",
 };
 
 const DECISION_COLORS: Record<string, string> = {
@@ -98,7 +98,7 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
       });
       if (res.ok) {
         await onRefresh();
-        onToast("success", "Configuration d'escalade sauvegard\u00E9e");
+        onToast("success", "Configuration d'escalade sauvegardée");
       } else {
         onToast("error", "Erreur lors de la sauvegarde");
       }
@@ -121,8 +121,8 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div>
               <CardTitle>Escalade dynamique</CardTitle>
               <CardDescription>
-                Les commandes de valeur \u00E9lev\u00E9e escaladent plus vite.
-                Configurez les d\u00E9lais par montant et d\u00E9cision.
+                Les commandes de valeur élevée escaladent plus vite.
+                Configurez les délais par montant et décision.
               </CardDescription>
             </div>
           </div>
@@ -132,7 +132,7 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
       {/* Presets */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Pr\u00E9r\u00E9glages</CardTitle>
+          <CardTitle className="text-sm">Préréglages</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -141,21 +141,21 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
               size="sm"
               onClick={() => applyPreset(PRESET_REACTIVE)}
             >
-              R\u00E9actif
+              Réactif
             </Button>
             <Button
               variant={configsEqual(config, DEFAULT_ESCALATION_CONFIG) ? "default" : "outline"}
               size="sm"
               onClick={() => applyPreset(DEFAULT_ESCALATION_CONFIG)}
             >
-              \u00C9quilibr\u00E9
+              Équilibré
             </Button>
             <Button
               variant={configsEqual(config, PRESET_RELAXED) ? "default" : "outline"}
               size="sm"
               onClick={() => applyPreset(PRESET_RELAXED)}
             >
-              Relax\u00E9
+              Relaxé
             </Button>
             <Button
               variant="ghost"
@@ -164,7 +164,7 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
               className="text-mist"
             >
               <RotateCcw className="h-3.5 w-3.5 mr-1" />
-              R\u00E9initialiser
+              Réinitialiser
             </Button>
           </div>
         </CardContent>
@@ -173,7 +173,7 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
       {/* Matrix Editor */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Matrice d&apos;escalade (d\u00E9lais en minutes)</CardTitle>
+          <CardTitle className="text-sm">Matrice d&apos;escalade (délais en minutes)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">

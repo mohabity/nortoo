@@ -451,10 +451,10 @@ function OrdersContent() {
             className="h-10 lg:h-9 rounded-lg border border-silk bg-white px-3 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30"
           >
             <option value="all">Pipeline: Tous</option>
-            <option value="auto_shipped">Auto-exp\u00E9di\u00E9</option>
-            <option value="needs_review">\u00C0 v\u00E9rifier</option>
-            <option value="escalated">Escalad\u00E9</option>
-            <option value="auto_blocked">Auto-bloqu\u00E9</option>
+            <option value="auto_shipped">Auto-expédié</option>
+            <option value="needs_review">À vérifier</option>
+            <option value="escalated">Escaladé</option>
+            <option value="auto_blocked">Auto-bloqué</option>
             <option value="merchant_override">Override</option>
             <option value="pending">En attente</option>
           </select>
@@ -515,7 +515,7 @@ function OrdersContent() {
                 {searchInput === "" && recentSearches.length > 0 && (
                   <div className="py-1">
                     <p className="px-3 py-1 text-[10px] font-medium text-mist uppercase tracking-wider">
-                      R\u00E9cents
+                      Récents
                     </p>
                     {recentSearches.map((r) => (
                       <div
@@ -575,7 +575,7 @@ function OrdersContent() {
         <div className="text-center py-16">
           <Search className="h-8 w-8 text-mist mx-auto mb-3" />
           <p className="text-fog font-medium">
-            Aucune commande trouv\u00E9e
+            Aucune commande trouvée
             {currentSearch && (
               <>
                 {" "}
@@ -587,7 +587,7 @@ function OrdersContent() {
           </p>
           {currentSearch && (
             <p className="text-sm text-mist mt-1">
-              Essayez avec moins de mots-cl\u00E9s
+              Essayez avec moins de mots-clés
             </p>
           )}
         </div>
@@ -635,7 +635,7 @@ function OrdersContent() {
               onClick={() => setFilter("page", String(meta.page - 1))}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Pr\u00E9c\u00E9dente</span>
+              <span className="hidden sm:inline ml-1">Précédente</span>
             </Button>
             <Button
               variant="outline"
