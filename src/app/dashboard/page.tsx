@@ -34,20 +34,20 @@ interface SavingsData {
 
 // ── Mock chart data ──
 const chartData = [
-  { date: "01 F\u00E9v", commandes: 24, score: 38 },
-  { date: "02 F\u00E9v", commandes: 31, score: 42 },
-  { date: "03 F\u00E9v", commandes: 18, score: 35 },
-  { date: "04 F\u00E9v", commandes: 45, score: 48 },
-  { date: "05 F\u00E9v", commandes: 38, score: 41 },
-  { date: "06 F\u00E9v", commandes: 52, score: 44 },
-  { date: "07 F\u00E9v", commandes: 41, score: 39 },
-  { date: "08 F\u00E9v", commandes: 35, score: 36 },
-  { date: "09 F\u00E9v", commandes: 48, score: 43 },
-  { date: "10 F\u00E9v", commandes: 55, score: 47 },
-  { date: "11 F\u00E9v", commandes: 42, score: 40 },
-  { date: "12 F\u00E9v", commandes: 38, score: 37 },
-  { date: "13 F\u00E9v", commandes: 61, score: 45 },
-  { date: "14 F\u00E9v", commandes: 58, score: 42 },
+  { date: "01 Fév", commandes: 24, score: 38 },
+  { date: "02 Fév", commandes: 31, score: 42 },
+  { date: "03 Fév", commandes: 18, score: 35 },
+  { date: "04 Fév", commandes: 45, score: 48 },
+  { date: "05 Fév", commandes: 38, score: 41 },
+  { date: "06 Fév", commandes: 52, score: 44 },
+  { date: "07 Fév", commandes: 41, score: 39 },
+  { date: "08 Fév", commandes: 35, score: 36 },
+  { date: "09 Fév", commandes: 48, score: 43 },
+  { date: "10 Fév", commandes: 55, score: 47 },
+  { date: "11 Fév", commandes: 42, score: 40 },
+  { date: "12 Fév", commandes: 38, score: 37 },
+  { date: "13 Fév", commandes: 61, score: 45 },
+  { date: "14 Fév", commandes: 58, score: 42 },
 ];
 
 // ── Mock recent orders ──
@@ -113,7 +113,7 @@ const recentOrders: OrderRow[] = [
     externalRef: "#1851",
     customerName: "xxxx",
     customerPhoneLast4: "5678",
-    productName: "iPhone 15 Coque + \u00C9couteurs",
+    productName: "iPhone 15 Coque + Écouteurs",
     total: 1850,
     shippingCity: "Sidi Slimane",
     fraudScore: 92,
@@ -164,7 +164,7 @@ export default function DashboardPage() {
           Vue d&apos;ensemble
         </h1>
         <p className="text-sm text-fog">
-          R\u00E9sum\u00E9 de votre activit\u00E9 anti-fraude
+          Résumé de votre activité anti-fraude
         </p>
       </div>
 
@@ -174,7 +174,7 @@ export default function DashboardPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-mint-deep">
-                \u00C9conomies ce mois
+                Économies ce mois
               </p>
               <p className="font-display text-3xl font-bold text-midnight mt-1">
                 {savings.totalSaved.toLocaleString("fr-FR")}{" "}
@@ -182,7 +182,7 @@ export default function DashboardPage() {
               </p>
               {savings.roiMultiple && (
                 <p className="text-xs text-fog mt-1">
-                  ROI : {savings.roiMultiple}\u00D7 votre abonnement
+                  ROI : {savings.roiMultiple}× votre abonnement
                 </p>
               )}
             </div>
@@ -200,15 +200,15 @@ export default function DashboardPage() {
       <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x-mandatory pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 lg:overflow-visible lg:grid lg:grid-cols-4 lg:gap-4">
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
-            title="\u00C9conomies estim\u00E9es"
+            title="Économies estimées"
             value={
               savings
                 ? `${savings.totalSaved.toLocaleString("fr-FR")} DH`
-                : "\u2014"
+                : "—"
             }
             change={
               savings
-                ? `${savings.deltaPercent >= 0 ? "+" : ""}${savings.deltaPercent}% vs p\u00E9riode pr\u00E9c\u00E9dente`
+                ? `${savings.deltaPercent >= 0 ? "+" : ""}${savings.deltaPercent}% vs période précédente`
                 : undefined
             }
             changeType={
@@ -226,7 +226,7 @@ export default function DashboardPage() {
           <KpiCard
             title="Score moyen"
             value="38"
-            change="-3 pts vs semaine pass\u00E9e"
+            change="-3 pts vs semaine passée"
             changeType="positive"
             icon={TrendingUp}
             iconColor="text-mint"
@@ -244,7 +244,7 @@ export default function DashboardPage() {
         </div>
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
-            title="Bloqu\u00E9es"
+            title="Bloquées"
             value="4"
             change="6.9% du total"
             changeType="neutral"
@@ -318,7 +318,7 @@ export default function DashboardPage() {
       {/* Recent Orders */}
       <Card>
         <CardHeader>
-          <CardTitle>Commandes r\u00E9centes</CardTitle>
+          <CardTitle>Commandes récentes</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Desktop: table */}

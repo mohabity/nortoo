@@ -577,7 +577,7 @@ export default function AnalyticsPage() {
   // Savings from API
   const savings = savingsData?.totalSaved ?? 0;
   const savingsChange = savingsData?.deltaPercent ?? 0;
-  const roiDisplay = savingsData?.roiMultiple ? `${savingsData.roiMultiple}\u00D7` : "\u2014";
+  const roiDisplay = savingsData?.roiMultiple ? `${savingsData.roiMultiple}×` : "—";
 
   // RTO delta vs baseline
   const rtoDelta = rtoRate - baseline;
@@ -797,8 +797,8 @@ export default function AnalyticsPage() {
             <p className="font-display text-2xl font-bold text-midnight">{roiDisplay}</p>
             <p className="mt-1 text-xs font-medium text-fog">
               {savingsData?.projectedMonthlySaved
-                ? `${savingsData.projectedMonthlySaved.toLocaleString("fr-FR")} DH/mois projet\u00E9`
-                : "\u2014"}
+                ? `${savingsData.projectedMonthlySaved.toLocaleString("fr-FR")} DH/mois projeté`
+                : "—"}
             </p>
           </div>
         </div>
@@ -812,19 +812,19 @@ export default function AnalyticsPage() {
               <Coins className="h-5 w-5 text-amber" />
               <CardTitle>Impact financier</CardTitle>
             </div>
-            <p className="text-xs text-fog">D\u00E9tail des \u00E9conomies g\u00E9n\u00E9r\u00E9es par Siift</p>
+            <p className="text-xs text-fog">Détail des économies générées par Siift</p>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Mini KPIs */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <div className="rounded-xl border border-silk bg-snow/50 p-4">
-                <p className="text-xs font-medium text-fog">Commandes \u00E9vit\u00E9es</p>
+                <p className="text-xs font-medium text-fog">Commandes évitées</p>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {savingsData.ordersSaved}
                 </p>
               </div>
               <div className="rounded-xl border border-silk bg-snow/50 p-4">
-                <p className="text-xs font-medium text-fog">\u00C9conomie moy./commande</p>
+                <p className="text-xs font-medium text-fog">Économie moy./commande</p>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {savingsData.avgSavedPerOrder} <span className="text-sm font-semibold text-fog">DH</span>
                 </p>
@@ -838,19 +838,19 @@ export default function AnalyticsPage() {
               <div className="rounded-xl border border-silk bg-snow/50 p-4">
                 <p className="text-xs font-medium text-fog">ROI Siift</p>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
-                  {savingsData.roiMultiple ? `${savingsData.roiMultiple}\u00D7` : "\u2014"}
+                  {savingsData.roiMultiple ? `${savingsData.roiMultiple}×` : "—"}
                 </p>
               </div>
             </div>
 
             {/* Breakdown */}
             <div>
-              <p className="text-sm font-medium text-midnight mb-3">R\u00E9partition des \u00E9conomies</p>
+              <p className="text-sm font-medium text-midnight mb-3">Répartition des économies</p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-violet" />
-                    <span className="text-sm text-slate">Auto-bloqu\u00E9es</span>
+                    <span className="text-sm text-slate">Auto-bloquées</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-xs text-fog">{savingsData.breakdown.autoBlocked.count} commandes</span>
@@ -862,7 +862,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-rose" />
-                    <span className="text-sm text-slate">Bloqu\u00E9es (marchand)</span>
+                    <span className="text-sm text-slate">Bloquées (marchand)</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-xs text-fog">{savingsData.breakdown.merchantBlocked.count} commandes</span>
@@ -874,7 +874,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-amber" />
-                    <span className="text-sm text-slate">Signal\u00E9es / escalad\u00E9es</span>
+                    <span className="text-sm text-slate">Signalées / escaladées</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-xs text-fog">{savingsData.breakdown.flaggedNotShipped.count} commandes</span>
@@ -891,7 +891,7 @@ export default function AnalyticsPage() {
               {/* Top products by savings */}
               {savingsData.topProducts.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-midnight mb-3">Top produits (par \u00E9conomies)</p>
+                  <p className="text-sm font-medium text-midnight mb-3">Top produits (par économies)</p>
                   <div className="space-y-1.5">
                     {savingsData.topProducts.map((p, i) => (
                       <div key={i} className="flex items-center justify-between rounded-sm bg-snow px-3 py-2">
@@ -911,7 +911,7 @@ export default function AnalyticsPage() {
               {/* Top cities by savings */}
               {savingsData.topCities.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-midnight mb-3">Top villes (par \u00E9conomies)</p>
+                  <p className="text-sm font-medium text-midnight mb-3">Top villes (par économies)</p>
                   <div className="space-y-1.5">
                     {savingsData.topCities.map((c, i) => (
                       <div key={i} className="flex items-center justify-between rounded-sm bg-snow px-3 py-2">

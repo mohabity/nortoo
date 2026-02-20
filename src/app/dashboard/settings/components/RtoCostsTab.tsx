@@ -46,7 +46,7 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
       });
       if (res.ok) {
         await onRefresh();
-        onToast("success", "Co\u00FBts RTO sauvegard\u00E9s");
+        onToast("success", "Coûts RTO sauvegardés");
       } else {
         onToast("error", "Erreur lors de la sauvegarde");
       }
@@ -66,11 +66,11 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <Coins className="h-5 w-5 text-amber" />
             <div>
               <CardTitle className="text-base">
-                Co\u00FBt d&apos;un retour (RTO)
+                Coût d&apos;un retour (RTO)
               </CardTitle>
               <CardDescription>
-                Ces valeurs sont utilis\u00E9es pour calculer les \u00E9conomies
-                estim\u00E9es sur votre tableau de bord
+                Ces valeurs sont utilisées pour calculer les économies
+                estimées sur votre tableau de bord
               </CardDescription>
             </div>
           </div>
@@ -81,7 +81,7 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate">
-                  Co\u00FBt fixe par retour
+                  Coût fixe par retour
                 </p>
                 <p className="text-xs text-mist">
                   Frais de livraison aller-retour, manutention, etc.
@@ -110,7 +110,7 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate">
-                  Co\u00FBt variable
+                  Coût variable
                 </p>
                 <p className="text-xs text-mist">
                   Pourcentage du montant de la commande (marge perdue, frais
@@ -140,7 +140,7 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
       {/* ═══ Live Preview ═══ */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Aper\u00E7u</CardTitle>
+          <CardTitle className="text-base">Aperçu</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-sm bg-snow border border-silk p-4">
@@ -149,13 +149,13 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
               <span className="font-mono font-bold">{exampleAmount} DH</span>
             </p>
             <p className="mt-2 text-lg font-display font-bold text-midnight">
-              Co\u00FBt RTO estim\u00E9 ={" "}
+              Coût RTO estimé ={" "}
               <span className="text-amber">
                 {Math.round(previewCost)} DH
               </span>
             </p>
             <p className="mt-1 text-xs text-mist">
-              {fixedCost} DH (fixe) + {exampleAmount} \u00D7 {variablePercent}%
+              {fixedCost} DH (fixe) + {exampleAmount} × {variablePercent}%
               = {Math.round(exampleAmount * (variablePercent / 100))} DH
               (variable)
             </p>
@@ -169,7 +169,7 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div>
             {hasChanges && (
               <p className="text-sm text-fog">
-                Modifications non sauvegard\u00E9es
+                Modifications non sauvegardées
               </p>
             )}
           </div>
