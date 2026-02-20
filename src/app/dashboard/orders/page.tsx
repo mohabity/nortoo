@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, Download } from "lucide-react";
 import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
 import { OrderCard } from "@/components/dashboard/order-card";
 import { OrderSlideOver } from "@/components/dashboard/order-slide-over";
@@ -77,6 +77,7 @@ function OrdersContent() {
   });
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(currentSearch);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -145,6 +146,36 @@ function OrdersContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("selected");
     router.push(`/dashboard/orders?${params.toString()}`);
+  }
+
+  async function handleExport() {
+    setExportLoading(true);
+    try {
+      const exportParams = new URLSearchParams();
+      if (currentDecision !== "all") exportParams.set("decision", currentDecision);
+      if (currentPipeline !== "all") exportParams.set("pipeline", currentPipeline);
+      if (currentSearch) exportParams.set("search", currentSearch);
+      const res = await fetch(`/api/orders/export?${exportParams}`);
+      if (!res.ok) {
+        const json = await res.json();
+        alert(json.error ?? "Erreur d'export");
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] ??
+        "commandes.csv";
+      a.click();
+      window.URL.revokeObjectURL(url);
+      if (res.headers.get("X-Truncated") === "true") {
+        alert("Export limit\u00E9 aux 10 000 premi\u00E8res commandes.");
+      }
+    } finally {
+      setExportLoading(false);
+    }
   }
 
   const counts = meta.counts ?? EMPTY_COUNTS;
@@ -218,6 +249,20 @@ function OrdersContent() {
               />
             </div>
           </form>
+
+          {/* Export CSV */}
+          <button
+            onClick={handleExport}
+            disabled={exportLoading}
+            className="h-10 lg:h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+          >
+            {exportLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">Exporter CSV</span>
+          </button>
         </div>
       </div>
 

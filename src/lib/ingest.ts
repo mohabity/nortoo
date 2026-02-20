@@ -22,6 +22,7 @@ import { normalizeProductId, updateProductStats, getProductRtoRate } from "@/lib
 import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } from "@/lib/city-stats";
 import { parseAddress } from "@/lib/address-parser";
 import { updateZoneStats, getZoneStats, getGlobalZoneStats } from "@/lib/zone-stats";
+import { generateExplanation } from "@/lib/score-explanation";
 
 export interface IngestParams {
   merchantId: number;
@@ -331,6 +332,14 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     decision = "flag"; // Downgrade to flag when auto-block is disabled
   }
 
+  // ── 5b. Generate human-readable explanation ──
+  const explanation = generateExplanation(
+    scoringResult.score,
+    decision,
+    scoringResult.factors,
+    scoringResult.confidence
+  );
+
   // ── 6. Insert order + audit log ──
   const [insertedOrder] = await db
     .insert(orders)
@@ -358,6 +367,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       riskLevel: scoringResult.riskLevel,
       decision,
       scoringFactors: JSON.stringify(scoringResult.factors),
+      scoreExplanation: JSON.stringify(explanation),
       scoringVersion: scoringResult.version,
       retentionExpiresAt: retentionDate(merchant.dataRetentionMonths),
     })

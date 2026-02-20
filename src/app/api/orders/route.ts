@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
         overrideDecision: orders.overrideDecision,
         deliveryStatus: orders.deliveryStatus,
         pipelineStatus: orders.pipelineStatus,
+        scoreExplanation: orders.scoreExplanation,
         createdAt: orders.createdAt,
       })
       .from(orders)

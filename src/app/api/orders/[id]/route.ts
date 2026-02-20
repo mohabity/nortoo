@@ -35,6 +35,14 @@ export async function GET(
     }
   }
 
+  // Parse score explanation from JSON string
+  let scoreExplanation = null;
+  if (order.scoreExplanation) {
+    try {
+      scoreExplanation = JSON.parse(order.scoreExplanation);
+    } catch { /* ignore */ }
+  }
+
   // Fetch customer if linked
   let customer = null;
   if (order.customerId) {
@@ -65,6 +73,7 @@ export async function GET(
     data: {
       ...order,
       scoringFactors,
+      scoreExplanation,
       confidence,
       customer,
     },

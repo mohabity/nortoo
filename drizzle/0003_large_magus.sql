@@ -1,0 +1,1 @@
+ALTER TABLE "orders" ADD COLUMN "score_explanation" text;

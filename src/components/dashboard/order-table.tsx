@@ -26,6 +26,7 @@ export interface OrderRow {
   overrideDecision?: string | null;
   deliveryStatus: string;
   pipelineStatus: string;
+  scoreExplanation?: string | null;
   createdAt: string;
 }
 
@@ -48,6 +49,7 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
       <TableHeader>
         <TableRow>
           <TableHead className="text-center w-[70px]">Score</TableHead>
+          <TableHead>Analyse</TableHead>
           <TableHead>Client</TableHead>
           <TableHead>Ville</TableHead>
           <TableHead className="text-right">Montant</TableHead>
@@ -60,7 +62,7 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
       <TableBody>
         {orders.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center text-fog py-8">
+            <TableCell colSpan={9} className="text-center text-fog py-8">
               Aucune commande trouvée
             </TableCell>
           </TableRow>
@@ -73,6 +75,13 @@ export function OrderTable({ orders, onRowClick }: OrderTableProps) {
             >
               <TableCell className="text-center">
                 <ScoreBadge score={order.fraudScore} size="sm" />
+              </TableCell>
+              <TableCell className="max-w-[180px]">
+                <p className="text-xs text-fog truncate">
+                  {order.scoreExplanation
+                    ? (() => { try { return JSON.parse(order.scoreExplanation).summary; } catch { return "\u2014"; } })()
+                    : "\u2014"}
+                </p>
               </TableCell>
               <TableCell>
                 <div>

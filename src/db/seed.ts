@@ -19,6 +19,7 @@ import { recalculateAllProductStats } from "../lib/product-stats";
 import { recalculateAllCityStats } from "../lib/city-stats";
 import { recalculateAllZoneStats } from "../lib/zone-stats";
 import { parseAddress } from "../lib/address-parser";
+import { generateExplanation } from "../lib/score-explanation";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql, { schema });
@@ -472,6 +473,14 @@ async function seed() {
 
     stats[result.decision]++;
 
+    // Generate human-readable explanation
+    const explanation = generateExplanation(
+      result.score,
+      result.decision,
+      result.factors,
+      result.confidence
+    );
+
     // Run pipeline engine for realistic statuses
     const orderRef = `#${orderNum}`;
     const pipelineResult = executePipeline({
@@ -510,6 +519,7 @@ async function seed() {
         riskLevel: result.riskLevel,
         decision: result.decision,
         scoringFactors: JSON.stringify(result.factors),
+        scoreExplanation: JSON.stringify(explanation),
         scoringVersion: result.version,
         deliveryStatus: cfg.deliveryStatus,
         deliveredAt: cfg.deliveryStatus === "delivered" ? daysAgo(cfg.daysBack - 2) : null,

@@ -73,6 +73,13 @@ interface OrderDetail {
   escalatedAt: string | null;
   merchantNotifiedAt: string | null;
   scoringVersion: string | null;
+  scoreExplanation: {
+    summary: string;
+    factors: string[];
+    tip: string | null;
+    emoji: string;
+    confidenceLabel: string;
+  } | null;
   createdAt: string;
   scoredAt: string;
   scoringFactors: ScoringFactor[];
@@ -376,6 +383,47 @@ export function OrderSlideOver({
                 </p>
               </div>
             )}
+
+            {/* ── D bis. Explanation Card ── */}
+            {(() => {
+              const expl = order.scoreExplanation;
+              const colorClass =
+                order.fraudScore <= 30
+                  ? "bg-mint-light/50 border-mint/20"
+                  : order.fraudScore <= 65
+                  ? "bg-sun-light/50 border-sun/20"
+                  : order.fraudScore <= 85
+                  ? "bg-coral-light/50 border-coral/20"
+                  : "bg-violet-light/50 border-violet/20";
+              return expl ? (
+                <div className={`mx-6 mt-4 rounded-lg border p-4 ${colorClass}`}>
+                  <p className="text-sm font-medium text-midnight">
+                    {expl.summary}
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {expl.factors.map((f: string, i: number) => (
+                      <li key={i} className="text-xs text-slate">
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  {expl.tip && (
+                    <p className="mt-2 text-xs font-medium text-fog italic">
+                      {expl.tip}
+                    </p>
+                  )}
+                  <p className="mt-1.5 text-[10px] text-mist">
+                    Confiance : {expl.confidenceLabel}
+                  </p>
+                </div>
+              ) : (
+                <div className="mx-6 mt-4 rounded-lg border border-silk bg-snow p-3">
+                  <p className="text-xs text-mist italic">
+                    Analyse non disponible pour cette commande
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* ── D. Order Info ── */}
             <div className="mx-6 mt-4">

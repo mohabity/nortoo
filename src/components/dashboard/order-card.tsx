@@ -71,6 +71,13 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
               {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}
             </span>
           </div>
+
+          {/* Explanation summary */}
+          {order.scoreExplanation && (
+            <p className="mt-1.5 text-[11px] text-fog line-clamp-1">
+              {(() => { try { return JSON.parse(order.scoreExplanation).summary; } catch { return null; } })()}
+            </p>
+          )}
         </div>
       </div>
     </button>

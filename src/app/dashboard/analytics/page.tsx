@@ -31,6 +31,8 @@ import {
   Package,
   AlertTriangle,
   MapPin,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -458,6 +460,7 @@ export default function AnalyticsPage() {
   const [zoneLoading, setZoneLoading] = useState(true);
   const [zoneError, setZoneError] = useState<string | null>(null);
   const [zoneCityFilter, setZoneCityFilter] = useState<string>("");
+  const [exportLoading, setExportLoading] = useState(false);
 
   // ── Fetch city data ──
   useEffect(() => {
@@ -650,6 +653,30 @@ export default function AnalyticsPage() {
     return totalReturnsAll > 0 ? Math.round((top3Returns / totalReturnsAll) * 100) : 0;
   }, [productData]);
 
+  async function handleExportAnalytics() {
+    setExportLoading(true);
+    try {
+      const days = period === "7j" ? 7 : period === "90j" ? 90 : 30;
+      const res = await fetch(`/api/analytics/export?period=${days}`);
+      if (!res.ok) {
+        const json = await res.json();
+        alert(json.error ?? "Erreur d'export");
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] ??
+        "analytique.csv";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setExportLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -660,7 +687,21 @@ export default function AnalyticsPage() {
             Performance anti-fraude, tendances RTO et ROI
           </p>
         </div>
-        <PeriodSelector value={period} onChange={setPeriod} />
+        <div className="flex items-center gap-3">
+          <PeriodSelector value={period} onChange={setPeriod} />
+          <button
+            onClick={handleExportAnalytics}
+            disabled={exportLoading}
+            className="h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+          >
+            {exportLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">Exporter</span>
+          </button>
+        </div>
       </div>
 
       {/* ═══ 1. KPI ROW — horizontal scroll mobile, grid desktop ═══ */}

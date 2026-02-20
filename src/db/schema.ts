@@ -130,6 +130,7 @@ export const orders = pgTable(
     riskLevel: text("risk_level").notNull().default("low"),
     decision: text("decision").notNull().default("ship"),
     scoringFactors: text("scoring_factors"), // JSON string
+    scoreExplanation: text("score_explanation"), // JSON stringified ScoreExplanation
     scoringVersion: text("scoring_version").default("v1.0"),
 
     // Override
