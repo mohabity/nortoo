@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getMerchantId } from "@/lib/merchant";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import { auth } from "@/auth";
 
 // ── Shared select columns ──
 const merchantSelect = {
@@ -96,6 +97,13 @@ const escalationConfigSchema = z.object({
 export async function PUT(request: Request) {
   const merchantId = await getMerchantId();
 
+  // Get userId from session for audit log enrichment
+  let userId: number | undefined;
+  try {
+    const session = await auth();
+    userId = session?.user?.userId;
+  } catch { /* non-critical */ }
+
   // Parse body
   let body: unknown;
   try {
@@ -162,6 +170,7 @@ export async function PUT(request: Request) {
 
     await db.insert(auditLogs).values({
       merchantId,
+      userId,
       actor: "merchant",
       action: "settings_change",
       targetType: "merchant",
@@ -224,6 +233,7 @@ export async function PUT(request: Request) {
 
     await db.insert(auditLogs).values({
       merchantId,
+      userId,
       actor: "merchant",
       action: "settings_change",
       targetType: "merchant",
@@ -265,6 +275,7 @@ export async function PUT(request: Request) {
 
     await db.insert(auditLogs).values({
       merchantId,
+      userId,
       actor: "merchant",
       action: "settings_change",
       targetType: "merchant",

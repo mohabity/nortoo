@@ -43,6 +43,14 @@ export const SAFE_CITIES = [
   "Fès", "Meknès", "Kénitra", "Oujda", "Tétouan",
 ];
 
+// ═══ User Limits per Plan ═══
+export const USER_LIMITS: Record<string, number> = {
+  trial: 2,
+  starter: 3,
+  growth: 5,
+  scale: 10,
+};
+
 // ═══ Data Retention ═══
 export const DEFAULT_RETENTION_MONTHS = 24; // Art. 3e Loi 09-08
 export const DATA_RIGHTS_RESPONSE_DAYS = 30; // Max days to respond to Art. 7-9 requests

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { usePermissions } from "@/hooks/use-permissions";
 
 const navItems = [
   { href: "/dashboard", label: "Accueil", icon: LayoutDashboard },
@@ -27,8 +28,21 @@ const moreItems = [
 export function BottomNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { can } = usePermissions();
 
-  const isMoreActive = moreItems.some((item) => pathname.startsWith(item.href));
+  // Filter nav items by role
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.href === "/dashboard/analytics") return can("analytics:read");
+    if (item.href === "/dashboard/settings") return can("settings:read");
+    return true;
+  });
+
+  const filteredMoreItems = moreItems.filter((item) => {
+    if (item.href === "/dashboard/compliance") return can("compliance:read");
+    return true;
+  });
+
+  const isMoreActive = filteredMoreItems.some((item) => pathname.startsWith(item.href));
 
   return (
     <>
@@ -43,7 +57,7 @@ export function BottomNav() {
       {/* "More" popup menu */}
       {moreOpen && (
         <div className="fixed bottom-20 right-4 z-50 rounded-sm border border-silk bg-white shadow-lg lg:hidden">
-          {moreItems.map((item) => {
+          {filteredMoreItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
               <Link
@@ -71,7 +85,7 @@ export function BottomNav() {
         style={{ paddingBottom: "var(--safe-bottom)" }}
       >
         <div className="flex h-16 items-center justify-around px-2">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive =
               item.href === "/dashboard"
                 ? pathname === "/dashboard"
@@ -95,17 +109,19 @@ export function BottomNav() {
             );
           })}
 
-          {/* More button */}
-          <button
-            onClick={() => setMoreOpen(!moreOpen)}
-            className={cn(
-              "flex flex-col items-center justify-center gap-0.5 min-w-[56px] py-1 transition-colors",
-              isMoreActive ? "text-mint-deep" : "text-fog"
-            )}
-          >
-            <MoreHorizontal className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Plus</span>
-          </button>
+          {/* More button — only show if there are items in the overflow menu */}
+          {filteredMoreItems.length > 0 && (
+            <button
+              onClick={() => setMoreOpen(!moreOpen)}
+              className={cn(
+                "flex flex-col items-center justify-center gap-0.5 min-w-[56px] py-1 transition-colors",
+                isMoreActive ? "text-mint-deep" : "text-fog"
+              )}
+            >
+              <MoreHorizontal className="h-5 w-5" />
+              <span className="text-[10px] font-medium">Plus</span>
+            </button>
+          )}
         </div>
       </nav>
     </>

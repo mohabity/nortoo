@@ -26,6 +26,7 @@ import { PipelineBadge } from "./pipeline-badge";
 import { formatDH, riskLabel, deliveryLabel, scoreColorClass } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePermissions } from "@/hooks/use-permissions";
 
 // ── Types ──
 
@@ -162,6 +163,7 @@ export function OrderSlideOver({
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { can } = usePermissions();
 
   // Override state
   const [overrideOpen, setOverrideOpen] = useState(false);
@@ -593,8 +595,8 @@ export function OrderSlideOver({
               </div>
             )}
 
-            {/* ── F. Override Buttons ── */}
-            <div className="mx-6 mt-4 mb-6">
+            {/* ── F. Override Buttons (orders:write only) ── */}
+            {can("orders:write") && <div className="mx-6 mt-4 mb-6">
               {!overrideOpen ? (
                 <div className="flex items-center gap-3">
                   <Button
@@ -665,7 +667,7 @@ export function OrderSlideOver({
               <p className="text-[11px] text-mist mt-2">
                 Les overrides sont tracés dans le journal d&apos;audit (Art. 23)
               </p>
-            </div>
+            </div>}
           </div>
         )}
       </SheetContent>

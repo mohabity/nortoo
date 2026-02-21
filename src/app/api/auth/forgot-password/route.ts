@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { db } from "@/db/index";
-import { merchants, passwordResetTokens, auditLogs } from "@/db/schema";
+import { users, passwordResetTokens, auditLogs } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 
@@ -56,25 +56,29 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Lookup merchant — always return success regardless
-  const [merchant] = await db
-    .select({ id: merchants.id, email: merchants.email })
-    .from(merchants)
-    .where(eq(merchants.email, email))
+  // Lookup user — always return success regardless
+  const [user] = await db
+    .select({
+      id: users.id,
+      merchantId: users.merchantId,
+      email: users.email,
+    })
+    .from(users)
+    .where(eq(users.email, email))
     .limit(1);
 
-  if (!merchant) {
+  if (!user) {
     // Don't reveal that email doesn't exist
     return NextResponse.json({ success: true });
   }
 
-  // Invalidate all existing unused tokens for this merchant
+  // Invalidate all existing unused tokens for this user
   await db
     .update(passwordResetTokens)
     .set({ usedAt: new Date() })
     .where(
       and(
-        eq(passwordResetTokens.merchantId, merchant.id),
+        eq(passwordResetTokens.userId, user.id),
         isNull(passwordResetTokens.usedAt)
       )
     );
@@ -86,7 +90,8 @@ export async function POST(request: NextRequest) {
   // Store hashed token in DB
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
   await db.insert(passwordResetTokens).values({
-    merchantId: merchant.id,
+    merchantId: user.merchantId,
+    userId: user.id,
     token: hashedToken,
     expiresAt,
   });
@@ -98,7 +103,7 @@ export async function POST(request: NextRequest) {
   // Send email
   const { html, text } = buildPasswordResetEmail(resetUrl);
   await sendEmail({
-    to: merchant.email,
+    to: user.email,
     subject: "Réinitialisation de mot de passe — Siift",
     html,
     text,
@@ -107,11 +112,12 @@ export async function POST(request: NextRequest) {
   // Audit log
   const ipHash = request.headers.get("x-forwarded-for") || "unknown";
   await db.insert(auditLogs).values({
-    merchantId: merchant.id,
+    merchantId: user.merchantId,
+    userId: user.id,
     actor: "merchant",
     action: "password_reset_requested",
-    targetType: "merchant",
-    targetId: String(merchant.id),
+    targetType: "user",
+    targetId: String(user.id),
     details: JSON.stringify({ email, ip: ipHash }),
   });
 

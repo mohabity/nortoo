@@ -67,6 +67,33 @@ export const merchants = pgTable("merchants", {
 });
 
 // ═══════════════════════════════════════════════════════════
+// USERS — Multi-user per merchant (roles: admin | manager | operator)
+// ═══════════════════════════════════════════════════════════
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    email: text("email").notNull().unique(),
+    name: text("name").notNull(),
+    passwordHash: text("password_hash"), // null for pending invites
+    role: text("role").notNull().default("operator"), // admin | manager | operator
+    status: text("status").notNull().default("pending"), // active | pending | disabled
+    inviteToken: text("invite_token").unique(), // SHA-256 hash of raw token
+    inviteExpiresAt: timestamp("invite_expires_at"),
+    lastLoginAt: timestamp("last_login_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("users_merchant_email_idx").on(table.merchantId, table.email),
+    index("users_invite_token_idx").on(table.inviteToken),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // CUSTOMERS — Personnes concernées
 // ⚠️ phoneHash = SHA-256(phone + SALT) — NEVER store raw phone
 // ═══════════════════════════════════════════════════════════
@@ -206,6 +233,7 @@ export const auditLogs = pgTable(
   {
     id: serial("id").primaryKey(),
     merchantId: integer("merchant_id").references(() => merchants.id),
+    userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
 
     actor: text("actor").notNull(), // system | merchant | consumer | admin
     action: text("action").notNull(), // score | override | access_request | delete | export | login | settings_change
@@ -456,6 +484,7 @@ export const passwordResetTokens = pgTable(
     merchantId: integer("merchant_id")
       .notNull()
       .references(() => merchants.id, { onDelete: "cascade" }),
+    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
     token: text("token").notNull().unique(), // SHA-256 of the raw token sent by email
     expiresAt: timestamp("expires_at").notNull(),
     usedAt: timestamp("used_at"), // null until used
@@ -529,6 +558,7 @@ export const webhookQueue = pgTable(
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
+  users: many(users),
   customers: many(customers),
   orders: many(orders),
   auditLogs: many(auditLogs),
@@ -536,6 +566,13 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   productStats: many(productStats),
   cityStats: many(cityStats),
   zoneStats: many(zoneStats),
+}));
+
+export const usersRelations = relations(users, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [users.merchantId],
+    references: [merchants.id],
+  }),
 }));
 
 export const inviteLinksRelations = relations(inviteLinks, ({ one }) => ({

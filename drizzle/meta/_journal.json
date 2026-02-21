@@ -29,6 +29,13 @@
       "when": 1771604432033,
       "tag": "0003_large_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771632945348,
+      "tag": "0004_curved_omega_flight",
+      "breakpoints": true
     }
   ]
 }

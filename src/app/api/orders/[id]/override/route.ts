@@ -3,7 +3,7 @@ import { db } from "@/db/index";
 import { orders, auditLogs, notifications } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { getMerchantId } from "@/lib/merchant";
+import { requirePermission, handlePermissionError } from "@/lib/permissions";
 
 const overrideSchema = z.object({
   decision: z.enum(["ship", "verify", "flag", "block"]),
@@ -14,7 +14,13 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const merchantId = await getMerchantId();
+  let ctx;
+  try {
+    ctx = await requirePermission("orders:write");
+  } catch (err) {
+    return handlePermissionError(err);
+  }
+  const { merchantId, userId } = ctx;
   const { id } = await params;
   const orderId = parseInt(id, 10);
   if (isNaN(orderId)) {
@@ -76,6 +82,7 @@ export async function POST(
   // Art. 23 — Audit log (obligatoire)
   await db.insert(auditLogs).values({
     merchantId,
+    userId,
     actor: "merchant",
     action: "override",
     targetType: "order",

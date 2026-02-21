@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/db/index";
-import { merchants, auditLogs } from "@/db/schema";
+import { merchants, users, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
 import { sendVerificationEmail } from "@/lib/email-verification";
@@ -49,14 +49,27 @@ export async function POST(request: Request) {
 
   const { name, email, password } = parsed.data;
 
-  // Check if email already exists
-  const [existing] = await db
+  // Check if email already exists (merchants or users)
+  const [existingMerchant] = await db
     .select({ id: merchants.id })
     .from(merchants)
     .where(eq(merchants.email, email))
     .limit(1);
 
-  if (existing) {
+  if (existingMerchant) {
+    return NextResponse.json(
+      { error: "Un compte avec cet email existe déjà" },
+      { status: 409 }
+    );
+  }
+
+  const [existingUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  if (existingUser) {
     return NextResponse.json(
       { error: "Un compte avec cet email existe déjà" },
       { status: 409 }
@@ -82,9 +95,23 @@ export async function POST(request: Request) {
     })
     .returning({ id: merchants.id });
 
+  // Create admin user row
+  const [newUser] = await db
+    .insert(users)
+    .values({
+      merchantId: newMerchant.id,
+      email,
+      name,
+      passwordHash,
+      role: "admin",
+      status: "active",
+    })
+    .returning({ id: users.id });
+
   // Audit log (Art. 23)
   await db.insert(auditLogs).values({
     merchantId: newMerchant.id,
+    userId: newUser.id,
     actor: "merchant",
     action: "register",
     targetType: "merchant",

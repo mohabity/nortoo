@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   User,
+  Users,
   Store,
   Sliders,
   KeyRound,
@@ -24,11 +25,13 @@ import { StoreTab } from "./components/StoreTab";
 import { NotificationsTab } from "./components/NotificationsTab";
 import { PrivacyTab } from "./components/PrivacyTab";
 import { RtoCostsTab } from "./components/RtoCostsTab";
+import { TeamTab } from "./components/TeamTab";
 
 // ── Tab definitions ──
 const TABS: TabMeta[] = [
   { id: "profile", label: "Profil", icon: User },
   { id: "store", label: "Boutique", icon: Store },
+  { id: "team", label: "Équipe", icon: Users },
   { id: "scoring", label: "Scoring", icon: Sliders },
   { id: "escalation", label: "Escalade", icon: Timer },
   { id: "rto_costs", label: "Coûts RTO", icon: Coins },
@@ -176,6 +179,7 @@ function SettingsPageInner() {
         <div className="flex-1 min-w-0">
           {activeTab === "profile" && <ProfileTab {...baseProps} />}
           {activeTab === "store" && <StoreTab {...baseProps} />}
+          {activeTab === "team" && <TeamTab {...baseProps} />}
           {activeTab === "scoring" && <ScoringTab {...baseProps} />}
           {activeTab === "escalation" && <EscalationTab {...baseProps} />}
           {activeTab === "rto_costs" && <RtoCostsTab {...baseProps} />}

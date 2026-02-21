@@ -11,6 +11,7 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/use-permissions";
 
 const navItems = [
   { href: "/dashboard", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -37,10 +38,19 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { can } = usePermissions();
 
   const plan = session?.user?.plan ?? "trial";
   const planLabel = PLAN_LABELS[plan] ?? plan;
   const planDescription = PLAN_DESCRIPTIONS[plan] ?? "";
+
+  // Filter nav items by role
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.href === "/dashboard/analytics") return can("analytics:read");
+    if (item.href === "/dashboard/settings") return can("settings:read");
+    if (item.href === "/dashboard/compliance") return can("compliance:read");
+    return true;
+  });
 
   return (
     <aside className="hidden lg:block fixed left-0 top-0 z-40 h-screen w-64 border-r border-silk bg-white">
@@ -58,7 +68,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex flex-col gap-1 p-4">
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const isActive =
             item.href === "/dashboard"
               ? pathname === "/dashboard"

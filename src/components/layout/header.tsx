@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { WebhookHealthDot } from "@/components/dashboard/webhook-health-dot";
+import { ROLE_LABELS, type Role } from "@/lib/permissions";
 
 const PLAN_LABELS: Record<string, string> = {
   trial: "Essai",
@@ -19,6 +20,8 @@ export function Header() {
   const merchantName = session?.user?.name ?? "Ma Boutique";
   const plan = session?.user?.plan ?? "trial";
   const planLabel = PLAN_LABELS[plan] ?? plan;
+  const role = (session?.user?.role ?? "operator") as Role;
+  const roleLabel = ROLE_LABELS[role] ?? role;
 
   return (
     <header className="hidden lg:flex sticky top-0 z-30 h-16 items-center justify-between border-b border-silk bg-white/80 backdrop-blur-sm px-6">
@@ -43,7 +46,7 @@ export function Header() {
           </div>
           <div>
             <p className="text-sm font-medium text-midnight">{merchantName}</p>
-            <p className="text-[10px] text-mist">Plan {planLabel}</p>
+            <p className="text-[10px] text-mist">{roleLabel} · Plan {planLabel}</p>
           </div>
         </div>
 

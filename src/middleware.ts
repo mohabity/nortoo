@@ -17,10 +17,12 @@ const PUBLIC_PATHS = [
   "/onboarding",
   "/forgot-password",
   "/reset-password",
+  "/invite",
   "/go/",
   "/api/auth/",
   "/api/webhook/",
   "/api/cron/",
+  "/api/team/accept-invite",
   "/_next/",
   "/favicon.ico",
 ];

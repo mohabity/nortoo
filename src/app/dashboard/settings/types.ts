@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 export type TabId =
   | "profile"
   | "store"
+  | "team"
   | "scoring"
   | "escalation"
   | "rto_costs"

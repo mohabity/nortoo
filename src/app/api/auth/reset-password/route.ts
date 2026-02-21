@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/db/index";
-import { merchants, passwordResetTokens, auditLogs } from "@/db/schema";
+import { users, passwordResetTokens, auditLogs } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
 const resetSchema = z.object({
@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
     .select({
       id: passwordResetTokens.id,
       merchantId: passwordResetTokens.merchantId,
+      userId: passwordResetTokens.userId,
       expiresAt: passwordResetTokens.expiresAt,
     })
     .from(passwordResetTokens)
@@ -76,11 +77,13 @@ export async function POST(request: NextRequest) {
   // Hash the new password
   const passwordHash = await hash(password, 12);
 
-  // Update merchant password
-  await db
-    .update(merchants)
-    .set({ passwordHash, updatedAt: new Date() })
-    .where(eq(merchants.id, resetRecord.merchantId));
+  // Update user password (prefer userId, fall back to merchantId for legacy tokens)
+  if (resetRecord.userId) {
+    await db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, resetRecord.userId));
+  }
 
   // Mark token as used
   await db
@@ -91,11 +94,12 @@ export async function POST(request: NextRequest) {
   // Audit log
   await db.insert(auditLogs).values({
     merchantId: resetRecord.merchantId,
+    userId: resetRecord.userId,
     actor: "merchant",
     action: "password_reset_completed",
-    targetType: "merchant",
-    targetId: String(resetRecord.merchantId),
-    details: JSON.stringify({ merchantId: resetRecord.merchantId }),
+    targetType: "user",
+    targetId: String(resetRecord.userId ?? resetRecord.merchantId),
+    details: JSON.stringify({ userId: resetRecord.userId }),
   });
 
   return NextResponse.json({ success: true });
