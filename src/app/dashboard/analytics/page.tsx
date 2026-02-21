@@ -32,6 +32,7 @@ import {
   AlertTriangle,
   MapPin,
   Download,
+  FileText,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -481,6 +482,43 @@ export default function AnalyticsPage() {
   const [zoneCityFilter, setZoneCityFilter] = useState<string>("");
   const [exportLoading, setExportLoading] = useState(false);
 
+  // ── PDF report state ──
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfDropdownOpen, setPdfDropdownOpen] = useState(false);
+
+  const pdfMonths = useMemo(() => {
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1 - i);
+      return {
+        value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+        label: d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }),
+      };
+    });
+  }, []);
+
+  async function handleDownloadPDF(month: string) {
+    setPdfLoading(true);
+    try {
+      const res = await fetch(`/api/reports/monthly?month=${month}`);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        alert((json as { error?: string }).error ?? "Erreur de generation du rapport");
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `siift-rapport-${month}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setPdfLoading(false);
+      setPdfDropdownOpen(false);
+    }
+  }
+
   // ── Savings state ──
   const [savingsData, setSavingsData] = useState<SavingsApiData | null>(null);
   const [savingsLoading, setSavingsLoading] = useState(true);
@@ -723,6 +761,47 @@ export default function AnalyticsPage() {
             )}
             <span className="hidden sm:inline">Exporter</span>
           </button>
+
+          {/* PDF Report dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setPdfDropdownOpen(!pdfDropdownOpen)}
+              disabled={pdfLoading}
+              className="h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+            >
+              {pdfLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">Rapport PDF</span>
+              <ChevronDown className="h-3 w-3 text-mist" />
+            </button>
+
+            {pdfDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setPdfDropdownOpen(false)}
+                />
+                <div className="absolute right-0 top-11 z-50 w-56 rounded-sm border border-silk bg-white shadow-lg">
+                  <div className="px-3 py-2 border-b border-silk">
+                    <p className="text-xs font-medium text-fog">Choisir le mois</p>
+                  </div>
+                  {pdfMonths.map((m) => (
+                    <button
+                      key={m.value}
+                      onClick={() => handleDownloadPDF(m.value)}
+                      disabled={pdfLoading}
+                      className="w-full text-left px-3 py-2 text-sm text-midnight hover:bg-snow transition-colors first-letter:uppercase disabled:opacity-50"
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
