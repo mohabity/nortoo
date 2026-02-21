@@ -62,15 +62,14 @@ export async function middleware(request: NextRequest) {
     // getToken() throws if AUTH_SECRET is missing — fall through to cookie check
   }
 
-  // 2. Fallback: legacy cookie — DEPRECATED, dashboard routes only
-  //    API routes must use proper JWT auth. Legacy cookie will be removed in a future release.
-  if (!pathname.startsWith("/api/")) {
-    const merchantCookie = request.cookies.get("nortoo_merchant");
-    if (merchantCookie?.value) {
-      const response = NextResponse.next();
-      response.headers.set("X-Auth-Method", "legacy-cookie-deprecated");
-      return response;
-    }
+  // 2. Fallback: legacy cookie — DEPRECATED
+  //    Accepted for dashboard routes AND dashboard API calls (same-origin fetch).
+  //    Webhook/external API routes use API key auth instead.
+  const merchantCookie = request.cookies.get("nortoo_merchant");
+  if (merchantCookie?.value) {
+    const response = NextResponse.next();
+    response.headers.set("X-Auth-Method", "legacy-cookie-deprecated");
+    return response;
   }
 
   // Not authenticated
