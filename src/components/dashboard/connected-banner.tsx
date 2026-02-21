@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Rocket, X } from "lucide-react";
+import { useTranslation } from "@/i18n/provider";
 
 const DISMISS_KEY_CONNECTED = "nortoo_dismiss_connected";
 const DISMISS_KEY_WELCOME = "nortoo_dismiss_welcome";
@@ -19,6 +20,7 @@ export function ConnectedBanner() {
   const welcome = searchParams.get("welcome");
   const [visible, setVisible] = useState(false);
   const [variant, setVariant] = useState<"connected" | "welcome">("connected");
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (welcome === "true") {
@@ -68,8 +70,8 @@ export function ConnectedBanner() {
         }`}
       >
         {isWelcome
-          ? "Bienvenue sur nortoo ! Votre boutique est connectée et prête à scorer vos commandes COD."
-          : "Boutique connectée avec succès ! Les commandes COD seront scorées automatiquement."}
+          ? t("components.banners.connected")
+          : t("components.banners.connectedShort")}
       </p>
       <button
         onClick={() => dismiss(variant)}
@@ -78,7 +80,7 @@ export function ConnectedBanner() {
             ? "text-mint-deep/60 hover:bg-mint/20 hover:text-mint-deep"
             : "text-mint-deep/60 hover:bg-mint/20 hover:text-mint-deep"
         }`}
-        aria-label="Fermer"
+        aria-label={t("common.close")}
       >
         <X className="h-4 w-4" />
       </button>

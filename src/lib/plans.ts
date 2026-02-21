@@ -154,7 +154,7 @@ export function checkOrderLimit(
   };
 }
 
-// ── Feature Labels (French) ──
+// ── Feature Labels (French — for i18n use t("features.{id}") instead) ──
 
 export const FEATURE_LABELS: Record<FeatureId, string> = {
   scoring: "Scoring anti-fraude",
@@ -169,7 +169,7 @@ export const FEATURE_LABELS: Record<FeatureId, string> = {
   roles: "Gestion des rôles",
 };
 
-// ── Plan Labels (French) ──
+// ── Plan Labels (French — for i18n use t("plans.{id}.name") and t("plans.{id}.label") instead) ──
 
 export const PLAN_LABELS: Record<PlanId, string> = {
   trial: "Essai",

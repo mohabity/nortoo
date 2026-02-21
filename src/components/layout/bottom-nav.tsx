@@ -13,22 +13,24 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useTranslation } from "@/i18n/provider";
 
 const navItems = [
-  { href: "/dashboard", label: "Accueil", icon: LayoutDashboard },
-  { href: "/dashboard/orders", label: "Commandes", icon: ShoppingCart },
-  { href: "/dashboard/analytics", label: "Analytique", icon: BarChart3 },
-  { href: "/dashboard/settings", label: "Paramètres", icon: Settings },
+  { href: "/dashboard", labelKey: "nav.home", icon: LayoutDashboard },
+  { href: "/dashboard/orders", labelKey: "nav.orders", icon: ShoppingCart },
+  { href: "/dashboard/analytics", labelKey: "nav.analytics", icon: BarChart3 },
+  { href: "/dashboard/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
 const moreItems = [
-  { href: "/dashboard/compliance", label: "Conformité", icon: Shield },
+  { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const { can } = usePermissions();
+  const { t } = useTranslation();
 
   // Filter nav items by role
   const filteredNavItems = navItems.filter((item) => {
@@ -72,7 +74,7 @@ export function BottomNav() {
                 )}
               >
                 <item.icon className="h-4 w-4" />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
@@ -104,7 +106,7 @@ export function BottomNav() {
                   <span className="absolute top-0 h-0.5 w-6 rounded-full bg-mint" />
                 )}
                 <item.icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium">{t(item.labelKey)}</span>
               </Link>
             );
           })}
@@ -119,7 +121,7 @@ export function BottomNav() {
               )}
             >
               <MoreHorizontal className="h-5 w-5" />
-              <span className="text-[10px] font-medium">Plus</span>
+              <span className="text-[10px] font-medium">{t("nav.more")}</span>
             </button>
           )}
         </div>

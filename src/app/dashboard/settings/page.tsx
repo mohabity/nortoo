@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
 import type { TabId, TabMeta, MerchantSettings, Toast } from "./types";
 import { ScoringTab } from "./components/ScoringTab";
 import { EscalationTab } from "./components/EscalationTab";
@@ -31,16 +32,16 @@ import { BillingTab } from "./components/BillingTab";
 
 // ── Tab definitions ──
 const TABS: TabMeta[] = [
-  { id: "profile", label: "Profil", icon: User },
-  { id: "store", label: "Boutique", icon: Store },
-  { id: "team", label: "Équipe", icon: Users },
-  { id: "scoring", label: "Scoring", icon: Sliders },
-  { id: "escalation", label: "Escalade", icon: Timer },
-  { id: "rto_costs", label: "Coûts RTO", icon: Coins },
-  { id: "api", label: "Intégration & API", icon: KeyRound },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "privacy", label: "Données & Confidentialité", icon: ShieldCheck },
-  { id: "billing", label: "Facturation", icon: CreditCard },
+  { id: "profile", labelKey: "settings.tabs.profile", icon: User },
+  { id: "store", labelKey: "settings.tabs.store", icon: Store },
+  { id: "team", labelKey: "settings.tabs.team", icon: Users },
+  { id: "scoring", labelKey: "settings.tabs.scoring", icon: Sliders },
+  { id: "escalation", labelKey: "settings.tabs.escalation", icon: Timer },
+  { id: "rto_costs", labelKey: "settings.tabs.rto_costs", icon: Coins },
+  { id: "api", labelKey: "settings.tabs.api", icon: KeyRound },
+  { id: "notifications", labelKey: "settings.tabs.notifications", icon: Bell },
+  { id: "privacy", labelKey: "settings.tabs.privacy", icon: ShieldCheck },
+  { id: "billing", labelKey: "settings.tabs.billing", icon: CreditCard },
 ];
 
 // ── Toast item ──
@@ -88,6 +89,7 @@ function useInitialTab(): TabId {
 
 // ── Inner page (needs Suspense for useSearchParams) ──
 function SettingsPageInner() {
+  const { t } = useTranslation();
   const initialTab = useInitialTab();
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [settings, setSettings] = useState<MerchantSettings | null>(null);
@@ -131,7 +133,7 @@ function SettingsPageInner() {
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="h-6 w-6 animate-spin text-mist" />
-        <span className="ml-2 text-sm text-fog">Chargement...</span>
+        <span className="ml-2 text-sm text-fog">{t("common.loading")}</span>
       </div>
     );
   }
@@ -146,9 +148,9 @@ function SettingsPageInner() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-display text-2xl font-bold text-midnight">Paramètres</h1>
+        <h1 className="font-display text-2xl font-bold text-midnight">{t("settings.title")}</h1>
         <p className="text-sm text-fog">
-          Configuration de votre compte et intégrations
+          {t("settings.subtitle")}
         </p>
       </div>
 
@@ -172,7 +174,7 @@ function SettingsPageInner() {
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             );
           })}
@@ -210,7 +212,6 @@ export default function SettingsPage() {
       fallback={
         <div className="flex items-center justify-center py-24">
           <Loader2 className="h-6 w-6 animate-spin text-mist" />
-          <span className="ml-2 text-sm text-fog">Chargement...</span>
         </div>
       }
     >

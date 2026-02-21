@@ -21,9 +21,12 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/i18n/provider";
 import type { BaseTabProps } from "../types";
 
 export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
+  const { t } = useTranslation();
+
   // Profile form
   const [name, setName] = useState(settings.name);
   const [email, setEmail] = useState(settings.email);
@@ -58,11 +61,11 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
     const normalizedEmail = email.trim().toLowerCase();
 
     if (trimmedName.length < 2) {
-      onToast("error", "Le nom doit contenir au moins 2 caractères");
+      onToast("error", t("settings.profile.nameMinLength"));
       return;
     }
     if (!normalizedEmail.includes("@")) {
-      onToast("error", "Adresse e-mail invalide");
+      onToast("error", t("settings.profile.invalidEmail"));
       return;
     }
 
@@ -80,7 +83,7 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
       const json = await res.json();
 
       if (!res.ok) {
-        onToast("error", json.error || "Erreur lors de la sauvegarde");
+        onToast("error", json.error || t("settings.profile.saveError"));
         return;
       }
 
@@ -89,13 +92,13 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
       if (json.emailChanged) {
         onToast(
           "info",
-          "Un e-mail de vérification a été envoyé à votre nouvelle adresse"
+          t("settings.profile.verificationSent")
         );
       } else {
-        onToast("success", "Profil mis à jour avec succès");
+        onToast("success", t("settings.profile.saved"));
       }
     } catch {
-      onToast("error", "Erreur réseau. Réessayez plus tard.");
+      onToast("error", t("settings.profile.networkError"));
     } finally {
       setSavingProfile(false);
     }
@@ -111,13 +114,13 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
       const json = await res.json();
 
       if (!res.ok) {
-        onToast("error", json.error || "Impossible d'envoyer l'e-mail");
+        onToast("error", json.error || t("settings.profile.resendError"));
         return;
       }
 
-      onToast("success", "E-mail de vérification envoyé !");
+      onToast("success", t("settings.profile.verificationResent"));
     } catch {
-      onToast("error", "Erreur réseau. Réessayez plus tard.");
+      onToast("error", t("settings.profile.networkError"));
     } finally {
       setResending(false);
     }
@@ -126,11 +129,11 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
   // Change password
   async function handleChangePassword() {
     if (newPassword !== confirmPassword) {
-      onToast("error", "Les mots de passe ne correspondent pas");
+      onToast("error", t("settings.profile.passwordMismatch"));
       return;
     }
     if (newPassword.length < 8) {
-      onToast("error", "Le mot de passe doit contenir au moins 8 caractères");
+      onToast("error", t("settings.profile.passwordMinLength"));
       return;
     }
     setSavingPassword(true);
@@ -146,16 +149,16 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
       const json = await res.json();
 
       if (!res.ok) {
-        onToast("error", json.error || "Erreur lors du changement de mot de passe");
+        onToast("error", json.error || t("settings.profile.passwordChangeError"));
         return;
       }
 
-      onToast("success", "Mot de passe modifié avec succès");
+      onToast("success", t("settings.profile.passwordChanged"));
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch {
-      onToast("error", "Erreur réseau. Réessayez plus tard.");
+      onToast("error", t("settings.profile.networkError"));
     } finally {
       setSavingPassword(false);
     }
@@ -182,10 +185,10 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <User className="h-5 w-5 text-ocean" />
             <div>
               <CardTitle className="text-base">
-                Informations personnelles
+                {t("settings.profile.personalInfo")}
               </CardTitle>
               <CardDescription>
-                Gérez les informations de votre compte
+                {t("settings.profile.personalInfoSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -193,19 +196,19 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium text-slate block mb-1.5">
-              Nom complet
+              {t("settings.profile.fullName")}
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-sm border border-silk bg-white px-3 py-2 text-sm text-midnight focus:outline-none focus:ring-2 focus:ring-mint/50"
-              placeholder="Votre nom complet"
+              placeholder={t("settings.profile.fullNamePlaceholder")}
             />
           </div>
           <div>
             <label className="text-sm font-medium text-slate block mb-1.5">
-              Adresse e-mail
+              {t("settings.profile.email")}
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -213,24 +216,24 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 rounded-sm border border-silk bg-white px-3 py-2 text-sm text-midnight focus:outline-none focus:ring-2 focus:ring-mint/50"
-                placeholder="vous@exemple.com"
+                placeholder={t("settings.profile.emailPlaceholder")}
               />
               {isVerified ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-mint-bg px-2.5 py-1 text-xs font-medium text-mint-deep whitespace-nowrap">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Vérifié
+                  {t("settings.profile.verified")}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 rounded-full bg-sun-light px-2.5 py-1 text-xs font-medium text-sun-deep whitespace-nowrap">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  Non vérifié
+                  {t("settings.profile.notVerified")}
                 </span>
               )}
             </div>
             {!isVerified && (
               <div className="mt-2 flex items-center gap-2">
                 <p className="text-xs text-fog">
-                  Vérifiez votre adresse e-mail pour accéder à toutes les fonctionnalités.
+                  {t("settings.profile.verifyHint")}
                 </p>
                 <button
                   onClick={handleResendVerification}
@@ -242,7 +245,7 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
                   ) : (
                     <RefreshCw className="h-3 w-3" />
                   )}
-                  Renvoyer
+                  {t("settings.profile.resend")}
                 </button>
               </div>
             )}
@@ -258,7 +261,7 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
               ) : (
                 <Save className="mr-2 h-4 w-4" />
               )}
-              Enregistrer les modifications
+              {t("settings.profile.saveChanges")}
             </Button>
           )}
         </CardContent>
@@ -270,9 +273,9 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-violet" />
             <div>
-              <CardTitle className="text-base">Mot de passe</CardTitle>
+              <CardTitle className="text-base">{t("settings.profile.password")}</CardTitle>
               <CardDescription>
-                Modifiez votre mot de passe de connexion
+                {t("settings.profile.passwordSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -280,7 +283,7 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium text-slate block mb-1.5">
-              Mot de passe actuel
+              {t("settings.profile.currentPassword")}
             </label>
             <input
               type="password"
@@ -291,19 +294,19 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
           </div>
           <div>
             <label className="text-sm font-medium text-slate block mb-1.5">
-              Nouveau mot de passe
+              {t("settings.profile.newPassword")}
             </label>
             <input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="w-full rounded-sm border border-silk bg-white px-3 py-2 text-sm text-midnight focus:outline-none focus:ring-2 focus:ring-mint/50"
-              placeholder="Minimum 8 caractères"
+              placeholder={t("settings.profile.passwordPlaceholder")}
             />
           </div>
           <div>
             <label className="text-sm font-medium text-slate block mb-1.5">
-              Confirmer le mot de passe
+              {t("settings.profile.confirmPassword")}
             </label>
             <input
               type="password"
@@ -325,7 +328,7 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
             ) : (
               <Lock className="mr-2 h-4 w-4" />
             )}
-            Changer le mot de passe
+            {t("settings.profile.changePassword")}
           </Button>
         </CardContent>
       </Card>
@@ -337,19 +340,17 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <Trash2 className="h-5 w-5 text-rose" />
             <div>
               <CardTitle className="text-base text-rose">
-                Zone de danger
+                {t("settings.profile.dangerZone")}
               </CardTitle>
               <CardDescription>
-                Actions irréversibles sur votre compte
+                {t("settings.profile.dangerZoneSubtitle")}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-fog mb-4">
-            La suppression de votre compte entraînera la perte définitive de
-            toutes vos données, commandes, et paramètres. Cette action ne peut
-            pas être annulée.
+            {t("settings.profile.deleteWarning")}
           </p>
 
           <Dialog.Root
@@ -359,7 +360,7 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <Dialog.Trigger asChild>
               <Button variant="destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer mon compte
+                {t("settings.profile.deleteAccount")}
               </Button>
             </Dialog.Trigger>
             <Dialog.Portal>
@@ -370,17 +371,15 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
                     <AlertTriangle className="h-5 w-5 text-rose" />
                   </div>
                   <Dialog.Title className="font-display font-semibold text-midnight text-lg">
-                    Supprimer votre compte ?
+                    {t("settings.profile.deleteTitle")}
                   </Dialog.Title>
                 </div>
                 <Dialog.Description className="text-sm text-fog mb-6">
-                  Cette action est irréversible. Toutes vos données seront
-                  supprimées définitivement sous 30 jours conformément à la
-                  Loi 09-08 relative à la protection des données personnelles.
+                  {t("settings.profile.deleteDescription")}
                 </Dialog.Description>
                 <div className="flex justify-end gap-3">
                   <Dialog.Close asChild>
-                    <Button variant="outline">Annuler</Button>
+                    <Button variant="outline">{t("common.cancel")}</Button>
                   </Dialog.Close>
                   <Button
                     variant="destructive"
@@ -390,7 +389,7 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
                     {deleting && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    Supprimer définitivement
+                    {t("settings.profile.deletePermanently")}
                   </Button>
                 </div>
               </Dialog.Content>

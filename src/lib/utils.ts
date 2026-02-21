@@ -1,12 +1,14 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { Locale } from "@/i18n/types";
+import { getTranslation } from "@/lib/i18n-utils";
 
 /** Merge Tailwind classes safely */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format amount in Moroccan Dirhams */
+/** Format amount in Moroccan Dirhams (legacy — prefer formatCurrency from i18n-utils) */
 export function formatDH(amount: number): string {
   return new Intl.NumberFormat("fr-MA").format(Math.round(amount)) + " DH";
 }
@@ -38,8 +40,9 @@ export function decisionColorClass(decision: string): string {
   }
 }
 
-/** Decision → French label */
-export function decisionLabel(decision: string): string {
+/** Decision → Localized label */
+export function decisionLabel(decision: string, locale?: Locale): string {
+  if (locale) return getTranslation(locale, `decisions.${decision}`);
   switch (decision) {
     case "ship": return "Expédier";
     case "verify": return "Vérifier";
@@ -49,8 +52,9 @@ export function decisionLabel(decision: string): string {
   }
 }
 
-/** Delivery status → French label */
-export function deliveryLabel(status: string): string {
+/** Delivery status → Localized label */
+export function deliveryLabel(status: string, locale?: Locale): string {
+  if (locale) return getTranslation(locale, `delivery.${status}`);
   switch (status) {
     case "pending": return "En attente";
     case "shipped": return "Expédié";
@@ -61,8 +65,9 @@ export function deliveryLabel(status: string): string {
   }
 }
 
-/** Risk level → French label */
-export function riskLabel(level: string): string {
+/** Risk level → Localized label */
+export function riskLabel(level: string, locale?: Locale): string {
+  if (locale) return getTranslation(locale, `risk.${level}`);
   switch (level) {
     case "low": return "Faible";
     case "medium": return "Moyen";

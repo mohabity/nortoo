@@ -12,37 +12,25 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useTranslation } from "@/i18n/provider";
 
 const navItems = [
-  { href: "/dashboard", label: "Vue d'ensemble", icon: LayoutDashboard },
-  { href: "/dashboard/orders", label: "Commandes", icon: ShoppingCart },
-  { href: "/dashboard/analytics", label: "Analytique", icon: BarChart3 },
-  { href: "/dashboard/settings", label: "Paramètres", icon: Settings },
-  { href: "/dashboard/compliance", label: "Conformité", icon: Shield },
+  { href: "/dashboard", labelKey: "nav.overview", icon: LayoutDashboard },
+  { href: "/dashboard/orders", labelKey: "nav.orders", icon: ShoppingCart },
+  { href: "/dashboard/analytics", labelKey: "nav.analytics", icon: BarChart3 },
+  { href: "/dashboard/settings", labelKey: "nav.settings", icon: Settings },
+  { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
 ];
-
-const PLAN_LABELS: Record<string, string> = {
-  trial: "Essai gratuit",
-  starter: "Starter",
-  pro: "Pro",
-  scale: "Scale",
-};
-
-const PLAN_DESCRIPTIONS: Record<string, string> = {
-  trial: "14 jours restants",
-  starter: "299 DH/mois",
-  pro: "699 DH/mois",
-  scale: "1 499 DH/mois",
-};
 
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { can } = usePermissions();
+  const { t } = useTranslation();
 
   const plan = session?.user?.plan ?? "trial";
-  const planLabel = PLAN_LABELS[plan] ?? plan;
-  const planDescription = PLAN_DESCRIPTIONS[plan] ?? "";
+  const planLabel = t(`plans.${plan}.name`);
+  const planDescription = t(`plans.${plan}.description`);
 
   // Filter nav items by role
   const filteredNavItems = navItems.filter((item) => {
@@ -81,7 +69,7 @@ export function Sidebar() {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
@@ -93,13 +81,13 @@ export function Sidebar() {
           href="/dashboard/billing"
           className="block rounded-sm bg-snow p-3 hover:bg-mint-bg/30 transition-colors group"
         >
-          <p className="text-xs font-medium text-fog">Plan actuel</p>
+          <p className="text-xs font-medium text-fog">{t("billing.currentPlan")}</p>
           <p className="font-display text-sm font-bold text-midnight">{planLabel}</p>
           {planDescription && (
             <p className="mt-1 text-xs text-mist">
               {planDescription}
               <span className="ml-1 text-mint-deep opacity-0 group-hover:opacity-100 transition-opacity">
-                Gérer →
+                {t("common.manage")}
               </span>
             </p>
           )}

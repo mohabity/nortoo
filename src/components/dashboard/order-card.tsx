@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Check } from "lucide-react";
-import { formatDH, cn } from "@/lib/utils";
+import { deliveryLabel, cn } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { PipelineBadge } from "./pipeline-badge";
 import { highlightText } from "@/lib/highlight";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency } from "@/lib/i18n-utils";
 import type { OrderRow } from "./order-table";
 
 interface OrderCardProps {
@@ -20,15 +22,8 @@ interface OrderCardProps {
   onLongPress?: (orderId: number) => void;
 }
 
-const deliveryLabels: Record<string, string> = {
-  pending: "En attente",
-  shipped: "Expédié",
-  delivered: "Livré",
-  returned: "Retourné",
-  cancelled: "Annulé",
-};
-
 function CardCountdown({ deadline }: { deadline: string }) {
+  const { t } = useTranslation();
   const [label, setLabel] = useState("");
   const [overdue, setOverdue] = useState(false);
 
@@ -36,7 +31,7 @@ function CardCountdown({ deadline }: { deadline: string }) {
     function update() {
       const diff = new Date(deadline).getTime() - Date.now();
       if (diff <= 0) {
-        setLabel("expiré");
+        setLabel(t("time.expired"));
         setOverdue(true);
         return;
       }
@@ -51,7 +46,7 @@ function CardCountdown({ deadline }: { deadline: string }) {
     update();
     const iv = setInterval(update, 30000);
     return () => clearInterval(iv);
-  }, [deadline]);
+  }, [deadline, t]);
 
   return (
     <span
@@ -71,6 +66,7 @@ export function OrderCard({
   onToggle,
   onLongPress,
 }: OrderCardProps) {
+  const { t, locale } = useTranslation();
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const movedRef = useRef(false);
 
@@ -148,10 +144,10 @@ export function OrderCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <p className="font-medium text-midnight truncate">
-              {hl(order.customerName) || "Client inconnu"}
+              {hl(order.customerName) || t("orders.table.unknownClient")}
             </p>
             <span className="font-mono text-sm font-semibold text-midnight shrink-0">
-              {formatDH(order.total)}
+              {formatCurrency(order.total, locale)}
             </span>
           </div>
 
@@ -185,7 +181,7 @@ export function OrderCard({
                 <CardCountdown deadline={order.reviewDeadline} />
               )}
             <span className="text-xs text-mist">
-              {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}
+              {deliveryLabel(order.deliveryStatus, locale)}
             </span>
           </div>
 

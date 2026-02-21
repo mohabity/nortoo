@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Mail, AlertTriangle, X, Loader2, Send } from "lucide-react";
+import { useTranslation } from "@/i18n/provider";
 
 const DISMISS_KEY = "email-verify-dismissed";
 const DISMISS_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -16,6 +17,7 @@ interface VerifyStatus {
 export function EmailVerificationBanner() {
   const searchParams = useSearchParams();
   const verifyParam = searchParams.get("verify");
+  const { t } = useTranslation();
 
   const [status, setStatus] = useState<VerifyStatus | null>(null);
   const [dismissed, setDismissed] = useState(true); // hidden until checked
@@ -25,11 +27,11 @@ export function EmailVerificationBanner() {
   // Show toast for verify query param
   useEffect(() => {
     if (verifyParam === "success") {
-      setToast({ type: "success", message: "Email vérifié avec succès !" });
+      setToast({ type: "success", message: t("components.banners.emailVerified") });
     } else if (verifyParam === "invalid") {
-      setToast({ type: "error", message: "Lien de vérification invalide." });
+      setToast({ type: "error", message: t("components.banners.emailInvalidLink") });
     } else if (verifyParam === "expired") {
-      setToast({ type: "info", message: "Ce lien a expiré. Renvoyez un email de vérification." });
+      setToast({ type: "info", message: t("components.banners.emailExpiredLink") });
     }
 
     if (verifyParam) {
@@ -39,7 +41,7 @@ export function EmailVerificationBanner() {
       window.history.replaceState({}, "", window.location.pathname);
       return () => clearTimeout(timer);
     }
-  }, [verifyParam]);
+  }, [verifyParam, t]);
 
   // Fetch verification status
   useEffect(() => {
@@ -72,17 +74,17 @@ export function EmailVerificationBanner() {
       const res = await fetch("/api/auth/verify-email/send", { method: "POST" });
       const data = await res.json();
       if (res.ok) {
-        setToast({ type: "success", message: "Email de vérification envoyé !" });
+        setToast({ type: "success", message: t("components.banners.emailResent") });
       } else {
-        setToast({ type: "error", message: data.error || "Erreur lors de l'envoi" });
+        setToast({ type: "error", message: data.error || t("components.banners.emailSendError") });
       }
     } catch {
-      setToast({ type: "error", message: "Erreur lors de l'envoi" });
+      setToast({ type: "error", message: t("components.banners.emailSendError") });
     } finally {
       setSending(false);
       setTimeout(() => setToast(null), 4000);
     }
-  }, []);
+  }, [t]);
 
   function handleDismiss() {
     sessionStorage.setItem(DISMISS_KEY, String(Date.now()));
@@ -115,10 +117,10 @@ export function EmailVerificationBanner() {
               <AlertTriangle className="h-5 w-5 shrink-0 text-rose mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-midnight">
-                  Certaines fonctionnalités sont limitées
+                  {t("components.banners.emailLimited")}
                 </p>
                 <p className="text-xs text-fog mt-0.5">
-                  Vérifiez votre email pour débloquer les exports et l&apos;API.
+                  {t("components.banners.emailLimitedDetail")}
                 </p>
               </div>
             </div>
@@ -132,7 +134,7 @@ export function EmailVerificationBanner() {
               ) : (
                 <Send className="h-3.5 w-3.5" />
               )}
-              Vérifier maintenant
+              {t("components.banners.emailVerifyNow")}
             </button>
           </div>
         </div>
@@ -158,12 +160,10 @@ export function EmailVerificationBanner() {
             <Mail className="h-5 w-5 shrink-0 text-amber mt-0.5" />
             <div>
               <p className="text-sm font-medium text-midnight">
-                Vérifiez votre email
+                {t("components.banners.emailVerifyTitle")}
               </p>
               <p className="text-xs text-fog mt-0.5">
-                Un email de vérification a été envoyé à{" "}
-                <span className="font-medium text-slate">{status.email}</span>.
-                Vérifiez vos spams si vous ne le trouvez pas.
+                {t("components.banners.emailSent", { email: status.email })}
               </p>
             </div>
           </div>
@@ -178,12 +178,12 @@ export function EmailVerificationBanner() {
               ) : (
                 <Send className="h-3.5 w-3.5" />
               )}
-              Renvoyer
+              {t("components.banners.emailResend")}
             </button>
             <button
               onClick={handleDismiss}
               className="rounded-lg p-2 text-mist hover:text-slate hover:bg-snow transition-colors"
-              aria-label="Plus tard"
+              aria-label={t("components.banners.emailLater")}
             >
               <X className="h-4 w-4" />
             </button>

@@ -30,7 +30,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, decisionLabel } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency, formatDate } from "@/lib/i18n-utils";
 import type { BaseTabProps } from "../types";
 
 // ── Types ──
@@ -90,13 +92,6 @@ function webhookFreshness(dateStr: string | null): "ok" | "warning" | "critical"
   return "ok";
 }
 
-const DECISION_LABELS: Record<string, string> = {
-  ship: "Expédier",
-  verify: "Vérifier",
-  flag: "Signaler",
-  block: "Bloquer",
-};
-
 const DECISION_COLORS: Record<string, string> = {
   ship: "text-mint-deep bg-mint-bg",
   verify: "text-sun-deep bg-sun-bg",
@@ -107,6 +102,7 @@ const DECISION_COLORS: Record<string, string> = {
 // ── Component ──
 
 export function StoreTab({ settings, onToast }: BaseTabProps) {
+  const { t, locale } = useTranslation();
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -134,11 +130,11 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
   const storeUrl = settings.domain ? `https://${settings.domain}` : null;
 
   const connectedDate = settings.consentRecordedAt
-    ? new Intl.DateTimeFormat("fr-FR", {
+    ? formatDate(settings.consentRecordedAt, locale, {
         day: "numeric",
         month: "long",
         year: "numeric",
-      }).format(new Date(settings.consentRecordedAt))
+      })
     : null;
 
   // Fetch diagnostics on mount
@@ -187,7 +183,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
 
       if (!res.ok) {
         setTestState("error");
-        setTestError(json.error || "Erreur lors du test");
+        setTestError(json.error || t("settings.store.testFailed"));
         return;
       }
 
@@ -201,7 +197,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
       }, 10_000);
     } catch {
       setTestState("error");
-      setTestError("Erreur réseau. Vérifiez votre connexion.");
+      setTestError(t("settings.store.networkError"));
     }
   }
 
@@ -229,14 +225,14 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             <div className="flex items-center gap-2">
               <Store className="h-5 w-5 text-mint" />
               <div>
-                <CardTitle className="text-base">YouCan</CardTitle>
+                <CardTitle className="text-base">{t("settings.store.youcan")}</CardTitle>
                 <CardDescription>
-                  Connexion à votre boutique YouCan
+                  {t("settings.store.connectionTitle")}
                 </CardDescription>
               </div>
             </div>
             <Badge variant={isConnected ? "mint" : "default"}>
-              {isConnected ? "Connectée" : "Non connectée"}
+              {isConnected ? t("settings.store.connected") : t("settings.store.notConnected")}
             </Badge>
           </div>
         </CardHeader>
@@ -246,13 +242,13 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
               {/* Store details */}
               <div className="rounded-sm border border-silk divide-y divide-silk">
                 <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-fog">Nom boutique</span>
+                  <span className="text-sm text-fog">{t("settings.store.storeName")}</span>
                   <span className="text-sm font-medium text-midnight">
                     {settings.name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-fog">Store ID</span>
+                  <span className="text-sm text-fog">{t("settings.store.storeId")}</span>
                   <span className="text-sm font-mono text-slate">
                     {settings.youcanStoreId}
                   </span>
@@ -260,14 +256,14 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                 {connectedDate && (
                   <div className="flex items-center justify-between px-4 py-3">
                     <span className="text-sm text-fog">
-                      Connectée depuis
+                      {t("settings.store.connectedSince")}
                     </span>
                     <span className="text-sm text-slate">{connectedDate}</span>
                   </div>
                 )}
                 {storeUrl && (
                   <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-sm text-fog">URL de la boutique</span>
+                    <span className="text-sm text-fog">{t("settings.store.storeUrl")}</span>
                     <a
                       href={storeUrl}
                       target="_blank"
@@ -289,7 +285,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                 <Dialog.Trigger asChild>
                   <Button variant="outline" size="sm" className="text-rose">
                     <Unplug className="mr-2 h-3.5 w-3.5" />
-                    Déconnecter la boutique
+                    {t("settings.store.disconnect")}
                   </Button>
                 </Dialog.Trigger>
                 <Dialog.Portal>
@@ -300,17 +296,15 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                         <AlertTriangle className="h-5 w-5 text-rose" />
                       </div>
                       <Dialog.Title className="font-display font-semibold text-midnight text-lg">
-                        Déconnecter YouCan ?
+                        {t("settings.store.disconnectTitle")}
                       </Dialog.Title>
                     </div>
                     <Dialog.Description className="text-sm text-fog mb-6">
-                      Voulez-vous vraiment déconnecter votre boutique YouCan ?
-                      Les nouveaux webhooks ne seront plus reçus et le scoring
-                      automatique sera interrompu.
+                      {t("settings.store.disconnectMessage")}
                     </Dialog.Description>
                     <div className="flex justify-end gap-3">
                       <Dialog.Close asChild>
-                        <Button variant="outline">Annuler</Button>
+                        <Button variant="outline">{t("common.cancel")}</Button>
                       </Dialog.Close>
                       <Button
                         variant="destructive"
@@ -320,7 +314,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                         {disconnecting && (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
-                        Déconnecter
+                        {t("settings.store.disconnect")}
                       </Button>
                     </div>
                   </Dialog.Content>
@@ -331,13 +325,12 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             <div className="text-center py-6">
               <Globe className="h-10 w-10 text-mist mx-auto mb-3" />
               <p className="text-sm text-fog mb-4">
-                Connectez votre boutique YouCan pour activer le scoring
-                automatique des commandes COD.
+                {t("settings.store.connectPrompt")}
               </p>
               <Button asChild>
                 <a href="/api/auth/youcan">
                   <Plug className="mr-2 h-4 w-4" />
-                  Connecter YouCan
+                  {t("settings.store.connectYoucan")}
                 </a>
               </Button>
             </div>
@@ -352,21 +345,21 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             <div className="flex items-center gap-2">
               <Webhook className="h-5 w-5 text-ocean" />
               <div>
-                <CardTitle className="text-base">Webhook</CardTitle>
+                <CardTitle className="text-base">{t("settings.store.webhook")}</CardTitle>
                 <CardDescription>
-                  Statut de réception des commandes
+                  {t("settings.store.webhookSubtitle")}
                 </CardDescription>
               </div>
             </div>
             <Badge variant={isConnected ? "mint" : "default"}>
-              {isConnected ? "Actif" : "Inactif"}
+              {isConnected ? t("common.active") : t("common.inactive")}
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium text-slate block mb-1.5">
-              URL du webhook
+              {t("settings.store.webhookUrl")}
             </label>
             <div className="flex items-center gap-2">
               <div className="flex-1 rounded-sm border border-silk bg-snow px-3 py-2 font-mono text-sm text-slate select-all overflow-x-auto">
@@ -376,7 +369,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                 variant="outline"
                 size="icon"
                 onClick={() => copyText(webhookUrl)}
-                title="Copier"
+                title={t("common.copy")}
               >
                 {copiedUrl ? (
                   <Check className="h-4 w-4 text-mint-deep" />
@@ -389,12 +382,12 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
           {isConnected && (
             <div className="rounded-xs bg-snow px-3 py-2">
               <p className="text-xs text-fog">
-                <span className="font-medium text-mint-deep">Dernier webhook :</span>{" "}
+                <span className="font-medium text-mint-deep">{t("settings.store.lastWebhook")}</span>{" "}
                 {diagLoading
-                  ? "Chargement..."
+                  ? t("common.loading")
                   : diagnostics?.lastRealWebhookAt
                     ? timeAgo(diagnostics.lastRealWebhookAt)
-                    : "Aucun reçu"}
+                    : t("settings.store.noneReceived")}
               </p>
             </div>
           )}
@@ -408,9 +401,9 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-sun" />
               <div>
-                <CardTitle className="text-base">Test de connexion</CardTitle>
+                <CardTitle className="text-base">{t("settings.store.test")}</CardTitle>
                 <CardDescription>
-                  Envoyez une commande test pour vérifier le scoring
+                  {t("settings.store.testSubtitle")}
                 </CardDescription>
               </div>
             </div>
@@ -420,7 +413,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             {testState === "idle" && (
               <Button onClick={handleTestWebhook} className="w-full sm:w-auto">
                 <Play className="mr-2 h-4 w-4" />
-                Envoyer une commande test
+                {t("settings.store.sendTest")}
               </Button>
             )}
 
@@ -429,8 +422,8 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
               <div className="flex items-center gap-3 rounded-sm border border-silk bg-snow px-4 py-3">
                 <Loader2 className="h-5 w-5 animate-spin text-ocean" />
                 <div>
-                  <p className="text-sm font-medium text-midnight">Envoi en cours...</p>
-                  <p className="text-xs text-fog">Scoring de la commande test</p>
+                  <p className="text-sm font-medium text-midnight">{t("settings.store.sending")}</p>
+                  <p className="text-xs text-fog">{t("settings.store.testScoring")}</p>
                 </div>
               </div>
             )}
@@ -441,52 +434,52 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-mint-deep" />
                   <p className="text-sm font-semibold text-mint-deep">
-                    Test réussi en {testResult.durationMs}ms
+                    {t("settings.store.testSuccess", { ms: testResult.durationMs })}
                   </p>
                 </div>
 
                 <div className="rounded-sm border border-silk bg-white divide-y divide-silk">
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">Référence</span>
+                    <span className="text-xs text-fog">{t("settings.store.reference")}</span>
                     <span className="text-xs font-mono font-medium text-midnight">
                       {testResult.testOrder.ref}
                     </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">Score</span>
+                    <span className="text-xs text-fog">{t("settings.store.score")}</span>
                     <span className="text-xs font-mono font-bold text-midnight">
                       {testResult.score}/100
                     </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">Décision</span>
+                    <span className="text-xs text-fog">{t("settings.store.decision")}</span>
                     <span className={cn(
                       "text-xs font-medium px-2 py-0.5 rounded",
                       DECISION_COLORS[testResult.decision] || "text-slate bg-snow"
                     )}>
-                      {DECISION_LABELS[testResult.decision] || testResult.decision}
+                      {decisionLabel(testResult.decision, locale)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">Client</span>
+                    <span className="text-xs text-fog">{t("settings.store.client")}</span>
                     <span className="text-xs text-slate">{testResult.testOrder.customer}</span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">Ville</span>
+                    <span className="text-xs text-fog">{t("settings.store.city")}</span>
                     <span className="text-xs text-slate">{testResult.testOrder.city}</span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">Produit</span>
+                    <span className="text-xs text-fog">{t("settings.store.product")}</span>
                     <span className="text-xs text-slate">{testResult.testOrder.product}</span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">Montant</span>
+                    <span className="text-xs text-fog">{t("settings.store.amount")}</span>
                     <span className="text-xs font-mono text-slate">
-                      {testResult.testOrder.total} DH
+                      {formatCurrency(testResult.testOrder.total, locale)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-xs text-fog">Confiance</span>
+                    <span className="text-xs text-fog">{t("settings.store.confidence")}</span>
                     <span className="text-xs text-slate">
                       {Math.round(testResult.confidence * 100)}%
                     </span>
@@ -499,7 +492,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   onClick={handleTestWebhook}
                 >
                   <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                  Relancer un test
+                  {t("settings.store.retryTest")}
                 </Button>
               </div>
             )}
@@ -509,15 +502,15 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
               <div className="rounded-sm border border-rose bg-rose-bg/30 p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-rose" />
-                  <p className="text-sm font-semibold text-rose">Échec du test</p>
+                  <p className="text-sm font-semibold text-rose">{t("settings.store.testFailed")}</p>
                 </div>
                 <p className="text-sm text-fog">{testError}</p>
                 <div className="text-xs text-fog space-y-1">
-                  <p>Suggestions :</p>
+                  <p>{t("settings.store.suggestions")}</p>
                   <ul className="list-disc pl-4 space-y-0.5">
-                    <li>Vérifiez que votre clé API est configurée</li>
-                    <li>Vérifiez votre connexion internet</li>
-                    <li>Limite : 5 tests par heure</li>
+                    <li>{t("settings.store.checkApiKey")}</li>
+                    <li>{t("settings.store.checkConnection")}</li>
+                    <li>{t("settings.store.testLimit")}</li>
                   </ul>
                 </div>
                 <Button
@@ -526,7 +519,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   onClick={handleTestWebhook}
                 >
                   <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                  Réessayer
+                  {t("common.retry")}
                 </Button>
               </div>
             )}
@@ -541,9 +534,9 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-ocean" />
               <div>
-                <CardTitle className="text-base">Diagnostics</CardTitle>
+                <CardTitle className="text-base">{t("settings.store.diagnostics")}</CardTitle>
                 <CardDescription>
-                  État de votre connexion webhook
+                  {t("settings.store.diagnosticsSubtitle")}
                 </CardDescription>
               </div>
             </div>
@@ -552,7 +545,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
             {diagLoading ? (
               <div className="flex items-center gap-2 py-4">
                 <Loader2 className="h-4 w-4 animate-spin text-mist" />
-                <span className="text-sm text-fog">Chargement des diagnostics...</span>
+                <span className="text-sm text-fog">{t("settings.store.loadingDiagnostics")}</span>
               </div>
             ) : diagnostics ? (
               <div className="rounded-sm border border-silk divide-y divide-silk">
@@ -564,10 +557,10 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                     ) : (
                       <XCircle className="h-4 w-4 text-rose" />
                     )}
-                    <span className="text-sm text-slate">Boutique connectée</span>
+                    <span className="text-sm text-slate">{t("settings.store.storeConnected")}</span>
                   </div>
                   <span className="text-sm text-fog">
-                    {diagnostics.storeConnected ? diagnostics.storeName : "Non"}
+                    {diagnostics.storeConnected ? diagnostics.storeName : t("common.no")}
                   </span>
                 </div>
 
@@ -579,10 +572,10 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                     ) : (
                       <XCircle className="h-4 w-4 text-rose" />
                     )}
-                    <span className="text-sm text-slate">Clé API</span>
+                    <span className="text-sm text-slate">{t("settings.store.apiKey")}</span>
                   </div>
                   <span className="text-sm text-fog">
-                    {diagnostics.hasApiKey ? "Configurée" : "Absente"}
+                    {diagnostics.hasApiKey ? t("common.configured") : t("common.missing")}
                   </span>
                 </div>
 
@@ -595,7 +588,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                       if (freshness === "warning") return <Clock className="h-4 w-4 text-amber-500" />;
                       return <XCircle className="h-4 w-4 text-rose" />;
                     })()}
-                    <span className="text-sm text-slate">Dernier webhook reçu</span>
+                    <span className="text-sm text-slate">{t("settings.store.lastWebhookReceived")}</span>
                   </div>
                   <span className={cn(
                     "text-sm",
@@ -606,7 +599,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   )}>
                     {diagnostics.lastRealWebhookAt
                       ? timeAgo(diagnostics.lastRealWebhookAt)
-                      : "Jamais"}
+                      : t("common.never")}
                   </span>
                 </div>
 
@@ -620,7 +613,7 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                     ) : (
                       <div className="h-4 w-4 rounded-full border-2 border-mist" />
                     )}
-                    <span className="text-sm text-slate">Token YouCan</span>
+                    <span className="text-sm text-slate">{t("settings.store.youcanToken")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {pingStatus === "loading" && (
@@ -632,13 +625,13 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                       </span>
                     )}
                     {pingStatus === "expired" && (
-                      <span className="text-sm text-rose font-medium">Expiré</span>
+                      <span className="text-sm text-rose font-medium">{t("settings.store.expired")}</span>
                     )}
                     {pingStatus === "unreachable" && (
-                      <span className="text-sm text-rose font-medium">Injoignable</span>
+                      <span className="text-sm text-rose font-medium">{t("common.unreachable")}</span>
                     )}
                     {pingStatus === "no_token" && (
-                      <span className="text-sm text-fog">Aucun token</span>
+                      <span className="text-sm text-fog">{t("settings.store.noToken")}</span>
                     )}
                     {(pingStatus === "idle" || pingStatus === "expired" || pingStatus === "unreachable") && (
                       <Button
@@ -647,34 +640,34 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                         onClick={handlePing}
                         className="h-7 text-xs"
                       >
-                        Vérifier
+                        {t("common.check")}
                       </Button>
                     )}
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-fog">Impossible de charger les diagnostics.</p>
+              <p className="text-sm text-fog">{t("settings.store.diagnosticsLoadError")}</p>
             )}
 
             {/* Stats summary */}
             {diagnostics && (
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-sm bg-snow px-3 py-2">
-                  <p className="text-xs text-fog">Total reçus</p>
+                  <p className="text-xs text-fog">{t("settings.store.totalReceived")}</p>
                   <p className="text-sm font-mono font-semibold text-midnight">
                     {diagnostics.totalWebhooksReceived}
                   </p>
                 </div>
                 <div className="rounded-sm bg-snow px-3 py-2">
-                  <p className="text-xs text-fog">Dernières 24h</p>
+                  <p className="text-xs text-fog">{t("settings.store.last24h")}</p>
                   <p className="text-sm font-mono font-semibold text-midnight">
                     {diagnostics.totalWebhooksLast24h}
                   </p>
                 </div>
                 {(diagnostics.queueStatus.failed > 0 || diagnostics.queueStatus.dead > 0) && (
                   <div className="rounded-sm bg-rose-bg/30 px-3 py-2">
-                    <p className="text-xs text-rose">En erreur</p>
+                    <p className="text-xs text-rose">{t("settings.store.inError")}</p>
                     <p className="text-sm font-mono font-semibold text-rose">
                       {diagnostics.queueStatus.failed + diagnostics.queueStatus.dead}
                     </p>
@@ -692,9 +685,9 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
           <div className="flex items-center gap-2">
             <ShoppingBag className="h-5 w-5 text-mist" />
             <div>
-              <CardTitle className="text-base">Autres plateformes</CardTitle>
+              <CardTitle className="text-base">{t("settings.store.otherPlatforms")}</CardTitle>
               <CardDescription>
-                Intégrations à venir
+                {t("settings.store.comingSoon")}
               </CardDescription>
             </div>
           </div>
@@ -710,11 +703,11 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   <ShoppingBag className="h-4 w-4 text-mist" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate">Shopify</p>
-                  <p className="text-xs text-mist">E-commerce international</p>
+                  <p className="text-sm font-medium text-slate">{t("settings.store.shopify")}</p>
+                  <p className="text-xs text-mist">{t("settings.store.shopifyDesc")}</p>
                 </div>
               </div>
-              <Badge>Bientôt</Badge>
+              <Badge>{t("common.soon")}</Badge>
             </div>
             <div className={cn(
               "flex items-center justify-between rounded-sm border border-silk p-4",
@@ -725,11 +718,11 @@ export function StoreTab({ settings, onToast }: BaseTabProps) {
                   <ShoppingBag className="h-4 w-4 text-mist" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate">WooCommerce</p>
-                  <p className="text-xs text-mist">WordPress e-commerce</p>
+                  <p className="text-sm font-medium text-slate">{t("settings.store.woocommerce")}</p>
+                  <p className="text-xs text-mist">{t("settings.store.woocommerceDesc")}</p>
                 </div>
               </div>
-              <Badge>Bientôt</Badge>
+              <Badge>{t("common.soon")}</Badge>
             </div>
           </div>
         </CardContent>

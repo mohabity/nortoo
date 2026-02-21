@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "@/i18n/provider";
 
 interface Notification {
   id: number;
@@ -35,15 +36,15 @@ const SEVERITY_DOT: Record<string, string> = {
   critical: "bg-rose",
 };
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (key: string, params?: Record<string, string | number>) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "À l'instant";
-  if (minutes < 60) return `Il y a ${minutes} min`;
+  if (minutes < 1) return t("components.notifications.timeAgo.justNow");
+  if (minutes < 60) return t("components.notifications.timeAgo.minutes", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Il y a ${hours}h`;
+  if (hours < 24) return t("components.notifications.timeAgo.hours", { count: hours });
   const days = Math.floor(hours / 24);
-  return `Il y a ${days}j`;
+  return t("components.notifications.timeAgo.days", { count: days });
 }
 
 export function NotificationBell() {
@@ -53,6 +54,7 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -117,7 +119,7 @@ export function NotificationBell() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-silk px-4 py-3">
         <h3 className="font-display text-sm font-semibold text-midnight">
-          Notifications
+          {t("components.notifications.title")}
         </h3>
         {unreadCount > 0 && (
           <button
@@ -126,7 +128,7 @@ export function NotificationBell() {
             className="flex items-center gap-1 text-xs text-ocean hover:text-ocean/80"
           >
             <CheckCheck className="h-3 w-3" />
-            Tout marquer lu
+            {t("components.notifications.markAllRead")}
           </button>
         )}
       </div>
@@ -135,7 +137,7 @@ export function NotificationBell() {
       <div className="overflow-y-auto flex-1">
         {items.length === 0 ? (
           <div className="py-8 text-center text-sm text-mist">
-            Aucune notification
+            {t("components.notifications.empty")}
           </div>
         ) : (
           items.map((n) => (
@@ -170,7 +172,7 @@ export function NotificationBell() {
                     {n.message}
                   </p>
                   <p className="mt-1 text-[11px] text-mist">
-                    {timeAgo(n.createdAt)}
+                    {timeAgo(n.createdAt, t)}
                   </p>
                 </div>
                 {n.actionUrl && (
@@ -223,7 +225,7 @@ export function NotificationBell() {
               <div className="h-1 w-10 rounded-full bg-silk" />
             </div>
             <SheetHeader className="sr-only">
-              <SheetTitle>Notifications</SheetTitle>
+              <SheetTitle>{t("components.notifications.title")}</SheetTitle>
             </SheetHeader>
             {notificationList}
           </SheetContent>

@@ -4,6 +4,8 @@ import { Shield, FileText, Eye, Trash2, Ban, Clock } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/i18n/provider";
+import { formatDate } from "@/lib/i18n-utils";
 
 // Mock data rights requests
 const dataRightsRequests = [
@@ -45,43 +47,45 @@ const recentAuditLogs = [
   { id: 8, actor: "consumer", action: "access_request", target: "Client c9d4...6f78", createdAt: "2026-02-05T11:20:00Z" },
 ];
 
-const rightTypeLabels: Record<string, { label: string; icon: typeof Eye }> = {
-  access: { label: "Droit d'accès (Art. 7)", icon: Eye },
-  deletion: { label: "Droit de suppression (Art. 8)", icon: Trash2 },
-  opposition: { label: "Droit d'opposition (Art. 9)", icon: Ban },
+const rightTypeKeys: Record<string, { key: string; icon: typeof Eye }> = {
+  access: { key: "compliance.rights.access", icon: Eye },
+  deletion: { key: "compliance.rights.deletion", icon: Trash2 },
+  opposition: { key: "compliance.rights.objection", icon: Ban },
 };
 
-const statusLabels: Record<string, { label: string; variant: "mint" | "amber" | "default" | "rose" }> = {
-  pending: { label: "En attente", variant: "amber" },
-  processing: { label: "En cours", variant: "amber" },
-  completed: { label: "Traité", variant: "mint" },
-  refused: { label: "Refusé", variant: "rose" },
+const statusKeys: Record<string, { key: string; variant: "mint" | "amber" | "default" | "rose" }> = {
+  pending: { key: "compliance.rights.statusPending", variant: "amber" },
+  processing: { key: "compliance.rights.statusInProgress", variant: "amber" },
+  completed: { key: "compliance.rights.statusProcessed", variant: "mint" },
+  refused: { key: "compliance.rights.statusRejected", variant: "rose" },
 };
 
-const actionLabels: Record<string, string> = {
-  score: "Scoring",
-  override: "Override",
-  access_request: "Demande d'accès",
-  delete: "Suppression",
-  settings_change: "Paramètres",
-  login: "Connexion",
-  export: "Export",
+const actionKeys: Record<string, string> = {
+  score: "compliance.audit.scoring",
+  override: "compliance.audit.override",
+  access_request: "compliance.audit.accessRequest",
+  delete: "compliance.audit.deletion",
+  settings_change: "compliance.audit.settings",
+  login: "compliance.audit.login",
+  export: "compliance.audit.export",
 };
 
-const actorLabels: Record<string, string> = {
-  system: "Système",
-  merchant: "Marchand",
-  consumer: "Consommateur",
-  admin: "Admin",
+const actorKeys: Record<string, string> = {
+  system: "compliance.audit.system",
+  merchant: "compliance.audit.merchant",
+  consumer: "compliance.audit.consumer",
+  admin: "compliance.audit.admin",
 };
 
 export default function CompliancePage() {
+  const { t, locale } = useTranslation();
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold text-midnight">Conformité</h1>
+        <h1 className="font-display text-2xl font-bold text-midnight">{t("compliance.title")}</h1>
         <p className="text-sm text-fog">
-          Gestion des droits des données — Loi 09-08
+          {t("compliance.subtitle")}
         </p>
       </div>
 
@@ -90,34 +94,34 @@ export default function CompliancePage() {
         <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-mint" />
-            <p className="text-xs font-medium text-fog">Hachage Art. 23</p>
+            <p className="text-xs font-medium text-fog">{t("compliance.cards.hashing")}</p>
           </div>
-          <p className="mt-2 font-display text-lg font-bold text-mint-deep">Actif</p>
-          <p className="text-xs text-mist">SHA-256 + sel</p>
+          <p className="mt-2 font-display text-lg font-bold text-mint-deep">{t("compliance.cards.hashingActive")}</p>
+          <p className="text-xs text-mist">{t("compliance.cards.hashingMethod")}</p>
         </div>
         <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-amber" />
-            <p className="text-xs font-medium text-fog">Rétention Art. 3e</p>
+            <p className="text-xs font-medium text-fog">{t("compliance.cards.retention")}</p>
           </div>
-          <p className="mt-2 font-display text-lg font-bold text-midnight">24 mois</p>
-          <p className="text-xs text-mist">Purge auto à 3h</p>
+          <p className="mt-2 font-display text-lg font-bold text-midnight">{t("compliance.cards.retentionPeriod")}</p>
+          <p className="text-xs text-mist">{t("compliance.cards.retentionSchedule")}</p>
         </div>
         <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-ocean" />
-            <p className="text-xs font-medium text-fog">Journal audit</p>
+            <p className="text-xs font-medium text-fog">{t("compliance.cards.auditLog")}</p>
           </div>
           <p className="mt-2 font-display text-lg font-bold text-midnight">1 247</p>
-          <p className="text-xs text-mist">Entrées ce mois</p>
+          <p className="text-xs text-mist">{t("compliance.cards.auditLogEntries")}</p>
         </div>
         <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
           <div className="flex items-center gap-2">
             <Ban className="h-4 w-4 text-violet" />
-            <p className="text-xs font-medium text-fog">Oppositions Art. 9</p>
+            <p className="text-xs font-medium text-fog">{t("compliance.cards.objections")}</p>
           </div>
           <p className="mt-2 font-display text-lg font-bold text-midnight">3</p>
-          <p className="text-xs text-mist">Consommateurs opposés</p>
+          <p className="text-xs text-mist">{t("compliance.cards.objectionsCount")}</p>
         </div>
       </div>
 
@@ -125,14 +129,14 @@ export default function CompliancePage() {
         {/* Data Rights Requests */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Demandes de droits</CardTitle>
-            <CardDescription>Requêtes Art. 7, 8 et 9 — Délai de réponse: 30 jours</CardDescription>
+            <CardTitle className="text-base">{t("compliance.rights.title")}</CardTitle>
+            <CardDescription>{t("compliance.rights.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {dataRightsRequests.map((req) => {
-                const rightConfig = rightTypeLabels[req.rightType];
-                const statusConfig = statusLabels[req.status];
+                const rightConfig = rightTypeKeys[req.rightType];
+                const statusConfig = statusKeys[req.status];
                 const RightIcon = rightConfig?.icon ?? Eye;
 
                 return (
@@ -144,16 +148,16 @@ export default function CompliancePage() {
                       <RightIcon className="h-4 w-4 text-fog" />
                       <div>
                         <p className="text-sm font-medium text-midnight">
-                          {rightConfig?.label ?? req.rightType}
+                          {rightConfig ? t(rightConfig.key) : req.rightType}
                         </p>
                         <p className="font-mono text-xs text-mist">{req.phoneHash}</p>
                         <p className="text-xs text-mist">
-                          {new Date(req.createdAt).toLocaleDateString("fr-FR")}
+                          {formatDate(req.createdAt, locale)}
                         </p>
                       </div>
                     </div>
                     <Badge variant={statusConfig?.variant ?? "default"}>
-                      {statusConfig?.label ?? req.status}
+                      {statusConfig ? t(statusConfig.key) : req.status}
                     </Badge>
                   </div>
                 );
@@ -165,8 +169,8 @@ export default function CompliancePage() {
         {/* Audit Log */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Journal d&apos;audit</CardTitle>
-            <CardDescription>Art. 23 — Traçabilité de chaque opération</CardDescription>
+            <CardTitle className="text-base">{t("compliance.audit.title")}</CardTitle>
+            <CardDescription>{t("compliance.audit.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
@@ -177,18 +181,18 @@ export default function CompliancePage() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <Badge variant="default" className="shrink-0">
-                      {actorLabels[log.actor] ?? log.actor}
+                      {actorKeys[log.actor] ? t(actorKeys[log.actor]) : log.actor}
                     </Badge>
                     <div className="min-w-0">
                       <p className="text-sm text-slate truncate">
-                        <span className="font-medium">{actionLabels[log.action] ?? log.action}</span>
+                        <span className="font-medium">{actionKeys[log.action] ? t(actionKeys[log.action]) : log.action}</span>
                         {" — "}
                         {log.target}
                       </p>
                     </div>
                   </div>
                   <span className="shrink-0 text-xs text-mist ml-2">
-                    {new Date(log.createdAt).toLocaleDateString("fr-FR", {
+                    {formatDate(log.createdAt, locale, {
                       day: "2-digit",
                       month: "short",
                       hour: "2-digit",
@@ -199,7 +203,7 @@ export default function CompliancePage() {
               ))}
             </div>
             <Button variant="outline" size="sm" className="mt-4 w-full">
-              Voir tout le journal
+              {t("compliance.audit.viewAll")}
             </Button>
           </CardContent>
         </Card>

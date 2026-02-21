@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { formatDH } from "@/lib/utils";
+import { deliveryLabel, cn } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { PipelineBadge } from "./pipeline-badge";
 import { highlightText } from "@/lib/highlight";
-import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency } from "@/lib/i18n-utils";
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/table";
 
 function CountdownBadge({ deadline }: { deadline: string }) {
+  const { t } = useTranslation();
   const [remaining, setRemaining] = useState("");
   const [isOverdue, setIsOverdue] = useState(false);
 
@@ -24,7 +26,7 @@ function CountdownBadge({ deadline }: { deadline: string }) {
     function update() {
       const diff = new Date(deadline).getTime() - Date.now();
       if (diff <= 0) {
-        setRemaining("expiré");
+        setRemaining(t("time.expired"));
         setIsOverdue(true);
         return;
       }
@@ -41,7 +43,7 @@ function CountdownBadge({ deadline }: { deadline: string }) {
     update();
     const iv = setInterval(update, 30000);
     return () => clearInterval(iv);
-  }, [deadline]);
+  }, [deadline, t]);
 
   return (
     <span
@@ -85,14 +87,6 @@ interface OrderTableProps {
   selectAllState?: "none" | "some" | "all";
 }
 
-const deliveryLabels: Record<string, string> = {
-  pending: "En attente",
-  shipped: "Expédié",
-  delivered: "Livré",
-  returned: "Retourné",
-  cancelled: "Annulé",
-};
-
 function SelectAllCheckbox({
   state,
   onChange,
@@ -100,6 +94,7 @@ function SelectAllCheckbox({
   state: "none" | "some" | "all";
   onChange: () => void;
 }) {
+  const { t } = useTranslation();
   const setRef = useCallback(
     (el: HTMLInputElement | null) => {
       if (el) el.indeterminate = state === "some";
@@ -114,7 +109,7 @@ function SelectAllCheckbox({
       checked={state === "all"}
       onChange={onChange}
       className="h-4 w-4 rounded border-silk accent-mint-deep cursor-pointer"
-      aria-label="Sélectionner toutes les commandes"
+      aria-label={t("orders.table.selectAll")}
     />
   );
 }
@@ -129,6 +124,7 @@ export function OrderTable({
   onRangeSelect,
   selectAllState = "none",
 }: OrderTableProps) {
+  const { t, locale } = useTranslation();
   const hasSelection = !!onToggle;
   const colSpan = hasSelection ? 10 : 9;
 
@@ -147,22 +143,22 @@ export function OrderTable({
               />
             </TableHead>
           )}
-          <TableHead className="text-center w-[70px]">Score</TableHead>
-          <TableHead>Analyse</TableHead>
-          <TableHead>Client</TableHead>
-          <TableHead>Ville</TableHead>
-          <TableHead className="text-right">Montant</TableHead>
-          <TableHead className="text-center">Décision</TableHead>
-          <TableHead className="text-center">Pipeline</TableHead>
-          <TableHead>Statut</TableHead>
-          <TableHead>Produit</TableHead>
+          <TableHead className="text-center w-[70px]">{t("orders.table.score")}</TableHead>
+          <TableHead>{t("orders.table.analysis")}</TableHead>
+          <TableHead>{t("orders.table.client")}</TableHead>
+          <TableHead>{t("orders.table.city")}</TableHead>
+          <TableHead className="text-right">{t("orders.table.amount")}</TableHead>
+          <TableHead className="text-center">{t("orders.table.decision")}</TableHead>
+          <TableHead className="text-center">{t("orders.table.pipeline")}</TableHead>
+          <TableHead>{t("orders.table.status")}</TableHead>
+          <TableHead>{t("orders.table.product")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {orders.length === 0 ? (
           <TableRow>
             <TableCell colSpan={colSpan} className="text-center text-fog py-8">
-              Aucune commande trouvée
+              {t("orders.table.noOrders")}
             </TableCell>
           </TableRow>
         ) : (
@@ -194,7 +190,7 @@ export function OrderTable({
                         }
                       }}
                       className="h-4 w-4 rounded border-silk accent-mint-deep cursor-pointer"
-                      aria-label={`Sélectionner commande ${order.externalRef ?? order.id}`}
+                      aria-label={t("orders.table.selectOrder", { ref: String(order.externalRef ?? order.id) })}
                     />
                   </TableCell>
                 )}
@@ -228,7 +224,7 @@ export function OrderTable({
                 </TableCell>
                 <TableCell>{hl(order.shippingCity)}</TableCell>
                 <TableCell className="text-right font-mono">
-                  {formatDH(order.total)}
+                  {formatCurrency(order.total, locale)}
                 </TableCell>
                 <TableCell className="text-center">
                   <DecisionBadge
@@ -254,7 +250,7 @@ export function OrderTable({
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-fog">
-                  {deliveryLabels[order.deliveryStatus] ?? order.deliveryStatus}
+                  {deliveryLabel(order.deliveryStatus, locale)}
                 </TableCell>
                 <TableCell className="max-w-[160px] truncate text-sm text-fog">
                   {hl(order.productName)}

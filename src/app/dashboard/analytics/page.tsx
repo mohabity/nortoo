@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FeatureGate } from "@/components/feature-gate";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency, formatNumber, formatDate } from "@/lib/i18n-utils";
 
 // ── Savings API response type ──
 interface SavingsApiData {
@@ -151,8 +153,9 @@ function generateDailyData(days: number) {
     const delivered = orders - returns;
 
     data.push({
-      date: d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
-      fullDate: d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }),
+      rawDate: d.toISOString(),
+      date: "", // formatted in component
+      fullDate: "", // formatted in component
       orders,
       delivered,
       returns,
@@ -164,12 +167,12 @@ function generateDailyData(days: number) {
 
 const DAILY_DATA_90 = generateDailyData(90);
 
-// ── Score distribution data ──
-const scoreDistribution = [
-  { range: "0-30", label: "Bas", count: 312, color: "#00E5A0" },
-  { range: "31-65", label: "Moyen", count: 145, color: "#F59E0B" },
-  { range: "66-85", label: "Élevé", count: 62, color: "#F43F5E" },
-  { range: "86-100", label: "Critique", count: 23, color: "#8B5CF6" },
+// ── Score distribution data (labels resolved in component via t()) ──
+const scoreDistributionBase = [
+  { range: "0-30", labelKey: "analytics.scoreDistribution.low", count: 312, color: "#00E5A0" },
+  { range: "31-65", labelKey: "analytics.scoreDistribution.medium", count: 145, color: "#F59E0B" },
+  { range: "66-85", labelKey: "analytics.scoreDistribution.high", count: 62, color: "#F43F5E" },
+  { range: "86-100", labelKey: "analytics.scoreDistribution.critical", count: 23, color: "#8B5CF6" },
 ];
 
 // ── Hourly patterns data ──
@@ -198,16 +201,17 @@ const hourlyData = Array.from({ length: 24 }, (_, h) => {
     hourNum: h,
     orders,
     riskRate,
-    label: isNight ? "Nuit" : isPeak ? "Pic" : "Normal",
+    isNight,
+    isPeak,
   };
 });
 
-// ── Decision breakdown data ──
-const decisionData = [
-  { name: "Expédier", value: 312, pct: 57.6, color: "#00E5A0" },
-  { name: "Vérifier", value: 145, pct: 26.8, color: "#F59E0B" },
-  { name: "Signaler", value: 62, pct: 11.4, color: "#F43F5E" },
-  { name: "Bloquer", value: 23, pct: 4.2, color: "#8B5CF6" },
+// ── Decision breakdown data (labels resolved in component via t()) ──
+const decisionDataBase = [
+  { nameKey: "decisions.ship", value: 312, pct: 57.6, color: "#00E5A0" },
+  { nameKey: "decisions.verify", value: 145, pct: 26.8, color: "#F59E0B" },
+  { nameKey: "decisions.flag", value: 62, pct: 11.4, color: "#F43F5E" },
+  { nameKey: "decisions.block", value: 23, pct: 4.2, color: "#8B5CF6" },
 ];
 
 // ═══════════════════════════════════════════════════════════
@@ -223,6 +227,12 @@ function PeriodSelector({
   value: Period;
   onChange: (p: Period) => void;
 }) {
+  const { t } = useTranslation();
+  const periodLabels: Record<Period, string> = {
+    "7j": t("analytics.periods.7d"),
+    "30j": t("analytics.periods.30d"),
+    "90j": t("analytics.periods.90d"),
+  };
   return (
     <div className="flex items-center rounded-sm border border-silk bg-snow/50 p-0.5">
       {(["7j", "30j", "90j"] as const).map((p) => (
@@ -236,7 +246,7 @@ function PeriodSelector({
               : "text-fog hover:text-slate"
           )}
         >
-          {p}
+          {periodLabels[p]}
         </button>
       ))}
     </div>
@@ -257,6 +267,7 @@ const tooltipStyle = {
 };
 
 function RtoTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  const { t } = useTranslation();
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
   return (
@@ -265,21 +276,21 @@ function RtoTooltip({ active, payload, label }: TooltipProps<number, string>) {
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-xs">
           <span className="h-2 w-2 rounded-full bg-fog inline-block" />
-          <span className="text-fog">Commandes:</span>
+          <span className="text-fog">{t("analytics.charts.orders")}</span>
           <span className="font-mono font-bold text-midnight">{d?.orders}</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <span className="h-2 w-2 rounded-full bg-mint inline-block" />
-          <span className="text-fog">Livrées:</span>
+          <span className="text-fog">{t("analytics.charts.delivered")}</span>
           <span className="font-mono font-bold text-mint-deep">{d?.delivered}</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <span className="h-2 w-2 rounded-full bg-rose inline-block" />
-          <span className="text-fog">Retours:</span>
+          <span className="text-fog">{t("analytics.charts.returns")}</span>
           <span className="font-mono font-bold text-rose">{d?.returns}</span>
         </div>
         <div className="flex items-center gap-2 text-xs border-t border-silk pt-1 mt-1">
-          <span className="text-fog">Taux RTO:</span>
+          <span className="text-fog">{t("analytics.charts.rtoRate")}</span>
           <span className="font-mono font-bold text-rose">{d?.rtoRate}%</span>
         </div>
       </div>
@@ -360,12 +371,13 @@ function RtoBar({ value }: { value: number }) {
 // ═══════════════════════════════════════════════════════════
 
 function RiskTierBadge({ tier }: { tier: CityAnalytics["riskTier"] }) {
+  const { t } = useTranslation();
   const config: Record<CityAnalytics["riskTier"], { label: string; bg: string; text: string }> = {
-    safe: { label: "Fiable", bg: "bg-mint-bg", text: "text-mint-deep" },
-    moderate: { label: "Modéré", bg: "bg-amber-bg", text: "text-amber" },
-    risky: { label: "Risque", bg: "bg-rose-bg", text: "text-rose" },
-    dangerous: { label: "Dangereux", bg: "bg-violet-bg", text: "text-violet" },
-    unknown: { label: "Inconnu", bg: "bg-snow", text: "text-fog" },
+    safe: { label: t("analytics.cities.reliable"), bg: "bg-mint-bg", text: "text-mint-deep" },
+    moderate: { label: t("analytics.cities.moderate"), bg: "bg-amber-bg", text: "text-amber" },
+    risky: { label: t("analytics.cities.risky"), bg: "bg-rose-bg", text: "text-rose" },
+    dangerous: { label: t("analytics.cities.dangerous"), bg: "bg-violet-bg", text: "text-violet" },
+    unknown: { label: t("analytics.cities.unknown"), bg: "bg-snow", text: "text-fog" },
   };
   const c = config[tier] ?? config.unknown;
   return (
@@ -380,23 +392,24 @@ function RiskTierBadge({ tier }: { tier: CityAnalytics["riskTier"] }) {
 // ═══════════════════════════════════════════════════════════
 
 function ProductRiskBadge({ rtoRate }: { rtoRate: number }) {
+  const { t } = useTranslation();
   if (rtoRate > 0.30) {
     return (
       <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-rose-bg text-rose">
-        Risque élevé
+        {t("analytics.products.riskHigh")}
       </span>
     );
   }
   if (rtoRate >= 0.15) {
     return (
       <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-amber-bg text-amber">
-        À surveiller
+        {t("analytics.products.riskWatch")}
       </span>
     );
   }
   return (
     <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-mint-bg text-mint-deep">
-      Fiable
+      {t("analytics.products.riskReliable")}
     </span>
   );
 }
@@ -406,23 +419,24 @@ function ProductRiskBadge({ rtoRate }: { rtoRate: number }) {
 // ═══════════════════════════════════════════════════════════
 
 function ZoneRiskBadge({ rtoRate }: { rtoRate: number }) {
+  const { t } = useTranslation();
   if (rtoRate > 0.35) {
     return (
       <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-rose-bg text-rose">
-        Critique
+        {t("analytics.zones.riskCritical")}
       </span>
     );
   }
   if (rtoRate > 0.20) {
     return (
       <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-amber-bg text-amber">
-        Risque
+        {t("analytics.zones.riskRisky")}
       </span>
     );
   }
   return (
     <span className="inline-flex rounded-xs px-2 py-0.5 text-[11px] font-semibold bg-mint-bg text-mint-deep">
-      Fiable
+      {t("analytics.zones.riskReliable")}
     </span>
   );
 }
@@ -458,6 +472,7 @@ function TableSkeleton({ rows = 5, cols = 6 }: { rows?: number; cols?: number })
 // ═══════════════════════════════════════════════════════════
 
 export default function AnalyticsPage() {
+  const { t, locale } = useTranslation();
   const [period, setPeriod] = useState<Period>("30j");
 
   // ── City state ──
@@ -493,10 +508,10 @@ export default function AnalyticsPage() {
       d.setMonth(d.getMonth() - 1 - i);
       return {
         value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-        label: d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }),
+        label: formatDate(d, locale, { month: "long", year: "numeric" }),
       };
     });
-  }, []);
+  }, [locale]);
 
   async function handleDownloadPDF(month: string) {
     setPdfLoading(true);
@@ -504,7 +519,7 @@ export default function AnalyticsPage() {
       const res = await fetch(`/api/reports/monthly?month=${month}`);
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        alert((json as { error?: string }).error ?? "Erreur de generation du rapport");
+        alert((json as { error?: string }).error ?? t("analytics.export.reportError"));
         return;
       }
       const blob = await res.blob();
@@ -543,14 +558,14 @@ export default function AnalyticsPage() {
     setCityError(null);
     fetch("/api/analytics/cities")
       .then((res) => {
-        if (!res.ok) throw new Error(`Erreur ${res.status}`);
+        if (!res.ok) throw new Error(`${t("common.error")} ${res.status}`);
         return res.json() as Promise<CitiesApiResponse>;
       })
       .then((json) => {
         setCityData(json.data);
       })
       .catch((err) => {
-        setCityError(err instanceof Error ? err.message : "Erreur de chargement");
+        setCityError(err instanceof Error ? err.message : t("analytics.products.loadError"));
       })
       .finally(() => {
         setCityLoading(false);
@@ -563,14 +578,14 @@ export default function AnalyticsPage() {
     setProductError(null);
     fetch("/api/analytics/products")
       .then((res) => {
-        if (!res.ok) throw new Error(`Erreur ${res.status}`);
+        if (!res.ok) throw new Error(`${t("common.error")} ${res.status}`);
         return res.json() as Promise<ProductsApiResponse>;
       })
       .then((json) => {
         setProductData(json.data);
       })
       .catch((err) => {
-        setProductError(err instanceof Error ? err.message : "Erreur de chargement");
+        setProductError(err instanceof Error ? err.message : t("analytics.products.loadError"));
       })
       .finally(() => {
         setProductLoading(false);
@@ -585,25 +600,41 @@ export default function AnalyticsPage() {
     if (zoneCityFilter) params.set("city", zoneCityFilter);
     fetch(`/api/analytics/zones?${params.toString()}`)
       .then((res) => {
-        if (!res.ok) throw new Error(`Erreur ${res.status}`);
+        if (!res.ok) throw new Error(`${t("common.error")} ${res.status}`);
         return res.json() as Promise<ZonesApiResponse>;
       })
       .then((json) => {
         setZoneData(json.data);
       })
       .catch((err) => {
-        setZoneError(err instanceof Error ? err.message : "Erreur de chargement");
+        setZoneError(err instanceof Error ? err.message : t("analytics.products.loadError"));
       })
       .finally(() => {
         setZoneLoading(false);
       });
   }, [zoneCityFilter]);
 
-  // Filter daily data by period
+  // Filter daily data by period and format dates with locale
   const dailyData = useMemo(() => {
     const days = period === "7j" ? 7 : period === "30j" ? 30 : 90;
-    return DAILY_DATA_90.slice(-days);
-  }, [period]);
+    return DAILY_DATA_90.slice(-days).map((d) => ({
+      ...d,
+      date: formatDate(d.rawDate, locale, { day: "2-digit", month: "short" }),
+      fullDate: formatDate(d.rawDate, locale, { day: "2-digit", month: "long", year: "numeric" }),
+    }));
+  }, [period, locale]);
+
+  // Resolve translated labels for score distribution
+  const scoreDistribution = useMemo(
+    () => scoreDistributionBase.map((s) => ({ ...s, label: t(s.labelKey) })),
+    [t]
+  );
+
+  // Resolve translated labels for decision breakdown
+  const decisionData = useMemo(
+    () => decisionDataBase.map((d) => ({ ...d, name: t(d.nameKey) })),
+    [t]
+  );
 
   // ── KPI calculations ──
   const totalOrders = dailyData.reduce((s, d) => s + d.orders, 0);
@@ -721,7 +752,7 @@ export default function AnalyticsPage() {
       const res = await fetch(`/api/analytics/export?period=${days}`);
       if (!res.ok) {
         const json = await res.json();
-        alert(json.error ?? "Erreur d'export");
+        alert(json.error ?? t("analytics.export.error"));
         return;
       }
       const blob = await res.blob();
@@ -743,9 +774,9 @@ export default function AnalyticsPage() {
       {/* ── Header ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-midnight">Analytique</h1>
+          <h1 className="font-display text-2xl font-bold text-midnight">{t("analytics.title")}</h1>
           <p className="text-sm text-fog">
-            Performance anti-fraude, tendances RTO et ROI
+            {t("analytics.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -762,7 +793,7 @@ export default function AnalyticsPage() {
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">Exporter</span>
+              <span className="hidden sm:inline">{t("analytics.export.button")}</span>
             </button>
           </FeatureGate>
 
@@ -779,7 +810,7 @@ export default function AnalyticsPage() {
                 ) : (
                   <FileText className="h-4 w-4" />
                 )}
-                <span className="hidden sm:inline">Rapport PDF</span>
+                <span className="hidden sm:inline">{t("analytics.export.pdfReport")}</span>
                 <ChevronDown className="h-3 w-3 text-mist" />
               </button>
 
@@ -791,7 +822,7 @@ export default function AnalyticsPage() {
                   />
                   <div className="absolute right-0 top-11 z-50 w-56 rounded-sm border border-silk bg-white shadow-lg">
                     <div className="px-3 py-2 border-b border-silk">
-                      <p className="text-xs font-medium text-fog">Choisir le mois</p>
+                      <p className="text-xs font-medium text-fog">{t("analytics.export.chooseMonth")}</p>
                     </div>
                     {pdfMonths.map((m) => (
                       <button
@@ -816,18 +847,18 @@ export default function AnalyticsPage() {
         {/* Économies estimées */}
         <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-fog">Économies estimées</p>
+            <p className="text-sm font-medium text-fog">{t("analytics.kpi.savings")}</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-amber-bg">
               <Coins className="h-4.5 w-4.5 text-amber" />
             </div>
           </div>
           <div className="mt-3">
             <p className="font-display text-2xl font-bold text-midnight">
-              {savings.toLocaleString("fr-FR")} <span className="text-base font-semibold text-fog">DH</span>
+              {formatCurrency(savings, locale)}
             </p>
             <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", savingsChange >= 0 ? "text-mint-deep" : "text-rose")}>
               {savingsChange >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-              {savingsChange >= 0 ? "+" : ""}{savingsChange}% vs période précédente
+              {savingsChange >= 0 ? "+" : ""}{savingsChange}% {t("analytics.kpi.vsPreviousPeriod")}
             </p>
           </div>
         </div>
@@ -835,7 +866,7 @@ export default function AnalyticsPage() {
         {/* Taux RTO actuel */}
         <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-fog">Taux RTO actuel</p>
+            <p className="text-sm font-medium text-fog">{t("analytics.kpi.rtoRate")}</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-rose-bg">
               <TrendingDown className="h-4.5 w-4.5 text-rose" />
             </div>
@@ -846,7 +877,7 @@ export default function AnalyticsPage() {
             </p>
             <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", rtoDelta <= 0 ? "text-mint-deep" : "text-rose")}>
               {rtoDelta <= 0 ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
-              {rtoDelta} pts vs baseline ({baseline}%)
+              {rtoDelta} {t("analytics.kpi.ptsVsBaseline")} ({baseline}%)
             </p>
           </div>
         </div>
@@ -854,7 +885,7 @@ export default function AnalyticsPage() {
         {/* Taux de livraison */}
         <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-fog">Taux de livraison</p>
+            <p className="text-sm font-medium text-fog">{t("analytics.kpi.deliveryRate")}</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-mint-bg">
               <Truck className="h-4.5 w-4.5 text-mint-deep" />
             </div>
@@ -865,7 +896,7 @@ export default function AnalyticsPage() {
             </p>
             <p className="mt-1 flex items-center gap-1 text-xs font-medium text-mint-deep">
               <ArrowUpRight className="h-3 w-3" />
-              {totalDelivered.toLocaleString("fr-FR")} commandes livrées
+              {formatNumber(totalDelivered, locale)} {t("analytics.kpi.deliveredOrders")}
             </p>
           </div>
         </div>
@@ -873,7 +904,7 @@ export default function AnalyticsPage() {
         {/* ROI nortoo */}
         <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-fog">ROI nortoo</p>
+            <p className="text-sm font-medium text-fog">{t("analytics.kpi.roi")}</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-violet-bg">
               <Flame className="h-4.5 w-4.5 text-violet" />
             </div>
@@ -882,7 +913,7 @@ export default function AnalyticsPage() {
             <p className="font-display text-2xl font-bold text-midnight">{roiDisplay}</p>
             <p className="mt-1 text-xs font-medium text-fog">
               {savingsData?.projectedMonthlySaved
-                ? `${savingsData.projectedMonthlySaved.toLocaleString("fr-FR")} DH/mois projeté`
+                ? `${formatNumber(savingsData.projectedMonthlySaved, locale)} ${t("analytics.kpi.projectedMonthly")}`
                 : "—"}
             </p>
           </div>
@@ -895,33 +926,33 @@ export default function AnalyticsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Coins className="h-5 w-5 text-amber" />
-              <CardTitle>Impact financier</CardTitle>
+              <CardTitle>{t("analytics.financial.title")}</CardTitle>
             </div>
-            <p className="text-xs text-fog">Détail des économies générées par nortoo</p>
+            <p className="text-xs text-fog">{t("analytics.financial.subtitle")}</p>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Mini KPIs */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <div className="rounded-xl border border-silk bg-snow/50 p-4">
-                <p className="text-xs font-medium text-fog">Commandes évitées</p>
+                <p className="text-xs font-medium text-fog">{t("analytics.financial.avoidedOrders")}</p>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {savingsData.ordersSaved}
                 </p>
               </div>
               <div className="rounded-xl border border-silk bg-snow/50 p-4">
-                <p className="text-xs font-medium text-fog">Économie moy./commande</p>
+                <p className="text-xs font-medium text-fog">{t("analytics.financial.avgSavedPerOrder")}</p>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
-                  {savingsData.avgSavedPerOrder} <span className="text-sm font-semibold text-fog">DH</span>
+                  {formatCurrency(savingsData.avgSavedPerOrder, locale)}
                 </p>
               </div>
               <div className="rounded-xl border border-silk bg-snow/50 p-4">
-                <p className="text-xs font-medium text-fog">Projection mensuelle</p>
+                <p className="text-xs font-medium text-fog">{t("analytics.financial.projectedMonthly")}</p>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
-                  {savingsData.projectedMonthlySaved.toLocaleString("fr-FR")} <span className="text-sm font-semibold text-fog">DH</span>
+                  {formatCurrency(savingsData.projectedMonthlySaved, locale)}
                 </p>
               </div>
               <div className="rounded-xl border border-silk bg-snow/50 p-4">
-                <p className="text-xs font-medium text-fog">ROI nortoo</p>
+                <p className="text-xs font-medium text-fog">{t("analytics.financial.roi")}</p>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {savingsData.roiMultiple ? `${savingsData.roiMultiple}×` : "—"}
                 </p>
@@ -930,41 +961,41 @@ export default function AnalyticsPage() {
 
             {/* Breakdown */}
             <div>
-              <p className="text-sm font-medium text-midnight mb-3">Répartition des économies</p>
+              <p className="text-sm font-medium text-midnight mb-3">{t("analytics.financial.breakdown")}</p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-violet" />
-                    <span className="text-sm text-slate">Auto-bloquées</span>
+                    <span className="text-sm text-slate">{t("analytics.financial.autoBlocked")}</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-xs text-fog">{savingsData.breakdown.autoBlocked.count} commandes</span>
+                    <span className="text-xs text-fog">{savingsData.breakdown.autoBlocked.count} {t("analytics.financial.orderCount")}</span>
                     <span className="font-mono text-sm font-bold text-midnight">
-                      {savingsData.breakdown.autoBlocked.amount.toLocaleString("fr-FR")} DH
+                      {formatCurrency(savingsData.breakdown.autoBlocked.amount, locale)}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-rose" />
-                    <span className="text-sm text-slate">Bloquées (marchand)</span>
+                    <span className="text-sm text-slate">{t("analytics.financial.merchantBlocked")}</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-xs text-fog">{savingsData.breakdown.merchantBlocked.count} commandes</span>
+                    <span className="text-xs text-fog">{savingsData.breakdown.merchantBlocked.count} {t("analytics.financial.orderCount")}</span>
                     <span className="font-mono text-sm font-bold text-midnight">
-                      {savingsData.breakdown.merchantBlocked.amount.toLocaleString("fr-FR")} DH
+                      {formatCurrency(savingsData.breakdown.merchantBlocked.amount, locale)}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between rounded-sm bg-snow px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-amber" />
-                    <span className="text-sm text-slate">Signalées / escaladées</span>
+                    <span className="text-sm text-slate">{t("analytics.financial.flaggedEscalated")}</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-xs text-fog">{savingsData.breakdown.flaggedNotShipped.count} commandes</span>
+                    <span className="text-xs text-fog">{savingsData.breakdown.flaggedNotShipped.count} {t("analytics.financial.orderCount")}</span>
                     <span className="font-mono text-sm font-bold text-midnight">
-                      {savingsData.breakdown.flaggedNotShipped.amount.toLocaleString("fr-FR")} DH
+                      {formatCurrency(savingsData.breakdown.flaggedNotShipped.amount, locale)}
                     </span>
                   </div>
                 </div>
@@ -976,15 +1007,15 @@ export default function AnalyticsPage() {
               {/* Top products by savings */}
               {savingsData.topProducts.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-midnight mb-3">Top produits (par économies)</p>
+                  <p className="text-sm font-medium text-midnight mb-3">{t("analytics.financial.topProducts")}</p>
                   <div className="space-y-1.5">
                     {savingsData.topProducts.map((p, i) => (
                       <div key={i} className="flex items-center justify-between rounded-sm bg-snow px-3 py-2">
                         <span className="text-sm text-slate truncate max-w-[60%]">{p.name}</span>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs text-fog">{p.count} cmd</span>
+                          <span className="text-xs text-fog">{p.count} {t("analytics.financial.cmd")}</span>
                           <span className="font-mono text-sm font-bold text-midnight">
-                            {p.saved.toLocaleString("fr-FR")} DH
+                            {formatCurrency(p.saved, locale)}
                           </span>
                         </div>
                       </div>
@@ -996,15 +1027,15 @@ export default function AnalyticsPage() {
               {/* Top cities by savings */}
               {savingsData.topCities.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-midnight mb-3">Top villes (par économies)</p>
+                  <p className="text-sm font-medium text-midnight mb-3">{t("analytics.financial.topCities")}</p>
                   <div className="space-y-1.5">
                     {savingsData.topCities.map((c, i) => (
                       <div key={i} className="flex items-center justify-between rounded-sm bg-snow px-3 py-2">
                         <span className="text-sm text-slate">{c.name}</span>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs text-fog">{c.count} cmd</span>
+                          <span className="text-xs text-fog">{c.count} {t("analytics.financial.cmd")}</span>
                           <span className="font-mono text-sm font-bold text-midnight">
-                            {c.saved.toLocaleString("fr-FR")} DH
+                            {formatCurrency(c.saved, locale)}
                           </span>
                         </div>
                       </div>
@@ -1021,9 +1052,9 @@ export default function AnalyticsPage() {
       <Card className="rounded-[18px]">
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>Tendance du taux RTO</CardTitle>
+            <CardTitle>{t("analytics.charts.rtoTrend")}</CardTitle>
             <p className="mt-1 text-xs text-fog">
-              Taux de retour quotidien vs baseline ({baseline}%)
+              {t("analytics.charts.rtoTrendSubtitle")} ({baseline}%)
             </p>
           </div>
         </CardHeader>
@@ -1058,7 +1089,7 @@ export default function AnalyticsPage() {
                   stroke="#94A3B8"
                   strokeDasharray="6 4"
                   label={{
-                    value: `Baseline ${baseline}%`,
+                    value: t("analytics.charts.baseline", { value: baseline }),
                     position: "right",
                     fontSize: 11,
                     fill: "#94A3B8",
@@ -1072,7 +1103,7 @@ export default function AnalyticsPage() {
                   fill="url(#rtoGradient)"
                   dot={false}
                   activeDot={{ r: 5, fill: "#F43F5E", stroke: "#fff", strokeWidth: 2 }}
-                  name="Taux RTO"
+                  name={t("analytics.charts.rtoRate")}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -1085,8 +1116,8 @@ export default function AnalyticsPage() {
         {/* ═══ 3. SCORE DISTRIBUTION ═══ */}
         <Card className="rounded-[18px]">
           <CardHeader>
-            <CardTitle>Distribution des scores</CardTitle>
-            <p className="text-xs text-fog">Volume de commandes par tranche de risque</p>
+            <CardTitle>{t("analytics.scoreDistribution.title")}</CardTitle>
+            <p className="text-xs text-fog">{t("analytics.scoreDistribution.subtitle")}</p>
           </CardHeader>
           <CardContent>
             <div className="h-[200px] lg:h-[280px]">
@@ -1107,9 +1138,9 @@ export default function AnalyticsPage() {
                   <Tooltip
                     contentStyle={tooltipStyle}
                     cursor={{ fill: "rgba(0,0,0,.03)" }}
-                    formatter={(value: number) => [`${value} commandes`, "Volume"]}
+                    formatter={(value: number) => [`${value} ${t("analytics.scoreDistribution.orders")}`, t("analytics.products.orders")]}
                   />
-                  <Bar dataKey="count" radius={[8, 8, 0, 0]} name="Commandes">
+                  <Bar dataKey="count" radius={[8, 8, 0, 0]} name={t("analytics.products.orders")}>
                     {scoreDistribution.map((entry, i) => (
                       <Cell key={i} fill={entry.color} fillOpacity={0.85} />
                     ))}
@@ -1133,8 +1164,8 @@ export default function AnalyticsPage() {
         {/* ═══ 6. DECISION DONUT ═══ */}
         <Card className="rounded-[18px]">
           <CardHeader>
-            <CardTitle>Répartition des décisions</CardTitle>
-            <p className="text-xs text-fog">Actions automatiques sur les commandes</p>
+            <CardTitle>{t("analytics.decisionBreakdown.title")}</CardTitle>
+            <p className="text-xs text-fog">{t("analytics.decisionBreakdown.subtitle")}</p>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col lg:flex-row h-auto lg:h-[280px] items-center gap-4 lg:gap-8">
@@ -1157,14 +1188,14 @@ export default function AnalyticsPage() {
                     </Pie>
                     <Tooltip
                       contentStyle={tooltipStyle}
-                      formatter={(value: number, name: string) => [`${value} commandes`, name]}
+                      formatter={(value: number, name: string) => [`${value} ${t("analytics.financial.orderCount")}`, name]}
                     />
                   </PieChart>
                 </ResponsiveContainer>
                 {/* Center label */}
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
                   <p className="font-mono text-2xl font-bold text-midnight">542</p>
-                  <p className="text-[10px] text-fog">total</p>
+                  <p className="text-[10px] text-fog">{t("analytics.decisionBreakdown.total")}</p>
                 </div>
               </div>
               <div className="flex flex-wrap justify-center gap-3 lg:flex-col lg:flex-nowrap lg:justify-start">
@@ -1191,9 +1222,9 @@ export default function AnalyticsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5 text-rose" />
-            <CardTitle>Produits à risque</CardTitle>
+            <CardTitle>{t("analytics.products.title")}</CardTitle>
           </div>
-          <p className="text-xs text-fog">Analyse du taux de retour par produit</p>
+          <p className="text-xs text-fog">{t("analytics.products.subtitle")}</p>
         </CardHeader>
         <CardContent>
           {/* ── Product mini KPIs ── */}
@@ -1209,13 +1240,13 @@ export default function AnalyticsPage() {
               <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-rose" />
-                  <p className="text-xs font-medium text-fog">Produits à risque élevé</p>
+                  <p className="text-xs font-medium text-fog">{t("analytics.products.highRisk")}</p>
                 </div>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {highRiskProducts.length}
                 </p>
                 <p className="text-[11px] text-fog">
-                  RTO &gt; 30%, min 5 commandes
+                  {t("analytics.products.highRiskCriteria")}
                 </p>
               </div>
 
@@ -1223,13 +1254,13 @@ export default function AnalyticsPage() {
               <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <Coins className="h-4 w-4 text-amber" />
-                  <p className="text-xs font-medium text-fog">DH de revenus à risque</p>
+                  <p className="text-xs font-medium text-fog">{t("analytics.products.revenueAtRisk")}</p>
                 </div>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
-                  {revenueAtRisk.toLocaleString("fr-FR")} <span className="text-sm font-semibold text-fog">DH</span>
+                  {formatCurrency(revenueAtRisk, locale)}
                 </p>
                 <p className="text-[11px] text-fog">
-                  CA des produits à risque élevé
+                  {t("analytics.products.revenueSubtitle")}
                 </p>
               </div>
 
@@ -1237,13 +1268,13 @@ export default function AnalyticsPage() {
               <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <TrendingDown className="h-4 w-4 text-violet" />
-                  <p className="text-xs font-medium text-fog">RTO concentré sur top 3</p>
+                  <p className="text-xs font-medium text-fog">{t("analytics.products.concentratedRto")}</p>
                 </div>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {top3RtoConcentration}<span className="text-sm font-semibold text-fog">%</span>
                 </p>
                 <p className="text-[11px] text-fog">
-                  % des retours sur les 3 pires produits
+                  {t("analytics.products.concentratedSubtitle")}
                 </p>
               </div>
             </div>
@@ -1255,14 +1286,14 @@ export default function AnalyticsPage() {
           ) : productError ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <AlertTriangle className="h-8 w-8 text-rose mb-3" />
-              <p className="text-sm font-medium text-midnight">Erreur de chargement</p>
+              <p className="text-sm font-medium text-midnight">{t("analytics.products.loadError")}</p>
               <p className="text-xs text-fog mt-1">{productError}</p>
             </div>
           ) : productData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Package className="h-8 w-8 text-fog mb-3" />
-              <p className="text-sm font-medium text-midnight">Aucun produit</p>
-              <p className="text-xs text-fog mt-1">Les données apparaitront ici après les premières commandes.</p>
+              <p className="text-sm font-medium text-midnight">{t("analytics.products.noProducts")}</p>
+              <p className="text-xs text-fog mt-1">{t("analytics.products.noProductsHint")}</p>
             </div>
           ) : (
             <>
@@ -1271,13 +1302,13 @@ export default function AnalyticsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-silk">
-                      <SortableHeader<ProductSortKey> label="Produit" sortKey="productName" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
-                      <SortableHeader<ProductSortKey> label="Catégorie" sortKey="productCategory" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
-                      <SortableHeader<ProductSortKey> label="Commandes" sortKey="totalOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                      <SortableHeader<ProductSortKey> label="Livrées" sortKey="deliveredOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                      <SortableHeader<ProductSortKey> label="Retours" sortKey="returnedOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                      <SortableHeader<ProductSortKey> label="Taux RTO" sortKey="rtoRate" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
-                      <SortableHeader<ProductSortKey> label="CA Total" sortKey="totalRevenue" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label={t("analytics.products.product")} sortKey="productName" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
+                      <SortableHeader<ProductSortKey> label={t("analytics.products.category")} sortKey="productCategory" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} />
+                      <SortableHeader<ProductSortKey> label={t("analytics.products.orders")} sortKey="totalOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label={t("analytics.products.delivered")} sortKey="deliveredOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label={t("analytics.products.returns")} sortKey="returnedOrders" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label={t("analytics.products.rtoRate")} sortKey="rtoRate" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
+                      <SortableHeader<ProductSortKey> label={t("analytics.products.totalRevenue")} sortKey="totalRevenue" currentSort={productSort} currentDir={productSortDir} onSort={handleProductSort} align="right" />
                     </tr>
                   </thead>
                   <tbody>
@@ -1306,7 +1337,7 @@ export default function AnalyticsPage() {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="font-mono text-sm font-semibold text-midnight">
-                            {p.totalRevenue.toLocaleString("fr-FR")} <span className="text-xs font-normal text-fog">DH</span>
+                            {formatCurrency(p.totalRevenue, locale)}
                           </span>
                         </td>
                       </tr>
@@ -1328,26 +1359,26 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-fog">Taux RTO</span>
+                        <span className="text-xs text-fog">{t("analytics.products.rtoRate")}</span>
                         <RtoBar value={Math.round(p.rtoRate * 100)} />
                       </div>
                     </div>
                     <div className="flex items-center gap-4 border-t border-silk pt-3">
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Commandes</p>
+                        <p className="text-[11px] text-fog">{t("analytics.products.orders")}</p>
                         <p className="font-mono text-sm font-bold text-slate">{p.totalOrders}</p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Livrées</p>
+                        <p className="text-[11px] text-fog">{t("analytics.products.delivered")}</p>
                         <p className="font-mono text-sm font-bold text-mint-deep">{p.deliveredOrders}</p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Retours</p>
+                        <p className="text-[11px] text-fog">{t("analytics.products.returns")}</p>
                         <p className="font-mono text-sm font-bold text-rose">{p.returnedOrders}</p>
                       </div>
                       <div className="flex-1 text-right">
-                        <p className="text-[11px] text-fog">CA</p>
-                        <p className="font-mono text-sm font-bold text-midnight">{p.totalRevenue.toLocaleString("fr-FR")} <span className="text-[11px] font-normal text-fog">DH</span></p>
+                        <p className="text-[11px] text-fog">{t("analytics.products.totalRevenue")}</p>
+                        <p className="font-mono text-sm font-bold text-midnight">{formatCurrency(p.totalRevenue, locale)}</p>
                       </div>
                     </div>
                   </div>
@@ -1363,8 +1394,8 @@ export default function AnalyticsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Analyse par ville</CardTitle>
-              <p className="text-xs text-fog">Performance par zone géographique</p>
+              <CardTitle>{t("analytics.cities.title")}</CardTitle>
+              <p className="text-xs text-fog">{t("analytics.cities.subtitle")}</p>
             </div>
             {!cityLoading && !cityError && cityData.length > 0 && (
               <span className={cn(
@@ -1373,7 +1404,7 @@ export default function AnalyticsPage() {
                   ? "bg-mint-bg text-mint-deep"
                   : "bg-snow text-fog"
               )}>
-                {cityData.some((c) => c.riskTier !== "unknown") ? "Données réelles" : "Estimation"}
+                {cityData.some((c) => c.riskTier !== "unknown") ? t("analytics.cities.realData") : t("analytics.cities.estimate")}
               </span>
             )}
           </div>
@@ -1384,14 +1415,14 @@ export default function AnalyticsPage() {
           ) : cityError ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <AlertTriangle className="h-8 w-8 text-rose mb-3" />
-              <p className="text-sm font-medium text-midnight">Erreur de chargement</p>
+              <p className="text-sm font-medium text-midnight">{t("analytics.products.loadError")}</p>
               <p className="text-xs text-fog mt-1">{cityError}</p>
             </div>
           ) : cityData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Package className="h-8 w-8 text-fog mb-3" />
-              <p className="text-sm font-medium text-midnight">Aucune donnée de ville</p>
-              <p className="text-xs text-fog mt-1">Les données apparaitront ici après les premières commandes.</p>
+              <p className="text-sm font-medium text-midnight">{t("analytics.cities.noData")}</p>
+              <p className="text-xs text-fog mt-1">{t("analytics.products.noProductsHint")}</p>
             </div>
           ) : (
             <>
@@ -1400,13 +1431,13 @@ export default function AnalyticsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-silk">
-                      <SortableHeader<CitySortKey> label="Ville" sortKey="cityDisplay" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} />
-                      <SortableHeader<CitySortKey> label="Commandes" sortKey="totalOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                      <SortableHeader<CitySortKey> label="Livrées" sortKey="deliveredOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                      <SortableHeader<CitySortKey> label="Retours" sortKey="returnedOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                      <SortableHeader<CitySortKey> label="Taux RTO" sortKey="rtoRate" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                      <SortableHeader<CitySortKey> label="Score moyen" sortKey="avgScore" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
-                      <SortableHeader<CitySortKey> label="Risque" sortKey="riskTier" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label={t("analytics.cities.city")} sortKey="cityDisplay" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} />
+                      <SortableHeader<CitySortKey> label={t("analytics.cities.orders")} sortKey="totalOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label={t("analytics.cities.delivered")} sortKey="deliveredOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label={t("analytics.cities.returns")} sortKey="returnedOrders" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label={t("analytics.cities.rtoRate")} sortKey="rtoRate" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label={t("analytics.cities.avgScore")} sortKey="avgScore" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
+                      <SortableHeader<CitySortKey> label={t("analytics.cities.risk")} sortKey="riskTier" currentSort={citySort} currentDir={citySortDir} onSort={handleCitySort} align="right" />
                     </tr>
                   </thead>
                   <tbody>
@@ -1459,25 +1490,25 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-fog">Taux RTO</span>
+                        <span className="text-xs text-fog">{t("analytics.cities.rtoRate")}</span>
                         <RtoBar value={Math.round(c.rtoRate * 100)} />
                       </div>
                     </div>
                     <div className="flex items-center gap-4 border-t border-silk pt-3">
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Commandes</p>
+                        <p className="text-[11px] text-fog">{t("analytics.cities.orders")}</p>
                         <p className="font-mono text-sm font-bold text-slate">{c.totalOrders}</p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Livrées</p>
+                        <p className="text-[11px] text-fog">{t("analytics.cities.delivered")}</p>
                         <p className="font-mono text-sm font-bold text-mint-deep">{c.deliveredOrders}</p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Retours</p>
+                        <p className="text-[11px] text-fog">{t("analytics.cities.returns")}</p>
                         <p className="font-mono text-sm font-bold text-rose">{c.returnedOrders}</p>
                       </div>
                       <div className="flex-1 text-right">
-                        <p className="text-[11px] text-fog">Score</p>
+                        <p className="text-[11px] text-fog">{t("analytics.cities.avgScore")}</p>
                         <span
                           className={cn(
                             "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
@@ -1506,10 +1537,10 @@ export default function AnalyticsPage() {
             <div>
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-ocean" />
-                <CardTitle>Analyse par quartier</CardTitle>
+                <CardTitle>{t("analytics.zones.title")}</CardTitle>
               </div>
               <p className="text-xs text-fog mt-1">
-                Score géographique auto-ajusté · Plus précis que la ville
+                {t("analytics.zones.subtitle")}
               </p>
             </div>
             {/* City filter */}
@@ -1519,7 +1550,7 @@ export default function AnalyticsPage() {
                 onChange={(e) => setZoneCityFilter(e.target.value)}
                 className="rounded-sm border border-silk bg-white px-3 py-2 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint min-h-[44px]"
               >
-                <option value="">Toutes les villes</option>
+                <option value="">{t("analytics.zones.allCities")}</option>
                 {zoneCities.map((city) => (
                   <option key={city} value={city}>{capitalize(city)}</option>
                 ))}
@@ -1540,39 +1571,39 @@ export default function AnalyticsPage() {
               <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-ocean" />
-                  <p className="text-xs font-medium text-fog">Quartiers trackés</p>
+                  <p className="text-xs font-medium text-fog">{t("analytics.zones.tracked")}</p>
                 </div>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {zoneData.length}
                 </p>
                 <p className="text-[11px] text-fog">
-                  zones avec données suffisantes
+                  {t("analytics.zones.trackedSubtitle")}
                 </p>
               </div>
 
               <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-rose" />
-                  <p className="text-xs font-medium text-fog">Quartiers critiques</p>
+                  <p className="text-xs font-medium text-fog">{t("analytics.zones.critical")}</p>
                 </div>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {criticalZones}
                 </p>
                 <p className="text-[11px] text-fog">
-                  RTO &gt; 35%
+                  {t("analytics.zones.criticalCriteria")}
                 </p>
               </div>
 
               <div className="min-w-[200px] snap-start lg:min-w-0 rounded-xl border border-silk bg-snow/50 p-4">
                 <div className="flex items-center gap-2">
                   <Truck className="h-4 w-4 text-mint-deep" />
-                  <p className="text-xs font-medium text-fog">Quartiers fiables</p>
+                  <p className="text-xs font-medium text-fog">{t("analytics.zones.reliable")}</p>
                 </div>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {safeZones}
                 </p>
                 <p className="text-[11px] text-fog">
-                  RTO &lt; 15%, min 5 commandes
+                  {t("analytics.zones.reliableCriteria")}
                 </p>
               </div>
             </div>
@@ -1584,14 +1615,14 @@ export default function AnalyticsPage() {
           ) : zoneError ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <AlertTriangle className="h-8 w-8 text-rose mb-3" />
-              <p className="text-sm font-medium text-midnight">Erreur de chargement</p>
+              <p className="text-sm font-medium text-midnight">{t("analytics.products.loadError")}</p>
               <p className="text-xs text-fog mt-1">{zoneError}</p>
             </div>
           ) : zoneData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <MapPin className="h-8 w-8 text-fog mb-3" />
-              <p className="text-sm font-medium text-midnight">Aucune donnée de quartier</p>
-              <p className="text-xs text-fog mt-1">Les données apparaitront ici après les premières commandes avec adresse détaillée.</p>
+              <p className="text-sm font-medium text-midnight">{t("analytics.zones.noData")}</p>
+              <p className="text-xs text-fog mt-1">{t("analytics.zones.noDataHint")}</p>
             </div>
           ) : (
             <>
@@ -1600,13 +1631,13 @@ export default function AnalyticsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-silk">
-                      <SortableHeader<ZoneSortKey> label="Ville" sortKey="city" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} />
-                      <SortableHeader<ZoneSortKey> label="Quartier" sortKey="zone" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} />
-                      <SortableHeader<ZoneSortKey> label="Commandes" sortKey="totalOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
-                      <SortableHeader<ZoneSortKey> label="Livrées" sortKey="deliveredOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
-                      <SortableHeader<ZoneSortKey> label="Retours" sortKey="returnedOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
-                      <SortableHeader<ZoneSortKey> label="Taux RTO" sortKey="rtoRate" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
-                      <SortableHeader<ZoneSortKey> label="Score moyen" sortKey="avgScore" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label={t("analytics.zones.city")} sortKey="city" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} />
+                      <SortableHeader<ZoneSortKey> label={t("analytics.zones.zone")} sortKey="zone" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} />
+                      <SortableHeader<ZoneSortKey> label={t("analytics.zones.orders")} sortKey="totalOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label={t("analytics.zones.delivered")} sortKey="deliveredOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label={t("analytics.zones.returns")} sortKey="returnedOrders" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label={t("analytics.zones.rtoRate")} sortKey="rtoRate" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
+                      <SortableHeader<ZoneSortKey> label={t("analytics.zones.avgScore")} sortKey="avgScore" currentSort={zoneSort} currentDir={zoneSortDir} onSort={handleZoneSort} align="right" />
                     </tr>
                   </thead>
                   <tbody>
@@ -1665,25 +1696,25 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-fog">Taux RTO</span>
+                        <span className="text-xs text-fog">{t("analytics.zones.rtoRate")}</span>
                         <RtoBar value={Math.round(z.rtoRate * 100)} />
                       </div>
                     </div>
                     <div className="flex items-center gap-4 border-t border-silk pt-3">
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Commandes</p>
+                        <p className="text-[11px] text-fog">{t("analytics.zones.orders")}</p>
                         <p className="font-mono text-sm font-bold text-slate">{z.totalOrders}</p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Livrées</p>
+                        <p className="text-[11px] text-fog">{t("analytics.zones.delivered")}</p>
                         <p className="font-mono text-sm font-bold text-mint-deep">{z.deliveredOrders}</p>
                       </div>
                       <div className="flex-1">
-                        <p className="text-[11px] text-fog">Retours</p>
+                        <p className="text-[11px] text-fog">{t("analytics.zones.returns")}</p>
                         <p className="font-mono text-sm font-bold text-rose">{z.returnedOrders}</p>
                       </div>
                       <div className="flex-1 text-right">
-                        <p className="text-[11px] text-fog">Score</p>
+                        <p className="text-[11px] text-fog">{t("analytics.zones.avgScore")}</p>
                         <span
                           className={cn(
                             "inline-flex rounded-xs px-2 py-0.5 font-mono text-xs font-bold",
@@ -1711,10 +1742,10 @@ export default function AnalyticsPage() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-fog" />
-              Patterns temporels
+              {t("analytics.hourly.title")}
             </CardTitle>
             <p className="mt-1 text-xs text-fog">
-              Volume de commandes et taux de risque par heure — les commandes nocturnes (1h-5h) sont 2× plus risquées
+              {t("analytics.hourly.subtitle")}
             </p>
           </div>
         </CardHeader>
@@ -1747,15 +1778,15 @@ export default function AnalyticsPage() {
                 <Tooltip
                   contentStyle={tooltipStyle}
                   formatter={(value: number, name: string) => {
-                    if (name === "Commandes") return [value, name];
-                    return [`${value}%`, "Taux de risque"];
+                    if (name === t("analytics.products.orders")) return [value, name];
+                    return [`${value}%`, t("analytics.hourly.riskRate")];
                   }}
                 />
                 <Bar
                   yAxisId="orders"
                   dataKey="orders"
                   radius={[4, 4, 0, 0]}
-                  name="Commandes"
+                  name={t("analytics.products.orders")}
                   barSize={16}
                 >
                   {hourlyData.map((entry, i) => (
@@ -1770,7 +1801,7 @@ export default function AnalyticsPage() {
                   yAxisId="risk"
                   dataKey="riskRate"
                   radius={[4, 4, 0, 0]}
-                  name="Risque"
+                  name={t("analytics.hourly.riskRate")}
                   barSize={16}
                   fillOpacity={0.25}
                 >
@@ -1788,15 +1819,15 @@ export default function AnalyticsPage() {
           <div className="mt-3 flex flex-wrap items-center gap-5 border-t border-silk pt-3">
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-6 rounded-full bg-ocean/70" />
-              <span className="text-xs text-fog">Commandes (jour)</span>
+              <span className="text-xs text-fog">{t("analytics.hourly.dayOrders")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-6 rounded-full bg-rose/70" />
-              <span className="text-xs text-fog">Commandes (nuit 1h-5h)</span>
+              <span className="text-xs text-fog">{t("analytics.hourly.nightOrders")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-6 rounded-full bg-mist/25" />
-              <span className="text-xs text-fog">Taux de risque (%)</span>
+              <span className="text-xs text-fog">{t("analytics.hourly.riskRate")}</span>
             </div>
           </div>
         </CardContent>

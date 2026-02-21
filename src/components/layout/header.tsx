@@ -7,16 +7,19 @@ import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { WebhookHealthDot } from "@/components/dashboard/webhook-health-dot";
 import { PlanBadge } from "@/components/plan-badge";
-import { ROLE_LABELS, type Role } from "@/lib/permissions.shared";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useTranslation } from "@/i18n/provider";
+import type { Role } from "@/lib/permissions.shared";
 import type { PlanId } from "@/lib/plans";
 
 export function Header() {
   const { data: session } = useSession();
+  const { t } = useTranslation();
 
   const merchantName = session?.user?.name ?? "Ma Boutique";
   const plan = (session?.user?.plan ?? "trial") as PlanId;
   const role = (session?.user?.role ?? "operator") as Role;
-  const roleLabel = ROLE_LABELS[role] ?? role;
+  const roleLabel = t(`roles.${role}`);
 
   return (
     <header className="hidden lg:flex sticky top-0 z-30 h-16 items-center justify-between border-b border-silk bg-white/80 backdrop-blur-sm px-6">
@@ -25,7 +28,7 @@ export function Header() {
         <Search className="h-4 w-4 text-mist" />
         <input
           type="text"
-          placeholder="Rechercher une commande..."
+          placeholder={t("header.searchPlaceholder")}
           className="bg-transparent text-sm text-slate placeholder:text-mist outline-none w-full"
         />
       </div>
@@ -33,6 +36,7 @@ export function Header() {
       {/* Actions */}
       <div className="flex items-center gap-3">
         <WebhookHealthDot />
+        <LanguageSwitcher />
         <NotificationBell />
 
         <div className="flex items-center gap-2 rounded-sm border border-silk px-3 py-1.5">
@@ -55,7 +59,7 @@ export function Header() {
           variant="ghost"
           size="icon"
           onClick={() => signOut({ callbackUrl: "/login" })}
-          title="Se déconnecter"
+          title={t("common.logout")}
         >
           <LogOut className="h-4 w-4 text-fog" />
         </Button>

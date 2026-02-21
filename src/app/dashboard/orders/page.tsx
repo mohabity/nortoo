@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useSelection } from "@/hooks/use-selection";
 import { FeatureGate } from "@/components/feature-gate";
+import { useTranslation } from "@/i18n/provider";
 
 // ── Types ──
 
@@ -64,12 +65,12 @@ const EMPTY_COUNTS: OrdersCounts = {
 // ── Pills config ──
 
 const DECISION_PILLS = [
-  { key: "all", label: "Toutes", activeClass: "bg-midnight text-white" },
-  { key: "ship", label: "Expédier", activeClass: "bg-mint text-white" },
-  { key: "verify", label: "Vérifier", activeClass: "bg-amber text-white" },
-  { key: "flag", label: "Signaler", activeClass: "bg-rose text-white" },
-  { key: "block", label: "Bloquer", activeClass: "bg-violet text-white" },
-] as const;
+  { key: "all", labelKey: "orders.filters.all", activeClass: "bg-midnight text-white" },
+  { key: "ship", labelKey: "decisions.ship", activeClass: "bg-mint text-white" },
+  { key: "verify", labelKey: "decisions.verify", activeClass: "bg-amber text-white" },
+  { key: "flag", labelKey: "decisions.flag", activeClass: "bg-rose text-white" },
+  { key: "block", labelKey: "decisions.block", activeClass: "bg-violet text-white" },
+];
 
 const SUGGESTION_ICONS = {
   client: User,
@@ -109,12 +110,13 @@ function removeRecentSearch(query: string) {
 // ── Page ──
 
 export default function OrdersPage() {
+  const { t } = useTranslation();
   return (
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-24">
           <Loader2 className="h-6 w-6 animate-spin text-mist" />
-          <span className="ml-2 text-sm text-fog">Chargement...</span>
+          <span className="ml-2 text-sm text-fog">{t("common.loading")}</span>
         </div>
       }
     >
@@ -124,6 +126,7 @@ export default function OrdersPage() {
 }
 
 function OrdersContent() {
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -367,7 +370,7 @@ function OrdersContent() {
       const res = await fetch(`/api/orders/export?${exportParams}`);
       if (!res.ok) {
         const json = await res.json();
-        alert(json.error ?? "Erreur d'export");
+        alert(json.error ?? t("orders.export.error"));
         return;
       }
       const blob = await res.blob();
@@ -381,7 +384,7 @@ function OrdersContent() {
       a.click();
       window.URL.revokeObjectURL(url);
       if (res.headers.get("X-Truncated") === "true") {
-        alert("Export limité aux 10 000 premières commandes.");
+        alert(t("orders.export.truncated"));
       }
     } finally {
       setExportLoading(false);
@@ -404,12 +407,12 @@ function OrdersContent() {
       const json = await res.json();
 
       if (!res.ok) {
-        addToast({ type: "error", message: json.error ?? "Erreur lors de l'override" });
+        addToast({ type: "error", message: json.error ?? t("orders.bulk.errorOverride") });
         return;
       }
 
       const { processed, previousDecisions } = json.data;
-      const label = bulkAction === "SHIP" ? "expédiées" : "bloquées";
+      const label = bulkAction === "SHIP" ? t("orders.bulk.shipped") : t("orders.bulk.blocked");
 
       setBulkAction(null);
       clearSelection();
@@ -417,14 +420,16 @@ function OrdersContent() {
 
       addToast({
         type: "success",
-        message: `${processed} commande${processed > 1 ? "s" : ""} ${label}`,
+        message: processed > 1
+          ? t("orders.bulk.processedPlural", { count: processed, action: label })
+          : t("orders.bulk.processed", { count: processed, action: label }),
         action: {
-          label: "Annuler",
+          label: t("orders.bulk.undo"),
           onClick: () => handleBulkUndo(previousDecisions),
         },
       });
     } catch {
-      addToast({ type: "error", message: "Erreur réseau" });
+      addToast({ type: "error", message: t("orders.bulk.networkError") });
     } finally {
       setBulkSubmitting(false);
     }
@@ -443,7 +448,7 @@ function OrdersContent() {
           body: JSON.stringify({
             orderIds: [orderId],
             action,
-            reason: "Annulation de l'override en masse",
+            reason: t("orders.bulk.undoReason"),
           }),
         });
       } catch {
@@ -451,7 +456,7 @@ function OrdersContent() {
       }
     }
     fetchOrders();
-    addToast({ type: "info", message: "Override annulé" });
+    addToast({ type: "info", message: t("orders.bulk.undone") });
   }
 
   // Mobile search
@@ -477,10 +482,12 @@ function OrdersContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-midnight">
-            Commandes
+            {t("orders.title")}
           </h1>
           <p className="text-sm text-fog">
-            {counts.all} commande{counts.all !== 1 ? "s" : ""} au total
+            {counts.all !== 1
+              ? t("orders.totalCountPlural", { count: counts.all })
+              : t("orders.totalCount", { count: counts.all })}
           </p>
         </div>
 
@@ -488,7 +495,7 @@ function OrdersContent() {
         <button
           onClick={openMobileSearch}
           className="lg:hidden h-10 w-10 flex items-center justify-center rounded-full border border-silk bg-white text-slate hover:bg-snow transition-colors"
-          aria-label="Rechercher"
+          aria-label={t("orders.search.ariaLabel")}
         >
           <Search className="h-4 w-4" />
         </button>
@@ -502,7 +509,7 @@ function OrdersContent() {
             <input
               ref={mobileSearchRef}
               type="text"
-              placeholder="Chercher par nom, ville, référence, produit..."
+              placeholder={t("orders.search.placeholder")}
               value={searchInput}
               onChange={(e) => handleSearchInputChange(e.target.value)}
               className="h-10 w-full rounded-full border border-silk bg-white pl-9 pr-9 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
@@ -520,7 +527,7 @@ function OrdersContent() {
             onClick={closeMobileSearch}
             className="text-sm text-ocean font-medium shrink-0"
           >
-            Annuler
+            {t("common.cancel")}
           </button>
         </div>
       )}
@@ -542,7 +549,7 @@ function OrdersContent() {
                     : "bg-white border border-silk text-slate hover:bg-snow"
                 }`}
               >
-                {pill.label}
+                {t(pill.labelKey)}
                 <span
                   className={`font-mono text-xs ${
                     isActive ? "opacity-80" : "text-mist"
@@ -562,13 +569,13 @@ function OrdersContent() {
             onChange={(e) => setFilter("pipeline", e.target.value)}
             className="h-10 lg:h-9 rounded-lg border border-silk bg-white px-3 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30"
           >
-            <option value="all">Pipeline: Tous</option>
-            <option value="auto_shipped">Auto-expédié</option>
-            <option value="needs_review">À vérifier</option>
-            <option value="escalated">Escaladé</option>
-            <option value="auto_blocked">Auto-bloqué</option>
-            <option value="merchant_override">Override</option>
-            <option value="pending">En attente</option>
+            <option value="all">{t("orders.filters.pipelineAll")}</option>
+            <option value="auto_shipped">{t("orders.filters.autoShipped")}</option>
+            <option value="needs_review">{t("orders.filters.toVerify")}</option>
+            <option value="escalated">{t("orders.filters.escalated")}</option>
+            <option value="auto_blocked">{t("orders.filters.autoBlocked")}</option>
+            <option value="merchant_override">{t("orders.filters.override")}</option>
+            <option value="pending">{t("orders.filters.pending")}</option>
           </select>
 
           {/* Desktop search */}
@@ -578,7 +585,7 @@ function OrdersContent() {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Chercher par nom, ville, référence, produit..."
+                placeholder={t("orders.search.placeholder")}
                 value={searchInput}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 onFocus={handleSearchFocus}
@@ -627,7 +634,7 @@ function OrdersContent() {
                 {searchInput === "" && recentSearches.length > 0 && (
                   <div className="py-1">
                     <p className="px-3 py-1 text-[10px] font-medium text-mist uppercase tracking-wider">
-                      Récents
+                      {t("orders.search.recent")}
                     </p>
                     {recentSearches.map((r) => (
                       <div
@@ -673,7 +680,7 @@ function OrdersContent() {
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">Exporter CSV</span>
+              <span className="hidden sm:inline">{t("orders.export.csv")}</span>
             </button>
           </FeatureGate>
         </div>
@@ -683,25 +690,23 @@ function OrdersContent() {
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-mist" />
-          <span className="ml-2 text-sm text-fog">Chargement...</span>
+          <span className="ml-2 text-sm text-fog">{t("common.loading")}</span>
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-16">
           <Search className="h-8 w-8 text-mist mx-auto mb-3" />
           <p className="text-fog font-medium">
-            Aucune commande trouvée
+            {t("orders.search.noResults")}
             {currentSearch && (
               <>
                 {" "}
-                pour &laquo;&nbsp;
-                <span className="text-midnight">{currentSearch}</span>
-                &nbsp;&raquo;
+                {t("orders.search.noResultsFor", { query: currentSearch })}
               </>
             )}
           </p>
           {currentSearch && (
             <p className="text-sm text-mist mt-1">
-              Essayez avec moins de mots-clés
+              {t("orders.search.tryFewerKeywords")}
             </p>
           )}
         </div>
@@ -745,7 +750,7 @@ function OrdersContent() {
       {meta.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-fog hidden sm:block">
-            Page {meta.page} sur {meta.totalPages}
+            {t("orders.pagination.page", { current: meta.page, total: meta.totalPages })}
           </p>
           <p className="text-sm text-fog sm:hidden">
             {meta.page}/{meta.totalPages}
@@ -758,7 +763,7 @@ function OrdersContent() {
               onClick={() => setFilter("page", String(meta.page - 1))}
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Précédente</span>
+              <span className="hidden sm:inline ml-1">{t("orders.pagination.previous")}</span>
             </Button>
             <Button
               variant="outline"
@@ -766,7 +771,7 @@ function OrdersContent() {
               disabled={meta.page >= meta.totalPages}
               onClick={() => setFilter("page", String(meta.page + 1))}
             >
-              <span className="hidden sm:inline mr-1">Suivante</span>
+              <span className="hidden sm:inline mr-1">{t("orders.pagination.next")}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

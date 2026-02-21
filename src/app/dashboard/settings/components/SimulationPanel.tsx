@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DecisionBadge } from "@/components/dashboard/decision-badge";
-import { cn, formatDH } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency } from "@/lib/i18n-utils";
 import {
   recalculateDistribution,
   type SimulationResult,
@@ -46,11 +48,11 @@ const DECISION_TEXT_COLORS: Record<string, string> = {
   block: "text-violet",
 };
 
-const DECISION_LABELS: Record<string, string> = {
-  ship: "Expédier",
-  verify: "Vérifier",
-  flag: "Signaler",
-  block: "Bloquer",
+const DECISION_LABEL_KEYS: Record<string, string> = {
+  ship: "decisions.ship",
+  verify: "decisions.verify",
+  flag: "decisions.flag",
+  block: "decisions.block",
 };
 
 const DECISIONS = ["ship", "verify", "flag", "block"] as const;
@@ -65,6 +67,7 @@ export function SimulationPanel({
   onApply,
   onClose,
 }: SimulationPanelProps) {
+  const { t, locale } = useTranslation();
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,17 +96,17 @@ export function SimulationPanel({
         if (!res.ok) {
           if (json.error === "insufficient_data") {
             setError(
-              `Pas assez de données pour une simulation fiable (minimum 20 commandes, vous en avez ${json.current ?? 0}). Revenez quand vous aurez plus d'historique.`
+              t("settings.simulation.insufficientData", { current: String(json.current ?? 0) })
             );
           } else {
-            setError(json.error ?? "Erreur lors de la simulation");
+            setError(json.error ?? t("settings.simulation.error"));
           }
           return;
         }
 
         setResult(json.data);
       } catch {
-        if (!cancelled) setError("Erreur réseau");
+        if (!cancelled) setError(t("settings.simulation.networkError"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -145,7 +148,7 @@ export function SimulationPanel({
       <div className="rounded-[16px] border border-silk bg-white p-6 animate-in fade-in duration-300">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-5 w-5 animate-spin text-ocean mr-2" />
-          <span className="text-sm text-fog">Simulation en cours...</span>
+          <span className="text-sm text-fog">{t("settings.simulation.running")}</span>
         </div>
       </div>
     );
@@ -157,7 +160,7 @@ export function SimulationPanel({
       <div className="rounded-[16px] border border-silk bg-white p-6 animate-in fade-in duration-300">
         <div className="flex items-start justify-between mb-4">
           <h3 className="font-display font-semibold text-midnight">
-            Simulation d&apos;impact
+            {t("settings.simulation.title")}
           </h3>
           <button onClick={onClose} className="text-mist hover:text-slate">
             <X className="h-4 w-4" />
@@ -182,10 +185,10 @@ export function SimulationPanel({
       <div className="flex items-start justify-between">
         <div>
           <h3 className="font-display font-semibold text-midnight">
-            Simulation d&apos;impact
+            {t("settings.simulation.title")}
           </h3>
           <p className="text-xs text-mist mt-0.5">
-            Basée sur vos {sampleSize} commandes récentes
+            {t("settings.simulation.basedOn", { count: String(sampleSize) })}
           </p>
         </div>
         <button onClick={onClose} className="text-mist hover:text-slate">
@@ -196,14 +199,16 @@ export function SimulationPanel({
       {/* ── Stacked comparison bars ── */}
       <div className="space-y-2">
         <DistributionBar
-          label="Actuel"
+          label={t("settings.simulation.current")}
           distribution={displayCurrent}
           total={totalCurrent}
+          t={t}
         />
         <DistributionBar
-          label="Simulé"
+          label={t("settings.simulation.simulated")}
           distribution={displaySimulated}
           total={totalSimulated}
+          t={t}
         />
       </div>
 
@@ -215,7 +220,7 @@ export function SimulationPanel({
             className="rounded-xl border border-silk bg-snow px-3 py-2.5 text-center"
           >
             <p className="text-[10px] font-medium text-mist uppercase tracking-wider">
-              {DECISION_LABELS[key]}
+              {t(DECISION_LABEL_KEYS[key])}
             </p>
             <p className={cn("font-mono text-xl font-bold mt-0.5", DECISION_TEXT_COLORS[key])}>
               {displaySimulated[key]}
@@ -238,11 +243,10 @@ export function SimulationPanel({
       {/* ── Change summary ── */}
       {displayChangePercent > 0 && (
         <p className="text-xs text-fog text-center">
-          <span className="font-mono font-medium text-midnight">
-            {liveResult?.changedCount ?? result.changes.totalChanged}
-          </span>{" "}
-          commande{(liveResult?.changedCount ?? result.changes.totalChanged) > 1 ? "s" : ""} changeraient de statut (
-          <span className="font-mono">{displayChangePercent}%</span>)
+          {t("settings.simulation.changeSummary", {
+            count: String(liveResult?.changedCount ?? result.changes.totalChanged),
+            percent: String(displayChangePercent),
+          })}
         </p>
       )}
 
@@ -250,19 +254,19 @@ export function SimulationPanel({
       {result.impact && (result.changes.newlyBlocked > 0 || result.changes.newlyShipped > 0) && (
         <div className="rounded-xl bg-snow border border-silk p-4 space-y-3">
           <p className="text-xs font-medium text-mist uppercase tracking-wider">
-            Impact estimé
+            {t("settings.simulation.estimatedImpact")}
           </p>
 
           {result.changes.newlyBlocked > 0 && (
             <div className="space-y-1.5">
               <p className="text-sm font-medium text-midnight">
-                +{result.changes.newlyBlocked} commande{result.changes.newlyBlocked > 1 ? "s" : ""} bloquée{result.changes.newlyBlocked > 1 ? "s" : ""} en plus
+                {t("settings.simulation.newlyBlocked", { count: String(result.changes.newlyBlocked) })}
               </p>
               {result.impact.newlyBlockedReturned > 0 && (
                 <div className="flex items-center gap-2 text-sm text-fog">
                   <CheckCircle2 className="h-3.5 w-3.5 text-mint-deep shrink-0" />
                   <span>
-                    {result.impact.newlyBlockedReturned} auraient été retournée{result.impact.newlyBlockedReturned > 1 ? "s" : ""} — bien bloquées
+                    {t("settings.simulation.wouldHaveReturned", { count: String(result.impact.newlyBlockedReturned) })}
                   </span>
                 </div>
               )}
@@ -270,7 +274,7 @@ export function SimulationPanel({
                 <div className="flex items-center gap-2 text-sm text-fog">
                   <AlertTriangle className="h-3.5 w-3.5 text-amber shrink-0" />
                   <span>
-                    {result.impact.newlyBlockedDelivered} livrée{result.impact.newlyBlockedDelivered > 1 ? "s" : ""} avec succès — vente{result.impact.newlyBlockedDelivered > 1 ? "s" : ""} perdue{result.impact.newlyBlockedDelivered > 1 ? "s" : ""}
+                    {t("settings.simulation.wouldHaveDelivered", { count: String(result.impact.newlyBlockedDelivered) })}
                   </span>
                 </div>
               )}
@@ -278,7 +282,7 @@ export function SimulationPanel({
                 <div className="flex items-center gap-2 text-sm text-fog">
                   <HelpCircle className="h-3.5 w-3.5 text-mist shrink-0" />
                   <span>
-                    {result.impact.newlyBlockedUnknown} statut inconnu
+                    {t("settings.simulation.unknownStatus", { count: String(result.impact.newlyBlockedUnknown) })}
                   </span>
                 </div>
               )}
@@ -290,7 +294,7 @@ export function SimulationPanel({
               <span className="text-mint-deep font-medium">
                 {result.changes.newlyShipped}
               </span>{" "}
-              commande{result.changes.newlyShipped > 1 ? "s" : ""} en moins bloquée{result.changes.newlyShipped > 1 ? "s" : ""}
+              {t("settings.simulation.fewerBlocked", { count: String(result.changes.newlyShipped) })}
             </p>
           )}
 
@@ -299,10 +303,10 @@ export function SimulationPanel({
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-1.5 text-fog">
                   <TrendingUp className="h-3.5 w-3.5 text-mint-deep" />
-                  Économies supplémentaires
+                  {t("settings.simulation.additionalSavings")}
                 </span>
                 <span className="font-mono font-medium text-mint-deep">
-                  +{formatDH(result.impact.estimatedSavingsGain)}
+                  +{formatCurrency(result.impact.estimatedSavingsGain, locale)}
                 </span>
               </div>
             )}
@@ -310,15 +314,15 @@ export function SimulationPanel({
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-1.5 text-fog">
                   <TrendingDown className="h-3.5 w-3.5 text-rose" />
-                  Ventes potentiellement perdues
+                  {t("settings.simulation.potentialSalesLost")}
                 </span>
                 <span className="font-mono font-medium text-rose">
-                  -{formatDH(result.impact.estimatedSalesLost)}
+                  -{formatCurrency(result.impact.estimatedSalesLost, locale)}
                 </span>
               </div>
             )}
             <div className="flex items-center justify-between text-sm font-medium border-t border-silk pt-1.5">
-              <span className="text-midnight">Bilan net</span>
+              <span className="text-midnight">{t("settings.simulation.netBalance")}</span>
               <span
                 className={cn(
                   "font-mono",
@@ -328,7 +332,7 @@ export function SimulationPanel({
                 )}
               >
                 {result.impact.netBalance >= 0 ? "+" : ""}
-                {formatDH(result.impact.netBalance)}
+                {formatCurrency(result.impact.netBalance, locale)}
               </span>
             </div>
           </div>
@@ -367,7 +371,7 @@ export function SimulationPanel({
       {result.examples.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-medium text-mist uppercase tracking-wider">
-            Commandes impactées
+            {t("settings.simulation.impactedOrders")}
           </p>
           <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
             {result.examples.slice(0, 5).map((ex) => (
@@ -394,7 +398,7 @@ export function SimulationPanel({
                     </span>
                   </div>
                   <span className="font-mono text-xs text-slate shrink-0 ml-2">
-                    {formatDH(ex.total)}
+                    {formatCurrency(ex.total, locale)}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-1">
@@ -409,12 +413,12 @@ export function SimulationPanel({
                   />
                   {ex.deliveryStatus === "returned" && (
                     <span className="text-[10px] text-mint-deep font-medium ml-auto">
-                      retournée
+                      {t("delivery.returned")}
                     </span>
                   )}
                   {ex.deliveryStatus === "delivered" && (
                     <span className="text-[10px] text-amber font-medium ml-auto">
-                      livrée
+                      {t("delivery.delivered")}
                     </span>
                   )}
                 </div>
@@ -427,7 +431,7 @@ export function SimulationPanel({
       {/* ── Actions ── */}
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3 pt-2 border-t border-silk">
         <Button variant="outline" onClick={onClose} disabled={applying}>
-          Annuler
+          {t("common.cancel")}
         </Button>
         <Button
           onClick={handleApply}
@@ -435,7 +439,7 @@ export function SimulationPanel({
           className="bg-mint hover:bg-mint-deep text-[#0B0F1A]"
         >
           {applying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Appliquer ces réglages
+          {t("settings.simulation.apply")}
         </Button>
       </div>
     </div>
@@ -448,10 +452,12 @@ function DistributionBar({
   label,
   distribution,
   total,
+  t,
 }: {
   label: string;
   distribution: { ship: number; verify: number; flag: number; block: number };
   total: number;
+  t: (key: string, params?: Record<string, string>) => string;
 }) {
   if (total === 0) return null;
 
@@ -472,7 +478,7 @@ function DistributionBar({
                 "transition-all duration-500 ease-out"
               )}
               style={{ width: `${pct}%` }}
-              title={`${DECISION_LABELS[key]}: ${distribution[key]} (${Math.round(pct)}%)`}
+              title={`${t(DECISION_LABEL_KEYS[key])}: ${distribution[key]} (${Math.round(pct)}%)`}
             />
           );
         })}

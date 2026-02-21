@@ -10,6 +10,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/i18n/provider";
 import type { BaseTabProps } from "../types";
 import type { EscalationConfig } from "@/lib/escalation";
 import {
@@ -25,10 +26,10 @@ const BRACKET_LABELS: Record<string, string> = {
   minimal: "< 200 DH",
 };
 
-const DECISION_LABELS: Record<string, string> = {
-  block: "Bloquer",
-  flag: "Signaler",
-  verify: "Vérifier",
+const DECISION_LABEL_KEYS: Record<string, string> = {
+  block: "decisions.block",
+  flag: "decisions.flag",
+  verify: "decisions.verify",
 };
 
 const DECISION_COLORS: Record<string, string> = {
@@ -60,6 +61,7 @@ function formatDelay(minutes: number): string {
 }
 
 export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<EscalationConfig>(
     parseConfig(settings.escalationConfig)
   );
@@ -98,12 +100,12 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
       });
       if (res.ok) {
         await onRefresh();
-        onToast("success", "Configuration d'escalade sauvegardée");
+        onToast("success", t("settings.escalation.saved"));
       } else {
-        onToast("error", "Erreur lors de la sauvegarde");
+        onToast("error", t("settings.escalation.saveError"));
       }
     } catch {
-      onToast("error", "Erreur lors de la sauvegarde");
+      onToast("error", t("settings.escalation.saveError"));
     } finally {
       setSaving(false);
     }
@@ -119,10 +121,9 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
               <Timer className="h-5 w-5 text-violet" />
             </div>
             <div>
-              <CardTitle>Escalade dynamique</CardTitle>
+              <CardTitle>{t("settings.escalation.dynamicTitle")}</CardTitle>
               <CardDescription>
-                Les commandes de valeur élevée escaladent plus vite.
-                Configurez les délais par montant et décision.
+                {t("settings.escalation.dynamicSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -132,7 +133,7 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
       {/* Presets */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Préréglages</CardTitle>
+          <CardTitle className="text-sm">{t("settings.escalation.presets")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -141,21 +142,21 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
               size="sm"
               onClick={() => applyPreset(PRESET_REACTIVE)}
             >
-              Réactif
+              {t("settings.escalation.reactive")}
             </Button>
             <Button
               variant={configsEqual(config, DEFAULT_ESCALATION_CONFIG) ? "default" : "outline"}
               size="sm"
               onClick={() => applyPreset(DEFAULT_ESCALATION_CONFIG)}
             >
-              Équilibré
+              {t("settings.escalation.balanced")}
             </Button>
             <Button
               variant={configsEqual(config, PRESET_RELAXED) ? "default" : "outline"}
               size="sm"
               onClick={() => applyPreset(PRESET_RELAXED)}
             >
-              Relaxé
+              {t("settings.escalation.relaxed")}
             </Button>
             <Button
               variant="ghost"
@@ -164,7 +165,7 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
               className="text-mist"
             >
               <RotateCcw className="h-3.5 w-3.5 mr-1" />
-              Réinitialiser
+              {t("settings.escalation.reset")}
             </Button>
           </div>
         </CardContent>
@@ -173,17 +174,17 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
       {/* Matrix Editor */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Matrice d&apos;escalade (délais en minutes)</CardTitle>
+          <CardTitle className="text-sm">{t("settings.escalation.matrixTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-silk">
-                  <th className="text-left py-2 pr-3 text-xs font-medium text-fog">Montant</th>
+                  <th className="text-left py-2 pr-3 text-xs font-medium text-fog">{t("settings.escalation.amount")}</th>
                   {(["block", "flag", "verify"] as const).map((d) => (
                     <th key={d} className={`text-center py-2 px-2 text-xs font-medium ${DECISION_COLORS[d]}`}>
-                      {DECISION_LABELS[d]}
+                      {t(DECISION_LABEL_KEYS[d])}
                     </th>
                   ))}
                 </tr>
@@ -230,7 +231,7 @@ export function EscalationTab({ settings, onRefresh, onToast }: BaseTabProps) {
             ) : (
               <Save className="mr-1.5 h-3.5 w-3.5" />
             )}
-            Sauvegarder
+            {t("common.save")}
           </Button>
         </div>
       )}

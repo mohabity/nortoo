@@ -16,7 +16,7 @@ export type TabId =
 // ── Tab metadata (for sidebar rendering) ──
 export interface TabMeta {
   id: TabId;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
 }
 

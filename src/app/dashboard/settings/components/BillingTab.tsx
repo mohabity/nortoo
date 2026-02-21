@@ -7,6 +7,8 @@ import { PlanBadge } from "@/components/plan-badge";
 import { type PlanId, type FeatureId } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import type { BaseTabProps } from "../types";
+import { useTranslation } from "@/i18n/provider";
+import { formatNumber, formatDate } from "@/lib/i18n-utils";
 
 interface PlanApiData {
   plan: PlanId;
@@ -27,6 +29,7 @@ interface PlanApiData {
 }
 
 export function BillingTab({ settings }: BaseTabProps) {
+  const { t, locale } = useTranslation();
   const [data, setData] = useState<PlanApiData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,22 +58,26 @@ export function BillingTab({ settings }: BaseTabProps) {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-lg font-semibold text-midnight">
-              Plan actuel
+              {t("billing.currentPlan")}
             </h2>
             <div className="mt-1 flex items-center gap-2">
               <PlanBadge plan={currentPlan} />
-              <span className="text-sm text-fog">{data.config.label}</span>
+              <span className="text-sm text-fog">{t(`plans.${currentPlan}.label`)}</span>
             </div>
           </div>
           {data.trial && (
             <div className="text-right">
               <p className="text-sm font-medium text-sun-deep">
                 {data.trial.daysRemaining > 0
-                  ? `${data.trial.daysRemaining} jour${data.trial.daysRemaining > 1 ? "s" : ""} restant${data.trial.daysRemaining > 1 ? "s" : ""}`
-                  : "Essai terminé"}
+                  ? data.trial.daysRemaining > 1
+                    ? t("billing.trial.daysRemainingPlural", { count: data.trial.daysRemaining })
+                    : t("billing.trial.daysRemaining", { count: data.trial.daysRemaining })
+                  : t("billing.trial.expired")}
               </p>
               <p className="text-xs text-mist">
-                Expire le {new Date(data.trial.expiresAt).toLocaleDateString("fr-FR")}
+                {t("billing.trial.expiresAt", {
+                  date: formatDate(data.trial.expiresAt, locale),
+                })}
               </p>
             </div>
           )}
@@ -81,10 +88,10 @@ export function BillingTab({ settings }: BaseTabProps) {
           {/* Orders */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-fog">Commandes ce mois</span>
+              <span className="text-xs font-medium text-fog">{t("billing.usage.ordersThisMonth")}</span>
               <span className="text-xs font-mono text-slate">
                 {data.usage.orders.current}
-                {data.usage.orders.limit > 0 ? ` / ${data.usage.orders.limit.toLocaleString("fr-FR")}` : " / ∞"}
+                {data.usage.orders.limit > 0 ? ` / ${formatNumber(data.usage.orders.limit, locale)}` : " / ∞"}
               </span>
             </div>
             <div className="h-2 rounded-full bg-snow">
@@ -105,7 +112,7 @@ export function BillingTab({ settings }: BaseTabProps) {
           {/* Users */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-fog">Utilisateurs</span>
+              <span className="text-xs font-medium text-fog">{t("billing.usage.users")}</span>
               <span className="text-xs font-mono text-slate">
                 {data.usage.users.current} / {data.usage.users.limit}
               </span>
@@ -131,7 +138,7 @@ export function BillingTab({ settings }: BaseTabProps) {
         className="flex items-center justify-center gap-2 rounded-sm border border-silk bg-snow px-6 py-4 text-sm font-medium text-slate hover:bg-mint-bg/30 hover:border-mint/30 transition-colors"
       >
         <ArrowRight className="h-4 w-4" />
-        Voir tous les plans et gérer votre abonnement →
+        {t("billing.viewPlans")}
       </Link>
     </div>
   );

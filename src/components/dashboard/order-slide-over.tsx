@@ -23,8 +23,10 @@ import { Button } from "@/components/ui/button";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { PipelineBadge } from "./pipeline-badge";
-import { formatDH, riskLabel, deliveryLabel, scoreColorClass } from "@/lib/utils";
+import { riskLabel, deliveryLabel, scoreColorClass } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
+import { formatDate, formatCurrency } from "@/lib/i18n-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/use-permissions";
 
@@ -101,7 +103,7 @@ function scoreBorderClass(score: number): string {
 
 // ── Escalation Progress ──
 
-function EscalationProgress({ start, deadline }: { start: string; deadline: string }) {
+function EscalationProgress({ start, deadline, t }: { start: string; deadline: string; t: (key: string, params?: Record<string, string | number>) => string }) {
   const [pct, setPct] = useState(0);
   const [remaining, setRemaining] = useState("");
 
@@ -117,16 +119,16 @@ function EscalationProgress({ start, deadline }: { start: string; deadline: stri
 
       const diff = d - now;
       if (diff <= 0) {
-        setRemaining("Expiré");
+        setRemaining(t("time.expired"));
       } else {
         const mins = Math.floor(diff / 60000);
-        setRemaining(mins >= 60 ? `${Math.floor(mins / 60)}h${(mins % 60).toString().padStart(2, "0")} restantes` : `${mins} min restantes`);
+        setRemaining(mins >= 60 ? t("components.orderSlideOver.hoursRemaining", { mins: `${Math.floor(mins / 60)}h${(mins % 60).toString().padStart(2, "0")}` }) : t("components.orderSlideOver.minsRemaining", { mins }));
       }
     }
     update();
     const iv = setInterval(update, 15000);
     return () => clearInterval(iv);
-  }, [start, deadline]);
+  }, [start, deadline, t]);
 
   const barColor = pct >= 90 ? "bg-rose" : pct >= 60 ? "bg-amber" : "bg-mint";
 
@@ -164,6 +166,7 @@ export function OrderSlideOver({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { can } = usePermissions();
+  const { t, locale } = useTranslation();
 
   // Override state
   const [overrideOpen, setOverrideOpen] = useState(false);
@@ -179,16 +182,16 @@ export function OrderSlideOver({
       const res = await fetch(`/api/orders/${orderId}`);
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error ?? "Erreur lors du chargement");
+        setError(json.error ?? t("components.orderSlideOver.loadError"));
         return;
       }
       setOrder(json.data);
     } catch {
-      setError("Impossible de charger la commande");
+      setError(t("components.orderSlideOver.loadErrorDetail"));
     } finally {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, t]);
 
   useEffect(() => {
     if (open && orderId) {
@@ -245,13 +248,13 @@ export function OrderSlideOver({
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-6 w-6 animate-spin text-mist" />
-            <span className="ml-2 text-sm text-fog">Chargement...</span>
+            <span className="ml-2 text-sm text-fog">{t("components.orderSlideOver.loading")}</span>
           </div>
         ) : error || !order ? (
           <div className="flex flex-col items-center justify-center h-full gap-3">
-            <p className="text-sm text-fog">{error ?? "Commande introuvable"}</p>
+            <p className="text-sm text-fog">{error ?? t("components.orderSlideOver.notFound")}</p>
             <Button variant="outline" size="sm" onClick={onClose}>
-              Fermer
+              {t("common.close")}
             </Button>
           </div>
         ) : (
@@ -273,11 +276,11 @@ export function OrderSlideOver({
                   <div className="flex items-center gap-2 mt-1">
                     <DecisionBadge decision={effectiveDecision} />
                     <span className="text-xs text-mist">
-                      Risque {riskLabel(order.riskLevel).toLowerCase()}
+                      {t("components.orderSlideOver.risk", { level: riskLabel(order.riskLevel, locale).toLowerCase() })}
                     </span>
                   </div>
                   <SheetDescription className="mt-1">
-                    {new Date(order.scoredAt).toLocaleDateString("fr-FR", {
+                    {formatDate(order.scoredAt, locale, {
                       day: "2-digit",
                       month: "long",
                       year: "numeric",
@@ -295,7 +298,7 @@ export function OrderSlideOver({
                 <ShieldCheck className="h-5 w-5 shrink-0 text-amber" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-midnight">
-                    Décision modifiée par le marchand
+                    {t("components.orderSlideOver.overrideNote")}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <DecisionBadge decision={order.overrideDecision} size="sm" />
@@ -305,7 +308,7 @@ export function OrderSlideOver({
                   </div>
                   {order.overrideAt && (
                     <p className="text-[11px] text-mist mt-0.5">
-                      {new Date(order.overrideAt).toLocaleDateString("fr-FR", {
+                      {formatDate(order.overrideAt, locale, {
                         day: "2-digit",
                         month: "short",
                         hour: "2-digit",
@@ -321,18 +324,18 @@ export function OrderSlideOver({
             {order.pipelineStatus && order.pipelineStatus !== "pending" && (
               <div className="mx-6 mt-4">
                 <h3 className="text-sm font-semibold text-midnight font-display mb-2">
-                  Pipeline
+                  {t("components.orderSlideOver.pipeline")}
                 </h3>
                 <div className="rounded-lg border border-silk bg-white p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-fog">Statut</span>
+                    <span className="text-sm text-fog">{t("components.orderSlideOver.status")}</span>
                     <PipelineBadge status={order.pipelineStatus} size="sm" />
                   </div>
                   {order.pipelineProcessedAt && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-fog">Traité à</span>
+                      <span className="text-sm text-fog">{t("components.orderSlideOver.processedAt")}</span>
                       <span className="text-sm text-slate font-mono">
-                        {new Date(order.pipelineProcessedAt).toLocaleTimeString("fr-FR", {
+                        {formatDate(order.pipelineProcessedAt, locale, {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
@@ -342,7 +345,7 @@ export function OrderSlideOver({
                   {order.escalationPriority && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-fog flex items-center gap-1">
-                        <Timer className="h-3 w-3" /> Priorité
+                        <Timer className="h-3 w-3" /> {t("components.orderSlideOver.priority")}
                       </span>
                       <span className={cn(
                         "text-xs font-mono font-bold px-1.5 py-0.5 rounded",
@@ -357,7 +360,7 @@ export function OrderSlideOver({
                   {order.reviewDeadline && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-fog flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> Délai
+                        <Clock className="h-3 w-3" /> {t("components.orderSlideOver.deadline")}
                       </span>
                       <span
                         className={cn(
@@ -367,7 +370,7 @@ export function OrderSlideOver({
                             : "text-amber"
                         )}
                       >
-                        {new Date(order.reviewDeadline).toLocaleTimeString("fr-FR", {
+                        {formatDate(order.reviewDeadline, locale, {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
@@ -379,14 +382,15 @@ export function OrderSlideOver({
                     <EscalationProgress
                       start={order.pipelineProcessedAt}
                       deadline={order.reviewDeadline}
+                      t={t}
                     />
                   )}
                   {order.escalatedAt && (
                     <div className="flex items-center gap-2 mt-1 px-2 py-1.5 bg-rose-bg rounded">
                       <AlertTriangle className="h-3.5 w-3.5 text-rose" />
                       <span className="text-xs text-rose">
-                        Escaladé le{" "}
-                        {new Date(order.escalatedAt).toLocaleDateString("fr-FR", {
+                        {t("components.orderSlideOver.escalatedAt")}{" "}
+                        {formatDate(order.escalatedAt, locale, {
                           day: "2-digit",
                           month: "short",
                           hour: "2-digit",
@@ -403,15 +407,15 @@ export function OrderSlideOver({
             {order.scoringFactors.length > 0 && (
               <div className="mx-6 mt-4">
                 <h3 className="text-sm font-semibold text-midnight font-display mb-2">
-                  Analyse du scoring
+                  {t("components.orderSlideOver.scoringAnalysis")}
                 </h3>
                 <div className="rounded-lg border border-silk overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-snow/50">
-                        <th className="px-3 py-2 text-left font-medium text-fog text-xs">Règle</th>
-                        <th className="px-3 py-2 text-center font-medium text-fog text-xs w-[60px]">Pts</th>
-                        <th className="px-3 py-2 text-left font-medium text-fog text-xs">Raison</th>
+                        <th className="px-3 py-2 text-left font-medium text-fog text-xs">{t("components.orderSlideOver.rule")}</th>
+                        <th className="px-3 py-2 text-center font-medium text-fog text-xs w-[60px]">{t("components.orderSlideOver.points")}</th>
+                        <th className="px-3 py-2 text-left font-medium text-fog text-xs">{t("components.orderSlideOver.reason")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -441,7 +445,7 @@ export function OrderSlideOver({
                         </tr>
                       ))}
                       <tr className="border-t-2 border-silk bg-snow">
-                        <td className="px-3 py-2 font-mono font-bold text-midnight text-xs">TOTAL</td>
+                        <td className="px-3 py-2 font-mono font-bold text-midnight text-xs">{t("components.orderSlideOver.total")}</td>
                         <td className="px-3 py-2 text-center">
                           <ScoreBadge score={order.fraudScore} size="sm" />
                         </td>
@@ -451,7 +455,7 @@ export function OrderSlideOver({
                   </table>
                 </div>
                 <p className="text-[11px] text-mist mt-1.5">
-                  {order.scoringVersion ?? "v1.0"} — Confiance {Math.round(order.confidence * 100)}%
+                  {order.scoringVersion ?? "v1.0"} — {t("components.orderSlideOver.confidence", { value: Math.round(order.confidence * 100) })}
                 </p>
               </div>
             )}
@@ -485,13 +489,13 @@ export function OrderSlideOver({
                     </p>
                   )}
                   <p className="mt-1.5 text-[10px] text-mist">
-                    Confiance : {expl.confidenceLabel}
+                    {t("components.orderSlideOver.confidence", { value: expl.confidenceLabel })}
                   </p>
                 </div>
               ) : (
                 <div className="mx-6 mt-4 rounded-lg border border-silk bg-snow p-3">
                   <p className="text-xs text-mist italic">
-                    Analyse non disponible pour cette commande
+                    {t("components.orderSlideOver.noAnalysis")}
                   </p>
                 </div>
               );
@@ -500,7 +504,7 @@ export function OrderSlideOver({
             {/* ── D. Order Info ── */}
             <div className="mx-6 mt-4">
               <h3 className="text-sm font-semibold text-midnight font-display mb-2">
-                Commande
+                {t("components.orderSlideOver.order")}
               </h3>
               <div className="rounded-lg border border-silk bg-white p-4 space-y-2.5">
                 <div className="flex items-center gap-2">
@@ -508,14 +512,14 @@ export function OrderSlideOver({
                   <span className="text-sm text-slate">{order.productName ?? "—"}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-fog">Montant</span>
-                  <span className="font-mono font-bold text-midnight">{formatDH(order.total)}</span>
+                  <span className="text-sm text-fog">{t("components.orderSlideOver.amount")}</span>
+                  <span className="font-mono font-bold text-midnight">{formatCurrency(order.total, locale)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-fog">Livraison</span>
+                  <span className="text-sm text-fog">{t("components.orderSlideOver.delivery")}</span>
                   <span className="text-sm text-slate">
                     <Truck className="inline h-3.5 w-3.5 mr-1 text-mist" />
-                    {deliveryLabel(order.deliveryStatus)}
+                    {deliveryLabel(order.deliveryStatus, locale)}
                   </span>
                 </div>
                 {order.shippingCity && (
@@ -546,7 +550,7 @@ export function OrderSlideOver({
                     )}
                     {order.addressConfidence != null && (
                       <span className="text-[10px] text-mist ml-1">
-                        {Math.round(order.addressConfidence * 100)}% confiance
+                        {t("components.orderSlideOver.confidence", { value: Math.round(order.addressConfidence * 100) })}
                       </span>
                     )}
                   </div>
@@ -554,7 +558,7 @@ export function OrderSlideOver({
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-mist shrink-0" />
                   <span className="text-sm text-fog">
-                    {new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                    {formatDate(order.createdAt, locale, {
                       day: "2-digit",
                       month: "long",
                       year: "numeric",
@@ -568,7 +572,7 @@ export function OrderSlideOver({
             {order.customer && (
               <div className="mx-6 mt-4">
                 <h3 className="text-sm font-semibold text-midnight font-display mb-2">
-                  Historique client
+                  {t("components.orderSlideOver.clientHistory")}
                 </h3>
                 <div className="rounded-lg border border-silk bg-snow p-4">
                   <div className="grid grid-cols-3 gap-3 text-center">
@@ -576,19 +580,19 @@ export function OrderSlideOver({
                       <p className="font-mono text-xl font-bold text-midnight">
                         {order.customer.totalOrders}
                       </p>
-                      <p className="text-[11px] text-mist">Commandes</p>
+                      <p className="text-[11px] text-mist">{t("components.orderSlideOver.historyOrders")}</p>
                     </div>
                     <div>
                       <p className="font-mono text-xl font-bold text-mint-deep">
                         {order.customer.successfulOrders}
                       </p>
-                      <p className="text-[11px] text-mist">Succès</p>
+                      <p className="text-[11px] text-mist">{t("components.orderSlideOver.historySuccess")}</p>
                     </div>
                     <div>
                       <p className="font-mono text-xl font-bold text-rose">
                         {order.customer.failedOrders}
                       </p>
-                      <p className="text-[11px] text-mist">Échecs</p>
+                      <p className="text-[11px] text-mist">{t("components.orderSlideOver.historyFailures")}</p>
                     </div>
                   </div>
                 </div>
@@ -608,7 +612,7 @@ export function OrderSlideOver({
                       setOverrideOpen(true);
                     }}
                   >
-                    Forcer l&apos;expédition
+                    {t("components.orderSlideOver.forceShip")}
                   </Button>
                   <Button
                     variant="outline"
@@ -619,23 +623,23 @@ export function OrderSlideOver({
                       setOverrideOpen(true);
                     }}
                   >
-                    Bloquer
+                    {t("components.orderSlideOver.block")}
                   </Button>
                 </div>
               ) : (
                 <div className="rounded-lg border border-silk bg-snow p-4 space-y-3">
                   <p className="text-sm font-medium text-midnight">
-                    Override →{" "}
+                    {t("components.orderSlideOver.overrideAction")}{" "}
                     <DecisionBadge decision={overrideDecision} size="sm" />
                   </p>
                   <div>
                     <label className="text-xs text-fog">
-                      Raison (optionnelle — tracée Art. 23)
+                      {t("components.orderSlideOver.overrideReasonLabel")}
                     </label>
                     <textarea
                       value={overrideReason}
                       onChange={(e) => setOverrideReason(e.target.value)}
-                      placeholder="Raison de l'override..."
+                      placeholder={t("components.orderSlideOver.overrideReasonPlaceholder")}
                       className="mt-1 w-full rounded-md border border-silk bg-white px-3 py-2 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
                       rows={2}
                     />
@@ -649,7 +653,7 @@ export function OrderSlideOver({
                       {overrideSubmitting && (
                         <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                       )}
-                      Confirmer
+                      {t("common.confirm")}
                     </Button>
                     <Button
                       variant="ghost"
@@ -659,13 +663,13 @@ export function OrderSlideOver({
                         setOverrideReason("");
                       }}
                     >
-                      Annuler
+                      {t("common.cancel")}
                     </Button>
                   </div>
                 </div>
               )}
               <p className="text-[11px] text-mist mt-2">
-                Les overrides sont tracés dans le journal d&apos;audit (Art. 23)
+                {t("components.orderSlideOver.overrideAuditNote")}
               </p>
             </div>}
           </div>

@@ -21,11 +21,14 @@ import { Button } from "@/components/ui/button";
 import { ThresholdBar } from "@/components/dashboard/threshold-bar";
 import { SCORING_PRESETS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
 import { SimulationPanel } from "./SimulationPanel";
 import { FeatureGate } from "@/components/feature-gate";
 import type { BaseTabProps } from "../types";
 
 export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
+  const { t } = useTranslation();
+
   // Editable values
   const [verify, setVerify] = useState(settings.verifyThreshold);
   const [flag, setFlag] = useState(settings.flagThreshold);
@@ -69,12 +72,12 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
       });
       if (res.ok) {
         await onRefresh();
-        onToast("success", "Paramètres de scoring sauvegardés");
+        onToast("success", t("settings.scoring.saved"));
       } else {
-        onToast("error", "Erreur lors de la sauvegarde");
+        onToast("error", t("settings.scoring.saveError"));
       }
     } catch {
-      onToast("error", "Erreur lors de la sauvegarde");
+      onToast("error", t("settings.scoring.saveError"));
     } finally {
       setSaving(false);
     }
@@ -119,9 +122,9 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div className="flex items-center gap-2">
             <Sliders className="h-5 w-5 text-ocean" />
             <div>
-              <CardTitle className="text-base">Seuils de scoring</CardTitle>
+              <CardTitle className="text-base">{t("settings.scoring.thresholds")}</CardTitle>
               <CardDescription>
-                Ajustez les seuils de décision pour le scoring automatique
+                {t("settings.scoring.thresholdsSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -137,10 +140,10 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate">
-                    Seuil Vérifier
+                    {t("settings.scoring.verifyThreshold")}
                   </p>
                   <p className="text-xs text-mist">
-                    Score au-dessus → vérification requise
+                    {t("settings.scoring.verifyHint")}
                   </p>
                 </div>
                 <span className="font-mono text-lg font-bold text-amber w-10 text-right">
@@ -162,10 +165,10 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate">
-                    Seuil Signaler
+                    {t("settings.scoring.flagThreshold")}
                   </p>
                   <p className="text-xs text-mist">
-                    Score au-dessus → commande signalée
+                    {t("settings.scoring.flagHint")}
                   </p>
                 </div>
                 <span className="font-mono text-lg font-bold text-rose w-10 text-right">
@@ -187,10 +190,10 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate">
-                    Seuil Bloquer
+                    {t("settings.scoring.blockThreshold")}
                   </p>
                   <p className="text-xs text-mist">
-                    Score au-dessus → commande bloquée
+                    {t("settings.scoring.blockHint")}
                   </p>
                 </div>
                 <span className="font-mono text-lg font-bold text-violet w-10 text-right">
@@ -216,9 +219,9 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-mint" />
             <div>
-              <CardTitle className="text-base">Préréglages</CardTitle>
+              <CardTitle className="text-base">{t("settings.scoring.presets")}</CardTitle>
               <CardDescription>
-                Configurations prédéfinies — cliquez pour appliquer
+                {t("settings.scoring.presetsSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -242,12 +245,12 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 >
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-midnight text-sm">
-                      {preset.name}
+                      {t(`presets.${key}.name`)}
                     </p>
                     {active && <Check className="h-4 w-4 text-mint-deep" />}
                   </div>
                   <p className="mt-1 text-xs text-fog">
-                    {preset.description}
+                    {t(`presets.${key}.description`)}
                   </p>
                   <p className="mt-2 font-mono text-xs text-mist">
                     {preset.verify} / {preset.flag} / {preset.block}
@@ -269,7 +272,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
             disabled={!hasChanges}
           >
             <Play className="mr-2 h-4 w-4" />
-            Simuler l&apos;impact sur vos commandes
+            {t("settings.scoring.simulate")}
           </Button>
         )}
 
@@ -296,9 +299,9 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-5 w-5 text-violet" />
             <div>
-              <CardTitle className="text-base">Blocage automatique</CardTitle>
+              <CardTitle className="text-base">{t("settings.scoring.autoBlock")}</CardTitle>
               <CardDescription>
-                Gestion des commandes à haut risque
+                {t("settings.scoring.autoBlockSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -307,13 +310,10 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <p className="text-sm text-slate">
-                Les commandes avec un score ≥{" "}
-                <span className="font-mono font-bold">{block}</span> (seuil
-                bloquer) seront automatiquement annulées.
+                {t("settings.scoring.autoBlockDescription", { threshold: String(block) })}
               </p>
               <p className="mt-1 text-xs text-mist">
-                Désactivez pour les convertir en signalements manuels à
-                vérifier.
+                {t("settings.scoring.autoBlockDisabledHint")}
               </p>
             </div>
             <button
@@ -333,18 +333,10 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
           </div>
           <div className="mt-3 rounded-xs bg-snow px-3 py-2">
             <p className="text-xs text-fog">
-              {autoBlock ? (
-                <>
-                  <span className="font-medium text-mint-deep">Actif</span> —
-                  Les commandes à risque critique sont bloquées automatiquement
-                </>
-              ) : (
-                <>
-                  <span className="font-medium text-mist">Inactif</span> —
-                  Les commandes à risque critique sont signalées pour revue
-                  manuelle
-                </>
-              )}
+              {autoBlock
+                ? t("settings.scoring.autoBlockActive")
+                : t("settings.scoring.autoBlockInactive")
+              }
             </p>
           </div>
         </CardContent>
@@ -357,7 +349,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div>
               {hasChanges && (
                 <p className="text-sm text-fog">
-                  Modifications non sauvegardées
+                  {t("settings.scoring.unsavedChanges")}
                 </p>
               )}
             </div>
@@ -371,7 +363,7 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
               ) : (
                 <Save className="mr-2 h-4 w-4" />
               )}
-              Enregistrer
+              {t("common.save")}
             </Button>
           </div>
         </div>

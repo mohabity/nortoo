@@ -23,6 +23,8 @@ import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
 import { OrderCard } from "@/components/dashboard/order-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { QuickStartChecklist } from "@/components/dashboard/quick-start-checklist";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency, formatNumber } from "@/lib/i18n-utils";
 
 // ── Savings data type ──
 interface SavingsData {
@@ -140,6 +142,7 @@ const recentOrders: OrderRow[] = [
 ];
 
 function UrgentCountdown({ deadline }: { deadline: string }) {
+  const { t } = useTranslation();
   const [label, setLabel] = useState("");
   const [overdue, setOverdue] = useState(false);
 
@@ -147,7 +150,7 @@ function UrgentCountdown({ deadline }: { deadline: string }) {
     function update() {
       const diff = new Date(deadline).getTime() - Date.now();
       if (diff <= 0) {
-        setLabel("expir\u00E9");
+        setLabel(t("time.expired"));
         setOverdue(true);
         return;
       }
@@ -179,6 +182,7 @@ const BANNER_DISMISS_KEY = "savings-banner-dismissed";
 const BANNER_DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export default function DashboardPage() {
+  const { t, locale } = useTranslation();
   const [savings, setSavings] = useState<SavingsData | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(true); // hidden by default until checked
   const [urgentOrders, setUrgentOrders] = useState<UrgentOrder[]>([]);
@@ -228,10 +232,10 @@ export default function DashboardPage() {
       {/* Page title */}
       <div>
         <h1 className="font-display text-2xl font-bold text-midnight">
-          Vue d&apos;ensemble
+          {t("dashboard.title")}
         </h1>
         <p className="text-sm text-fog">
-          Résumé de votre activité anti-fraude
+          {t("dashboard.subtitle")}
         </p>
       </div>
 
@@ -244,15 +248,15 @@ export default function DashboardPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-mint-deep">
-                Économies ce mois
+                {t("dashboard.savings.title")}
               </p>
               <p className="font-display text-3xl font-bold text-midnight mt-1">
-                {savings.totalSaved.toLocaleString("fr-FR")}{" "}
-                <span className="text-base font-semibold text-fog">DH</span>
+                {formatNumber(savings.totalSaved, locale)}{" "}
+                <span className="text-base font-semibold text-fog">{t("currency.dh")}</span>
               </p>
               {savings.roiMultiple && (
                 <p className="text-xs text-fog mt-1">
-                  ROI : {savings.roiMultiple}× votre abonnement
+                  {t("dashboard.savings.roi", { multiple: savings.roiMultiple })}
                 </p>
               )}
             </div>
@@ -273,7 +277,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <Timer className="h-4 w-4 text-rose" />
               <CardTitle className="text-sm">
-                Commandes urgentes ({urgentOrders.length})
+                {t("dashboard.urgentOrders.title")} ({urgentOrders.length})
               </CardTitle>
             </div>
           </CardHeader>
@@ -308,14 +312,14 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="font-mono text-xs font-semibold text-midnight">
-                      {o.total.toLocaleString("fr-FR")} DH
+                      {formatNumber(o.total, locale)} {t("currency.dh")}
                     </span>
                     {o.reviewDeadline && (
                       <UrgentCountdown deadline={o.reviewDeadline} />
                     )}
                     {o.pipelineStatus === "escalated" && (
                       <span className="text-[10px] font-medium text-rose bg-rose-bg px-1.5 py-0.5 rounded">
-                        Escaladé
+                        {t("dashboard.urgentOrders.escalated")}
                       </span>
                     )}
                   </div>
@@ -330,15 +334,15 @@ export default function DashboardPage() {
       <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x-mandatory pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0 lg:overflow-visible lg:grid lg:grid-cols-4 lg:gap-4">
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
-            title="Économies estimées"
+            title={t("dashboard.kpi.savings")}
             value={
               savings
-                ? `${savings.totalSaved.toLocaleString("fr-FR")} DH`
+                ? `${formatNumber(savings.totalSaved, locale)} ${t("currency.dh")}`
                 : "—"
             }
             change={
               savings
-                ? `${savings.deltaPercent >= 0 ? "+" : ""}${savings.deltaPercent}% vs période précédente`
+                ? t("dashboard.changes.vsPreviousPeriod", { delta: `${savings.deltaPercent >= 0 ? "+" : ""}${savings.deltaPercent}` })
                 : undefined
             }
             changeType={
@@ -354,9 +358,9 @@ export default function DashboardPage() {
         </div>
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
-            title="Score moyen"
+            title={t("dashboard.kpi.avgScore")}
             value="38"
-            change="-3 pts vs semaine passée"
+            change={t("dashboard.changes.ptsVsLastWeek", { pts: "-3" })}
             changeType="positive"
             icon={TrendingUp}
             iconColor="text-mint"
@@ -364,9 +368,9 @@ export default function DashboardPage() {
         </div>
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
-            title="Taux de livraison"
+            title={t("dashboard.kpi.deliveryRate")}
             value="78%"
-            change="+5% ce mois"
+            change={t("dashboard.changes.thisMonth", { value: "+5%" })}
             changeType="positive"
             icon={Truck}
             iconColor="text-mint"
@@ -374,9 +378,9 @@ export default function DashboardPage() {
         </div>
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
-            title="Bloquées"
+            title={t("dashboard.kpi.blocked")}
             value="4"
-            change="6.9% du total"
+            change={t("dashboard.changes.ofTotal", { value: "6.9%" })}
             changeType="neutral"
             icon={ShieldAlert}
             iconColor="text-violet"
@@ -387,7 +391,7 @@ export default function DashboardPage() {
       {/* Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Tendance des commandes</CardTitle>
+          <CardTitle>{t("dashboard.chart.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[200px] lg:h-[300px]">
@@ -428,7 +432,7 @@ export default function DashboardPage() {
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorCommandes)"
-                  name="Commandes"
+                  name={t("dashboard.chart.orders")}
                 />
                 <Area
                   type="monotone"
@@ -437,7 +441,7 @@ export default function DashboardPage() {
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#colorScore)"
-                  name="Score moyen"
+                  name={t("dashboard.chart.avgScore")}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -448,7 +452,7 @@ export default function DashboardPage() {
       {/* Recent Orders */}
       <Card>
         <CardHeader>
-          <CardTitle>Commandes récentes</CardTitle>
+          <CardTitle>{t("dashboard.recentOrders")}</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Desktop: table */}

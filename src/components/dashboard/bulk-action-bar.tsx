@@ -1,6 +1,7 @@
 "use client";
 
 import { X, AlertTriangle } from "lucide-react";
+import { useTranslation } from "@/i18n/provider";
 
 interface BulkActionBarProps {
   selectedCount: number;
@@ -17,11 +18,13 @@ export function BulkActionBar({
   onForceBlock,
   onClear,
 }: BulkActionBarProps) {
+  const { t } = useTranslation();
+
   return (
     <div
       className="fixed bottom-16 left-0 right-0 lg:bottom-0 lg:left-64 z-40 animate-in slide-in-from-bottom-4 duration-200"
       role="toolbar"
-      aria-label="Actions groupées"
+      aria-label={t("orders.bulk.groupedActions")}
     >
       <div
         className="bg-[#0B0F1A] text-white rounded-t-[14px] px-4 py-3 lg:px-6 lg:py-3"
@@ -33,17 +36,19 @@ export function BulkActionBar({
             <button
               onClick={onClear}
               className="text-white/60 hover:text-white transition-colors"
-              aria-label="Annuler la sélection"
+              aria-label={t("orders.bulk.cancelSelection")}
             >
               <X className="h-4 w-4" />
             </button>
             <span className="text-[0.85rem] font-semibold">
-              {selectedCount} commande{selectedCount > 1 ? "s" : ""} sélectionnée{selectedCount > 1 ? "s" : ""}
+              {selectedCount > 1
+                ? t("orders.bulk.selectedCountPlural", { count: selectedCount })
+                : t("orders.bulk.selectedCount", { count: selectedCount })}
             </span>
             {maxExceeded && (
               <span className="flex items-center gap-1 text-xs text-amber-400">
                 <AlertTriangle className="h-3.5 w-3.5" />
-                Max 50 commandes par action
+                {t("orders.bulk.maxExceeded")}
               </span>
             )}
           </div>
@@ -53,20 +58,20 @@ export function BulkActionBar({
               disabled={maxExceeded}
               className="inline-flex items-center gap-1.5 rounded-[10px] bg-mint px-4 py-2 text-sm font-semibold text-[#0B0F1A] transition-colors hover:bg-mint-deep disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Forcer expédition
+              {t("orders.bulk.forceShip")}
             </button>
             <button
               onClick={onForceBlock}
               disabled={maxExceeded}
               className="inline-flex items-center gap-1.5 rounded-[10px] bg-rose px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Forcer blocage
+              {t("orders.bulk.forceBlock")}
             </button>
             <button
               onClick={onClear}
               className="px-3 py-2 text-sm text-white/60 hover:text-white transition-colors"
             >
-              Annuler
+              {t("common.cancel")}
             </button>
           </div>
         </div>
@@ -75,12 +80,14 @@ export function BulkActionBar({
         <div className="lg:hidden space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[0.85rem] font-semibold">
-              {selectedCount} commande{selectedCount > 1 ? "s" : ""} sélectionnée{selectedCount > 1 ? "s" : ""}
+              {selectedCount > 1
+                ? t("orders.bulk.selectedCountPlural", { count: selectedCount })
+                : t("orders.bulk.selectedCount", { count: selectedCount })}
             </span>
             <button
               onClick={onClear}
               className="text-white/60 hover:text-white transition-colors"
-              aria-label="Annuler la sélection"
+              aria-label={t("orders.bulk.cancelSelection")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -88,7 +95,7 @@ export function BulkActionBar({
           {maxExceeded && (
             <span className="flex items-center gap-1 text-xs text-amber-400">
               <AlertTriangle className="h-3.5 w-3.5" />
-              Max 50 commandes par action
+              {t("orders.bulk.maxExceeded")}
             </span>
           )}
           <div className="flex gap-2">
@@ -97,14 +104,14 @@ export function BulkActionBar({
               disabled={maxExceeded}
               className="flex-1 rounded-[10px] bg-mint py-2.5 text-sm font-semibold text-[#0B0F1A] transition-colors hover:bg-mint-deep disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Forcer expédition
+              {t("orders.bulk.forceShip")}
             </button>
             <button
               onClick={onForceBlock}
               disabled={maxExceeded}
               className="flex-1 rounded-[10px] bg-rose py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Forcer blocage
+              {t("orders.bulk.forceBlock")}
             </button>
           </div>
         </div>

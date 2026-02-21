@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
 
 interface OnboardingData {
   completed: boolean;
@@ -28,6 +29,7 @@ export function QuickStartChecklist() {
   const [data, setData] = useState<OnboardingData | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Check sessionStorage for dismissal
@@ -55,14 +57,13 @@ export function QuickStartChecklist() {
   if (!data.completed || data.realOrderCount >= 10) return null;
 
   const items: CheckItem[] = [
-    { label: "Boutique connectée", done: data.storeConnected },
-    { label: "Scoring configuré", done: data.scoringConfigured },
-    { label: "Commande test envoyée", done: data.testOrderSent },
+    { label: t("components.quickStart.storeConnected"), done: data.storeConnected },
+    { label: t("components.quickStart.scoringConfigured"), done: data.scoringConfigured },
+    { label: t("components.quickStart.testOrderSent"), done: data.testOrderSent },
     {
-      label: "Recevoir votre première vraie commande",
+      label: t("components.quickStart.firstRealOrder"),
       done: data.realOrderCount > 0,
-      pending:
-        "En attente... Les commandes COD seront scorées automatiquement dès qu'un client passe commande.",
+      pending: t("components.quickStart.firstRealOrderHint"),
     },
   ];
 
@@ -92,11 +93,11 @@ export function QuickStartChecklist() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Rocket className="h-4 w-4 text-mint-deep" />
-            <CardTitle className="text-sm">Démarrage rapide</CardTitle>
+            <CardTitle className="text-sm">{t("components.quickStart.title")}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium bg-mint-bg text-mint-deep px-2 py-0.5 rounded-full">
-              {completedCount}/{items.length} complété
+              {t("components.quickStart.progress", { completed: completedCount, total: items.length })}
             </span>
             <button
               onClick={handleDismiss}

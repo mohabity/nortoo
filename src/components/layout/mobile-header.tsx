@@ -3,28 +3,31 @@
 import { usePathname } from "next/navigation";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { WebhookHealthDot } from "@/components/dashboard/webhook-health-dot";
+import { useTranslation } from "@/i18n/provider";
 
-const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Vue d'ensemble",
-  "/dashboard/orders": "Commandes",
-  "/dashboard/analytics": "Analytique",
-  "/dashboard/settings": "Paramètres",
-  "/dashboard/compliance": "Conformité",
+const PAGE_TITLE_KEYS: Record<string, string> = {
+  "/dashboard": "nav.overview",
+  "/dashboard/orders": "nav.orders",
+  "/dashboard/analytics": "nav.analytics",
+  "/dashboard/settings": "nav.settings",
+  "/dashboard/compliance": "nav.compliance",
 };
 
-function getPageTitle(pathname: string): string {
+function getPageTitleKey(pathname: string): string {
   // Exact match first
-  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  if (PAGE_TITLE_KEYS[pathname]) return PAGE_TITLE_KEYS[pathname];
   // Prefix match (e.g. /dashboard/orders/123)
-  for (const [path, title] of Object.entries(PAGE_TITLES)) {
-    if (pathname.startsWith(path) && path !== "/dashboard") return title;
+  for (const [path, key] of Object.entries(PAGE_TITLE_KEYS)) {
+    if (pathname.startsWith(path) && path !== "/dashboard") return key;
   }
-  return "nortoo";
+  return "";
 }
 
 export function MobileHeader() {
   const pathname = usePathname();
-  const title = getPageTitle(pathname);
+  const { t } = useTranslation();
+  const titleKey = getPageTitleKey(pathname);
+  const title = titleKey ? t(titleKey) : "nortoo";
 
   return (
     <header

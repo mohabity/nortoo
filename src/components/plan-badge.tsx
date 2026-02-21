@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { type PlanId, PLAN_LABELS } from "@/lib/plans";
+import { type PlanId } from "@/lib/plans";
+import { useTranslation } from "@/i18n/provider";
 
 const PLAN_COLORS: Record<PlanId, { bg: string; text: string }> = {
   trial: { bg: "bg-sun/15", text: "text-sun-deep" },
@@ -20,9 +21,10 @@ interface PlanBadgeProps {
  * Used in header, billing tab, etc.
  */
 export function PlanBadge({ plan, className }: PlanBadgeProps) {
+  const { t } = useTranslation();
   const planId = plan as PlanId;
   const colors = PLAN_COLORS[planId] ?? PLAN_COLORS.trial;
-  const label = PLAN_LABELS[planId] ?? plan;
+  const label = t(`plans.${planId}.name`);
 
   return (
     <span

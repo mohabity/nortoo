@@ -7,7 +7,7 @@ export const PLANS = {
   scale: { name: "Scale", price: 1499, orders: 10000, label: "1 499 DH/mois" },
 } as const;
 
-// ═══ Scoring Presets ═══
+// ═══ Scoring Presets (French names — for i18n use t("presets.{id}.name") instead) ═══
 export const SCORING_PRESETS = {
   conservative: {
     name: "Conservateur",

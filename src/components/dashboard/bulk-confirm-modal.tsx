@@ -5,7 +5,9 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { CheckCircle2, ShieldBan, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DecisionBadge } from "./decision-badge";
-import { formatDH, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency } from "@/lib/i18n-utils";
 import type { OrderRow } from "./order-table";
 
 interface BulkConfirmModalProps {
@@ -27,6 +29,7 @@ export function BulkConfirmModal({
   onConfirm,
   isSubmitting,
 }: BulkConfirmModalProps) {
+  const { t, locale } = useTranslation();
   const [reason, setReason] = useState("");
 
   const isShip = action === "SHIP";
@@ -69,27 +72,31 @@ export function BulkConfirmModal({
             </div>
             <Dialog.Title className="font-display font-semibold text-midnight text-lg">
               {isShip
-                ? `Forcer l'expédition de ${count} commande${count > 1 ? "s" : ""}`
-                : `Bloquer ${count} commande${count > 1 ? "s" : ""}`}
+                ? (count > 1
+                    ? t("components.bulkConfirm.forceShipTitlePlural", { count })
+                    : t("components.bulkConfirm.forceShipTitle", { count }))
+                : (count > 1
+                    ? t("components.bulkConfirm.blockTitlePlural", { count })
+                    : t("components.bulkConfirm.blockTitle", { count }))}
             </Dialog.Title>
           </div>
 
           <Dialog.Description className="text-sm text-fog mb-5">
             {isShip
-              ? `Ces commandes seront marquées comme "Override — Expédition forcée" et ne seront plus bloquées par le scoring automatique.`
-              : `Ces commandes seront marquées comme "Override — Blocage forcé". Elles ne seront pas expédiées.`}
+              ? t("components.bulkConfirm.shipWarning")
+              : t("components.bulkConfirm.blockWarning")}
           </Dialog.Description>
 
           {/* Reason textarea */}
           <div className="mb-5">
             <label className="text-sm font-medium text-slate block mb-1.5">
-              Raison (optionnel)
+              {t("components.bulkConfirm.reasonLabel")}
             </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={2}
-              placeholder="Ex: Client confirmé par téléphone"
+              placeholder={t("components.bulkConfirm.reasonPlaceholder")}
               className="w-full rounded-lg border border-silk bg-snow px-3 py-2 text-sm text-slate placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30 resize-none"
             />
           </div>
@@ -97,7 +104,7 @@ export function BulkConfirmModal({
           {/* Summary breakdown */}
           <div className="mb-5 rounded-lg border border-silk bg-snow p-4 space-y-2">
             <p className="text-xs font-medium text-mist uppercase tracking-wider mb-2">
-              Résumé
+              {t("components.bulkConfirm.summary")}
             </p>
             {DECISION_KEYS.map((key) => {
               const entry = breakdown.get(key);
@@ -110,19 +117,21 @@ export function BulkConfirmModal({
                   <div className="flex items-center gap-2">
                     <DecisionBadge decision={key} size="sm" />
                     <span className="text-fog">
-                      {entry.count} commande{entry.count > 1 ? "s" : ""}
+                      {entry.count > 1
+                        ? t("components.bulkConfirm.orderCountPlural", { count: entry.count })
+                        : t("components.bulkConfirm.orderCount", { count: entry.count })}
                     </span>
                   </div>
                   <span className="font-mono text-slate">
-                    {formatDH(entry.total)}
+                    {formatCurrency(entry.total, locale)}
                   </span>
                 </div>
               );
             })}
             <div className="border-t border-silk pt-2 mt-2 flex items-center justify-between text-sm font-medium">
-              <span className="text-midnight">Montant total</span>
+              <span className="text-midnight">{t("components.bulkConfirm.totalAmount")}</span>
               <span className="font-mono text-midnight">
-                {formatDH(totalAmount)}
+                {formatCurrency(totalAmount, locale)}
               </span>
             </div>
           </div>
@@ -131,7 +140,7 @@ export function BulkConfirmModal({
           <div className="flex justify-end gap-3">
             <Dialog.Close asChild>
               <Button variant="outline" disabled={isSubmitting}>
-                Annuler
+                {t("common.cancel")}
               </Button>
             </Dialog.Close>
             <Button
@@ -146,7 +155,7 @@ export function BulkConfirmModal({
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {isShip ? "Confirmer l'expédition" : "Confirmer le blocage"}
+              {isShip ? t("components.bulkConfirm.confirmShip") : t("components.bulkConfirm.confirmBlock")}
             </Button>
           </div>
         </Dialog.Content>

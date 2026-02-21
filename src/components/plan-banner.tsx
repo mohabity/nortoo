@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Clock, TrendingUp, X } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
 
 interface PlanInfo {
   plan: string;
@@ -21,6 +22,7 @@ interface PlanInfo {
  * - Orders >= 100% of limit
  */
 export function PlanBanner() {
+  const { t } = useTranslation();
   const [data, setData] = useState<PlanInfo | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
@@ -43,29 +45,33 @@ export function PlanBanner() {
   if (data.trial && data.trial.daysRemaining === 0) {
     variant = "error";
     icon = <AlertTriangle className="h-4 w-4 shrink-0" />;
-    message = "Votre période d'essai est terminée. Passez à un plan payant pour continuer.";
-    cta = "Voir les plans";
+    message = t("components.planBanner.trialExpired");
+    cta = t("components.planBanner.seePlans");
   }
   // Trial <=3 days
   else if (data.trial && data.trial.daysRemaining <= 3 && data.trial.daysRemaining > 0) {
     variant = "warning";
     icon = <Clock className="h-4 w-4 shrink-0" />;
-    message = `Il reste ${data.trial.daysRemaining} jour${data.trial.daysRemaining > 1 ? "s" : ""} d'essai. Passez à un plan payant pour ne rien perdre.`;
-    cta = "Voir les plans";
+    message = t("components.planBanner.trialEnding", { count: data.trial.daysRemaining });
+    cta = t("components.planBanner.seePlans");
   }
   // Orders >= 100% of limit
   else if (data.usage.orders.limit > 0 && data.usage.orders.percent >= 100) {
     variant = "info";
     icon = <TrendingUp className="h-4 w-4 shrink-0" />;
-    message = `Vous avez atteint la limite de ${data.usage.orders.limit} commandes/mois. Vos commandes sont toujours scorées, mais pensez à upgrader.`;
-    cta = "Voir les plans";
+    message = t("components.planBanner.limitReached", { limit: data.usage.orders.limit });
+    cta = t("components.planBanner.seePlans");
   }
   // Orders >= 80% of limit
   else if (data.usage.orders.limit > 0 && data.usage.orders.percent >= 80) {
     variant = "warning";
     icon = <TrendingUp className="h-4 w-4 shrink-0" />;
-    message = `${data.usage.orders.current}/${data.usage.orders.limit} commandes ce mois (${data.usage.orders.percent}%). Pensez à upgrader si nécessaire.`;
-    cta = "Voir les plans";
+    message = t("components.planBanner.limitApproaching", {
+      current: data.usage.orders.current,
+      limit: data.usage.orders.limit,
+      percent: data.usage.orders.percent,
+    });
+    cta = t("components.planBanner.seePlans");
   }
 
   if (!variant) return null;

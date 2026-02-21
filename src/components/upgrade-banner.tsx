@@ -5,12 +5,12 @@ import { ArrowUpRight } from "lucide-react";
 import { usePlan } from "@/hooks/use-plan";
 import {
   PLAN_CONFIGS,
-  FEATURE_LABELS,
   minimumPlanFor,
   type FeatureId,
   type PlanId,
 } from "@/lib/plans";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
 
 const PLAN_COLORS: Record<PlanId, { bg: string; text: string; btn: string }> = {
   trial: { bg: "bg-slate/5", text: "text-slate", btn: "bg-slate text-white hover:bg-slate/90" },
@@ -31,6 +31,7 @@ export function UpgradeBanner({
   className,
 }: UpgradeBannerProps) {
   const { can } = usePlan();
+  const { t } = useTranslation();
 
   // Don't render if the feature is available
   if (can(feature)) return null;
@@ -38,7 +39,8 @@ export function UpgradeBanner({
   const requiredPlan = minimumPlanFor(feature);
   const config = PLAN_CONFIGS[requiredPlan];
   const colors = PLAN_COLORS[requiredPlan];
-  const featureLabel = FEATURE_LABELS[feature];
+  const featureLabel = t(`features.${feature}`);
+  const planName = t(`plans.${requiredPlan}.name`);
 
   if (compact) {
     return (
@@ -59,7 +61,7 @@ export function UpgradeBanner({
           ⬆
         </span>
         <span>
-          Plan <strong className="text-slate">{config.name}</strong> requis
+          {t("components.upgradeBanner.planRequired", { plan: planName })}
         </span>
         <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
       </Link>
@@ -85,9 +87,12 @@ export function UpgradeBanner({
         </div>
         <div>
           <p className="text-sm font-medium text-midnight">
-            {featureLabel} nécessite le plan {config.name}
+            {t("components.upgradeBanner.featureRequires", {
+              feature: featureLabel,
+              plan: planName,
+            })}
           </p>
-          <p className="text-xs text-mist mt-0.5">{config.label}</p>
+          <p className="text-xs text-mist mt-0.5">{t(`plans.${requiredPlan}.label`)}</p>
         </div>
       </div>
       <Link
@@ -97,7 +102,7 @@ export function UpgradeBanner({
           colors.btn
         )}
       >
-        Passer au {config.name} →
+        {t("components.upgradeBanner.upgradeTo", { plan: planName })}
       </Link>
     </div>
   );

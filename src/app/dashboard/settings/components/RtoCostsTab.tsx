@@ -10,9 +10,12 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency } from "@/lib/i18n-utils";
 import type { BaseTabProps } from "../types";
 
 export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
+  const { t, locale } = useTranslation();
   const [fixedCost, setFixedCost] = useState(settings.rtoCostFixed);
   const [variablePercent, setVariablePercent] = useState(
     Math.round(settings.rtoCostPercent * 100)
@@ -46,12 +49,12 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
       });
       if (res.ok) {
         await onRefresh();
-        onToast("success", "Coûts RTO sauvegardés");
+        onToast("success", t("settings.rtoCosts.saved"));
       } else {
-        onToast("error", "Erreur lors de la sauvegarde");
+        onToast("error", t("settings.rtoCosts.saveError"));
       }
     } catch {
-      onToast("error", "Erreur lors de la sauvegarde");
+      onToast("error", t("settings.rtoCosts.saveError"));
     } finally {
       setSaving(false);
     }
@@ -66,11 +69,10 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <Coins className="h-5 w-5 text-amber" />
             <div>
               <CardTitle className="text-base">
-                Coût d&apos;un retour (RTO)
+                {t("settings.rtoCosts.returnCost")}
               </CardTitle>
               <CardDescription>
-                Ces valeurs sont utilisées pour calculer les économies
-                estimées sur votre tableau de bord
+                {t("settings.rtoCosts.returnCostSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -81,10 +83,10 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate">
-                  Coût fixe par retour
+                  {t("settings.rtoCosts.fixedCost")}
                 </p>
                 <p className="text-xs text-mist">
-                  Frais de livraison aller-retour, manutention, etc.
+                  {t("settings.rtoCosts.fixedCostHint")}
                 </p>
               </div>
               <div className="flex items-center gap-1">
@@ -110,11 +112,10 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate">
-                  Coût variable
+                  {t("settings.rtoCosts.variableCost")}
                 </p>
                 <p className="text-xs text-mist">
-                  Pourcentage du montant de la commande (marge perdue, frais
-                  stock)
+                  {t("settings.rtoCosts.variableCostHint")}
                 </p>
               </div>
               <div className="flex items-center gap-1">
@@ -140,24 +141,23 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
       {/* ═══ Live Preview ═══ */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Aperçu</CardTitle>
+          <CardTitle className="text-base">{t("settings.rtoCosts.preview")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-sm bg-snow border border-silk p-4">
             <p className="text-sm text-slate">
-              Exemple : commande de{" "}
-              <span className="font-mono font-bold">{exampleAmount} DH</span>
+              {t("settings.rtoCosts.example", { amount: formatCurrency(exampleAmount, locale) })}
             </p>
             <p className="mt-2 text-lg font-display font-bold text-midnight">
-              Coût RTO estimé ={" "}
+              {t("settings.rtoCosts.estimatedCost")} ={" "}
               <span className="text-amber">
-                {Math.round(previewCost)} DH
+                {formatCurrency(previewCost, locale)}
               </span>
             </p>
             <p className="mt-1 text-xs text-mist">
-              {fixedCost} DH (fixe) + {exampleAmount} × {variablePercent}%
-              = {Math.round(exampleAmount * (variablePercent / 100))} DH
-              (variable)
+              {formatCurrency(fixedCost, locale)} ({t("settings.rtoCosts.fixed")}) + {exampleAmount} × {variablePercent}%
+              = {formatCurrency(exampleAmount * (variablePercent / 100), locale)}
+              ({t("settings.rtoCosts.variable")})
             </p>
           </div>
         </CardContent>
@@ -169,7 +169,7 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div>
             {hasChanges && (
               <p className="text-sm text-fog">
-                Modifications non sauvegardées
+                {t("settings.scoring.unsavedChanges")}
               </p>
             )}
           </div>
@@ -183,7 +183,7 @@ export function RtoCostsTab({ settings, onRefresh, onToast }: BaseTabProps) {
             ) : (
               <Save className="mr-2 h-4 w-4" />
             )}
-            Enregistrer
+            {t("common.save")}
           </Button>
         </div>
       </div>

@@ -21,52 +21,50 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/i18n/provider";
+import { formatDate } from "@/lib/i18n-utils";
 import type { BaseTabProps } from "../types";
 
 // ── Data right action ──
-interface RightAction {
+interface RightActionDef {
   icon: React.ElementType;
-  title: string;
-  description: string;
-  buttonLabel: string;
+  titleKey: string;
+  descriptionKey: string;
+  buttonLabelKey: string;
   article: string;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost";
 }
 
-const DATA_RIGHTS: RightAction[] = [
+const DATA_RIGHTS: RightActionDef[] = [
   {
     icon: Download,
-    title: "Exporter mes données",
-    description:
-      "Obtenez une copie de toutes les données personnelles que nous détenons à votre sujet.",
-    buttonLabel: "Exporter",
+    titleKey: "settings.privacy.exportTitle",
+    descriptionKey: "settings.privacy.exportDescription",
+    buttonLabelKey: "settings.privacy.exportButton",
     article: "Art. 7",
     variant: "outline",
   },
   {
     icon: Pencil,
-    title: "Rectifier mes données",
-    description:
-      "Demandez la correction d'informations inexactes ou incomplètes.",
-    buttonLabel: "Demander",
+    titleKey: "settings.privacy.rectifyTitle",
+    descriptionKey: "settings.privacy.rectifyDescription",
+    buttonLabelKey: "settings.privacy.rectifyButton",
     article: "Art. 7",
     variant: "outline",
   },
   {
     icon: Trash2,
-    title: "Supprimer mes données",
-    description:
-      "Demandez la suppression définitive de vos données personnelles.",
-    buttonLabel: "Demander la suppression",
+    titleKey: "settings.privacy.deleteTitle",
+    descriptionKey: "settings.privacy.deleteDescription",
+    buttonLabelKey: "settings.privacy.deleteButton",
     article: "Art. 8",
     variant: "destructive",
   },
   {
     icon: Ban,
-    title: "Exercer mon droit d'opposition",
-    description:
-      "Opposez-vous au traitement de vos données à des fins de scoring automatisé.",
-    buttonLabel: "S'opposer",
+    titleKey: "settings.privacy.objectTitle",
+    descriptionKey: "settings.privacy.objectDescription",
+    buttonLabelKey: "settings.privacy.objectButton",
     article: "Art. 9",
     variant: "outline",
   },
@@ -76,33 +74,34 @@ const DATA_RIGHTS: RightAction[] = [
 const SUB_PROCESSORS = [
   {
     name: "Neon",
-    service: "Base de données PostgreSQL",
+    serviceKey: "settings.privacy.neonService",
     location: "EU Frankfurt",
-    purpose: "Stockage des commandes et profils",
+    purposeKey: "settings.privacy.neonPurpose",
   },
   {
     name: "Vercel",
-    service: "Hébergement application",
+    serviceKey: "settings.privacy.vercelService",
     location: "EU Frankfurt (fra1)",
-    purpose: "Exécution du code applicatif",
+    purposeKey: "settings.privacy.vercelPurpose",
   },
   {
     name: "Upstash",
-    service: "Cache Redis",
+    serviceKey: "settings.privacy.upstashService",
     location: "EU Frankfurt",
-    purpose: "Limitation de débit et cache",
+    purposeKey: "settings.privacy.upstashPurpose",
   },
 ];
 
 export function PrivacyTab({ settings, onToast }: BaseTabProps) {
+  const { t, locale } = useTranslation();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   const connectedDate = settings.consentRecordedAt
-    ? new Intl.DateTimeFormat("fr-FR", {
+    ? formatDate(settings.consentRecordedAt, locale, {
         day: "numeric",
         month: "long",
         year: "numeric",
-      }).format(new Date(settings.consentRecordedAt))
+      })
     : null;
 
   async function handleDataRight(title: string) {
@@ -111,7 +110,7 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
       await new Promise((r) => setTimeout(r, 600));
       onToast(
         "info",
-        "Demande enregistrée. Vous recevrez une réponse sous 48h."
+        t("settings.privacy.requestSubmitted")
       );
     } finally {
       setLoadingAction(null);
@@ -127,26 +126,24 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
             <ShieldCheck className="h-5 w-5 text-mint" />
             <div>
               <CardTitle className="text-base">
-                Conformité Loi 09-08
+                {t("settings.privacy.complianceTitle")}
               </CardTitle>
               <CardDescription>
-                Protection des données personnelles
+                {t("settings.privacy.complianceSubtitle")}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate">
-            nortoo est conforme à la Loi 09-08 relative à la protection des
-            personnes physiques à l&apos;égard du traitement des données à
-            caractère personnel.
+            {t("settings.privacy.complianceText")}
           </p>
 
           <div className="rounded-sm border border-silk divide-y divide-silk">
             {settings.cndpDeclarationRef && (
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-sm text-fog">
-                  N° récépissé CNDP
+                  {t("settings.privacy.cndpRef")}
                 </span>
                 <Badge variant="mint">{settings.cndpDeclarationRef}</Badge>
               </div>
@@ -154,17 +151,17 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
             {connectedDate && (
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-sm text-fog">
-                  Consentement enregistré le
+                  {t("settings.privacy.consentRecorded")}
                 </span>
                 <span className="text-sm text-slate">{connectedDate}</span>
               </div>
             )}
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-fog">
-                Durée de conservation
+                {t("settings.privacy.retentionPeriod")}
               </span>
               <span className="text-sm font-medium text-midnight">
-                {settings.dataRetentionMonths} mois
+                {t("settings.privacy.retentionMonths", { count: String(settings.dataRetentionMonths) })}
               </span>
             </div>
           </div>
@@ -178,10 +175,10 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
             <FileText className="h-5 w-5 text-ocean" />
             <div>
               <CardTitle className="text-base">
-                Vos droits (Art. 7-9)
+                {t("settings.privacy.rightsTitle")}
               </CardTitle>
               <CardDescription>
-                Exercez vos droits conformément à la Loi 09-08
+                {t("settings.privacy.rightsSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -190,10 +187,11 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
           <div className="space-y-4">
             {DATA_RIGHTS.map((right) => {
               const Icon = right.icon;
-              const isLoading = loadingAction === right.title;
+              const title = t(right.titleKey);
+              const isLoading = loadingAction === right.titleKey;
               return (
                 <div
-                  key={right.title}
+                  key={right.titleKey}
                   className="flex items-start justify-between gap-4 rounded-sm border border-silk p-4"
                 >
                   <div className="flex items-start gap-3">
@@ -203,28 +201,28 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-midnight">
-                          {right.title}
+                          {title}
                         </p>
                         <Badge variant="ocean" className="text-[10px]">
                           {right.article}
                         </Badge>
                       </div>
                       <p className="text-xs text-fog mt-0.5">
-                        {right.description}
+                        {t(right.descriptionKey)}
                       </p>
                     </div>
                   </div>
                   <Button
                     variant={right.variant as "outline" | "destructive" | undefined}
                     size="sm"
-                    onClick={() => handleDataRight(right.title)}
+                    onClick={() => handleDataRight(right.titleKey)}
                     disabled={isLoading}
                     className="shrink-0"
                   >
                     {isLoading && (
                       <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                     )}
-                    {right.buttonLabel}
+                    {t(right.buttonLabelKey)}
                   </Button>
                 </div>
               );
@@ -240,27 +238,20 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
             <Clock className="h-5 w-5 text-violet" />
             <div>
               <CardTitle className="text-base">
-                Conservation des données
+                {t("settings.privacy.dataRetentionTitle")}
               </CardTitle>
               <CardDescription>
-                Politique de rétention (Art. 3e)
+                {t("settings.privacy.dataRetentionSubtitle")}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-slate">
-            Les données personnelles liées aux commandes sont conservées pendant{" "}
-            <span className="font-mono font-bold">
-              {settings.dataRetentionMonths} mois
-            </span>{" "}
-            après la dernière commande, conformément à l&apos;Article 3e de la
-            Loi 09-08.
+            {t("settings.privacy.dataRetentionText", { months: String(settings.dataRetentionMonths) })}
           </p>
           <p className="text-sm text-fog">
-            Un processus automatique supprime les données expirées
-            quotidiennement à 3h du matin. Les journaux d&apos;audit sont
-            conservés 36 mois pour répondre aux obligations légales.
+            {t("settings.privacy.dataRetentionAutoDelete")}
           </p>
         </CardContent>
       </Card>
@@ -272,10 +263,10 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
             <Server className="h-5 w-5 text-fog" />
             <div>
               <CardTitle className="text-base">
-                Sous-traitants (Art. 25)
+                {t("settings.privacy.subProcessorsTitle")}
               </CardTitle>
               <CardDescription>
-                Infrastructure et sous-traitants techniques
+                {t("settings.privacy.subProcessorsSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -286,16 +277,16 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
               <thead>
                 <tr className="border-b border-silk">
                   <th className="pb-2 text-left font-medium text-fog">
-                    Sous-traitant
+                    {t("settings.privacy.processor")}
                   </th>
                   <th className="pb-2 text-left font-medium text-fog">
-                    Service
+                    {t("settings.privacy.service")}
                   </th>
                   <th className="pb-2 text-left font-medium text-fog">
-                    Localisation
+                    {t("settings.privacy.location")}
                   </th>
                   <th className="pb-2 text-left font-medium text-fog">
-                    Finalité
+                    {t("settings.privacy.purpose")}
                   </th>
                 </tr>
               </thead>
@@ -305,13 +296,13 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
                     <td className="py-2.5 font-medium text-midnight">
                       {sp.name}
                     </td>
-                    <td className="py-2.5 text-slate">{sp.service}</td>
+                    <td className="py-2.5 text-slate">{t(sp.serviceKey)}</td>
                     <td className="py-2.5">
                       <Badge variant="mint" className="text-[10px]">
                         {sp.location}
                       </Badge>
                     </td>
-                    <td className="py-2.5 text-fog">{sp.purpose}</td>
+                    <td className="py-2.5 text-fog">{t(sp.purposeKey)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -319,9 +310,7 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
           </div>
           <div className="mt-4 rounded-xs bg-snow px-3 py-2">
             <p className="text-xs text-fog">
-              Tous les sous-traitants sont localisés dans l&apos;Union
-              Européenne conformément à l&apos;Article 43 de la Loi 09-08
-              relatif aux transferts de données.
+              {t("settings.privacy.subProcessorsFooter")}
             </p>
           </div>
         </CardContent>

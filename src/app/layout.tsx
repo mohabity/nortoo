@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { I18nProvider } from "@/i18n/provider";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -54,7 +55,9 @@ export default function RootLayout({
       lang="fr"
       className={`${outfit.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="font-body">{children}</body>
+      <body className="font-body">
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

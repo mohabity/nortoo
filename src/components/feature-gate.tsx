@@ -5,11 +5,10 @@ import { Lock } from "lucide-react";
 import { usePlan } from "@/hooks/use-plan";
 import {
   minimumPlanFor,
-  PLAN_LABELS,
-  FEATURE_LABELS,
   type FeatureId,
 } from "@/lib/plans";
 import Link from "next/link";
+import { useTranslation } from "@/i18n/provider";
 
 interface FeatureGateProps {
   /** Feature to check */
@@ -42,15 +41,19 @@ export function FeatureGate({
   message,
 }: FeatureGateProps) {
   const { can } = usePlan();
+  const { t } = useTranslation();
 
   if (can(feature)) {
     return <>{children}</>;
   }
 
   const requiredPlan = minimumPlanFor(feature);
-  const planLabel = PLAN_LABELS[requiredPlan];
-  const featureLabel = FEATURE_LABELS[feature];
-  const defaultMessage = `${featureLabel} nécessite le plan ${planLabel} ou supérieur.`;
+  const planLabel = t(`plans.${requiredPlan}.name`);
+  const featureLabel = t(`features.${feature}`);
+  const defaultMessage = t("components.featureGate.requiresPlan", {
+    feature: featureLabel,
+    plan: planLabel,
+  });
   const displayMessage = message ?? defaultMessage;
 
   if (mode === "hide") {
@@ -68,7 +71,7 @@ export function FeatureGate({
           href="/dashboard/billing"
           className="inline-flex items-center gap-1.5 rounded-sm bg-mint px-4 py-2 text-sm font-medium text-midnight transition-colors hover:bg-mint-dark"
         >
-          Voir les plans →
+          {t("components.featureGate.viewPlans")}
         </Link>
       </div>
     );
@@ -84,7 +87,7 @@ export function FeatureGate({
         <div className="flex items-center gap-2 rounded-sm bg-white/90 px-4 py-2 shadow-sm border border-silk">
           <Lock className="h-4 w-4 text-mist" />
           <span className="text-xs font-medium text-fog">
-            Plan {planLabel}+
+            {t("components.featureGate.planBadge", { plan: planLabel })}
           </span>
         </div>
       </div>

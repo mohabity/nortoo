@@ -22,9 +22,11 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/i18n/provider";
 import type { BaseTabProps } from "../types";
 
 export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
+  const { t } = useTranslation();
   const [showKey, setShowKey] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -60,13 +62,13 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
       });
       if (res.ok) {
         await onRefresh();
-        onToast("success", "Nouvelle clé API générée avec succès");
+        onToast("success", t("settings.api.regenerated"));
         setShowKey(true);
       } else {
-        onToast("error", "Erreur lors de la régénération");
+        onToast("error", t("settings.api.regenerateError"));
       }
     } catch {
-      onToast("error", "Erreur lors de la régénération");
+      onToast("error", t("settings.api.regenerateError"));
     } finally {
       setRegenerating(false);
       setShowRegenerateModal(false);
@@ -114,9 +116,9 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div className="flex items-center gap-2">
             <KeyRound className="h-5 w-5 text-mint" />
             <div>
-              <CardTitle className="text-base">Clé API</CardTitle>
+              <CardTitle className="text-base">{t("settings.api.apiKey")}</CardTitle>
               <CardDescription>
-                Authentifiez vos webhooks avec cette clé
+                {t("settings.api.apiKeySubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -124,11 +126,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
         <CardContent className="space-y-4">
           <div>
             <p className="text-xs text-mist mb-2">
-              Ajoutez cette clé dans le header{" "}
-              <code className="font-mono bg-snow px-1 py-0.5 rounded-xs text-slate">
-                x-nortoo-key
-              </code>{" "}
-              de vos webhooks
+              {t("settings.api.apiKeyInstruction")}
             </p>
             <div className="flex items-center gap-2">
               <div className="flex-1 rounded-sm border border-silk bg-snow px-3 py-2 font-mono text-sm text-slate overflow-x-auto">
@@ -138,7 +136,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 variant="outline"
                 size="icon"
                 onClick={() => setShowKey(!showKey)}
-                title={showKey ? "Masquer" : "Afficher"}
+                title={showKey ? t("common.hide") : t("common.show")}
               >
                 {showKey ? (
                   <EyeOff className="h-4 w-4" />
@@ -154,7 +152,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
                   copyText(settings.apiKey, setCopiedKey)
                 }
                 disabled={!settings.apiKey}
-                title="Copier"
+                title={t("common.copy")}
               >
                 {copiedKey ? (
                   <Check className="h-4 w-4 text-mint-deep" />
@@ -173,7 +171,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <Dialog.Trigger asChild>
               <Button variant="destructive" size="sm">
                 <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                Régénérer la clé
+                {t("settings.api.regenerate")}
               </Button>
             </Dialog.Trigger>
             <Dialog.Portal>
@@ -184,17 +182,15 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
                     <AlertTriangle className="h-5 w-5 text-rose" />
                   </div>
                   <Dialog.Title className="font-display font-semibold text-midnight text-lg">
-                    Régénérer la clé API ?
+                    {t("settings.api.regenerateTitle")}
                   </Dialog.Title>
                 </div>
                 <Dialog.Description className="text-sm text-fog mb-6">
-                  L&apos;ancienne clé cessera de fonctionner immédiatement.
-                  Tous les webhooks configurés avec cette clé devront être
-                  mis à jour avec la nouvelle.
+                  {t("settings.api.regenerateWarning")}
                 </Dialog.Description>
                 <div className="flex justify-end gap-3">
                   <Dialog.Close asChild>
-                    <Button variant="outline">Annuler</Button>
+                    <Button variant="outline">{t("common.cancel")}</Button>
                   </Dialog.Close>
                   <Button
                     variant="destructive"
@@ -204,7 +200,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
                     {regenerating && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    Régénérer
+                    {t("settings.api.regenerate")}
                   </Button>
                 </div>
               </Dialog.Content>
@@ -219,9 +215,9 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
           <div className="flex items-center gap-2">
             <Link2 className="h-5 w-5 text-ocean" />
             <div>
-              <CardTitle className="text-base">URL du webhook</CardTitle>
+              <CardTitle className="text-base">{t("settings.api.webhookUrl")}</CardTitle>
               <CardDescription>
-                Configurez cette URL comme endpoint dans votre plateforme
+                {t("settings.api.webhookUrlSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -235,7 +231,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
               variant="outline"
               size="icon"
               onClick={() => copyText(webhookUrl, setCopiedUrl)}
-              title="Copier"
+              title={t("common.copy")}
             >
               {copiedUrl ? (
                 <Check className="h-4 w-4 text-mint-deep" />
@@ -254,10 +250,10 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <Code2 className="h-5 w-5 text-violet" />
             <div>
               <CardTitle className="text-base">
-                Exemples d&apos;intégration
+                {t("settings.api.examples")}
               </CardTitle>
               <CardDescription>
-                Testez l&apos;endpoint avec cURL ou intégrez le payload JSON
+                {t("settings.api.examplesSubtitle")}
               </CardDescription>
             </div>
           </div>
@@ -266,7 +262,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
           {/* cURL example */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-slate">Exemple cURL</p>
+              <p className="text-sm font-medium text-slate">{t("settings.api.curlExample")}</p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -277,7 +273,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 ) : (
                   <Copy className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                {copiedCurl ? "Copié" : "Copier"}
+                {copiedCurl ? t("common.copied") : t("common.copy")}
               </Button>
             </div>
             <pre className="bg-midnight text-green-400 font-mono text-xs rounded-sm p-4 overflow-x-auto whitespace-pre">
@@ -288,7 +284,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
           {/* JSON payload example */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-slate">Payload JSON</p>
+              <p className="text-sm font-medium text-slate">{t("settings.api.jsonPayload")}</p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -299,7 +295,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
                 ) : (
                   <Copy className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                {copiedPayload ? "Copié" : "Copier"}
+                {copiedPayload ? t("common.copied") : t("common.copy")}
               </Button>
             </div>
             <pre className="bg-midnight text-mint font-mono text-xs rounded-sm p-4 overflow-x-auto whitespace-pre">

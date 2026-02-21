@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
 import type { BaseTabProps } from "../types";
 
 // ── Toggle switch ──
@@ -77,6 +78,7 @@ function ToggleRow({
 }
 
 export function NotificationsTab({ onToast }: BaseTabProps) {
+  const { t } = useTranslation();
   // Email notification toggles
   const [blockedOrders, setBlockedOrders] = useState(true);
   const [dailySummary, setDailySummary] = useState(false);
@@ -109,10 +111,10 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
             <Bell className="h-5 w-5 text-mint" />
             <div>
               <CardTitle className="text-base">
-                Notifications par e-mail
+                {t("settings.notifications.email.title")}
               </CardTitle>
               <CardDescription>
-                Configurez les alertes que vous souhaitez recevoir
+                {t("settings.notifications.email.subtitle")}
               </CardDescription>
             </div>
           </div>
@@ -120,32 +122,32 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
         <CardContent>
           <div className="divide-y divide-silk">
             <ToggleRow
-              label="Commandes bloquées"
-              description="Recevez un e-mail à chaque commande bloquée automatiquement"
+              label={t("settings.notifications.email.blocked")}
+              description={t("settings.notifications.email.blockedDesc")}
               enabled={blockedOrders}
               onChange={setBlockedOrders}
             />
             <ToggleRow
-              label="Résumé quotidien"
-              description="Récapitulatif des commandes du jour envoyé à 9h"
+              label={t("settings.notifications.email.dailySummary")}
+              description={t("settings.notifications.email.dailySummaryDesc")}
               enabled={dailySummary}
               onChange={setDailySummary}
             />
             <ToggleRow
-              label="Résumé hebdomadaire"
-              description="Rapport de performance envoyé chaque lundi à 9h"
+              label={t("settings.notifications.email.weeklySummary")}
+              description={t("settings.notifications.email.weeklySummaryDesc")}
               enabled={weeklySummary}
               onChange={setWeeklySummary}
             />
             <ToggleRow
-              label="Alerte taux RTO"
-              description="Notification quand le taux RTO dépasse un seuil"
+              label={t("settings.notifications.email.rtoAlert")}
+              description={t("settings.notifications.email.rtoAlertDesc")}
               enabled={rtoAlert}
               onChange={setRtoAlert}
             >
               {rtoAlert && (
                 <div className="mt-2 flex items-center gap-2">
-                  <label className="text-xs text-fog">Seuil :</label>
+                  <label className="text-xs text-fog">{t("settings.notifications.email.threshold")}</label>
                   <input
                     type="number"
                     min={10}
@@ -170,7 +172,7 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
             ) : (
               <Save className="mr-2 h-4 w-4" />
             )}
-            Enregistrer les préférences
+            {t("settings.notifications.email.save")}
           </Button>
         </CardContent>
       </Card>
@@ -183,35 +185,35 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
               <MessageSquare className="h-5 w-5 text-mist" />
               <div>
                 <CardTitle className="text-base">
-                  Notifications WhatsApp
+                  {t("settings.notifications.whatsapp.title")}
                 </CardTitle>
                 <CardDescription>
-                  Alertes directes aux clients par WhatsApp
+                  {t("settings.notifications.whatsapp.subtitle")}
                 </CardDescription>
               </div>
             </div>
-            <Badge>Bientôt</Badge>
+            <Badge>{t("common.soon")}</Badge>
           </div>
         </CardHeader>
         <CardContent className="opacity-50 pointer-events-none">
           <div className="divide-y divide-silk">
             <ToggleRow
-              label="Vérification client"
-              description="Envoyer un message de vérification aux commandes suspectes"
+              label={t("settings.notifications.whatsapp.verification")}
+              description={t("settings.notifications.whatsapp.verificationDesc")}
               enabled={waVerify}
               onChange={() => {}}
               disabled
             />
             <ToggleRow
-              label="Confirmation livraison"
-              description="Confirmer la disponibilité du client avant l'expédition"
+              label={t("settings.notifications.whatsapp.deliveryConfirmation")}
+              description={t("settings.notifications.whatsapp.deliveryConfirmationDesc")}
               enabled={waConfirm}
               onChange={() => {}}
               disabled
             />
             <ToggleRow
-              label="Rappel COD"
-              description="Rappeler au client de préparer le montant exact"
+              label={t("settings.notifications.whatsapp.codReminder")}
+              description={t("settings.notifications.whatsapp.codReminderDesc")}
               enabled={waReminder}
               onChange={() => {}}
               disabled

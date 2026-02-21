@@ -16,11 +16,12 @@ import { PlanBadge } from "@/components/plan-badge";
 import {
   PLAN_CONFIGS,
   PLAN_ORDER,
-  FEATURE_LABELS,
   type PlanId,
   type FeatureId,
 } from "@/lib/plans";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
+import { formatCurrency, formatNumber, formatDate } from "@/lib/i18n-utils";
 
 // ── Types ──
 
@@ -61,6 +62,7 @@ const PLAN_CTA_COLORS: Record<PlanId, string> = {
 // ── Page ──
 
 export default function BillingPage() {
+  const { t, locale } = useTranslation();
   const [data, setData] = useState<PlanApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [changing, setChanging] = useState<PlanId | null>(null);
@@ -85,8 +87,8 @@ export default function BillingPage() {
   // Auto-dismiss toast
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
   }, [toast]);
 
   const handleChangePlan = async (newPlan: PlanId) => {
@@ -105,7 +107,7 @@ export default function BillingPage() {
       if (res.ok) {
         setToast({
           type: "success",
-          message: `Plan changé vers ${PLAN_CONFIGS[newPlan].name} avec succès.`,
+          message: t("billing.toast.planChanged", { plan: t(`plans.${newPlan}.name`) }),
         });
         // Refresh data
         setLoading(true);
@@ -113,11 +115,11 @@ export default function BillingPage() {
       } else {
         setToast({
           type: "error",
-          message: json.error || "Erreur lors du changement de plan.",
+          message: json.error || t("billing.toast.planChangeError"),
         });
       }
     } catch {
-      setToast({ type: "error", message: "Erreur réseau. Réessayez." });
+      setToast({ type: "error", message: t("billing.toast.networkError") });
     } finally {
       setChanging(null);
     }
@@ -127,7 +129,7 @@ export default function BillingPage() {
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="h-6 w-6 animate-spin text-mist" />
-        <span className="ml-2 text-sm text-fog">Chargement...</span>
+        <span className="ml-2 text-sm text-fog">{t("common.loading")}</span>
       </div>
     );
   }
@@ -147,9 +149,9 @@ export default function BillingPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="font-display text-2xl font-bold text-midnight">Facturation</h1>
+        <h1 className="font-display text-2xl font-bold text-midnight">{t("billing.title")}</h1>
         <p className="text-sm text-fog">
-          Gérez votre abonnement et suivez votre utilisation
+          {t("billing.subtitle")}
         </p>
       </div>
 
@@ -158,23 +160,26 @@ export default function BillingPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-lg font-semibold text-midnight">
-              Plan actuel
+              {t("billing.currentPlan")}
             </h2>
             <div className="mt-1 flex items-center gap-2">
               <PlanBadge plan={currentPlan} />
-              <span className="text-sm text-fog">{data.config.label}</span>
+              <span className="text-sm text-fog">{t(`plans.${currentPlan}.label`)}</span>
             </div>
           </div>
           {data.trial && (
             <div className="text-right">
               <p className="text-sm font-medium text-sun-deep">
                 {data.trial.daysRemaining > 0
-                  ? `${data.trial.daysRemaining} jour${data.trial.daysRemaining > 1 ? "s" : ""} restant${data.trial.daysRemaining > 1 ? "s" : ""}`
-                  : "Essai terminé"}
+                  ? data.trial.daysRemaining > 1
+                    ? t("billing.trial.daysRemainingPlural", { count: data.trial.daysRemaining })
+                    : t("billing.trial.daysRemaining", { count: data.trial.daysRemaining })
+                  : t("billing.trial.expired")}
               </p>
               <p className="text-xs text-mist">
-                Expire le{" "}
-                {new Date(data.trial.expiresAt).toLocaleDateString("fr-FR")}
+                {t("billing.trial.expiresAt", {
+                  date: formatDate(data.trial.expiresAt, locale),
+                })}
               </p>
             </div>
           )}
@@ -186,12 +191,12 @@ export default function BillingPage() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-medium text-fog">
-                Commandes ce mois
+                {t("billing.usage.ordersThisMonth")}
               </span>
               <span className="text-xs font-mono text-slate">
                 {data.usage.orders.current}
                 {data.usage.orders.limit > 0
-                  ? ` / ${data.usage.orders.limit.toLocaleString("fr-FR")}`
+                  ? ` / ${formatNumber(data.usage.orders.limit, locale)}`
                   : " / ∞"}
               </span>
             </div>
@@ -215,7 +220,7 @@ export default function BillingPage() {
           {/* Users */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-fog">Utilisateurs</span>
+              <span className="text-xs font-medium text-fog">{t("billing.usage.users")}</span>
               <span className="text-xs font-mono text-slate">
                 {data.usage.users.current} / {data.usage.users.limit}
               </span>
@@ -239,9 +244,7 @@ export default function BillingPage() {
           <div className="mt-4 flex items-center gap-3 rounded-sm bg-sun/5 border border-sun/20 px-4 py-3">
             <Clock className="h-4 w-4 text-sun-deep shrink-0" />
             <p className="text-sm text-sun-deep flex-1">
-              Votre essai se termine dans {data.trial.daysRemaining} jour
-              {data.trial.daysRemaining > 1 ? "s" : ""}. Passez à un plan payant
-              pour continuer.
+              {t("billing.alerts.trialEnding", { count: data.trial.daysRemaining })}
             </p>
           </div>
         )}
@@ -250,8 +253,7 @@ export default function BillingPage() {
           <div className="mt-4 flex items-center gap-3 rounded-sm bg-rose/5 border border-rose/20 px-4 py-3">
             <AlertTriangle className="h-4 w-4 text-rose shrink-0" />
             <p className="text-sm text-rose flex-1">
-              Votre période d&apos;essai est terminée. Choisissez un plan pour
-              continuer à scorer vos commandes.
+              {t("billing.alerts.trialExpired")}
             </p>
           </div>
         )}
@@ -260,8 +262,7 @@ export default function BillingPage() {
           <div className="mt-4 flex items-center gap-3 rounded-sm bg-ocean/5 border border-ocean/20 px-4 py-3">
             <Info className="h-4 w-4 text-ocean shrink-0" />
             <p className="text-sm text-ocean flex-1">
-              Limite atteinte. Le scoring continue mais passez au plan supérieur
-              pour un accès complet.
+              {t("billing.alerts.limitReached")}
             </p>
           </div>
         )}
@@ -270,8 +271,7 @@ export default function BillingPage() {
           <div className="mt-4 flex items-center gap-3 rounded-sm bg-sun/5 border border-sun/20 px-4 py-3">
             <AlertTriangle className="h-4 w-4 text-sun-deep shrink-0" />
             <p className="text-sm text-sun-deep flex-1">
-              Vous approchez de votre limite ({data.usage.orders.percent}%).
-              Passez au plan supérieur pour augmenter votre quota.
+              {t("billing.alerts.limitApproaching", { percent: data.usage.orders.percent })}
             </p>
           </div>
         )}
@@ -280,7 +280,7 @@ export default function BillingPage() {
       {/* ═══ Section 2 — Plan Comparatif ═══ */}
       <div>
         <h2 className="font-display text-lg font-semibold text-midnight mb-4">
-          Choisir un plan
+          {t("billing.comparison.title")}
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PLAN_ORDER.map((planId) => {
@@ -305,24 +305,24 @@ export default function BillingPage() {
                 {isCurrent && (
                   <div className="absolute -top-3 left-4 flex items-center gap-1 rounded-full bg-mint px-2.5 py-0.5 text-[10px] font-semibold text-midnight">
                     <Crown className="h-3 w-3" />
-                    Actuel
+                    {t("billing.comparison.current")}
                   </div>
                 )}
 
                 <h3 className="font-display text-base font-bold text-midnight">
-                  {config.name}
+                  {t(`plans.${planId}.name`)}
                 </h3>
                 <div className="mt-1">
                   {config.price > 0 ? (
                     <>
                       <span className="font-display text-2xl font-bold text-midnight">
-                        {config.price.toLocaleString("fr-FR")}
+                        {formatCurrency(config.price, locale)}
                       </span>
-                      <span className="text-sm text-fog"> DH/mois</span>
+                      <span className="text-sm text-fog">{t("currency.perMonth")}</span>
                     </>
                   ) : (
                     <span className="font-display text-lg font-bold text-fog">
-                      Gratuit
+                      {t("billing.free")}
                     </span>
                   )}
                 </div>
@@ -331,18 +331,20 @@ export default function BillingPage() {
                 <div className="mt-3 space-y-1 text-xs text-fog">
                   <p>
                     {config.ordersPerMonth > 0
-                      ? `${config.ordersPerMonth.toLocaleString("fr-FR")} commandes/mois`
-                      : "Commandes illimitées"}
+                      ? `${formatNumber(config.ordersPerMonth, locale)} ${t("billing.usage.ordersPerMonth")}`
+                      : t("billing.usage.unlimitedOrders")}
                   </p>
                   <p>
-                    {config.maxUsers} utilisateur{config.maxUsers > 1 ? "s" : ""}
+                    {config.maxUsers > 1
+                      ? t("billing.usage.usersCountPlural", { count: config.maxUsers })
+                      : t("billing.usage.usersCount", { count: config.maxUsers })}
                   </p>
                   {config.bulkBatchLimit > 0 && (
-                    <p>{config.bulkBatchLimit} par lot</p>
+                    <p>{config.bulkBatchLimit} {t("billing.usage.perBatch")}</p>
                   )}
                   {config.bulkBatchLimit === 0 &&
                     config.features.includes("bulk_actions") && (
-                      <p>Lots illimités</p>
+                      <p>{t("billing.usage.unlimitedBatch")}</p>
                     )}
                 </div>
 
@@ -358,14 +360,14 @@ export default function BillingPage() {
                         className="flex items-start gap-2 text-xs text-slate"
                       >
                         <Check className="h-3.5 w-3.5 text-mint shrink-0 mt-0.5" />
-                        {FEATURE_LABELS[feature as FeatureId]}
+                        {t(`features.${feature}`)}
                       </li>
                     ))}
                   {config.features.filter(
                     (f) => !["scoring", "dashboard", "search"].includes(f)
                   ).length === 0 && (
                     <li className="text-xs text-mist italic">
-                      Scoring + Dashboard
+                      {t("billing.usage.scoringDashboard")}
                     </li>
                   )}
                 </ul>
@@ -405,15 +407,15 @@ export default function BillingPage() {
                   {isChanging ? (
                     <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                   ) : isCurrent ? (
-                    "Plan actuel ✓"
+                    t("billing.comparison.currentPlan")
                   ) : planId === "trial" ? (
                     "—"
                   ) : isNext ? (
-                    <>Passer au {config.name} →</>
+                    t("billing.comparison.upgradeTo", { plan: t(`plans.${planId}.name`) })
                   ) : isUpgrade ? (
-                    `Choisir ${config.name}`
+                    t("billing.comparison.choose", { plan: t(`plans.${planId}.name`) })
                   ) : (
-                    "Rétrograder"
+                    t("billing.comparison.downgrade")
                   )}
                 </button>
               </div>
@@ -428,7 +430,7 @@ export default function BillingPage() {
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="h-5 w-5 text-sun" />
             <h2 className="font-display text-base font-semibold text-midnight">
-              En passant au {PLAN_CONFIGS[nextPlanId].name}, vous débloquez
+              {t("billing.unlock.title", { plan: t(`plans.${nextPlanId}.name`) })}
             </h2>
           </div>
 
@@ -443,7 +445,7 @@ export default function BillingPage() {
                   <Check className="h-4 w-4 text-mint shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-midnight">
-                      {FEATURE_LABELS[feature as FeatureId]}
+                      {t(`features.${feature}`)}
                     </p>
                   </div>
                 </div>
@@ -456,13 +458,11 @@ export default function BillingPage() {
                 <ArrowRight className="h-4 w-4 text-ocean shrink-0 mt-0.5" />
                 <p className="text-sm font-medium text-midnight">
                   {PLAN_CONFIGS[nextPlanId].ordersPerMonth > 0
-                    ? `${PLAN_CONFIGS[nextPlanId].ordersPerMonth.toLocaleString("fr-FR")} commandes/mois`
-                    : "Commandes illimitées"}{" "}
+                    ? `${formatNumber(PLAN_CONFIGS[nextPlanId].ordersPerMonth, locale)} ${t("billing.usage.ordersPerMonth")}`
+                    : t("billing.usage.unlimitedOrders")}{" "}
                   <span className="text-mist font-normal">
-                    au lieu de{" "}
-                    {PLAN_CONFIGS[currentPlan].ordersPerMonth.toLocaleString(
-                      "fr-FR"
-                    )}
+                    {t("billing.unlock.insteadOf")}{" "}
+                    {formatNumber(PLAN_CONFIGS[currentPlan].ordersPerMonth, locale)}
                   </span>
                 </p>
               </div>
@@ -473,9 +473,9 @@ export default function BillingPage() {
               <div className="flex items-start gap-2.5 rounded-sm bg-snow px-4 py-3">
                 <ArrowRight className="h-4 w-4 text-ocean shrink-0 mt-0.5" />
                 <p className="text-sm font-medium text-midnight">
-                  {PLAN_CONFIGS[nextPlanId].maxUsers} utilisateurs{" "}
+                  {PLAN_CONFIGS[nextPlanId].maxUsers} {t("billing.unlock.users")}{" "}
                   <span className="text-mist font-normal">
-                    au lieu de {PLAN_CONFIGS[currentPlan].maxUsers}
+                    {t("billing.unlock.insteadOf")} {PLAN_CONFIGS[currentPlan].maxUsers}
                   </span>
                 </p>
               </div>
@@ -495,8 +495,8 @@ export default function BillingPage() {
               <Loader2 className="h-4 w-4 animate-spin mx-auto" />
             ) : (
               <>
-                Passer au {PLAN_CONFIGS[nextPlanId].name} —{" "}
-                {PLAN_CONFIGS[nextPlanId].label} →
+                {t("billing.comparison.upgradeTo", { plan: t(`plans.${nextPlanId}.name`) })}{" "}
+                — {t(`plans.${nextPlanId}.label`)}
               </>
             )}
           </button>
@@ -506,13 +506,13 @@ export default function BillingPage() {
       {/* ═══ Section 4 — Historique placeholder ═══ */}
       <div className="rounded-sm border border-silk bg-white p-6">
         <h2 className="font-display text-base font-semibold text-midnight mb-2">
-          Historique de facturation
+          {t("billing.history.title")}
         </h2>
         <p className="text-sm text-fog">
-          L&apos;historique de facturation sera disponible prochainement.
+          {t("billing.history.placeholder")}
         </p>
         <p className="mt-2 text-xs text-mist">
-          Pour toute question :{" "}
+          {t("billing.history.contact")}{" "}
           <a
             href="mailto:support@nortoo.io"
             className="text-ocean hover:underline"

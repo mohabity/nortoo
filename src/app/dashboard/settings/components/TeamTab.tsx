@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
+import { formatDate } from "@/lib/i18n-utils";
 import type { BaseTabProps } from "../types";
 
 interface TeamMember {
@@ -34,19 +36,20 @@ interface TeamMember {
   createdAt: string;
 }
 
-const ROLE_BADGES: Record<string, { label: string; className: string }> = {
-  admin: { label: "Admin", className: "bg-violet/10 text-violet border-violet/20" },
-  manager: { label: "Responsable", className: "bg-amber/10 text-amber border-amber/20" },
-  operator: { label: "Opérateur", className: "bg-ocean/10 text-ocean border-ocean/20" },
+const ROLE_BADGES: Record<string, { labelKey: string; className: string }> = {
+  admin: { labelKey: "roles.admin", className: "bg-violet/10 text-violet border-violet/20" },
+  manager: { labelKey: "roles.manager", className: "bg-amber/10 text-amber border-amber/20" },
+  operator: { labelKey: "roles.operator", className: "bg-ocean/10 text-ocean border-ocean/20" },
 };
 
-const STATUS_BADGES: Record<string, { label: string; className: string }> = {
-  active: { label: "Actif", className: "bg-mint/10 text-mint-deep border-mint/20" },
-  pending: { label: "En attente", className: "bg-amber/10 text-amber border-amber/20" },
-  disabled: { label: "Désactivé", className: "bg-rose/10 text-rose border-rose/20" },
+const STATUS_BADGES: Record<string, { labelKey: string; className: string }> = {
+  active: { labelKey: "settings.team.statusActive", className: "bg-mint/10 text-mint-deep border-mint/20" },
+  pending: { labelKey: "settings.team.statusPending", className: "bg-amber/10 text-amber border-amber/20" },
+  disabled: { labelKey: "settings.team.statusDisabled", className: "bg-rose/10 text-rose border-rose/20" },
 };
 
 export function TeamTab({ onToast }: BaseTabProps) {
+  const { t, locale } = useTranslation();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [limit, setLimit] = useState(2);
@@ -104,17 +107,17 @@ export function TeamTab({ onToast }: BaseTabProps) {
       });
       const json = await res.json();
       if (res.ok) {
-        onToast("success", "Invitation envoyée");
+        onToast("success", t("settings.team.inviteSent"));
         setShowInvite(false);
         setInviteEmail("");
         setInviteName("");
         setInviteRole("operator");
         await fetchTeam();
       } else {
-        onToast("error", json.error ?? "Erreur lors de l'invitation");
+        onToast("error", json.error ?? t("settings.team.inviteError"));
       }
     } catch {
-      onToast("error", "Erreur de connexion");
+      onToast("error", t("settings.team.connectionError"));
     } finally {
       setInviting(false);
     }
@@ -131,13 +134,13 @@ export function TeamTab({ onToast }: BaseTabProps) {
       });
       const json = await res.json();
       if (res.ok) {
-        onToast("success", "Rôle modifié");
+        onToast("success", t("settings.team.roleChanged"));
         await fetchTeam();
       } else {
-        onToast("error", json.error ?? "Erreur");
+        onToast("error", json.error ?? t("common.error"));
       }
     } catch {
-      onToast("error", "Erreur de connexion");
+      onToast("error", t("settings.team.connectionError"));
     }
   }
 
@@ -153,13 +156,13 @@ export function TeamTab({ onToast }: BaseTabProps) {
       });
       const json = await res.json();
       if (res.ok) {
-        onToast("success", newStatus === "active" ? "Utilisateur activé" : "Utilisateur désactivé");
+        onToast("success", newStatus === "active" ? t("settings.team.userActivated") : t("settings.team.userDeactivated"));
         await fetchTeam();
       } else {
-        onToast("error", json.error ?? "Erreur");
+        onToast("error", json.error ?? t("common.error"));
       }
     } catch {
-      onToast("error", "Erreur de connexion");
+      onToast("error", t("settings.team.connectionError"));
     }
   }
 
@@ -170,12 +173,12 @@ export function TeamTab({ onToast }: BaseTabProps) {
       const res = await fetch(`/api/team/${id}/resend`, { method: "POST" });
       const json = await res.json();
       if (res.ok) {
-        onToast("success", "Invitation renvoyée");
+        onToast("success", t("settings.team.inviteResent"));
       } else {
-        onToast("error", json.error ?? "Erreur");
+        onToast("error", json.error ?? t("common.error"));
       }
     } catch {
-      onToast("error", "Erreur de connexion");
+      onToast("error", t("settings.team.connectionError"));
     }
   }
 
@@ -186,13 +189,13 @@ export function TeamTab({ onToast }: BaseTabProps) {
       const res = await fetch(`/api/team/${id}`, { method: "DELETE" });
       const json = await res.json();
       if (res.ok) {
-        onToast("success", "Membre supprimé");
+        onToast("success", t("settings.team.memberRemoved"));
         await fetchTeam();
       } else {
-        onToast("error", json.error ?? "Erreur");
+        onToast("error", json.error ?? t("common.error"));
       }
     } catch {
-      onToast("error", "Erreur de connexion");
+      onToast("error", t("settings.team.connectionError"));
     }
   }
 
@@ -212,9 +215,9 @@ export function TeamTab({ onToast }: BaseTabProps) {
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-violet" />
               <div>
-                <CardTitle className="text-base">Gestion de l&apos;équipe</CardTitle>
+                <CardTitle className="text-base">{t("settings.team.title")}</CardTitle>
                 <CardDescription>
-                  {members.length}/{limit} membres
+                  {t("settings.team.membersCount", { current: members.length, limit })}
                 </CardDescription>
               </div>
             </div>
@@ -224,7 +227,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
               disabled={members.length >= limit}
             >
               <UserPlus className="mr-2 h-4 w-4" />
-              Inviter
+              {t("settings.team.invite")}
             </Button>
           </div>
         </CardHeader>
@@ -234,10 +237,10 @@ export function TeamTab({ onToast }: BaseTabProps) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-silk text-left">
-                  <th className="pb-3 font-medium text-fog">Membre</th>
-                  <th className="pb-3 font-medium text-fog hidden sm:table-cell">Rôle</th>
-                  <th className="pb-3 font-medium text-fog hidden sm:table-cell">Statut</th>
-                  <th className="pb-3 font-medium text-fog hidden lg:table-cell">Dernière connexion</th>
+                  <th className="pb-3 font-medium text-fog">{t("settings.team.member")}</th>
+                  <th className="pb-3 font-medium text-fog hidden sm:table-cell">{t("settings.team.role")}</th>
+                  <th className="pb-3 font-medium text-fog hidden sm:table-cell">{t("settings.team.status")}</th>
+                  <th className="pb-3 font-medium text-fog hidden lg:table-cell">{t("settings.team.lastLogin")}</th>
                   <th className="pb-3 font-medium text-fog w-10"></th>
                 </tr>
               </thead>
@@ -255,33 +258,33 @@ export function TeamTab({ onToast }: BaseTabProps) {
                           {/* Mobile-only badges */}
                           <div className="flex gap-1.5 mt-1 sm:hidden">
                             <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium", roleBadge.className)}>
-                              {roleBadge.label}
+                              {t(roleBadge.labelKey)}
                             </span>
                             <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium", statusBadge.className)}>
-                              {statusBadge.label}
+                              {t(statusBadge.labelKey)}
                             </span>
                           </div>
                         </div>
                       </td>
                       <td className="py-3 hidden sm:table-cell">
                         <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium", roleBadge.className)}>
-                          {roleBadge.label}
+                          {t(roleBadge.labelKey)}
                         </span>
                       </td>
                       <td className="py-3 hidden sm:table-cell">
                         <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium", statusBadge.className)}>
-                          {statusBadge.label}
+                          {t(statusBadge.labelKey)}
                         </span>
                       </td>
                       <td className="py-3 hidden lg:table-cell">
                         <span className="text-xs text-fog">
                           {member.lastLoginAt
-                            ? new Date(member.lastLoginAt).toLocaleDateString("fr-FR", {
+                            ? formatDate(member.lastLoginAt, locale, {
                                 day: "numeric",
                                 month: "short",
                                 year: "numeric",
                               })
-                            : "Jamais"}
+                            : t("common.never")}
                         </span>
                       </td>
                       <td className="py-3">
@@ -307,7 +310,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
                                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate hover:bg-snow"
                                 >
                                   <ShieldCheck className="h-3.5 w-3.5 text-violet" />
-                                  Promouvoir Admin
+                                  {t("settings.team.promoteAdmin")}
                                 </button>
                               )}
                               {member.role !== "manager" && (
@@ -316,7 +319,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
                                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate hover:bg-snow"
                                 >
                                   <Shield className="h-3.5 w-3.5 text-amber" />
-                                  Définir Responsable
+                                  {t("settings.team.setManager")}
                                 </button>
                               )}
                               {member.role !== "operator" && (
@@ -325,7 +328,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
                                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate hover:bg-snow"
                                 >
                                   <ShieldAlert className="h-3.5 w-3.5 text-ocean" />
-                                  Définir Opérateur
+                                  {t("settings.team.setOperator")}
                                 </button>
                               )}
 
@@ -338,7 +341,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
                                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate hover:bg-snow"
                                 >
                                   <RefreshCw className="h-3.5 w-3.5" />
-                                  {member.status === "active" ? "Désactiver" : "Activer"}
+                                  {member.status === "active" ? t("settings.team.deactivate") : t("settings.team.activate")}
                                 </button>
                               )}
 
@@ -349,7 +352,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
                                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate hover:bg-snow"
                                 >
                                   <Mail className="h-3.5 w-3.5" />
-                                  Renvoyer l&apos;invitation
+                                  {t("settings.team.resendInvite")}
                                 </button>
                               )}
 
@@ -361,7 +364,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
                                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose hover:bg-rose/5"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                                Supprimer
+                                {t("settings.team.removeMember")}
                               </button>
                             </div>
                           )}
@@ -377,7 +380,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
           {members.length === 1 && (
             <div className="mt-4 rounded-lg bg-snow border border-silk px-4 py-3">
               <p className="text-sm text-fog">
-                Vous êtes le seul membre. Invitez votre équipe pour collaborer !
+                {t("settings.team.soloMessage")}
               </p>
             </div>
           )}
@@ -385,7 +388,7 @@ export function TeamTab({ onToast }: BaseTabProps) {
           {members.length >= limit && (
             <div className="mt-4 rounded-lg bg-amber/5 border border-amber/20 px-4 py-3">
               <p className="text-sm text-amber">
-                Limite de membres atteinte ({limit}). Passez à un plan supérieur pour ajouter plus de membres.
+                {t("settings.team.limitReached", { limit })}
               </p>
             </div>
           )}
@@ -397,52 +400,52 @@ export function TeamTab({ onToast }: BaseTabProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-xl border border-silk bg-white p-6 shadow-xl">
             <h2 className="font-display text-lg font-bold text-midnight">
-              Inviter un membre
+              {t("settings.team.inviteModal.title")}
             </h2>
             <p className="mt-1 text-sm text-fog">
-              Un email d&apos;invitation sera envoyé avec un lien d&apos;activation.
+              {t("settings.team.inviteModal.subtitle")}
             </p>
 
             <form onSubmit={handleInvite} className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate mb-1">
-                  Email *
+                  {t("settings.team.inviteModal.email")}
                 </label>
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   required
-                  placeholder="membre@exemple.com"
+                  placeholder={t("settings.team.inviteModal.emailPlaceholder")}
                   className="w-full rounded-lg border border-silk px-3 py-2.5 text-sm text-midnight focus:border-mint focus:ring-1 focus:ring-mint outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate mb-1">
-                  Nom (optionnel)
+                  {t("settings.team.inviteModal.name")}
                 </label>
                 <input
                   type="text"
                   value={inviteName}
                   onChange={(e) => setInviteName(e.target.value)}
-                  placeholder="Prénom Nom"
+                  placeholder={t("settings.team.inviteModal.namePlaceholder")}
                   className="w-full rounded-lg border border-silk px-3 py-2.5 text-sm text-midnight focus:border-mint focus:ring-1 focus:ring-mint outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate mb-1">
-                  Rôle *
+                  {t("settings.team.inviteModal.role")}
                 </label>
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as "admin" | "manager" | "operator")}
                   className="w-full rounded-lg border border-silk px-3 py-2.5 text-sm text-midnight focus:border-mint focus:ring-1 focus:ring-mint outline-none"
                 >
-                  <option value="operator">Opérateur — Lecture commandes</option>
-                  <option value="manager">Responsable — Commandes + Analytique</option>
-                  <option value="admin">Administrateur — Accès complet</option>
+                  <option value="operator">{t("settings.team.inviteModal.operatorDesc")}</option>
+                  <option value="manager">{t("settings.team.inviteModal.managerDesc")}</option>
+                  <option value="admin">{t("settings.team.inviteModal.adminDesc")}</option>
                 </select>
               </div>
 
@@ -453,11 +456,11 @@ export function TeamTab({ onToast }: BaseTabProps) {
                   className="flex-1"
                   onClick={() => setShowInvite(false)}
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </Button>
                 <Button type="submit" className="flex-1" disabled={inviting}>
                   {inviting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Envoyer l&apos;invitation
+                  {t("settings.team.inviteModal.send")}
                 </Button>
               </div>
             </form>
