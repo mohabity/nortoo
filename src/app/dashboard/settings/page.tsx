@@ -94,18 +94,23 @@ function SettingsPageInner() {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [settings, setSettings] = useState<MerchantSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   // Fetch settings
   const fetchSettings = useCallback(async () => {
     try {
+      setFetchError(null);
+      setLoading(true);
       const res = await fetch("/api/settings");
       const json = await res.json();
-      if (json.data) {
-        setSettings(json.data as MerchantSettings);
+      if (!res.ok || !json.data) {
+        setFetchError(json.error || "Failed to load settings");
+        return;
       }
+      setSettings(json.data as MerchantSettings);
     } catch {
-      // silently fail
+      setFetchError("Failed to load settings");
     } finally {
       setLoading(false);
     }
@@ -129,11 +134,26 @@ function SettingsPageInner() {
   }, []);
 
   // Loading state
-  if (loading || !settings) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="h-6 w-6 animate-spin text-mist" />
         <span className="ml-2 text-sm text-fog">{t("common.loading")}</span>
+      </div>
+    );
+  }
+
+  // Error state
+  if (fetchError || !settings) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <p className="text-sm text-rose">{fetchError || t("common.error")}</p>
+        <button
+          onClick={fetchSettings}
+          className="rounded-sm bg-mint px-4 py-2 text-sm font-medium text-midnight hover:bg-mint/90 transition-colors"
+        >
+          {t("common.retry")}
+        </button>
       </div>
     );
   }
