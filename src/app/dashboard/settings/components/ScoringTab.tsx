@@ -8,6 +8,7 @@ import {
   Check,
   Loader2,
   Save,
+  Play,
 } from "lucide-react";
 import {
   Card,
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { ThresholdBar } from "@/components/dashboard/threshold-bar";
 import { SCORING_PRESETS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { SimulationPanel } from "./SimulationPanel";
 import type { BaseTabProps } from "../types";
 
 export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
@@ -31,6 +33,9 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
 
   // Save state
   const [saving, setSaving] = useState(false);
+
+  // Simulation state
+  const [showSimulation, setShowSimulation] = useState(false);
 
   // Sync from parent when settings change
   useEffect(() => {
@@ -253,6 +258,35 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
         </CardContent>
       </Card>
 
+      {/* ═══ Simuler l'impact ═══ */}
+      {!showSimulation && (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setShowSimulation(true)}
+          disabled={!hasChanges}
+        >
+          <Play className="mr-2 h-4 w-4" />
+          Simuler l&apos;impact sur vos commandes
+        </Button>
+      )}
+
+      {showSimulation && (
+        <SimulationPanel
+          verify={verify}
+          flag={flag}
+          block={block}
+          savedVerify={settings.verifyThreshold}
+          savedFlag={settings.flagThreshold}
+          savedBlock={settings.blockThreshold}
+          onApply={async () => {
+            await handleSave();
+            setShowSimulation(false);
+          }}
+          onClose={() => setShowSimulation(false)}
+        />
+      )}
+
       {/* ═══ Auto-blocage ═══ */}
       <Card>
         <CardHeader>
@@ -314,29 +348,31 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
       </Card>
 
       {/* ═══ Sticky Save Bar ═══ */}
-      <div className="sticky bottom-0 border-t border-silk bg-white/80 backdrop-blur-sm px-6 py-4 -mx-1 rounded-b">
-        <div className="flex items-center justify-between">
-          <div>
-            {hasChanges && (
-              <p className="text-sm text-fog">
-                Modifications non sauvegardées
-              </p>
-            )}
+      {!showSimulation && (
+        <div className="sticky bottom-0 border-t border-silk bg-white/80 backdrop-blur-sm px-6 py-4 -mx-1 rounded-b">
+          <div className="flex items-center justify-between">
+            <div>
+              {hasChanges && (
+                <p className="text-sm text-fog">
+                  Modifications non sauvegardées
+                </p>
+              )}
+            </div>
+            <Button
+              disabled={!hasChanges || saving}
+              onClick={handleSave}
+              className="min-w-[160px]"
+            >
+              {saving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Enregistrer
+            </Button>
           </div>
-          <Button
-            disabled={!hasChanges || saving}
-            onClick={handleSave}
-            className="min-w-[160px]"
-          >
-            {saving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            Enregistrer
-          </Button>
         </div>
-      </div>
+      )}
 
       {/* ── Slider CSS ── */}
       <style jsx>{`
