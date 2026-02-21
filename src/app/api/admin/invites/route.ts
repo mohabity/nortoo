@@ -1,28 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { inviteLinks } from "@/db/schema";
-import { getMerchantId } from "@/lib/merchant";
+import { auth } from "@/auth";
 import { desc } from "drizzle-orm";
 import { randomBytes } from "crypto";
 
 /**
- * Admin-only invite management (merchantId === 1).
+ * Admin-only invite management.
+ * Access controlled by PLATFORM_ADMIN_EMAILS env var (session-based auth).
  *
  * GET  /api/admin/invites — List all invites
  * POST /api/admin/invites — Create an invite
  */
 
-async function requireAdmin() {
-  const merchantId = await getMerchantId();
-  if (!merchantId || merchantId !== 1) {
+const PLATFORM_ADMIN_EMAILS = (process.env.PLATFORM_ADMIN_EMAILS || "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
+async function requirePlatformAdmin() {
+  const session = await auth();
+  if (!session?.user?.email) return null;
+  if (!PLATFORM_ADMIN_EMAILS.includes(session.user.email.toLowerCase())) {
     return null;
   }
-  return merchantId;
+  return session.user.merchantId;
 }
 
 // ── GET: list invites ──
 export async function GET() {
-  const admin = await requireAdmin();
+  const admin = await requirePlatformAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
   }
@@ -37,7 +44,7 @@ export async function GET() {
 
 // ── POST: create invite ──
 export async function POST(request: NextRequest) {
-  const admin = await requireAdmin();
+  const admin = await requirePlatformAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
   }

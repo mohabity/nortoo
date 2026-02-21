@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { webhookQueue } from "@/db/schema";
 import { and, eq, lt, lte, sql } from "drizzle-orm";
 import { processWebhook } from "@/lib/webhook-processor";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 /**
  * GET /api/cron/webhook-retry
@@ -13,12 +14,7 @@ import { processWebhook } from "@/lib/webhook-processor";
  * Also cleans up old completed (>7d) and dead (>30d) entries.
  */
 export async function GET(request: Request) {
-  // ── Verify cron secret (optional, for prod security) ──
-  const authHeader = request.headers.get("authorization");
-  if (
-    process.env.CRON_SECRET &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

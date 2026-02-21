@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { merchants } from "@/db/schema";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 /**
  * GET /api/cron/monthly-reset
@@ -8,12 +9,7 @@ import { merchants } from "@/db/schema";
  * Resets currentMonthOrders = 0 and updates currentMonthStart for all merchants.
  */
 export async function GET(request: Request) {
-  // Verify cron secret (Vercel sends this header)
-  const authHeader = request.headers.get("authorization");
-  if (
-    process.env.CRON_SECRET &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -6,6 +6,7 @@ import { merchants, users, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import { authLimiter, getClientIp, isRateLimitConfigured } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   name: z
@@ -26,6 +27,18 @@ const registerSchema = z.object({
  * Generates an API key for webhook auth.
  */
 export async function POST(request: Request) {
+  // ── Rate limiting ──
+  if (isRateLimitConfigured()) {
+    const ip = getClientIp(request);
+    const { success } = await authLimiter.limit(`register:${ip}`);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Trop de tentatives. Réessayez dans une minute." },
+        { status: 429 }
+      );
+    }
+  }
+
   let body: unknown;
 
   try {
@@ -80,7 +93,7 @@ export async function POST(request: Request) {
   const passwordHash = await hash(password, 12);
 
   // Generate API key for webhook auth
-  const apiKey = generateApiKey();
+  const { key: apiKey, hash: apiKeyHash } = generateApiKey();
 
   // Insert new merchant
   const [newMerchant] = await db
@@ -90,6 +103,7 @@ export async function POST(request: Request) {
       email,
       passwordHash,
       apiKey,
+      apiKeyHash,
       plan: "trial",
       trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
       currentMonthStart: new Date(),

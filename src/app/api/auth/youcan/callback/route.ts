@@ -367,7 +367,7 @@ async function autoCreateMerchant(opts: {
 }) {
   const randomPassword = randomBytes(24).toString("hex");
   const passwordHash = await hash(randomPassword, 12);
-  const apiKey = generateApiKey();
+  const { key: apiKey, hash: apiKeyHash } = generateApiKey();
 
   const merchantEmail = opts.storeEmail || "unknown@youcan.shop";
 
@@ -382,6 +382,7 @@ async function autoCreateMerchant(opts: {
       youcanAccessToken: opts.accessToken,
       youcanStoreName: opts.storeName,
       apiKey,
+      apiKeyHash,
       plan: "trial",
       trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
       currentMonthStart: new Date(),

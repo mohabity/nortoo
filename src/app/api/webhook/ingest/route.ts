@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractApiKey, validateApiKey } from "@/lib/api-key";
+import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
 
 /**
@@ -34,11 +35,11 @@ const ingestSchema = z.object({
  */
 export async function POST(request: Request) {
   try {
-    // ── 1. Auth by API key ──
-    const apiKey = extractApiKey(request);
+    // ── 1. Auth by API key (header only — no query param for custom integrations) ──
+    const apiKey = extractApiKey(request, { allowQueryParam: false });
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing API key. Set x-nortoo-key header or ?key= param." },
+        { error: "Missing API key. Set x-nortoo-key header." },
         { status: 401 }
       );
     }
@@ -49,6 +50,17 @@ export async function POST(request: Request) {
         { error: "Invalid API key" },
         { status: 401 }
       );
+    }
+
+    // ── Rate limiting per API key ──
+    if (isRateLimitConfigured()) {
+      const { success } = await webhookLimiter.limit(`wh:${apiKey.slice(0, 16)}`);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded" },
+          { status: 429 }
+        );
+      }
     }
 
     // ── 2. Parse & validate payload ──

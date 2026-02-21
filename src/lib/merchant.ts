@@ -1,13 +1,15 @@
 import { cookies } from "next/headers";
 import { auth } from "@/auth";
 
-// Fallback for seed data / testing
+// Fallback for seed data / testing — ONLY used in development
 export const DEMO_MERCHANT_ID = 1;
 
 /**
  * Read the authenticated merchant ID from the Auth.js session.
- * Falls back to the legacy nortoo_merchant cookie (YouCan OAuth compat),
- * then to DEMO_MERCHANT_ID if nothing is found.
+ * Falls back to the legacy nortoo_merchant cookie (YouCan OAuth compat).
+ *
+ * In production, throws if no auth found (no DEMO_MERCHANT_ID fallback).
+ * In development, falls back to DEMO_MERCHANT_ID for local testing.
  */
 export async function getMerchantId(): Promise<number> {
   // 1. Try Auth.js session first
@@ -18,19 +20,30 @@ export async function getMerchantId(): Promise<number> {
     // auth() may fail in some contexts, fall through
   }
 
-  // 2. Fallback: legacy cookie (YouCan OAuth backward compat)
+  // 2. Fallback: legacy cookie (YouCan OAuth backward compat) — DEPRECATED
   try {
     const cookieStore = await cookies();
     const raw = cookieStore.get("nortoo_merchant")?.value;
     if (raw) {
       const parsed = parseInt(raw, 10);
-      if (!isNaN(parsed) && parsed > 0) return parsed;
+      if (!isNaN(parsed) && parsed > 0) {
+        console.warn(
+          "[merchant] Using deprecated legacy cookie auth — migrate to session"
+        );
+        return parsed;
+      }
     }
   } catch {
     // cookies() may fail in some contexts, fall through
   }
 
-  return DEMO_MERCHANT_ID;
+  // 3. Dev fallback ONLY — never in production
+  if (process.env.NODE_ENV === "development") {
+    console.warn("[merchant] No auth found — using DEMO_MERCHANT_ID (dev only)");
+    return DEMO_MERCHANT_ID;
+  }
+
+  throw new Error("No authenticated merchant found");
 }
 
 /**

@@ -38,13 +38,14 @@ export async function POST() {
   }
 
   // Generate new key
-  const newKey = generateApiKey();
+  const { key: newKey, hash: newKeyHash } = generateApiKey();
 
   // Update merchant
   await db
     .update(merchants)
     .set({
       apiKey: newKey,
+      apiKeyHash: newKeyHash,
       updatedAt: new Date(),
     })
     .where(eq(merchants.id, merchantId));

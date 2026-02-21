@@ -21,7 +21,8 @@ export const merchants = pgTable("merchants", {
   email: text("email").notNull(),
 
   // API Key — merchant copies this into their webhook config
-  apiKey: text("api_key").unique(),
+  apiKey: text("api_key").unique(), // plaintext during transition → will be masked post-migration
+  apiKeyHash: text("api_key_hash").unique(), // SHA-256 hash for secure lookup
 
   // Auth
   passwordHash: text("password_hash"),        // bcrypt hash — null if OAuth-only

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { extractApiKey, validateApiKey } from "@/lib/api-key";
+import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
+import { verifyWebhookSignature } from "@/lib/webhook-verify";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
 import type { YouCanOrderPayload } from "@/types/youcan";
 
@@ -35,6 +37,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // ── Rate limiting per API key ──
+    if (isRateLimitConfigured()) {
+      const { success } = await webhookLimiter.limit(`wh:${apiKey.slice(0, 16)}`);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded" },
+          { status: 429 }
+        );
+      }
+    }
+
     // ── 2. Read raw body ──
     let rawBody: string;
     let payload: YouCanOrderPayload;
@@ -46,6 +59,24 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Invalid JSON payload" },
         { status: 400 }
+      );
+    }
+
+    // ── 2b. HMAC signature verification (if configured) ──
+    const webhookSecret = process.env.YOUCAN_WEBHOOK_SECRET;
+    const signature = request.headers.get("x-youcan-signature");
+    if (webhookSecret) {
+      if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+        console.error("[Webhook YouCan] Invalid HMAC signature");
+        return NextResponse.json(
+          { error: "Invalid webhook signature" },
+          { status: 403 }
+        );
+      }
+    } else if (signature) {
+      // Secret not configured but signature present — log for visibility
+      console.warn(
+        "[Webhook YouCan] x-youcan-signature present but YOUCAN_WEBHOOK_SECRET not set — skipping verification"
       );
     }
 

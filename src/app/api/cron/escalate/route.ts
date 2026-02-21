@@ -6,6 +6,7 @@ import { recalculateAllProductStats } from "@/lib/product-stats";
 import { recalculateAllCityStats } from "@/lib/city-stats";
 import { recalculateAllZoneStats } from "@/lib/zone-stats";
 import { getEscalationContext } from "@/lib/escalation";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 /**
  * GET /api/cron/escalate
@@ -14,12 +15,8 @@ import { getEscalationContext } from "@/lib/escalation";
  * Orders are processed by escalationPriority (highest priority first).
  */
 export async function GET(request: Request) {
-  // Verify cron secret in production
-  if (process.env.NODE_ENV === "production") {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!verifyCronSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const now = new Date();
