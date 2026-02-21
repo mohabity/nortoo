@@ -38,22 +38,30 @@ const merchantSelect = {
  * Returns the current merchant's settings.
  */
 export async function GET() {
-  const merchantId = await getMerchantId();
+  try {
+    const merchantId = await getMerchantId();
 
-  const [merchant] = await db
-    .select(merchantSelect)
-    .from(merchants)
-    .where(eq(merchants.id, merchantId))
-    .limit(1);
+    const [merchant] = await db
+      .select(merchantSelect)
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
 
-  if (!merchant) {
+    if (!merchant) {
+      return NextResponse.json(
+        { error: "Marchand introuvable" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ data: merchant });
+  } catch (error) {
+    console.error("[Settings GET] Error:", error);
     return NextResponse.json(
-      { error: "Marchand introuvable" },
-      { status: 404 }
+      { error: "Internal error" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({ data: merchant });
 }
 
 /**

@@ -11,35 +11,43 @@ import { getMerchantId } from "@/lib/merchant";
  * Used by the dashboard urgent widget with 60s polling.
  */
 export async function GET() {
-  const merchantId = await getMerchantId();
+  try {
+    const merchantId = await getMerchantId();
 
-  const urgentOrders = await db
-    .select({
-      id: orders.id,
-      externalRef: orders.externalRef,
-      customerName: orders.customerName,
-      total: orders.total,
-      fraudScore: orders.fraudScore,
-      decision: orders.decision,
-      pipelineStatus: orders.pipelineStatus,
-      reviewDeadline: orders.reviewDeadline,
-      escalationPriority: orders.escalationPriority,
-      escalatedAt: orders.escalatedAt,
-      createdAt: orders.createdAt,
-    })
-    .from(orders)
-    .where(
-      and(
-        eq(orders.merchantId, merchantId),
-        eq(orders.isTest, false),
-        or(
-          eq(orders.pipelineStatus, "needs_review"),
-          eq(orders.pipelineStatus, "escalated")
+    const urgentOrders = await db
+      .select({
+        id: orders.id,
+        externalRef: orders.externalRef,
+        customerName: orders.customerName,
+        total: orders.total,
+        fraudScore: orders.fraudScore,
+        decision: orders.decision,
+        pipelineStatus: orders.pipelineStatus,
+        reviewDeadline: orders.reviewDeadline,
+        escalationPriority: orders.escalationPriority,
+        escalatedAt: orders.escalatedAt,
+        createdAt: orders.createdAt,
+      })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.merchantId, merchantId),
+          eq(orders.isTest, false),
+          or(
+            eq(orders.pipelineStatus, "needs_review"),
+            eq(orders.pipelineStatus, "escalated")
+          )
         )
       )
-    )
-    .orderBy(asc(orders.escalationPriority), asc(orders.reviewDeadline))
-    .limit(10);
+      .orderBy(asc(orders.escalationPriority), asc(orders.reviewDeadline))
+      .limit(10);
 
-  return NextResponse.json({ data: urgentOrders });
+    return NextResponse.json({ data: urgentOrders });
+  } catch (error) {
+    console.error("[Dashboard Urgent] Error:", error);
+    return NextResponse.json(
+      { error: "Internal error" },
+      { status: 500 }
+    );
+  }
 }

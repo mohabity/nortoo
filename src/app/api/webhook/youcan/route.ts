@@ -1,9 +1,35 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { extractApiKey, validateApiKey } from "@/lib/api-key";
 import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
 import { verifyWebhookSignature } from "@/lib/webhook-verify";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
 import type { YouCanOrderPayload } from "@/types/youcan";
+
+/** Max body size: 1 MB */
+const MAX_BODY_SIZE = 1_048_576;
+
+/**
+ * Zod schema — validates the minimal structure expected from YouCan webhooks.
+ * `.passthrough()` allows extra fields we don't validate (forward-compatible).
+ */
+const youcanPayloadSchema = z.object({
+  id: z.union([z.string(), z.number()]),
+  ref: z.string().optional(),
+  total: z.union([z.number(), z.string()]),
+  payment: z.object({
+    payload: z.object({
+      gateway: z.string().optional(),
+    }).passthrough().optional(),
+    address: z.array(z.any()).optional(),
+  }).passthrough().optional(),
+  customer: z.object({
+    phone: z.string().optional(),
+  }).passthrough().optional(),
+  shipping: z.object({
+    address: z.array(z.any()).optional(),
+  }).passthrough().optional(),
+}).passthrough();
 
 /**
  * POST /api/webhook/youcan
@@ -48,12 +74,36 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── 2. Read raw body ──
+    // ── 2. Read raw body (with size limit) ──
+    const contentLength = parseInt(request.headers.get("content-length") || "0", 10);
+    if (contentLength > MAX_BODY_SIZE) {
+      console.error(`[Webhook YouCan] Payload too large: ${contentLength} bytes`);
+      return NextResponse.json(
+        { error: "Payload too large" },
+        { status: 413 }
+      );
+    }
+
     let rawBody: string;
     let payload: YouCanOrderPayload;
     try {
       rawBody = await request.text();
-      payload = JSON.parse(rawBody);
+      if (rawBody.length > MAX_BODY_SIZE) {
+        console.error(`[Webhook YouCan] Payload too large after read: ${rawBody.length} chars`);
+        return NextResponse.json(
+          { error: "Payload too large" },
+          { status: 413 }
+        );
+      }
+      const parsed = youcanPayloadSchema.safeParse(JSON.parse(rawBody));
+      if (!parsed.success) {
+        console.error("[Webhook YouCan] Zod validation failed:", parsed.error.issues);
+        return NextResponse.json(
+          { error: "Invalid payload structure", details: parsed.error.issues },
+          { status: 400 }
+        );
+      }
+      payload = parsed.data as unknown as YouCanOrderPayload;
     } catch {
       console.error("[Webhook YouCan] Invalid JSON body");
       return NextResponse.json(
