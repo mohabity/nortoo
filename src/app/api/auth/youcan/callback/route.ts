@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/index";
-import { merchants, auditLogs, inviteLinks } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { merchants, users, auditLogs, inviteLinks } from "@/db/schema";
+import { and, eq, sql } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
 import { encode } from "next-auth/jwt";
 import { hash } from "bcryptjs";
@@ -261,7 +261,45 @@ export async function GET(request: NextRequest) {
       }),
     });
 
-    // ── 7. Create Auth.js JWT session + set cookies ──
+    // ── 7. Ensure user row exists (multi-user support) ──
+    let userId: number;
+    let userRole = "admin";
+
+    const [existingUser] = await db
+      .select({ id: users.id, role: users.role })
+      .from(users)
+      .where(
+        and(
+          eq(users.merchantId, merchantId),
+          eq(users.email, merchantEmail)
+        )
+      )
+      .limit(1);
+
+    if (existingUser) {
+      userId = existingUser.id;
+      userRole = existingUser.role;
+      await db
+        .update(users)
+        .set({ lastLoginAt: new Date() })
+        .where(eq(users.id, userId));
+    } else {
+      // Auto-create admin user for this merchant (YouCan OAuth)
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          merchantId,
+          email: merchantEmail,
+          name: merchantName,
+          role: "admin",
+          status: "active",
+          lastLoginAt: new Date(),
+        })
+        .returning({ id: users.id });
+      userId = newUser.id;
+    }
+
+    // ── 8. Create Auth.js JWT session + set cookies ──
     const isSecure = process.env.NODE_ENV === "production";
     const cookieName = isSecure
       ? "__Secure-authjs.session-token"
@@ -272,10 +310,12 @@ export async function GET(request: NextRequest) {
       salt: cookieName,
       secret: process.env.AUTH_SECRET!,
       token: {
-        sub: String(merchantId),
+        sub: String(userId),
         name: merchantName,
         email: merchantEmail,
+        userId,
         merchantId,
+        role: userRole,
         plan: merchantPlan,
       },
       maxAge,
@@ -329,11 +369,13 @@ async function autoCreateMerchant(opts: {
   const passwordHash = await hash(randomPassword, 12);
   const apiKey = generateApiKey();
 
+  const merchantEmail = opts.storeEmail || "unknown@youcan.shop";
+
   const [newMerchant] = await db
     .insert(merchants)
     .values({
       name: opts.storeName,
-      email: opts.storeEmail || "unknown@youcan.shop",
+      email: merchantEmail,
       domain: opts.storeDomain,
       passwordHash,
       youcanStoreId: opts.storeId,
@@ -347,10 +389,19 @@ async function autoCreateMerchant(opts: {
     })
     .returning({ id: merchants.id });
 
+  // Also create the admin user row for multi-user support
+  await db.insert(users).values({
+    merchantId: newMerchant.id,
+    email: merchantEmail,
+    name: opts.storeName,
+    role: "admin",
+    status: "active",
+  });
+
   return {
     merchantId: newMerchant.id,
     merchantName: opts.storeName,
-    merchantEmail: opts.storeEmail || "unknown@youcan.shop",
+    merchantEmail,
     merchantPlan: "trial",
     apiKey,
   };
