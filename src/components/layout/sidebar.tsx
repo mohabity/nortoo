@@ -58,11 +58,11 @@ export function Sidebar() {
       <div className="flex h-16 items-center gap-2 border-b border-silk px-6">
         <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-mint">
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="#0B0F1A" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M3 6h18M7 12h10M10 18h4"/>
+            <path d="M6 18V6l12 12V6"/>
           </svg>
         </div>
         <span className="font-display text-lg font-black tracking-[-0.06em] text-midnight">
-          Siift
+          nortoo
         </span>
       </div>
 

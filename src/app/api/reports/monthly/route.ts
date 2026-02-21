@@ -369,7 +369,7 @@ export async function GET(request: NextRequest) {
   headers.set("Content-Type", "application/pdf");
   headers.set(
     "Content-Disposition",
-    `attachment; filename="siift-rapport-${monthStr}.pdf"`
+    `attachment; filename="nortoo-rapport-${monthStr}.pdf"`
   );
 
   return new Response(new Uint8Array(pdfBuffer), { status: 200, headers });

@@ -137,7 +137,7 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-slate">
-            Siift est conforme à la Loi 09-08 relative à la protection des
+            nortoo est conforme à la Loi 09-08 relative à la protection des
             personnes physiques à l&apos;égard du traitement des données à
             caractère personnel.
           </p>

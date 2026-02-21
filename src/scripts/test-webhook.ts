@@ -12,7 +12,7 @@
  */
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3005";
-const API_KEY = "cp_live_test_1234567890abcdef1234567890abcdef";
+const API_KEY = "nt_live_test_1234567890abcdef1234567890abcdef";
 const ENDPOINT = `${BASE_URL}/api/webhook/ingest`;
 
 // ── Helpers ──
@@ -44,7 +44,7 @@ async function sendOrder(payload: Record<string, unknown>, label: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-codpilot-key": API_KEY,
+      "x-nortoo-key": API_KEY,
     },
     body: JSON.stringify(payload),
   });
@@ -98,7 +98,7 @@ async function sendOrder(payload: Record<string, unknown>, label: string) {
 // ── Main ──
 
 async function main() {
-  console.log("\x1b[1m🚀 CODPilot Webhook End-to-End Test\x1b[0m");
+  console.log("\x1b[1m🚀 nortoo Webhook End-to-End Test\x1b[0m");
   console.log(`   Server: ${BASE_URL}`);
   console.log(`   API Key: ${API_KEY.slice(0, 20)}...`);
 

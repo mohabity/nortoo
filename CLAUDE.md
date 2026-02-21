@@ -1,554 +1,76 @@
-# CODPilot — Anti-Fraud RTO Intelligence for Moroccan E-Commerce
+# nortoo — Scoring anti-fraude COD (Next.js)
 
-## What is CODPilot?
+## Qu'est-ce que nortoo ?
 
-CODPilot is a SaaS platform that scores Cash-on-Delivery orders in real-time to predict which will be delivered and which will be refused (RTO). It integrates with YouCan (Morocco's primary e-commerce platform) via webhooks, scores each COD order 0-100, and tells the merchant: Ship, Verify, Flag, or Block.
+nortoo (No RTO) est une **plateforme de scoring anti-fraude** pour le e-commerce COD (Cash-on-Delivery) au Maroc. 30-50% des commandes COD echouent → nortoo score chaque commande 0-100 et decide LESQUELLES expedier et lesquelles bloquer.
 
-**Target:** Moroccan e-commerce merchants losing 30-50% of COD orders to RTO.
-**Business model:** 299-1499 DH/month SaaS subscriptions.
-**Language:** Dashboard in French. AI conversations in Darija (Moroccan Arabic). Code in English.
+نو ر.ت.و — زيرو رتور
 
-## Stack — DO NOT DEVIATE
-
-| Layer | Tech | Region | Why |
-|-------|------|--------|-----|
-| Framework | Next.js 15 (App Router) | — | Single language, SSR, API routes, Claude Code mastery |
-| Language | TypeScript (strict) | — | Type safety across entire stack |
-| ORM | Drizzle ORM | — | Type-safe, fast, good migrations, complex queries |
-| Database | Neon PostgreSQL | 🇪🇺 Frankfurt | Serverless PG, free tier, EU for Loi 09-08 Art.43 |
-| Auth | Auth.js v5 (NextAuth) | — | OAuth YouCan/Shopify, JWT sessions, free |
-| Cache | Upstash Redis | 🇪🇺 Frankfurt | Rate limiting, velocity detection, TTL cache |
-| UI | Tailwind CSS + shadcn/ui | — | Production components, Pixealogy design system |
-| Charts | Recharts | — | Included with shadcn/ui |
-| Validation | Zod | — | Runtime validation, API input/output |
-| Billing | Stripe | 🇪🇺 Ireland | Subscriptions, 3 tiers, webhooks |
-| Deploy | Vercel | 🇪🇺 fra1 | Git push deploy, edge, cron jobs |
-| Icons | Lucide React | — | Consistent icon set |
-
-## Project Structure
+## Architecture
 
 ```
-codpilot/
-├── CLAUDE.md                          ← YOU ARE HERE
-├── .env.local                         ← Local env vars (never commit)
-├── .env.example                       ← Template for env vars
-├── vercel.json                        ← EU region + cron config
-├── drizzle.config.ts                  ← Drizzle migration config
-├── package.json
-├── tsconfig.json
-├── tailwind.config.ts                 ← Pixealogy design tokens
-├── next.config.ts
-├── src/
-│   ├── app/
-│   │   ├── layout.tsx                 ← Root layout (Sora + DM Sans fonts)
-│   │   ├── page.tsx                   ← Landing / redirect to dashboard
-│   │   ├── globals.css                ← Tailwind + custom CSS vars
-│   │   ├── (auth)/
-│   │   │   ├── login/page.tsx         ← Merchant login
-│   │   │   └── install/page.tsx       ← YouCan OAuth install flow
-│   │   ├── dashboard/
-│   │   │   ├── layout.tsx             ← Dashboard shell (sidebar + header)
-│   │   │   ├── page.tsx               ← Overview (KPIs + charts + recent orders)
-│   │   │   ├── orders/
-│   │   │   │   ├── page.tsx           ← Full orders list with filters
-│   │   │   │   └── [id]/page.tsx      ← Order detail + scoring breakdown
-│   │   │   ├── analytics/page.tsx     ← RTO trends, ROI, scoring metrics
-│   │   │   ├── settings/page.tsx      ← Thresholds, presets, integration status
-│   │   │   └── compliance/page.tsx    ← Data rights requests, audit log viewer
-│   │   └── api/
-│   │       ├── auth/[...nextauth]/route.ts  ← Auth.js catch-all
-│   │       ├── webhook/
-│   │       │   ├── youcan/route.ts    ← POST: YouCan-format orders (API key auth)
-│   │       │   ├── ingest/route.ts    ← POST: Universal order ingestion (API key auth)
-│   │       │   └── stripe/route.ts    ← POST: billing lifecycle
-│   │       ├── orders/
-│   │       │   ├── route.ts           ← GET: list orders (paginated)
-│   │       │   └── [id]/
-│   │       │       ├── route.ts       ← GET: order detail
-│   │       │       └── override/route.ts  ← POST: manual override
-│   │       ├── stats/route.ts         ← GET: dashboard KPIs
-│   │       ├── chart/route.ts         ← GET: chart data
-│   │       ├── settings/route.ts      ← GET/PUT: merchant settings
-│   │       ├── data-rights/
-│   │       │   ├── access/route.ts    ← POST: Art.7 data access request
-│   │       │   ├── delete/route.ts    ← POST: Art.8 deletion request
-│   │       │   └── oppose/route.ts    ← POST: Art.9 opposition request
-│   │       └── cron/
-│   │           ├── purge-expired/route.ts  ← Auto-delete expired data (Art.3e)
-│   │           └── refresh-network/route.ts ← Refresh network scores
-│   ├── lib/
-│   │   ├── scoring.ts                 ← 12-rule scoring engine
-│   │   ├── hash.ts                    ← SHA-256 phone hashing (Art.23)
-│   │   ├── api-key.ts                 ← API key generation + validation
-│   │   ├── ingest.ts                  ← Shared order ingestion pipeline
-│   │   ├── merchant.ts                ← DEMO_MERCHANT_ID helper
-│   │   ├── db.ts                      ← Drizzle client initialization
-│   │   ├── utils.ts                   ← cn() helper, formatDH, etc.
-│   │   └── constants.ts               ← Scoring thresholds, plan prices, etc.
-│   ├── db/
-│   │   ├── schema.ts                  ← All Drizzle table definitions
-│   │   └── migrations/               ← Generated by drizzle-kit
-│   ├── components/
-│   │   ├── ui/                        ← shadcn/ui components
-│   │   ├── dashboard/                 ← Dashboard-specific components
-│   │   │   ├── score-badge.tsx
-│   │   │   ├── decision-badge.tsx
-│   │   │   ├── kpi-card.tsx
-│   │   │   ├── order-table.tsx
-│   │   │   └── threshold-bar.tsx
-│   │   └── layout/
-│   │       ├── sidebar.tsx
-│   │       └── header.tsx
-│   └── types/
-│       ├── youcan.ts                  ← YouCan webhook payload types
-│       └── scoring.ts                 ← Scoring types
-└── drizzle/                           ← Migration output directory
+YouCan (commande COD)
+  → POST /api/webhook/youcan
+  → HMAC-SHA256
+  → Filtre COD
+  → Seuils custom marchand
+  → Scoring Engine (13 regles)
+  → 0-30: SHIP · 31-65: VERIFY · 66-85: FLAG · 86-100: BLOCK
+  → Upsert customer
+  → Log DB
+  → Dashboard temps reel
 ```
 
-## Database Schema (Drizzle)
-
-### CRITICAL RULES:
-1. **Phone numbers are NEVER stored in plain text.** Always SHA-256 hash. Store only last 4 digits for display.
-2. **Every table with personal data has `merchant_id`** for tenant isolation.
-3. **Every mutation creates an audit_log entry** (Art. 23 Loi 09-08).
-4. **retention_expires_at** on personal data tables for auto-purge (Art. 3e).
-
-### Tables:
-
-```typescript
-// src/db/schema.ts
-
-// ═══ MERCHANTS (responsables du traitement) ═══
-merchants: {
-  id: serial primary key
-  name: text not null                    // "TrendyShop.ma"
-  domain: text                           // "trendyshop.ma"
-  email: text not null
-  apiKey: text unique                    // "cp_live_xxx" — merchant puts this in webhook config
-  youcanStoreId: text unique
-  shopifyStoreId: text                   // Future: Shopify integration
-  plan: text default "trial"             // trial | starter | growth | scale
-  stripeCustomerId: text
-  stripeSubscriptionId: text
-  // Scoring settings
-  verifyThreshold: integer default 31
-  flagThreshold: integer default 66
-  blockThreshold: integer default 86
-  autoBlockEnabled: boolean default true
-  // Compliance
-  cndpDeclarationRef: text              // N° récépissé CNDP
-  consentRecordedAt: timestamp          // When OAuth consent was given
-  dataRetentionMonths: integer default 24
-  // Meta
-  createdAt: timestamp default now()
-  updatedAt: timestamp default now()
-}
-
-// ═══ CUSTOMERS (personnes concernées) ═══
-customers: {
-  id: serial primary key
-  merchantId: integer not null → merchants.id
-  phoneHash: text not null               // SHA-256(phone + SALT) — NEVER raw
-  phoneLast4: text                       // "3456" for display only
-  name: text                             // Can be null if not provided
-  city: text
-  totalOrders: integer default 0
-  successfulOrders: integer default 0
-  failedOrders: integer default 0
-  isOpposed: boolean default false       // Art. 9 opposition
-  firstSeen: timestamp default now()
-  lastSeen: timestamp default now()
-  retentionExpiresAt: timestamp          // Auto-purge date (Art. 3e)
-  // Unique constraint: (merchantId, phoneHash)
-}
-
-// ═══ ORDERS ═══
-orders: {
-  id: serial primary key
-  merchantId: integer not null → merchants.id
-  customerId: integer → customers.id
-  externalId: text                       // YouCan order ID
-  externalRef: text                      // YouCan order ref (#1234)
-  customerName: text
-  customerPhoneLast4: text
-  productName: text
-  total: real not null
-  currency: text default "MAD"
-  shippingCity: text
-  shippingAddress: text
-  // Scoring
-  fraudScore: integer not null default 25
-  riskLevel: text default "low"          // low | medium | high | critical
-  decision: text default "ship"          // ship | verify | flag | block
-  scoringFactors: text                   // JSON array of {rule, points, reason}
-  scoringVersion: text                   // "v1.0" — traceability
-  // Override
-  overrideDecision: text                 // If merchant overrode the decision
-  overrideBy: text                       // "merchant" | "system"
-  overrideReason: text
-  overrideAt: timestamp
-  // Delivery
-  deliveryStatus: text default "pending" // pending | shipped | delivered | returned | cancelled
-  deliveredAt: timestamp
-  // Compliance
-  retentionExpiresAt: timestamp
-  // Meta
-  createdAt: timestamp default now()
-  scoredAt: timestamp default now()
-}
-
-// ═══ AUDIT LOGS (Art. 23 — obligatoire) ═══
-audit_logs: {
-  id: serial primary key
-  merchantId: integer → merchants.id
-  actor: text not null                   // "system" | "merchant" | "consumer" | "admin"
-  action: text not null                  // "score" | "override" | "access_request" | "delete" | "export" | "login" | "settings_change"
-  targetType: text                       // "order" | "customer" | "merchant" | "settings"
-  targetId: text
-  details: text                          // JSON with context
-  ipHash: text                           // Hashed IP
-  createdAt: timestamp default now()
-}
-
-// ═══ DATA RIGHTS REQUESTS (Art. 7-9 — obligatoire) ═══
-data_rights_requests: {
-  id: serial primary key
-  merchantId: integer → merchants.id
-  requesterPhoneHash: text not null
-  rightType: text not null               // "access" | "rectification" | "deletion" | "opposition"
-  status: text default "pending"         // pending | processing | completed | refused
-  responseDeadline: timestamp            // 30 days from request
-  completedAt: timestamp
-  auditLogId: integer → audit_logs.id
-  createdAt: timestamp default now()
-}
-
-// ═══ OPPOSITION LIST (Art. 9) ═══
-opposition_list: {
-  id: serial primary key
-  phoneHash: text not null
-  merchantId: integer                    // NULL = global opposition
-  reason: text
-  createdAt: timestamp default now()
-  // Unique: (phoneHash, merchantId)
-}
-
-// ═══ NETWORK PROFILES (Phase 2 — needs CNDP authorization Art. 12.1.f) ═══
-network_profiles: {
-  phoneHash: text primary key            // SHA-256 — NEVER raw phone
-  networkScore: integer default 50
-  totalOrdersNetwork: integer default 0
-  totalFailuresNetwork: integer default 0
-  merchantCount: integer default 0
-  lastUpdated: timestamp default now()
-  // ⚠️ NO personal data here. Only aggregated scores.
-}
-```
-
-### Indexes:
-- `customers(merchantId, phoneHash)` UNIQUE — fast lookup, tenant isolation
-- `orders(merchantId, createdAt DESC)` — dashboard queries
-- `orders(merchantId, decision)` — filtered views
-- `orders(fraudScore)` — score distribution analytics
-- `audit_logs(merchantId, createdAt DESC)` — audit trail
-- `opposition_list(phoneHash, merchantId)` UNIQUE — fast opposition check
-- `network_profiles(phoneHash)` PRIMARY KEY — O(1) lookup
-
-## Scoring Engine
-
-### Rules (v1.0):
-
-| Rule | Points | Signal | Logic |
-|------|--------|--------|-------|
-| R0_BASE | +25 | Baseline | Every order starts at 25 |
-| R1_LOYAL | -20 | Trust | customer.successfulOrders >= 3 |
-| R2_KNOWN | -10 | Trust | customer.successfulOrders >= 1 |
-| R3_RECIDIVIST | +30 | High risk | customer.failedOrders >= 2 |
-| R4_ONE_FAIL | +15 | Medium risk | customer.failedOrders === 1 |
-| R5_NEW | +10 | Unknown | No history (new customer) |
-| R6_VERY_HIGH | +20 | Amount | total > 1000 DH |
-| R7_HIGH | +10 | Amount | total > 500 DH |
-| R8_RISKY_ZONE | +15 | Geography | City in risky zones list |
-| R9_SHORT_ADDR | +10 | Quality | Address < 15 chars |
-| R10_GIBBERISH | +15 | Quality | Address fails quality check (no vowels, etc.) |
-| R11_NIGHT | +5 | Timing | Order placed between 1-5 AM |
-| R_NETWORK | +/- 20 | Network | Network Intelligence score (Phase 2) |
-
-### Risky Zones (Morocco):
-`["Taza", "Ouarzazate", "Errachidia", "Sidi Slimane", "Khouribga", "Sidi Kacem", "Guelmim", "Tan-Tan", "Tiznit"]`
-
-### Decision Logic:
-```
-score <= merchant.verifyThreshold  → SHIP (low risk)
-score <= merchant.flagThreshold    → VERIFY (medium risk)
-score <= merchant.blockThreshold   → FLAG (high risk)
-score > merchant.blockThreshold    → BLOCK (critical risk)
-```
-Default thresholds: verify=31, flag=66, block=86
-
-### Confidence:
-- New customer (0 orders): 0.5
-- 1-2 orders: 0.7
-- 3+ orders: 0.9
-
-## LOI 09-08 COMPLIANCE — MANDATORY RULES
-
-These rules are NON-NEGOTIABLE. Every feature must comply.
-
-### 1. Phone Hashing (Art. 23)
-```typescript
-import { createHash } from 'crypto';
-function hashPhone(phone: string): string {
-  return createHash('sha256')
-    .update(phone + process.env.PHONE_HASH_SALT)
-    .digest('hex');
-}
-```
-- Phone is hashed IN MEMORY immediately when webhook arrives
-- Raw phone is NEVER written to database
-- Only `phone_last4` is stored for dashboard display
-
-### 2. Opposition Check (Art. 9)
-Before scoring any order, check if the phone hash is in `opposition_list`.
-If opposed → score = 25, decision = "flag", reason = "opposition_active".
-The consumer's scoring is disabled. Merchant reviews manually.
-
-### 3. Audit Logging (Art. 23)
-Every data mutation MUST create an audit_log entry:
-- Order scored → action: "score"
-- Override → action: "override"
-- Data access request → action: "access_request"
-- Data deletion → action: "delete"
-- Settings change → action: "settings_change"
-- Login → action: "login"
-
-### 4. Data Retention (Art. 3e)
-- Default: 24 months after last order
-- `retention_expires_at` set on every order and customer record
-- Cron job `/api/cron/purge-expired` runs daily at 3 AM
-- Deletes orders and anonymizes customers past retention date
-
-### 5. Tenant Isolation (Art. 23, 25)
-- Every query MUST filter by `merchant_id`
-- A merchant can NEVER see another merchant's data
-- Use Drizzle `where(eq(table.merchantId, currentMerchantId))` on EVERY query
-
-### 6. Data Rights Endpoints (Art. 7-9)
-- `/api/data-rights/access` — Returns all data for a phone hash
-- `/api/data-rights/delete` — Deletes all data, logs in audit
-- `/api/data-rights/oppose` — Adds to opposition list
-
-### 7. Transfer Restrictions (Art. 43)
-- ALL infrastructure in EU region
-- Neon: eu-central-1 (Frankfurt)
-- Vercel: fra1 (Frankfurt)
-- Upstash: eu-central-1 (Frankfurt)
-- NEVER deploy to US region
-
-### 8. Network Intelligence (Art. 12.1.f)
-- Requires CNDP AUTHORIZATION (not just declaration) before activation
-- Only SHA-256 hashes in network_profiles — NEVER raw data
-- Only aggregated scores shared — NEVER per-merchant details
-- Feature flag: `NETWORK_INTELLIGENCE_ENABLED=false` until authorization received
-- Store CNDP authorization ref in system config
-
-## Design System — Pixealogy
-
-### Fonts:
-- **Headings:** Sora (weights: 400-800)
-- **Body:** DM Sans (weights: 300-700)
-- **Code/Numbers:** IBM Plex Mono (weights: 400-600)
-
-### Colors (Tailwind config):
-```
-sun:     #F59E0B  (primary accent, CTAs, highlights)
-sun-light: #FEF3C7
-sun-deep: #B45309
-coral:   #F97066  (danger, high risk, errors)
-coral-light: #FEE2E2
-terra:   #C2410C  (dark danger)
-mint:    #34D399  (success, low risk, ship)
-mint-light: #D1FAE5
-mint-deep: #059669
-ocean:   #0EA5E9  (info, links)
-ocean-light: #E0F2FE
-violet:  #8B5CF6  (block, critical)
-violet-light: #EDE9FE
-ink1:    #1C1917  (headings)
-ink2:    #44403C  (body text)
-ink3:    #78716C  (secondary text)
-ink4:    #A8A29E  (muted text)
-cream:   #FFFBF5  (page background)
-sand:    #F5F0EB  (card background alt)
-border:  #E7E0D8  (borders)
-```
-
-### Score → Color Mapping:
-- 0-30: mint (low risk, ship)
-- 31-65: sun (medium risk, verify)
-- 66-85: coral (high risk, flag)
-- 86-100: violet (critical, block)
-
-### Decision → Color:
-- ship: mint
-- verify: sun
-- flag: coral
-- block: violet
-
-### UI Conventions:
-- Border radius: 12px cards, 8px buttons, 6px badges
-- Shadows: subtle (0 2px 8px rgba(0,0,0,.06))
-- Dashboard background: cream (#FFFBF5)
-- Cards: white with border (1px solid #E7E0D8)
-- Score badges: colored background at 15% opacity, bold mono font
-- French labels throughout dashboard (Expédier, Vérifier, Signaler, Bloquer)
-
-## Environment Variables
-
-```env
-# Database — Neon EU Frankfurt
-DATABASE_URL=postgresql://user:pass@ep-xxx.eu-central-1.aws.neon.tech/codpilot?sslmode=require
-
-# Auth
-AUTH_SECRET=                            # openssl rand -base64 32
-AUTH_URL=http://localhost:3000           # Change to production URL on deploy
-
-# Redis — Upstash EU (Phase 2)
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-
-# Stripe (Phase 2)
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-
-# WhatsApp (Phase 2)
-WHATSAPP_ACCESS_TOKEN=
-WHATSAPP_PHONE_NUMBER_ID=
-
-# Security
-PHONE_HASH_SALT=                        # openssl rand -hex 32
-
-# Compliance
-CNDP_DECLARATION_REF=                   # Fill after CNDP filing
-NETWORK_INTELLIGENCE_ENABLED=false      # DO NOT enable without CNDP authorization
-DATA_RETENTION_MONTHS=24
-
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-## API Design Conventions
-
-- All API routes return JSON: `{ data?, error?, meta? }`
-- Errors: `{ error: "message", code: "ERROR_CODE" }`
-- Pagination: `?page=1&per_page=20` → response includes `meta: { page, perPage, total, totalPages }`
-- All webhook routes authenticate via API key (x-codpilot-key header or ?key= param)
-- All dashboard API routes check auth session first (Phase 2: Auth.js)
-- All mutations create audit_log entries
-
-## Webhook Authentication — API Keys
-
-Merchants authenticate webhooks with an API key (format: `cp_live_` + 32 hex bytes).
-The key is set in the `merchants.apiKey` column and displayed in the Settings page.
-Merchants copy the key into their webhook config (YouCan, Shopify, WooCommerce, or custom).
-
-**Two ways to pass the key:**
-1. Header: `x-codpilot-key: cp_live_xxx` (recommended)
-2. Query param: `?key=cp_live_xxx` (for platforms that don't support custom headers)
-
-**Generate a key:** `generateApiKey()` in `src/lib/api-key.ts`
-**Validate a key:** `validateApiKey(key)` in `src/lib/api-key.ts` — returns the merchant or null
-
-## Webhook Endpoints
-
-### POST /api/webhook/youcan — YouCan-specific format
-Accepts YouCan `order.created` webhook payload. Filters COD orders only.
-
-### POST /api/webhook/ingest — Universal endpoint
-Accepts a simplified JSON payload that works with any source:
-```json
-{
-  "ref": "#1234",
-  "customer": { "phone": "0612345678", "name": "Ahmed", "city": "Casablanca", "address": "123 Rue X" },
-  "total": 349,
-  "currency": "MAD",
-  "product": "T-shirt Nike",
-  "shipping_city": "Casablanca",
-  "shipping_address": "123 Rue X, Maârif"
-}
-```
-
-### Shared Pipeline (src/lib/ingest.ts)
-Both endpoints use the same `processIncomingOrder()` function:
-```
-Auth by API key (x-codpilot-key header or ?key= param)
-│
-├── 1. Hash phone immediately (never store raw — Art. 23)
-├── 2. Check opposition_list → if opposed, score=25 + flag (Art. 9)
-├── 3. Upsert customer by (merchantId, phoneHash)
-├── 4. Run scoring engine (12 rules) with merchant thresholds
-├── 5. If auto_block disabled and decision=block → downgrade to flag
-├── 6. Insert order + audit_log (Art. 23)
-├── 7. Set retention_expires_at
-└── 8. Return { orderId, score, decision, factors, confidence }
-```
-
-## Development Commands
-
-```bash
-npm run dev              # Start dev server (port 3000)
-npm run build            # Production build
-npm run db:generate      # Generate Drizzle migrations
-npm run db:migrate       # Run migrations
-npm run db:push          # Push schema directly (dev only)
-npm run db:studio        # Open Drizzle Studio (DB GUI)
-npm run db:seed          # Seed with test data
-```
-
-## Phase Plan
-
-### Phase 1 — MVP (NOW)
-- [x] Project scaffold + schema
-- [x] Drizzle schema + push to Neon Frankfurt
-- [x] Dashboard layout (sidebar + header)
-- [x] Dashboard overview (KPIs + chart + recent orders)
-- [x] Orders page (table + filters + detail)
-- [x] Settings page (thresholds + presets)
-- [x] Scoring engine (12 rules)
-- [x] API key auth for webhooks (replaces OAuth)
-- [x] YouCan webhook (receive + score + store)
-- [x] Universal ingest endpoint (/api/webhook/ingest)
-- [x] Seed data (50 Moroccan test orders)
-- [ ] Deploy to Vercel EU
-
-### Phase 2 — Beta (M2-M3)
-- [ ] Auth.js with session-based dashboard auth
-- [ ] Stripe billing (3 tiers)
-- [ ] Upstash Redis (rate limiting + velocity)
-- [ ] WhatsApp verification for "verify" decisions
-- [ ] Analytics page (RTO trends, ROI calc)
-- [ ] Compliance page (data rights, audit viewer)
-- [ ] Multi-tenant (multiple merchants)
-
-### Phase 3 — Growth (M4-M6)
-- [ ] Network Intelligence (after CNDP authorization)
-- [ ] Shopify integration
-- [ ] ML scoring (XGBoost inference)
-- [ ] Advanced analytics
-- [ ] Geo-intelligence (micro-zone scoring)
-
-## Moroccan Context — Seed Data
-
-### Cities (use for seed + risky zones):
-Safe: Casablanca, Rabat, Marrakech, Tanger, Agadir, Fès, Meknès
-Risky: Taza, Ouarzazate, Errachidia, Sidi Slimane, Khouribga, Sidi Kacem
-
-### Phone format: +212 6XX XXX XXX (mobile)
-
-### Names (mix of):
-Ahmed, Youssef, Fatima Zahra, Karim, Mehdi, Salma, Hassan, Nadia, Omar, Imane, Hamza, Zineb, Rachid, Houda, Amine, Mohamed, Khadija, Soufiane, Meryem, Khalid
-
-### Products (typical Moroccan e-com):
-T-shirt Nike, Robe Caftan, Montre Casio, Baskets Puma, Parfum, Écouteurs Bluetooth, Coque iPhone, Palette Maquillage, Sac Bandoulière, Lampe LED, Crème Nivea, Portefeuille Tommy, Lunettes Ray-Ban, Montre Xiaomi, Running Adidas
-
-### Currency: MAD (Moroccan Dirham), display as "XXX DH"
+## Stack: Next.js 15 + Drizzle/Neon PostgreSQL + Tailwind + Recharts
+
+## Routes
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| /dashboard | GET | KPIs + charts + orders table + detail slide-over |
+| /dashboard/orders | GET | Full orders list with filters |
+| /dashboard/analytics | GET | RTO trends, ROI, scoring metrics, PDF export |
+| /dashboard/settings | GET | Thresholds + presets + scoring weights + integration |
+| /dashboard/compliance | GET | Data rights requests, audit log viewer |
+| /api/auth/youcan | GET | Start OAuth flow |
+| /api/auth/youcan/callback | GET | Exchange code → token → upsert merchant |
+| /api/webhook/youcan | POST | Receive order → score → save |
+| /api/webhook/ingest | POST | Universal order ingestion (API key auth) |
+| /api/dashboard/stats | GET | KPIs |
+| /api/dashboard/orders | GET | Paginated orders |
+| /api/dashboard/chart | GET | Daily chart data |
+| /api/orders/[id]/override | POST | Manual ship/block |
+| /api/reports/monthly | GET | Monthly PDF report |
+| /api/settings | GET/PUT | Merchant thresholds + weights |
+| /api/team | GET/POST | Team management |
+
+## Scoring: 13 Rules
+
+Base 25 → Client fiable -20/-10 → Recidiviste +30/+15 → Nouveau +10 → Montant +20/+10 → Zone risque ville +15 → Zone risque quartier +10 → Adresse +10/+15 → Nocturne +5 → SKU risk → Auto-adjustment geo
+
+## Design System
+
+- Couleurs : mint #00E5A0, midnight #0B0F1A, slate #1E293B
+- Fonts : Outfit (display), Plus Jakarta Sans (body), JetBrains Mono (mono)
+- Icone : N stylise dans carre mint arrondi `<path d="M6 18V6l12 12V6"/>`
+- Nom toujours en minuscules : nortoo
+- Tagline FR : "Scoring anti-fraude COD · Maroc"
+- Tagline arabe : "نو ر.ت.و — زيرو رتور"
+
+## API Key
+
+- Prefix : `nt_live_` (nouvelles cles)
+- Legacy : `cp_live_` (anciennes cles, toujours acceptees)
+- Header : `x-nortoo-key` (legacy `x-codpilot-key` aussi accepte)
+- Domaine : nortoo.io
+
+## Plans : Trial (0 DH) · Starter (299 DH) · Growth (599 DH) · Scale (1 499 DH)
+
+## Compliance
+
+- Conforme Loi 09-08 (protection des donnees personnelles)
+- Donnees hebergees en UE (Frankfurt)
+- Phones haches SHA-256, jamais stockes en clair
+- Audit log obligatoire (Art. 23)
+- Retention 24 mois (Art. 3e)
+- Isolation par merchant_id sur chaque requete

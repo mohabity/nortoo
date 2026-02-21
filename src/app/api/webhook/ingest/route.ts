@@ -28,7 +28,7 @@ const ingestSchema = z.object({
 /**
  * POST /api/webhook/ingest
  * Universal order ingestion endpoint.
- * Auth: x-codpilot-key header or ?key= query param.
+ * Auth: x-nortoo-key header or ?key= query param.
  *
  * New flow: Validate → Enqueue → 200 OK → process optimistically.
  */
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const apiKey = extractApiKey(request);
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Missing API key. Set x-codpilot-key header or ?key= param." },
+        { error: "Missing API key. Set x-nortoo-key header or ?key= param." },
         { status: 401 }
       );
     }

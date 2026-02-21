@@ -11,7 +11,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM = "Siift <noreply@siift.ma>";
+const FROM = "nortoo <noreply@nortoo.io>";
 
 /**
  * Send an email via Resend. Falls back to console.log if no API key is set.
@@ -52,7 +52,7 @@ export function buildPasswordResetEmail(resetUrl: string) {
 <body style="font-family:'Helvetica Neue',Arial,sans-serif;background:#F8FAFC;padding:40px 20px">
   <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden">
     <div style="padding:24px 32px;border-bottom:1px solid #E2E8F0">
-      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">Siift</span>
+      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">nortoo</span>
     </div>
     <div style="padding:32px">
       <h2 style="font-size:1.1rem;color:#0B0F1A;margin:0 0 16px">R\u00e9initialisation de mot de passe</h2>
@@ -67,13 +67,13 @@ export function buildPasswordResetEmail(resetUrl: string) {
       </p>
     </div>
     <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0">
-      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">Siift \u00b7 Scorez vos commandes COD \u00b7 \u0633\u064a\u0641\u0637\u0648</p>
+      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648</p>
     </div>
   </div>
 </body>
 </html>`;
 
-  const text = `Réinitialisation de mot de passe — Siift
+  const text = `Réinitialisation de mot de passe — nortoo
 
 Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur ce lien pour choisir un nouveau mot de passe :
 
@@ -94,12 +94,12 @@ export function buildEmailVerificationEmail(verifyUrl: string) {
 <body style="font-family:'Helvetica Neue',Arial,sans-serif;background:#F8FAFC;padding:40px 20px">
   <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden">
     <div style="padding:24px 32px;border-bottom:1px solid #E2E8F0">
-      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">Siift</span>
+      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">nortoo</span>
     </div>
     <div style="padding:32px">
       <h2 style="font-size:1.1rem;color:#0B0F1A;margin:0 0 16px">V\u00e9rifiez votre email</h2>
       <p style="font-size:0.9rem;color:#64748B;line-height:1.6;margin:0 0 24px">
-        Bienvenue sur Siift ! Cliquez sur le bouton ci-dessous pour v\u00e9rifier votre adresse email.
+        Bienvenue sur nortoo ! Cliquez sur le bouton ci-dessous pour v\u00e9rifier votre adresse email.
       </p>
       <a href="${verifyUrl}" style="display:inline-block;background:#00E5A0;color:#0B0F1A;font-weight:600;padding:12px 32px;border-radius:10px;text-decoration:none;font-size:0.9rem">
         V\u00e9rifier mon email
@@ -109,15 +109,15 @@ export function buildEmailVerificationEmail(verifyUrl: string) {
       </p>
     </div>
     <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0">
-      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">Siift \u00b7 Scorez vos commandes COD \u00b7 \u0633\u064a\u0641\u0637\u0648</p>
+      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648</p>
     </div>
   </div>
 </body>
 </html>`;
 
-  const text = `V\u00e9rifiez votre email \u2014 Siift
+  const text = `V\u00e9rifiez votre email \u2014 nortoo
 
-Bienvenue sur Siift ! Cliquez sur ce lien pour v\u00e9rifier votre adresse email :
+Bienvenue sur nortoo ! Cliquez sur ce lien pour v\u00e9rifier votre adresse email :
 
 ${verifyUrl}
 
@@ -140,12 +140,12 @@ export function buildTeamInviteEmail(
 <body style="font-family:'Helvetica Neue',Arial,sans-serif;background:#F8FAFC;padding:40px 20px">
   <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden">
     <div style="padding:24px 32px;border-bottom:1px solid #E2E8F0">
-      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">Siift</span>
+      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">nortoo</span>
     </div>
     <div style="padding:32px">
       <h2 style="font-size:1.1rem;color:#0B0F1A;margin:0 0 16px">Vous \u00eates invit\u00e9(e) !</h2>
       <p style="font-size:0.9rem;color:#64748B;line-height:1.6;margin:0 0 8px">
-        Vous avez \u00e9t\u00e9 invit\u00e9(e) \u00e0 rejoindre <strong>${merchantName}</strong> sur Siift en tant que <strong>${roleLabel}</strong>.
+        Vous avez \u00e9t\u00e9 invit\u00e9(e) \u00e0 rejoindre <strong>${merchantName}</strong> sur nortoo en tant que <strong>${roleLabel}</strong>.
       </p>
       <p style="font-size:0.9rem;color:#64748B;line-height:1.6;margin:0 0 24px">
         Cliquez sur le bouton ci-dessous pour cr\u00e9er votre mot de passe et activer votre compte.
@@ -158,15 +158,15 @@ export function buildTeamInviteEmail(
       </p>
     </div>
     <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0">
-      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">Siift \u00b7 Scorez vos commandes COD \u00b7 \u0633\u064a\u0641\u0637\u0648</p>
+      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648</p>
     </div>
   </div>
 </body>
 </html>`;
 
-  const text = `Invitation \u00e0 rejoindre ${merchantName} \u2014 Siift
+  const text = `Invitation \u00e0 rejoindre ${merchantName} \u2014 nortoo
 
-Vous avez \u00e9t\u00e9 invit\u00e9(e) \u00e0 rejoindre ${merchantName} sur Siift en tant que ${roleLabel}.
+Vous avez \u00e9t\u00e9 invit\u00e9(e) \u00e0 rejoindre ${merchantName} sur nortoo en tant que ${roleLabel}.
 
 Cliquez sur ce lien pour cr\u00e9er votre mot de passe et activer votre compte :
 

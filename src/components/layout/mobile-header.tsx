@@ -19,7 +19,7 @@ function getPageTitle(pathname: string): string {
   for (const [path, title] of Object.entries(PAGE_TITLES)) {
     if (pathname.startsWith(path) && path !== "/dashboard") return title;
   }
-  return "Siift";
+  return "nortoo";
 }
 
 export function MobileHeader() {
@@ -41,7 +41,7 @@ export function MobileHeader() {
           strokeWidth="2.5"
           strokeLinecap="round"
         >
-          <path d="M3 6h18M7 12h10M10 18h4" />
+          <path d="M6 18V6l12 12V6" />
         </svg>
       </div>
 

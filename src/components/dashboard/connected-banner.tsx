@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Rocket, X } from "lucide-react";
 
-const DISMISS_KEY_CONNECTED = "codpilot_dismiss_connected";
-const DISMISS_KEY_WELCOME = "codpilot_dismiss_welcome";
+const DISMISS_KEY_CONNECTED = "nortoo_dismiss_connected";
+const DISMISS_KEY_WELCOME = "nortoo_dismiss_welcome";
 
 /**
  * Shows a success toast when ?connected=true or ?welcome=true is in the URL.
@@ -68,7 +68,7 @@ export function ConnectedBanner() {
         }`}
       >
         {isWelcome
-          ? "Bienvenue sur Siift ! Votre boutique est connectée et prête à scorer vos commandes COD."
+          ? "Bienvenue sur nortoo ! Votre boutique est connectée et prête à scorer vos commandes COD."
           : "Boutique connectée avec succès ! Les commandes COD seront scorées automatiquement."}
       </p>
       <button

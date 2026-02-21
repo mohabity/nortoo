@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
   const { html, text } = buildPasswordResetEmail(resetUrl);
   await sendEmail({
     to: user.email,
-    subject: "Réinitialisation de mot de passe — Siift",
+    subject: "Réinitialisation de mot de passe — nortoo",
     html,
     text,
   });

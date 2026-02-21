@@ -75,7 +75,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
 
   const curlExample = `curl -X POST ${webhookUrl} \\
   -H "Content-Type: application/json" \\
-  -H "x-codpilot-key: ${settings.apiKey ?? "VOTRE_CLE_API"}" \\
+  -H "x-nortoo-key: ${settings.apiKey ?? "VOTRE_CLE_API"}" \\
   -d '{
     "ref": "#1234",
     "customer": {
@@ -126,7 +126,7 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <p className="text-xs text-mist mb-2">
               Ajoutez cette clé dans le header{" "}
               <code className="font-mono bg-snow px-1 py-0.5 rounded-xs text-slate">
-                x-codpilot-key
+                x-nortoo-key
               </code>{" "}
               de vos webhooks
             </p>

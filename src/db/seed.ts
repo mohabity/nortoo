@@ -1,5 +1,5 @@
 /**
- * CODPilot Seed Script
+ * nortoo Seed Script
  * Inserts: 2 merchants (with passwords), 15 customers, 50 scored orders, 50 audit logs
  * Run: npm run db:seed
  */
@@ -35,7 +35,7 @@ const MERCHANTS_DATA = [
     domain: "trendyshop.ma",
     email: "contact@trendyshop.ma",
     password: "password123",
-    apiKey: "cp_live_test_1234567890abcdef1234567890abcdef",
+    apiKey: "nt_live_test_1234567890abcdef1234567890abcdef",
     plan: "growth" as const,
     verifyThreshold: 31,
     flagThreshold: 66,
@@ -50,7 +50,7 @@ const MERCHANTS_DATA = [
     domain: "modamaroc.ma",
     email: "admin@modamaroc.ma",
     password: "password123",
-    apiKey: "cp_live_test_abcdef1234567890abcdef1234567890",
+    apiKey: "nt_live_test_abcdef1234567890abcdef1234567890",
     plan: "starter" as const,
     verifyThreshold: 31,
     flagThreshold: 66,
@@ -213,7 +213,7 @@ function retentionDate(): Date {
 // ═══════════════════════════════════════════════════════════
 
 async function seed() {
-  console.log("🌱 Starting CODPilot seed...\n");
+  console.log("🌱 Starting nortoo seed...\n");
 
   // ── 1. Upsert Merchants ──
   console.log("📦 Upserting merchants...");

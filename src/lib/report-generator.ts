@@ -41,7 +41,7 @@ export interface ReportData {
   savings: { totalSaved: number; ordersSaved: number };
 }
 
-// ── Colors (Siift palette) ──
+// ── Colors (nortoo palette) ──
 
 const COLORS = {
   mint: [0, 229, 160] as [number, number, number],
@@ -130,7 +130,7 @@ export function generateInsights(data: ReportData): string[] {
   // 4. Savings highlight
   if (data.savings.totalSaved > 1000) {
     insights.push(
-      `Siift vous a fait economiser ${data.savings.totalSaved.toLocaleString("fr-FR")} DH ce mois en bloquant ${data.savings.ordersSaved} commandes a risque.`
+      `nortoo vous a fait economiser ${data.savings.totalSaved.toLocaleString("fr-FR")} DH ce mois en bloquant ${data.savings.ordersSaved} commandes a risque.`
     );
   }
 
@@ -147,7 +147,7 @@ function drawFooter(doc: jsPDF, pageNum: number, totalPages: number) {
   setColor(doc, COLORS.fog);
   doc.setFont("helvetica", "normal");
   doc.text(
-    "Siift  -  Scorez vos commandes COD  -  siift.ma",
+    "nortoo  -  Scoring anti-fraude COD  -  nortoo.io",
     pageW / 2,
     pageH - 10,
     { align: "center" }
@@ -170,7 +170,7 @@ function drawPage1(doc: jsPDF, data: ReportData) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
   setColor(doc, COLORS.mintDeep);
-  doc.text("Siift", margin, y + 6);
+  doc.text("nortoo", margin, y + 6);
 
   doc.setFontSize(13);
   setColor(doc, COLORS.fog);

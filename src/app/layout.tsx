@@ -30,14 +30,14 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Siift — Anti-Fraude RTO Intelligence",
+  title: "nortoo — Scoring anti-fraude COD",
   description:
-    "Scorez vos commandes COD en temps réel. Réduisez vos retours de 35% à 10%.",
+    "nortoo score chaque commande COD en temps réel. No RTO — conçu pour le e-commerce marocain.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Siift",
+    title: "nortoo",
   },
 };
 

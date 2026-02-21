@@ -19,7 +19,7 @@ export interface MonthlyReportEmail {
 
 /**
  * Build the monthly report email HTML + text.
- * Follows Siift branding (same style as src/lib/email.ts templates).
+ * Follows nortoo branding (same style as src/lib/email.ts templates).
  */
 export function buildMonthlyReportEmail(data: MonthlyReportEmail): {
   html: string;
@@ -34,7 +34,7 @@ export function buildMonthlyReportEmail(data: MonthlyReportEmail): {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)">
         <!-- Header -->
         <tr><td style="padding:32px 32px 0;text-align:center">
-          <div style="font-size:24px;font-weight:800;color:#059669;letter-spacing:-0.04em">Siift</div>
+          <div style="font-size:24px;font-weight:800;color:#059669;letter-spacing:-0.04em">nortoo</div>
           <h1 style="margin:12px 0 4px;font-size:20px;font-weight:700;color:#0B0F1A">
             Rapport mensuel
           </h1>
@@ -87,7 +87,7 @@ export function buildMonthlyReportEmail(data: MonthlyReportEmail): {
         <!-- Footer -->
         <tr><td style="padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0">
           <p style="margin:0;font-size:11px;color:#94a3b8">
-            Siift &middot; Scorez vos commandes COD &middot; siift.ma
+            nortoo &middot; Scoring anti-fraude COD &middot; nortoo.io
           </p>
         </td></tr>
       </table>
@@ -96,7 +96,7 @@ export function buildMonthlyReportEmail(data: MonthlyReportEmail): {
 </body>
 </html>`;
 
-  const text = `Siift - Rapport mensuel
+  const text = `nortoo - Rapport mensuel
 ${data.month} - ${data.merchantName}
 
 Commandes : ${data.kpis.totalOrders.toLocaleString("fr-FR")}
@@ -107,7 +107,7 @@ ROI : ${data.kpis.roi}
 ${data.topInsight ? `\uD83D\uDCA1 ${data.topInsight}\n` : ""}
 T\u00E9l\u00E9charger le rapport : ${data.reportUrl}
 
-Siift - Scorez vos commandes COD - siift.ma`;
+nortoo - Scoring anti-fraude COD - nortoo.io`;
 
   return { html, text };
 }

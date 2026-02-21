@@ -6,7 +6,7 @@ import type { YouCanOrderPayload } from "@/types/youcan";
 /**
  * POST /api/webhook/youcan
  * Receives YouCan order.create webhooks.
- * Auth: x-codpilot-key header or ?key= query param.
+ * Auth: x-nortoo-key header or ?key= query param.
  *
  * New flow: Enqueue immediately → 200 OK → process optimistically.
  * If processing fails, the cron retry will pick it up.
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     if (!apiKey) {
       console.error("[Webhook YouCan] Missing API key");
       return NextResponse.json(
-        { error: "Missing API key. Set x-codpilot-key header or ?key= param." },
+        { error: "Missing API key. Set x-nortoo-key header or ?key= param." },
         { status: 401 }
       );
     }

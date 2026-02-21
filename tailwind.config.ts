@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Siift Design System — cool fintech palette
+        // nortoo Design System — cool fintech palette
         midnight: "#0B0F1A",
         slate: "#1E293B",
         graphite: "#334155",

@@ -142,13 +142,13 @@ export async function POST(request: Request) {
     const roleLabel = ROLE_LABELS[role as Role] ?? role;
     const { html, text } = buildTeamInviteEmail(
       inviteUrl,
-      merchant?.name ?? "Siift",
+      merchant?.name ?? "nortoo",
       roleLabel
     );
 
     sendEmail({
       to: normalizedEmail,
-      subject: `Invitation à rejoindre ${merchant?.name ?? "Siift"} sur Siift`,
+      subject: `Invitation à rejoindre ${merchant?.name ?? "nortoo"} sur nortoo`,
       html,
       text,
     }).catch(() => {});

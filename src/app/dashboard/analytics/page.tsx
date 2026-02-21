@@ -123,7 +123,7 @@ interface CitiesApiResponse {
 
 // ═══════════════════════════════════════════════════════════
 // MOCK DATA — Realistic Moroccan e-commerce over 30 days
-// RTO trend: 35% → 28% → 20% → 13% to show Siift impact
+// RTO trend: 35% → 28% → 20% → 13% to show nortoo impact
 // ═══════════════════════════════════════════════════════════
 
 function generateDailyData(days: number) {
@@ -510,7 +510,7 @@ export default function AnalyticsPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `siift-rapport-${month}.pdf`;
+      a.download = `nortoo-rapport-${month}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     } finally {
@@ -864,10 +864,10 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* ROI Siift */}
+        {/* ROI nortoo */}
         <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-fog">ROI Siift</p>
+            <p className="text-sm font-medium text-fog">ROI nortoo</p>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-violet-bg">
               <Flame className="h-4.5 w-4.5 text-violet" />
             </div>
@@ -891,7 +891,7 @@ export default function AnalyticsPage() {
               <Coins className="h-5 w-5 text-amber" />
               <CardTitle>Impact financier</CardTitle>
             </div>
-            <p className="text-xs text-fog">Détail des économies générées par Siift</p>
+            <p className="text-xs text-fog">Détail des économies générées par nortoo</p>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Mini KPIs */}
@@ -915,7 +915,7 @@ export default function AnalyticsPage() {
                 </p>
               </div>
               <div className="rounded-xl border border-silk bg-snow/50 p-4">
-                <p className="text-xs font-medium text-fog">ROI Siift</p>
+                <p className="text-xs font-medium text-fog">ROI nortoo</p>
                 <p className="mt-2 font-display text-xl font-bold text-midnight">
                   {savingsData.roiMultiple ? `${savingsData.roiMultiple}×` : "—"}
                 </p>

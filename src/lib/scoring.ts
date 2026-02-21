@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// Siift Scoring Engine v1.2
+// nortoo Scoring Engine v1.2
 // 15 rules, score 0-100, 4 decision levels
 // v1.1: Added R12_SKU_RISK + dynamic R8_GEO_RISK
 // v1.2: Added R8b_ZONE_RISK (quartier-level geo scoring)

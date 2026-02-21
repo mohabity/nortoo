@@ -26,7 +26,7 @@ export function ReportBanner() {
     });
 
     // Check dismissal for this month
-    const key = `siift_dismiss_report_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const key = `nortoo_dismiss_report_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     if (localStorage.getItem(key)) return;
 
     setMonthLabel(label);
@@ -36,7 +36,7 @@ export function ReportBanner() {
   function dismiss() {
     setVisible(false);
     const now = new Date();
-    const key = `siift_dismiss_report_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const key = `nortoo_dismiss_report_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     localStorage.setItem(key, "1");
   }
 

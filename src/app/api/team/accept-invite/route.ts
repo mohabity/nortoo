@@ -84,7 +84,7 @@ export async function GET(request: Request) {
       email: user.email,
       name: user.name,
       role: user.role,
-      merchantName: merchant?.name ?? "Siift",
+      merchantName: merchant?.name ?? "nortoo",
     },
   });
 }

@@ -157,7 +157,7 @@ function InvitePageInner() {
               strokeWidth="2.5"
               strokeLinecap="round"
             >
-              <path d="M3 6h18M7 12h10M10 18h4" />
+              <path d="M6 18V6l12 12V6" />
             </svg>
           </div>
           <h1 className="mt-4 font-display text-xl font-bold text-midnight">

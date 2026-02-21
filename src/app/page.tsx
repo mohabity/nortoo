@@ -12,16 +12,16 @@ export default function Home() {
         <div className="mb-6 inline-flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-mint">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="#0B0F1A" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M3 6h18M7 12h10M10 18h4"/>
+              <path d="M6 18V6l12 12V6"/>
             </svg>
           </div>
           <span className="font-display text-2xl font-black tracking-[-0.06em] text-midnight">
-            Siift
+            nortoo
           </span>
         </div>
 
         <h1 className="font-display text-2xl font-bold text-midnight">
-          Anti-Fraude RTO Intelligence
+          Scoring anti-fraude COD · Maroc
         </h1>
         <p className="mt-2 text-fog">
           Scorez vos commandes COD en temps réel. Expédiez en confiance, bloquez la fraude.

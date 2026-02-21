@@ -338,7 +338,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Legacy cookie (backward compat with middleware)
-    response.cookies.set("codpilot_merchant", String(merchantId), {
+    response.cookies.set("nortoo_merchant", String(merchantId), {
       httpOnly: true,
       secure: isSecure,
       sameSite: "lax",

@@ -288,11 +288,11 @@ function OnboardingWizard() {
             strokeWidth="2.5"
             strokeLinecap="round"
           >
-            <path d="M3 6h18M7 12h10M10 18h4" />
+            <path d="M6 18V6l12 12V6" />
           </svg>
         </div>
         <span className="font-display text-xl font-black tracking-[-0.06em] text-midnight">
-          Siift
+          nortoo
         </span>
       </div>
 
@@ -409,7 +409,7 @@ function StepWelcome({ name, onNext }: { name: string; onNext: () => void }) {
       <div className="text-5xl">{"🎯"}</div>
       <div>
         <h2 className="font-display text-xl sm:text-[1.4rem] font-bold text-midnight">
-          Bienvenue sur Siift{name ? `, ${name}` : ""} !
+          Bienvenue sur nortoo{name ? `, ${name}` : ""} !
         </h2>
         <p className="mt-2 text-sm text-fog">
           Scorez vos commandes COD en temps réel et réduisez vos retours de 40%.
@@ -489,7 +489,7 @@ function StepConnectStore({
           Connectez votre boutique YouCan
         </h2>
         <p className="mt-2 text-sm text-fog">
-          Siift s&apos;installe automatiquement. Vos commandes COD seront scorées en temps réel.
+          nortoo s&apos;installe automatiquement. Vos commandes COD seront scorées en temps réel.
         </p>
       </div>
 
@@ -509,7 +509,7 @@ function StepConnectStore({
           </button>
         </p>
         <p className="font-mono text-[0.55rem] text-mist">
-          {"🔒 Connexion sécurisée OAuth — Siift ne stocke pas vos identifiants YouCan"}
+          {"🔒 Connexion sécurisée OAuth — nortoo ne stocke pas vos identifiants YouCan"}
         </p>
       </div>
     </div>

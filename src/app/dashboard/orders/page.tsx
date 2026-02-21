@@ -78,7 +78,7 @@ const SUGGESTION_ICONS = {
 
 // ── Recent searches helpers ──
 
-const RECENT_SEARCHES_KEY = "codpilot-recent-searches";
+const RECENT_SEARCHES_KEY = "nortoo-recent-searches";
 const MAX_RECENT = 5;
 
 function getRecentSearches(): RecentSearch[] {

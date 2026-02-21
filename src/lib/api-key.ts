@@ -5,18 +5,19 @@ import { eq } from "drizzle-orm";
 
 /**
  * Generate a new API key for a merchant.
- * Format: "cp_live_" + 32 random hex bytes (71 chars total)
+ * Format: "nt_live_" + 32 random hex bytes (71 chars total)
  */
 export function generateApiKey(): string {
-  return "cp_live_" + randomBytes(32).toString("hex");
+  return "nt_live_" + randomBytes(32).toString("hex");
 }
 
 /**
  * Validate an API key and return the merchant if found.
  * Returns null if the key is invalid or not found.
+ * Accepts both nt_live_ (new) and cp_live_ (legacy) prefixes.
  */
 export async function validateApiKey(key: string) {
-  if (!key || !key.startsWith("cp_live_")) {
+  if (!key || (!key.startsWith("nt_live_") && !key.startsWith("cp_live_"))) {
     return null;
   }
 
@@ -31,14 +32,18 @@ export async function validateApiKey(key: string) {
 
 /**
  * Extract API key from request headers or query params.
- * Checks: x-codpilot-key header first, then ?key= query param.
+ * Checks: x-nortoo-key header first, then x-codpilot-key (legacy), then ?key= query param.
  */
 export function extractApiKey(request: Request): string | null {
-  // 1. Check header
-  const headerKey = request.headers.get("x-codpilot-key");
+  // 1. Check header (new)
+  const headerKey = request.headers.get("x-nortoo-key");
   if (headerKey) return headerKey;
 
-  // 2. Check query param
+  // 2. Check legacy header
+  const legacyHeaderKey = request.headers.get("x-codpilot-key");
+  if (legacyHeaderKey) return legacyHeaderKey;
+
+  // 3. Check query param
   const url = new URL(request.url);
   const paramKey = url.searchParams.get("key");
   if (paramKey) return paramKey;

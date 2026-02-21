@@ -7,7 +7,7 @@ import type { NextRequest } from "next/server";
  *
  * Protects /dashboard/* and /api/* (except webhooks/crons) routes.
  * Checks for Auth.js JWT token first, then falls back to the legacy
- * "codpilot_merchant" cookie for backward compatibility with YouCan OAuth flow.
+ * "nortoo_merchant" cookie for backward compatibility with YouCan OAuth flow.
  */
 
 // Routes that DON'T need auth (webhooks use API key auth)
@@ -63,7 +63,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Fallback: legacy cookie (YouCan OAuth backward compat)
-  const merchantCookie = request.cookies.get("codpilot_merchant");
+  const merchantCookie = request.cookies.get("nortoo_merchant");
   if (merchantCookie?.value) {
     return NextResponse.next();
   }

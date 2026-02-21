@@ -44,7 +44,7 @@ export async function sendVerificationEmail(
   const { html, text } = buildEmailVerificationEmail(verifyUrl);
   const sent = await sendEmail({
     to: email,
-    subject: "V\u00e9rifiez votre email \u2014 Siift",
+    subject: "V\u00e9rifiez votre email \u2014 nortoo",
     html,
     text,
   });
