@@ -1,7 +1,7 @@
 import { randomBytes, createHash } from "crypto";
 import { db } from "@/db/index";
 import { merchants } from "@/db/schema";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 /**
  * Hash an API key with SHA-256 for database storage/lookup.
@@ -27,9 +27,7 @@ export function generateApiKey(): { key: string; hash: string } {
  * Returns null if the key is invalid or not found.
  * Accepts both nt_live_ (new) and cp_live_ (legacy) prefixes.
  *
- * Lookup strategy:
- * 1. Try apiKeyHash (SHA-256) — preferred, secure
- * 2. Fallback to plaintext apiKey — for pre-migration keys
+ * Lookup: SHA-256 hash-based only (plaintext fallback removed after backfill).
  */
 export async function validateApiKey(key: string) {
   if (!key || (!key.startsWith("nt_live_") && !key.startsWith("cp_live_"))) {
@@ -38,11 +36,10 @@ export async function validateApiKey(key: string) {
 
   const keyHash = hashApiKey(key);
 
-  // Try hash-based lookup first, fallback to plaintext for pre-migration keys
   const [merchant] = await db
     .select()
     .from(merchants)
-    .where(or(eq(merchants.apiKeyHash, keyHash), eq(merchants.apiKey, key)))
+    .where(eq(merchants.apiKeyHash, keyHash))
     .limit(1);
 
   return merchant ?? null;

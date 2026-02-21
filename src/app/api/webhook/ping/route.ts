@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { merchants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
+import { decryptSafe } from "@/lib/encryption";
 
 /**
  * POST /api/webhook/ping
@@ -21,7 +22,9 @@ export async function POST() {
     .where(eq(merchants.id, merchantId))
     .limit(1);
 
-  if (!merchant?.youcanAccessToken) {
+  const accessToken = decryptSafe(merchant?.youcanAccessToken ?? null);
+
+  if (!accessToken) {
     return NextResponse.json({
       data: { status: "no_token", latencyMs: 0 },
     });
@@ -31,7 +34,7 @@ export async function POST() {
 
   try {
     const res = await fetch("https://api.youcan.shop/me", {
-      headers: { Authorization: `Bearer ${merchant.youcanAccessToken}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
       signal: AbortSignal.timeout(10_000),
     });
     const latencyMs = Date.now() - start;

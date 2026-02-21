@@ -5,7 +5,14 @@ import { and, eq, sql } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
 import { encode } from "next-auth/jwt";
 import { hash } from "bcryptjs";
-import { randomBytes } from "crypto";
+import { randomBytes, timingSafeEqual } from "crypto";
+import { encrypt } from "@/lib/encryption";
+
+/** Constant-time string comparison to prevent timing attacks on CSRF tokens. */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
+}
 
 /**
  * GET /api/auth/youcan/callback
@@ -52,7 +59,7 @@ export async function GET(request: NextRequest) {
     savedCsrf = savedStateRaw || "";
   }
 
-  if (!savedCsrf || savedCsrf !== state) {
+  if (!savedCsrf || !state || !safeCompare(savedCsrf, state)) {
     return errorRedirect("Erreur de sécurité (state CSRF invalide). Réessayez.");
   }
 
@@ -134,7 +141,7 @@ export async function GET(request: NextRequest) {
       await db
         .update(merchants)
         .set({
-          youcanAccessToken: accessToken,
+          youcanAccessToken: encrypt(accessToken),
           youcanStoreName: storeName,
           name: storeName || existingByStore.name,
           email: storeEmail || existingByStore.email,
@@ -165,7 +172,7 @@ export async function GET(request: NextRequest) {
           .update(merchants)
           .set({
             youcanStoreId: storeId,
-            youcanAccessToken: accessToken,
+            youcanAccessToken: encrypt(accessToken),
             youcanStoreName: storeName,
             domain: storeDomain || existingByEmail.domain,
             emailVerified: existingByEmail.emailVerified ?? new Date(), // YouCan verified
@@ -379,7 +386,7 @@ async function autoCreateMerchant(opts: {
       domain: opts.storeDomain,
       passwordHash,
       youcanStoreId: opts.storeId,
-      youcanAccessToken: opts.accessToken,
+      youcanAccessToken: encrypt(opts.accessToken),
       youcanStoreName: opts.storeName,
       apiKey,
       apiKeyHash,
