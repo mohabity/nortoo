@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { WebhookHealthDot } from "@/components/dashboard/webhook-health-dot";
-import { ROLE_LABELS, type Role } from "@/lib/permissions";
+import { ROLE_LABELS, type Role } from "@/lib/permissions.shared";
 
 const PLAN_LABELS: Record<string, string> = {
   trial: "Essai",

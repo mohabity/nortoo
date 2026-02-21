@@ -5,7 +5,7 @@ import {
   type Permission,
   type Role,
   ROLE_PERMISSIONS,
-} from "@/lib/permissions";
+} from "@/lib/permissions.shared";
 
 /**
  * Client-side permission hook.

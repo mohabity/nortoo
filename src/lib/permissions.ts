@@ -1,40 +1,16 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
-// ── Permission types ──
+// Re-export shared types & constants so server imports keep working
+export {
+  type Permission,
+  type Role,
+  ROLE_PERMISSIONS,
+  ROLE_LABELS,
+  hasPermission,
+} from "@/lib/permissions.shared";
 
-export type Permission =
-  | "orders:read"
-  | "orders:write"
-  | "analytics:read"
-  | "settings:read"
-  | "settings:write"
-  | "team:manage"
-  | "compliance:read";
-
-export type Role = "admin" | "manager" | "operator";
-
-// ── Role → permissions map ──
-
-export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  admin: [
-    "orders:read",
-    "orders:write",
-    "analytics:read",
-    "settings:read",
-    "settings:write",
-    "team:manage",
-    "compliance:read",
-  ],
-  manager: ["orders:read", "orders:write", "analytics:read"],
-  operator: ["orders:read"],
-};
-
-export const ROLE_LABELS: Record<Role, string> = {
-  admin: "Administrateur",
-  manager: "Responsable",
-  operator: "Opérateur",
-};
+import { hasPermission, type Role, type Permission } from "@/lib/permissions.shared";
 
 // ── Auth context returned by requirePermission ──
 
@@ -43,14 +19,6 @@ export interface AuthContext {
   userId: number;
   role: Role;
   plan: string;
-}
-
-// ── Helper: check if a role has specific permissions ──
-
-export function hasPermission(role: Role, ...perms: Permission[]): boolean {
-  const rolePerms = ROLE_PERMISSIONS[role];
-  if (!rolePerms) return false;
-  return perms.every((p) => rolePerms.includes(p));
 }
 
 // ── Permission error ──
