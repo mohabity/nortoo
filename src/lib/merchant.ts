@@ -32,3 +32,29 @@ export async function getMerchantId(): Promise<number> {
 
   return DEMO_MERCHANT_ID;
 }
+
+/**
+ * Get both merchantId and plan from the session.
+ * The plan is cached in the JWT — for security-critical checks,
+ * always verify against the DB (server-side gating does this).
+ */
+export async function getMerchantContext(): Promise<{
+  merchantId: number;
+  plan: string;
+}> {
+  try {
+    const session = await auth();
+    if (session?.user?.merchantId) {
+      return {
+        merchantId: session.user.merchantId,
+        plan: session.user.plan ?? "trial",
+      };
+    }
+  } catch {
+    // fall through
+  }
+
+  // Fallback
+  const merchantId = await getMerchantId();
+  return { merchantId, plan: "trial" };
+}

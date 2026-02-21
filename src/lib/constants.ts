@@ -1,8 +1,9 @@
 // ═══ Plan Pricing ═══
+// NOTE: Canonical plan config is in src/lib/plans.ts — this is kept for backward compat
 export const PLANS = {
-  trial: { name: "Essai", price: 0, orders: 100, label: "14 jours gratuits" },
+  trial: { name: "Essai", price: 0, orders: 50, label: "14 jours gratuits" },
   starter: { name: "Starter", price: 299, orders: 500, label: "299 DH/mois" },
-  growth: { name: "Growth", price: 599, orders: 2000, label: "599 DH/mois" },
+  pro: { name: "Pro", price: 699, orders: 2000, label: "699 DH/mois" },
   scale: { name: "Scale", price: 1499, orders: 10000, label: "1 499 DH/mois" },
 } as const;
 
@@ -44,10 +45,11 @@ export const SAFE_CITIES = [
 ];
 
 // ═══ User Limits per Plan ═══
+// NOTE: Canonical limits are in src/lib/plans.ts — this is kept for backward compat
 export const USER_LIMITS: Record<string, number> = {
-  trial: 2,
-  starter: 3,
-  growth: 5,
+  trial: 1,
+  starter: 1,
+  pro: 3,
   scale: 10,
 };
 

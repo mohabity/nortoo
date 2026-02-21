@@ -10,7 +10,7 @@ import {
   ROLE_LABELS,
   type Role,
 } from "@/lib/permissions";
-import { USER_LIMITS } from "@/lib/constants";
+import { getUserLimit } from "@/lib/plans";
 import { sendEmail, buildTeamInviteEmail } from "@/lib/email";
 
 /**
@@ -36,7 +36,7 @@ export async function GET() {
       .orderBy(users.createdAt);
 
     // Get plan limit
-    const limit = USER_LIMITS[ctx.plan] ?? 2;
+    const limit = getUserLimit(ctx.plan);
 
     return NextResponse.json({
       data: teamMembers,
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       .from(users)
       .where(eq(users.merchantId, ctx.merchantId));
 
-    const limit = USER_LIMITS[ctx.plan] ?? 2;
+    const limit = getUserLimit(ctx.plan);
     if (currentCount >= limit) {
       return NextResponse.json(
         {

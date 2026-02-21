@@ -26,6 +26,9 @@ const merchantSelect = {
   dataRetentionMonths: merchants.dataRetentionMonths,
   cndpDeclarationRef: merchants.cndpDeclarationRef,
   consentRecordedAt: merchants.consentRecordedAt,
+  trialEndsAt: merchants.trialEndsAt,
+  currentMonthOrders: merchants.currentMonthOrders,
+  currentMonthStart: merchants.currentMonthStart,
   createdAt: merchants.createdAt,
   updatedAt: merchants.updatedAt,
 } as const;

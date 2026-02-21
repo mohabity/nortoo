@@ -10,7 +10,8 @@ export type TabId =
   | "rto_costs"
   | "api"
   | "notifications"
-  | "privacy";
+  | "privacy"
+  | "billing";
 
 // ── Tab metadata (for sidebar rendering) ──
 export interface TabMeta {
@@ -38,6 +39,9 @@ export interface MerchantSettings {
   dataRetentionMonths: number;
   cndpDeclarationRef: string | null;
   consentRecordedAt: string | null;
+  trialEndsAt: string | null;
+  currentMonthOrders: number;
+  currentMonthStart: string | null;
   createdAt: string;
   updatedAt: string;
 }

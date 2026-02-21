@@ -3,7 +3,8 @@ import { db } from "@/db/index";
 import { orders, merchants } from "@/db/schema";
 import { and, eq, desc } from "drizzle-orm";
 import { z } from "zod";
-import { getMerchantId } from "@/lib/merchant";
+import { getMerchantContext } from "@/lib/merchant";
+import { requireFeature, handleFeatureGateError } from "@/lib/require-feature";
 import {
   simulateThresholds,
   type SimOrderInput,
@@ -23,7 +24,14 @@ const simulateSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const merchantId = await getMerchantId();
+  const { merchantId, plan } = await getMerchantContext();
+
+  // Plan gate — simulation requires Pro+
+  try {
+    requireFeature(plan, "simulation");
+  } catch (err) {
+    return handleFeatureGateError(err);
+  }
 
   // Parse body
   let body: unknown;

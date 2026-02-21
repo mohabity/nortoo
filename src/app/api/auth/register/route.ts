@@ -91,6 +91,8 @@ export async function POST(request: Request) {
       passwordHash,
       apiKey,
       plan: "trial",
+      trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+      currentMonthStart: new Date(),
       dataRetentionMonths: 24,
     })
     .returning({ id: merchants.id });

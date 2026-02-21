@@ -36,6 +36,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FeatureGate } from "@/components/feature-gate";
 
 // ── Savings API response type ──
 interface SavingsApiData {
@@ -749,59 +750,64 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex items-center gap-3">
           <PeriodSelector value={period} onChange={setPeriod} />
-          <button
-            onClick={handleExportAnalytics}
-            disabled={exportLoading}
-            className="h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
-          >
-            {exportLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">Exporter</span>
-          </button>
-
-          {/* PDF Report dropdown */}
-          <div className="relative">
+          {/* Export CSV — Starter+ */}
+          <FeatureGate feature="csv_export" mode="lock">
             <button
-              onClick={() => setPdfDropdownOpen(!pdfDropdownOpen)}
-              disabled={pdfLoading}
+              onClick={handleExportAnalytics}
+              disabled={exportLoading}
               className="h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
             >
-              {pdfLoading ? (
+              {exportLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <FileText className="h-4 w-4" />
+                <Download className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">Rapport PDF</span>
-              <ChevronDown className="h-3 w-3 text-mist" />
+              <span className="hidden sm:inline">Exporter</span>
             </button>
+          </FeatureGate>
 
-            {pdfDropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setPdfDropdownOpen(false)}
-                />
-                <div className="absolute right-0 top-11 z-50 w-56 rounded-sm border border-silk bg-white shadow-lg">
-                  <div className="px-3 py-2 border-b border-silk">
-                    <p className="text-xs font-medium text-fog">Choisir le mois</p>
+          {/* PDF Report dropdown — Pro+ */}
+          <FeatureGate feature="pdf_report" mode="lock">
+            <div className="relative">
+              <button
+                onClick={() => setPdfDropdownOpen(!pdfDropdownOpen)}
+                disabled={pdfLoading}
+                className="h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+              >
+                {pdfLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Rapport PDF</span>
+                <ChevronDown className="h-3 w-3 text-mist" />
+              </button>
+
+              {pdfDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setPdfDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 top-11 z-50 w-56 rounded-sm border border-silk bg-white shadow-lg">
+                    <div className="px-3 py-2 border-b border-silk">
+                      <p className="text-xs font-medium text-fog">Choisir le mois</p>
+                    </div>
+                    {pdfMonths.map((m) => (
+                      <button
+                        key={m.value}
+                        onClick={() => handleDownloadPDF(m.value)}
+                        disabled={pdfLoading}
+                        className="w-full text-left px-3 py-2 text-sm text-midnight hover:bg-snow transition-colors first-letter:uppercase disabled:opacity-50"
+                      >
+                        {m.label}
+                      </button>
+                    ))}
                   </div>
-                  {pdfMonths.map((m) => (
-                    <button
-                      key={m.value}
-                      onClick={() => handleDownloadPDF(m.value)}
-                      disabled={pdfLoading}
-                      className="w-full text-left px-3 py-2 text-sm text-midnight hover:bg-snow transition-colors first-letter:uppercase disabled:opacity-50"
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          </FeatureGate>
         </div>
       </div>
 

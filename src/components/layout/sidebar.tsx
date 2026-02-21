@@ -24,14 +24,14 @@ const navItems = [
 const PLAN_LABELS: Record<string, string> = {
   trial: "Essai gratuit",
   starter: "Starter",
-  growth: "Growth",
+  pro: "Pro",
   scale: "Scale",
 };
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
   trial: "14 jours restants",
   starter: "299 DH/mois",
-  growth: "699 DH/mois",
+  pro: "699 DH/mois",
   scale: "1 499 DH/mois",
 };
 

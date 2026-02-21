@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { orders, cityStats, productStats, auditLogs } from "@/db/schema";
 import { eq, and, gte, desc, avg, count, sql } from "drizzle-orm";
-import { getMerchantId } from "@/lib/merchant";
+import { getMerchantContext } from "@/lib/merchant";
 import { requireVerifiedEmail } from "@/lib/email-verification";
+import { requireFeature, handleFeatureGateError } from "@/lib/require-feature";
 
 // ── Rate limiting (in-memory) ──
 const exportCounts = new Map<number, { count: number; resetAt: number }>();
@@ -48,7 +49,14 @@ function riskTierLabel(tier: string | null): string {
  * Query params: period = 7 | 30 | 90 (days, default 30)
  */
 export async function GET(request: NextRequest) {
-  const merchantId = await getMerchantId();
+  const { merchantId, plan } = await getMerchantContext();
+
+  // Plan gate — csv_export requires Starter+
+  try {
+    requireFeature(plan, "csv_export");
+  } catch (err) {
+    return handleFeatureGateError(err);
+  }
 
   // Email verification guard
   const verifyCheck = await requireVerifiedEmail(merchantId);

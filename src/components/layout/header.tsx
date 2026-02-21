@@ -10,7 +10,7 @@ import { ROLE_LABELS, type Role } from "@/lib/permissions.shared";
 const PLAN_LABELS: Record<string, string> = {
   trial: "Essai",
   starter: "Starter",
-  growth: "Growth",
+  pro: "Pro",
   scale: "Scale",
 };
 

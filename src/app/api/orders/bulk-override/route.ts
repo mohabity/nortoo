@@ -3,7 +3,8 @@ import { db } from "@/db/index";
 import { orders, auditLogs, notifications } from "@/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { getMerchantId } from "@/lib/merchant";
+import { getMerchantContext } from "@/lib/merchant";
+import { requireBulkAccess, handleFeatureGateError, BulkLimitError } from "@/lib/require-feature";
 
 const bulkOverrideSchema = z.object({
   orderIds: z.array(z.number().int().positive()).min(1).max(50),
@@ -22,7 +23,7 @@ const DECISION_LABELS: Record<string, string> = {
 };
 
 export async function POST(request: Request) {
-  const merchantId = await getMerchantId();
+  const { merchantId, plan } = await getMerchantContext();
 
   // Parse body
   let body: unknown;
@@ -41,6 +42,19 @@ export async function POST(request: Request) {
   }
 
   const { orderIds, action, reason } = parsed.data;
+
+  // Plan gate — bulk_actions requires Starter+ with dynamic batch limit
+  try {
+    requireBulkAccess(plan, orderIds.length);
+  } catch (err) {
+    if (err instanceof BulkLimitError) {
+      return NextResponse.json(
+        { error: err.message, code: "BULK_LIMIT" },
+        { status: 403 }
+      );
+    }
+    return handleFeatureGateError(err);
+  }
   const decision = ACTION_MAP[action];
 
   // Fetch all orders — verify ownership + get previous decisions

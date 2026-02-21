@@ -383,6 +383,8 @@ async function autoCreateMerchant(opts: {
       youcanStoreName: opts.storeName,
       apiKey,
       plan: "trial",
+      trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+      currentMonthStart: new Date(),
       inviteCode: opts.inviteCode || null,
       emailVerified: new Date(), // YouCan has already verified the email
       consentRecordedAt: new Date(),

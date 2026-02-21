@@ -10,6 +10,7 @@ import {
 import { and, eq, gte, lte, count, avg, sql, desc } from "drizzle-orm";
 import { requirePermission, handlePermissionError } from "@/lib/permissions";
 import { requireVerifiedEmail } from "@/lib/email-verification";
+import { requireFeature, handleFeatureGateError } from "@/lib/require-feature";
 import { generateMonthlyReport, type ReportData } from "@/lib/report-generator";
 import { PLANS } from "@/lib/constants";
 
@@ -47,7 +48,14 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     return handlePermissionError(err);
   }
-  const { merchantId, userId } = ctx;
+  const { merchantId, userId, plan } = ctx;
+
+  // Plan gate — pdf_report requires Pro+
+  try {
+    requireFeature(plan ?? "trial", "pdf_report");
+  } catch (err) {
+    return handleFeatureGateError(err);
+  }
 
   // Email verification guard
   const verifyCheck = await requireVerifiedEmail(merchantId);

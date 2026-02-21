@@ -36,7 +36,7 @@ const MERCHANTS_DATA = [
     email: "contact@trendyshop.ma",
     password: "password123",
     apiKey: "nt_live_test_1234567890abcdef1234567890abcdef",
-    plan: "growth" as const,
+    plan: "pro" as const,
     verifyThreshold: 31,
     flagThreshold: 66,
     blockThreshold: 86,
@@ -777,7 +777,7 @@ async function seed() {
   console.log(`   • ${productsUpdated} stats produits + ${citiesUpdated} stats villes + ${zonesUpdated} stats quartiers`);
   console.log(`   • 100+ entrées audit log`);
   console.log(`\n🔑 Identifiants de connexion:`);
-  console.log(`   • contact@trendyshop.ma / password123 (plan Growth)`);
+  console.log(`   • contact@trendyshop.ma / password123 (plan Pro)`);
   console.log(`   • admin@modamaroc.ma / password123 (plan Starter)`);
 }
 

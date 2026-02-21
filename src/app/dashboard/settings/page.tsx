@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Coins,
   Timer,
+  CreditCard,
   Loader2,
   X,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import { NotificationsTab } from "./components/NotificationsTab";
 import { PrivacyTab } from "./components/PrivacyTab";
 import { RtoCostsTab } from "./components/RtoCostsTab";
 import { TeamTab } from "./components/TeamTab";
+import { BillingTab } from "./components/BillingTab";
 
 // ── Tab definitions ──
 const TABS: TabMeta[] = [
@@ -38,6 +40,7 @@ const TABS: TabMeta[] = [
   { id: "api", label: "Intégration & API", icon: KeyRound },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "privacy", label: "Données & Confidentialité", icon: ShieldCheck },
+  { id: "billing", label: "Facturation", icon: CreditCard },
 ];
 
 // ── Toast item ──
@@ -186,6 +189,7 @@ function SettingsPageInner() {
           {activeTab === "api" && <ApiTab {...baseProps} />}
           {activeTab === "notifications" && <NotificationsTab {...baseProps} />}
           {activeTab === "privacy" && <PrivacyTab {...baseProps} />}
+          {activeTab === "billing" && <BillingTab {...baseProps} />}
         </div>
       </div>
 

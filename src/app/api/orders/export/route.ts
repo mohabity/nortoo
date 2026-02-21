@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { orders, auditLogs } from "@/db/schema";
 import { and, eq, gte, lte, like, or, desc } from "drizzle-orm";
-import { getMerchantId } from "@/lib/merchant";
+import { getMerchantContext } from "@/lib/merchant";
 import { expandSearch } from "@/lib/search";
 import { decisionLabel } from "@/lib/utils";
 import { requireVerifiedEmail } from "@/lib/email-verification";
+import { requireFeature, handleFeatureGateError } from "@/lib/require-feature";
 
 // ── Rate limiting (in-memory) ──
 const exportCounts = new Map<number, { count: number; resetAt: number }>();
@@ -61,7 +62,14 @@ function formatDate(date: Date | string | null): string {
  * Same filters as GET /api/orders.
  */
 export async function GET(request: NextRequest) {
-  const merchantId = await getMerchantId();
+  const { merchantId, plan } = await getMerchantContext();
+
+  // Plan gate — csv_export requires Starter+
+  try {
+    requireFeature(plan, "csv_export");
+  } catch (err) {
+    return handleFeatureGateError(err);
+  }
 
   // Email verification guard
   const verifyCheck = await requireVerifiedEmail(merchantId);

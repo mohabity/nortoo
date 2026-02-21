@@ -34,10 +34,15 @@ export const merchants = pgTable("merchants", {
   shopifyStoreId: text("shopify_store_id"),
 
   // Billing
-  plan: text("plan").notNull().default("trial"), // trial | starter | growth | scale
+  plan: text("plan").notNull().default("trial"), // trial | starter | pro | scale
   inviteCode: text("invite_code"),               // invite code used at signup
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+
+  // Plan usage tracking
+  trialEndsAt: timestamp("trial_ends_at"),                              // null = no active trial
+  currentMonthOrders: integer("current_month_orders").notNull().default(0),
+  currentMonthStart: timestamp("current_month_start"),                  // reset monthly by cron
 
   // Scoring settings
   verifyThreshold: integer("verify_threshold").notNull().default(31),

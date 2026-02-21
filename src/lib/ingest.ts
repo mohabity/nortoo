@@ -13,8 +13,8 @@
  */
 
 import { db } from "@/db/index";
-import { customers, orders, auditLogs, oppositionList, notifications } from "@/db/schema";
-import { and, eq, or, isNull } from "drizzle-orm";
+import { customers, orders, auditLogs, oppositionList, notifications, merchants } from "@/db/schema";
+import { and, eq, or, isNull, sql } from "drizzle-orm";
 import { hashPhone, phoneLast4 } from "@/lib/hash";
 import { scoreOrder, type ScoringResult } from "@/lib/scoring";
 import { executePipeline } from "@/lib/pipeline";
@@ -479,7 +479,21 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     decision = "block";
   }
 
-  // ── 7. Update product & city stats (fire-and-forget, non-blocking, skip for test orders) ──
+  // ── 7. Increment monthly order counter (atomic, skip test orders) ──
+  if (!params.isTest) {
+    try {
+      await db
+        .update(merchants)
+        .set({
+          currentMonthOrders: sql`${merchants.currentMonthOrders} + 1`,
+        })
+        .where(eq(merchants.id, merchantId));
+    } catch (err) {
+      console.error("[Ingest] Monthly order counter increment failed (non-blocking):", err);
+    }
+  }
+
+  // ── 8. Update product & city stats (fire-and-forget, non-blocking, skip for test orders) ──
   if (!params.isTest) {
     try {
       if (resolvedProductId && productName) {

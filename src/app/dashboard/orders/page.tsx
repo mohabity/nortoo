@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useSelection } from "@/hooks/use-selection";
+import { FeatureGate } from "@/components/feature-gate";
 
 // ── Types ──
 
@@ -660,19 +661,21 @@ function OrdersContent() {
             )}
           </div>
 
-          {/* Export CSV */}
-          <button
-            onClick={handleExport}
-            disabled={exportLoading}
-            className="h-10 lg:h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
-          >
-            {exportLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">Exporter CSV</span>
-          </button>
+          {/* Export CSV — Starter+ */}
+          <FeatureGate feature="csv_export" mode="lock">
+            <button
+              onClick={handleExport}
+              disabled={exportLoading}
+              className="h-10 lg:h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+            >
+              {exportLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">Exporter CSV</span>
+            </button>
+          </FeatureGate>
         </div>
       </div>
 
@@ -770,15 +773,17 @@ function OrdersContent() {
         </div>
       )}
 
-      {/* ── Bulk action bar ── */}
+      {/* ── Bulk action bar — Starter+ ── */}
       {selectionCount > 0 && (
-        <BulkActionBar
-          selectedCount={selectionCount}
-          maxExceeded={selectionCount > 50}
-          onForceShip={() => setBulkAction("SHIP")}
-          onForceBlock={() => setBulkAction("BLOCK")}
-          onClear={clearSelection}
-        />
+        <FeatureGate feature="bulk_actions" mode="lock">
+          <BulkActionBar
+            selectedCount={selectionCount}
+            maxExceeded={selectionCount > 50}
+            onForceShip={() => setBulkAction("SHIP")}
+            onForceBlock={() => setBulkAction("BLOCK")}
+            onClear={clearSelection}
+          />
+        </FeatureGate>
       )}
 
       {/* ── Bulk confirm modal ── */}
