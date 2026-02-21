@@ -1,25 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { Search, User, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { WebhookHealthDot } from "@/components/dashboard/webhook-health-dot";
+import { PlanBadge } from "@/components/plan-badge";
 import { ROLE_LABELS, type Role } from "@/lib/permissions.shared";
-
-const PLAN_LABELS: Record<string, string> = {
-  trial: "Essai",
-  starter: "Starter",
-  pro: "Pro",
-  scale: "Scale",
-};
+import type { PlanId } from "@/lib/plans";
 
 export function Header() {
   const { data: session } = useSession();
 
   const merchantName = session?.user?.name ?? "Ma Boutique";
-  const plan = session?.user?.plan ?? "trial";
-  const planLabel = PLAN_LABELS[plan] ?? plan;
+  const plan = (session?.user?.plan ?? "trial") as PlanId;
   const role = (session?.user?.role ?? "operator") as Role;
   const roleLabel = ROLE_LABELS[role] ?? role;
 
@@ -46,7 +41,13 @@ export function Header() {
           </div>
           <div>
             <p className="text-sm font-medium text-midnight">{merchantName}</p>
-            <p className="text-[10px] text-mist">{roleLabel} · Plan {planLabel}</p>
+            <div className="flex items-center gap-1.5 text-[10px] text-mist">
+              <span>{roleLabel}</span>
+              <span>·</span>
+              <Link href="/dashboard/billing" className="hover:opacity-80 transition-opacity">
+                <PlanBadge plan={plan} />
+              </Link>
+            </div>
           </div>
         </div>
 

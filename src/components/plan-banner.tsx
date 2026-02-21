@@ -82,7 +82,7 @@ export function PlanBanner() {
       <p className="flex-1">{message}</p>
       {cta && (
         <Link
-          href="/dashboard/settings?tab=billing"
+          href="/dashboard/billing"
           className="shrink-0 font-medium underline underline-offset-2 hover:opacity-80"
         >
           {cta}

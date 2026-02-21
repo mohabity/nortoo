@@ -65,7 +65,7 @@ export function FeatureGate({
         </div>
         <p className="text-sm text-fog">{displayMessage}</p>
         <Link
-          href="/dashboard/settings?tab=billing"
+          href="/dashboard/billing"
           className="inline-flex items-center gap-1.5 rounded-sm bg-mint px-4 py-2 text-sm font-medium text-midnight transition-colors hover:bg-mint-dark"
         >
           Voir les plans →

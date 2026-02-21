@@ -22,6 +22,7 @@ import { ThresholdBar } from "@/components/dashboard/threshold-bar";
 import { SCORING_PRESETS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { SimulationPanel } from "./SimulationPanel";
+import { FeatureGate } from "@/components/feature-gate";
 import type { BaseTabProps } from "../types";
 
 export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
@@ -259,33 +260,35 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
       </Card>
 
       {/* ═══ Simuler l'impact ═══ */}
-      {!showSimulation && (
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => setShowSimulation(true)}
-          disabled={!hasChanges}
-        >
-          <Play className="mr-2 h-4 w-4" />
-          Simuler l&apos;impact sur vos commandes
-        </Button>
-      )}
+      <FeatureGate feature="simulation" mode="upgrade">
+        {!showSimulation && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setShowSimulation(true)}
+            disabled={!hasChanges}
+          >
+            <Play className="mr-2 h-4 w-4" />
+            Simuler l&apos;impact sur vos commandes
+          </Button>
+        )}
 
-      {showSimulation && (
-        <SimulationPanel
-          verify={verify}
-          flag={flag}
-          block={block}
-          savedVerify={settings.verifyThreshold}
-          savedFlag={settings.flagThreshold}
-          savedBlock={settings.blockThreshold}
-          onApply={async () => {
-            await handleSave();
-            setShowSimulation(false);
-          }}
-          onClose={() => setShowSimulation(false)}
-        />
-      )}
+        {showSimulation && (
+          <SimulationPanel
+            verify={verify}
+            flag={flag}
+            block={block}
+            savedVerify={settings.verifyThreshold}
+            savedFlag={settings.flagThreshold}
+            savedBlock={settings.blockThreshold}
+            onApply={async () => {
+              await handleSave();
+              setShowSimulation(false);
+            }}
+            onClose={() => setShowSimulation(false)}
+          />
+        )}
+      </FeatureGate>
 
       {/* ═══ Auto-blocage ═══ */}
       <Card>

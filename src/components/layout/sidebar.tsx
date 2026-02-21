@@ -87,15 +87,23 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Plan info */}
+      {/* Plan info — clickable */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-silk p-4">
-        <div className="rounded-sm bg-snow p-3">
+        <Link
+          href="/dashboard/billing"
+          className="block rounded-sm bg-snow p-3 hover:bg-mint-bg/30 transition-colors group"
+        >
           <p className="text-xs font-medium text-fog">Plan actuel</p>
           <p className="font-display text-sm font-bold text-midnight">{planLabel}</p>
           {planDescription && (
-            <p className="mt-1 text-xs text-mist">{planDescription}</p>
+            <p className="mt-1 text-xs text-mist">
+              {planDescription}
+              <span className="ml-1 text-mint-deep opacity-0 group-hover:opacity-100 transition-opacity">
+                Gérer →
+              </span>
+            </p>
           )}
-        </div>
+        </Link>
       </div>
     </aside>
   );

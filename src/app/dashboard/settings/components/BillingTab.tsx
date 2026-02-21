@@ -1,15 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Check, Crown } from "lucide-react";
+import Link from "next/link";
+import { Loader2, ArrowRight } from "lucide-react";
 import { PlanBadge } from "@/components/plan-badge";
-import {
-  PLAN_CONFIGS,
-  PLAN_ORDER,
-  type PlanId,
-  type FeatureId,
-  FEATURE_LABELS,
-} from "@/lib/plans";
+import { type PlanId, type FeatureId } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import type { BaseTabProps } from "../types";
 
@@ -30,20 +25,6 @@ interface PlanApiData {
   trial: { daysRemaining: number; expiresAt: string } | null;
   currentMonthStart: string | null;
 }
-
-const PLAN_CARD_COLORS: Record<PlanId, string> = {
-  trial: "border-silk",
-  starter: "border-mint/40",
-  pro: "border-ocean/40",
-  scale: "border-violet/40",
-};
-
-const PLAN_CTA_COLORS: Record<PlanId, string> = {
-  trial: "bg-slate text-white hover:bg-slate/90",
-  starter: "bg-mint text-midnight hover:bg-mint-dark",
-  pro: "bg-ocean text-white hover:bg-ocean/90",
-  scale: "bg-violet text-white hover:bg-violet/90",
-};
 
 export function BillingTab({ settings }: BaseTabProps) {
   const [data, setData] = useState<PlanApiData | null>(null);
@@ -66,10 +47,9 @@ export function BillingTab({ settings }: BaseTabProps) {
   }
 
   const currentPlan = data.plan;
-  const payablePlans = PLAN_ORDER.filter((p) => p !== "trial") as PlanId[];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* ── Current Plan ── */}
       <div className="rounded-sm border border-silk bg-white p-6">
         <div className="flex items-center justify-between">
@@ -104,7 +84,7 @@ export function BillingTab({ settings }: BaseTabProps) {
               <span className="text-xs font-medium text-fog">Commandes ce mois</span>
               <span className="text-xs font-mono text-slate">
                 {data.usage.orders.current}
-                {data.usage.orders.limit > 0 ? ` / ${data.usage.orders.limit}` : " / ∞"}
+                {data.usage.orders.limit > 0 ? ` / ${data.usage.orders.limit.toLocaleString("fr-FR")}` : " / ∞"}
               </span>
             </div>
             <div className="h-2 rounded-full bg-snow">
@@ -145,102 +125,14 @@ export function BillingTab({ settings }: BaseTabProps) {
         </div>
       </div>
 
-      {/* ── Plan Cards ── */}
-      <div>
-        <h2 className="font-display text-lg font-semibold text-midnight mb-4">
-          Choisir un plan
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {payablePlans.map((planId) => {
-            const config = PLAN_CONFIGS[planId];
-            const isCurrent = planId === currentPlan;
-            const isUpgrade =
-              PLAN_ORDER.indexOf(planId) > PLAN_ORDER.indexOf(currentPlan);
-
-            return (
-              <div
-                key={planId}
-                className={cn(
-                  "relative rounded-sm border-2 bg-white p-5 transition-shadow",
-                  isCurrent ? "ring-2 ring-mint shadow-md" : "",
-                  PLAN_CARD_COLORS[planId]
-                )}
-              >
-                {isCurrent && (
-                  <div className="absolute -top-3 left-4 flex items-center gap-1 rounded-full bg-mint px-2.5 py-0.5 text-[10px] font-semibold text-midnight">
-                    <Crown className="h-3 w-3" />
-                    Actuel
-                  </div>
-                )}
-
-                <h3 className="font-display text-base font-bold text-midnight">
-                  {config.name}
-                </h3>
-                <div className="mt-1">
-                  <span className="font-display text-2xl font-bold text-midnight">
-                    {config.price}
-                  </span>
-                  <span className="text-sm text-fog"> DH/mois</span>
-                </div>
-
-                <ul className="mt-4 space-y-2">
-                  <li className="flex items-start gap-2 text-sm text-slate">
-                    <Check className="h-4 w-4 text-mint shrink-0 mt-0.5" />
-                    {config.ordersPerMonth > 0
-                      ? `${config.ordersPerMonth.toLocaleString("fr-FR")} commandes/mois`
-                      : "Commandes illimitées"}
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-slate">
-                    <Check className="h-4 w-4 text-mint shrink-0 mt-0.5" />
-                    {config.maxUsers} utilisateur{config.maxUsers > 1 ? "s" : ""}
-                  </li>
-                  {config.features
-                    .filter(
-                      (f) => !["scoring", "dashboard", "search"].includes(f)
-                    )
-                    .map((feature) => (
-                      <li
-                        key={feature}
-                        className="flex items-start gap-2 text-sm text-slate"
-                      >
-                        <Check className="h-4 w-4 text-mint shrink-0 mt-0.5" />
-                        {FEATURE_LABELS[feature as FeatureId]}
-                      </li>
-                    ))}
-                </ul>
-
-                <button
-                  disabled={isCurrent}
-                  className={cn(
-                    "mt-5 w-full rounded-sm px-4 py-2.5 text-sm font-medium transition-colors",
-                    isCurrent
-                      ? "bg-snow text-mist cursor-not-allowed"
-                      : isUpgrade
-                        ? PLAN_CTA_COLORS[planId]
-                        : "border border-silk text-fog hover:bg-snow"
-                  )}
-                  onClick={() => {
-                    window.open(
-                      `mailto:contact@nortoo.com?subject=Upgrade%20vers%20${config.name}&body=Je%20souhaite%20passer%20au%20plan%20${config.name}.`,
-                      "_blank"
-                    );
-                  }}
-                >
-                  {isCurrent
-                    ? "Plan actuel"
-                    : isUpgrade
-                      ? "Contactez-nous"
-                      : "Downgrade"}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        <p className="mt-4 text-xs text-mist text-center">
-          Pour changer de plan, contactez-nous par email. Le paiement se fait par virement bancaire ou carte.
-        </p>
-      </div>
+      {/* ── Link to full billing page ── */}
+      <Link
+        href="/dashboard/billing"
+        className="flex items-center justify-center gap-2 rounded-sm border border-silk bg-snow px-6 py-4 text-sm font-medium text-slate hover:bg-mint-bg/30 hover:border-mint/30 transition-colors"
+      >
+        <ArrowRight className="h-4 w-4" />
+        Voir tous les plans et gérer votre abonnement →
+      </Link>
     </div>
   );
 }
