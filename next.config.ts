@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   // Vercel handles this, but explicit for safety
@@ -32,7 +33,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.vercel.app https://*.neon.tech https://api.youcan.shop",
+              "connect-src 'self' https://*.vercel.app https://*.neon.tech https://api.youcan.shop https://*.ingest.de.sentry.io",
               "frame-ancestors 'none'",
             ].join("; "),
           },
@@ -42,4 +43,19 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Sentry build options
+  org: process.env.SENTRY_ORG || "nortoo",
+  project: process.env.SENTRY_PROJECT || "nortoo-web",
+
+  // Suppress build logs
+  silent: true,
+
+  // Keep source maps private (upload to Sentry, don't expose publicly)
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+
+  // Disable Sentry telemetry
+  telemetry: false,
+});

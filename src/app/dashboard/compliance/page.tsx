@@ -1,51 +1,32 @@
 "use client";
 
-import { Shield, FileText, Eye, Trash2, Ban, Clock } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Shield, FileText, Eye, Trash2, Ban, Clock, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/provider";
 import { formatDate } from "@/lib/i18n-utils";
 
-// Mock data rights requests
-const dataRightsRequests = [
-  {
-    id: 1,
-    phoneHash: "a3f2...8c41",
-    rightType: "access",
-    status: "completed",
-    createdAt: "2026-02-10T14:30:00Z",
-    deadline: "2026-03-12T14:30:00Z",
-  },
-  {
-    id: 2,
-    phoneHash: "b7e1...2d55",
-    rightType: "deletion",
-    status: "processing",
-    createdAt: "2026-02-15T09:00:00Z",
-    deadline: "2026-03-17T09:00:00Z",
-  },
-  {
-    id: 3,
-    phoneHash: "c9d4...6f78",
-    rightType: "opposition",
-    status: "completed",
-    createdAt: "2026-02-05T11:20:00Z",
-    deadline: "2026-03-07T11:20:00Z",
-  },
-];
+interface AuditLog {
+  id: number;
+  actor: string;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  details: Record<string, unknown> | null;
+  createdAt: string;
+}
 
-// Mock audit logs
-const recentAuditLogs = [
-  { id: 1, actor: "system", action: "score", target: "Commande #1847", createdAt: "2026-02-18T10:30:01Z" },
-  { id: 2, actor: "system", action: "score", target: "Commande #1848", createdAt: "2026-02-18T09:15:02Z" },
-  { id: 3, actor: "merchant", action: "override", target: "Commande #1840", createdAt: "2026-02-17T16:00:00Z" },
-  { id: 4, actor: "system", action: "score", target: "Commande #1849", createdAt: "2026-02-18T08:45:01Z" },
-  { id: 5, actor: "consumer", action: "access_request", target: "Client a3f2...8c41", createdAt: "2026-02-10T14:30:00Z" },
-  { id: 6, actor: "merchant", action: "settings_change", target: "Seuils scoring", createdAt: "2026-02-08T10:00:00Z" },
-  { id: 7, actor: "system", action: "delete", target: "Données expirées (12 fiches)", createdAt: "2026-02-18T03:00:00Z" },
-  { id: 8, actor: "consumer", action: "access_request", target: "Client c9d4...6f78", createdAt: "2026-02-05T11:20:00Z" },
-];
+interface DataRightsRequest {
+  id: number;
+  requesterPhoneHash: string;
+  rightType: string;
+  status: string;
+  responseDeadline: string | null;
+  completedAt: string | null;
+  createdAt: string;
+}
 
 const rightTypeKeys: Record<string, { key: string; icon: typeof Eye }> = {
   access: { key: "compliance.rights.access", icon: Eye },
@@ -64,10 +45,16 @@ const actionKeys: Record<string, string> = {
   score: "compliance.audit.scoring",
   override: "compliance.audit.override",
   access_request: "compliance.audit.accessRequest",
+  data_rights_access: "compliance.audit.accessRequest",
+  data_rights_delete: "compliance.audit.deletion",
+  data_rights_oppose: "compliance.audit.objection",
   delete: "compliance.audit.deletion",
+  data_purge: "compliance.audit.deletion",
   settings_change: "compliance.audit.settings",
   login: "compliance.audit.login",
   export: "compliance.audit.export",
+  analytics_exported: "compliance.audit.export",
+  report_exported: "compliance.audit.export",
 };
 
 const actorKeys: Record<string, string> = {
@@ -79,6 +66,61 @@ const actorKeys: Record<string, string> = {
 
 export default function CompliancePage() {
   const { t, locale } = useTranslation();
+
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [auditTotal, setAuditTotal] = useState<number>(0);
+  const [dataRightsRequests, setDataRightsRequests] = useState<DataRightsRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [auditRes, rightsRes] = await Promise.all([
+        fetch("/api/dashboard/audit?per_page=8"),
+        fetch("/api/data-rights/list?per_page=10"),
+      ]);
+
+      if (auditRes.ok) {
+        const auditJson = await auditRes.json();
+        setAuditLogs(auditJson.data ?? []);
+        setAuditTotal(auditJson.meta?.total ?? 0);
+      }
+
+      if (rightsRes.ok) {
+        const rightsJson = await rightsRes.json();
+        setDataRightsRequests(rightsJson.data ?? []);
+      }
+    } catch {
+      setError(t("common.error"));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-6 w-6 animate-spin text-mint" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <p className="text-sm text-rose">{error}</p>
+        <Button onClick={fetchData} size="sm">
+          {t("common.retry")}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,7 +154,9 @@ export default function CompliancePage() {
             <FileText className="h-4 w-4 text-ocean" />
             <p className="text-xs font-medium text-fog">{t("compliance.cards.auditLog")}</p>
           </div>
-          <p className="mt-2 font-display text-lg font-bold text-midnight">1 247</p>
+          <p className="mt-2 font-display text-lg font-bold text-midnight">
+            {auditTotal.toLocaleString(locale === "fr" ? "fr-FR" : "en-US")}
+          </p>
           <p className="text-xs text-mist">{t("compliance.cards.auditLogEntries")}</p>
         </div>
         <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-4">
@@ -120,7 +164,9 @@ export default function CompliancePage() {
             <Ban className="h-4 w-4 text-violet" />
             <p className="text-xs font-medium text-fog">{t("compliance.cards.objections")}</p>
           </div>
-          <p className="mt-2 font-display text-lg font-bold text-midnight">3</p>
+          <p className="mt-2 font-display text-lg font-bold text-midnight">
+            {dataRightsRequests.filter((r) => r.rightType === "opposition").length}
+          </p>
           <p className="text-xs text-mist">{t("compliance.cards.objectionsCount")}</p>
         </div>
       </div>
@@ -133,36 +179,42 @@ export default function CompliancePage() {
             <CardDescription>{t("compliance.rights.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {dataRightsRequests.map((req) => {
-                const rightConfig = rightTypeKeys[req.rightType];
-                const statusConfig = statusKeys[req.status];
-                const RightIcon = rightConfig?.icon ?? Eye;
+            {dataRightsRequests.length === 0 ? (
+              <p className="py-8 text-center text-sm text-mist">
+                {t("compliance.rights.empty") ?? "Aucune demande pour le moment"}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {dataRightsRequests.map((req) => {
+                  const rightConfig = rightTypeKeys[req.rightType];
+                  const statusConfig = statusKeys[req.status];
+                  const RightIcon = rightConfig?.icon ?? Eye;
 
-                return (
-                  <div
-                    key={req.id}
-                    className="flex items-center justify-between rounded-sm border border-silk p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <RightIcon className="h-4 w-4 text-fog" />
-                      <div>
-                        <p className="text-sm font-medium text-midnight">
-                          {rightConfig ? t(rightConfig.key) : req.rightType}
-                        </p>
-                        <p className="font-mono text-xs text-mist">{req.phoneHash}</p>
-                        <p className="text-xs text-mist">
-                          {formatDate(req.createdAt, locale)}
-                        </p>
+                  return (
+                    <div
+                      key={req.id}
+                      className="flex items-center justify-between rounded-sm border border-silk p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <RightIcon className="h-4 w-4 text-fog" />
+                        <div>
+                          <p className="text-sm font-medium text-midnight">
+                            {rightConfig ? t(rightConfig.key) : req.rightType}
+                          </p>
+                          <p className="font-mono text-xs text-mist">{req.requesterPhoneHash}</p>
+                          <p className="text-xs text-mist">
+                            {formatDate(req.createdAt, locale)}
+                          </p>
+                        </div>
                       </div>
+                      <Badge variant={statusConfig?.variant ?? "default"}>
+                        {statusConfig ? t(statusConfig.key) : req.status}
+                      </Badge>
                     </div>
-                    <Badge variant={statusConfig?.variant ?? "default"}>
-                      {statusConfig ? t(statusConfig.key) : req.status}
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -173,35 +225,47 @@ export default function CompliancePage() {
             <CardDescription>{t("compliance.audit.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-1">
-              {recentAuditLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between rounded-xs px-3 py-2 hover:bg-snow/50"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Badge variant="default" className="shrink-0">
-                      {actorKeys[log.actor] ? t(actorKeys[log.actor]) : log.actor}
-                    </Badge>
-                    <div className="min-w-0">
-                      <p className="text-sm text-slate truncate">
-                        <span className="font-medium">{actionKeys[log.action] ? t(actionKeys[log.action]) : log.action}</span>
-                        {" — "}
-                        {log.target}
-                      </p>
+            {auditLogs.length === 0 ? (
+              <p className="py-8 text-center text-sm text-mist">
+                {t("compliance.audit.empty") ?? "Aucun log pour le moment"}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {auditLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="flex items-center justify-between rounded-xs px-3 py-2 hover:bg-snow/50"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Badge variant="default" className="shrink-0">
+                        {actorKeys[log.actor] ? t(actorKeys[log.actor]) : log.actor}
+                      </Badge>
+                      <div className="min-w-0">
+                        <p className="text-sm text-slate truncate">
+                          <span className="font-medium">
+                            {actionKeys[log.action] ? t(actionKeys[log.action]) : log.action}
+                          </span>
+                          {log.targetType && log.targetId && (
+                            <>
+                              {" — "}
+                              {log.targetType} #{log.targetId}
+                            </>
+                          )}
+                        </p>
+                      </div>
                     </div>
+                    <span className="shrink-0 text-xs text-mist ml-2">
+                      {formatDate(log.createdAt, locale, {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                   </div>
-                  <span className="shrink-0 text-xs text-mist ml-2">
-                    {formatDate(log.createdAt, locale, {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
             <Button variant="outline" size="sm" className="mt-4 w-full">
               {t("compliance.audit.viewAll")}
             </Button>
