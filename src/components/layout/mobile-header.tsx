@@ -31,19 +31,8 @@ export function MobileHeader() {
       className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-silk bg-white/80 backdrop-blur-sm px-4 lg:hidden"
       style={{ paddingTop: "var(--safe-top)" }}
     >
-      {/* Logo icon */}
-      <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-mint shrink-0">
-        <svg
-          className="h-4 w-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#0B0F1A"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        >
-          <path d="M6 18V6l12 12V6" />
-        </svg>
-      </div>
+      {/* Logo */}
+      <img src="/nortoo-logo.png" alt="nortoo" className="h-6 w-auto shrink-0" />
 
       {/* Page title */}
       <h1 className="font-display text-base font-bold text-midnight truncate px-3">

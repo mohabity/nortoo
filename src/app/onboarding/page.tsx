@@ -278,22 +278,8 @@ function OnboardingWizard() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-snow px-4 py-8">
       {/* Logo */}
-      <div className="mb-8 flex items-center gap-2.5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-mint to-mint-deep shadow-md">
-          <svg
-            className="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#0B0F1A"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          >
-            <path d="M6 18V6l12 12V6" />
-          </svg>
-        </div>
-        <span className="font-display text-xl font-black tracking-[-0.06em] text-midnight">
-          nortoo
-        </span>
+      <div className="mb-8">
+        <img src="/nortoo-logo.png" alt="nortoo" className="h-9 w-auto" />
       </div>
 
       {/* Card */}

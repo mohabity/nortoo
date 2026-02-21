@@ -42,15 +42,8 @@ export default async function InvitePage({
     <div className="flex min-h-screen items-center justify-center bg-snow px-4">
       <div className="w-full max-w-sm text-center">
         {/* Logo */}
-        <div className="mb-8 inline-flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-mint">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="#0B0F1A" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M6 18V6l12 12V6"/>
-            </svg>
-          </div>
-          <span className="font-display text-2xl font-black tracking-[-0.06em] text-midnight">
-            nortoo
-          </span>
+        <div className="mb-8">
+          <img src="/nortoo-logo.png" alt="nortoo" className="mx-auto h-9 w-auto" />
         </div>
 
         <div className="rounded-sm border border-rose/30 bg-rose-bg p-6">

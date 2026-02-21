@@ -33,6 +33,9 @@ export const metadata: Metadata = {
   title: "nortoo — Scoring anti-fraude COD",
   description:
     "nortoo score chaque commande COD en temps réel. No RTO — conçu pour le e-commerce marocain.",
+  icons: {
+    icon: "/favicon.ico",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

@@ -148,18 +148,7 @@ function InvitePageInner() {
       <div className="w-full max-w-md rounded-xl border border-silk bg-white p-8 shadow-sm">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl bg-mint">
-            <svg
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#0B0F1A"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            >
-              <path d="M6 18V6l12 12V6" />
-            </svg>
-          </div>
+          <img src="/nortoo-logo.png" alt="nortoo" className="mx-auto h-9 w-auto" />
           <h1 className="mt-4 font-display text-xl font-bold text-midnight">
             Rejoindre {inviteData.merchantName}
           </h1>
