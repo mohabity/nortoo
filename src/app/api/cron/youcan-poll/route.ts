@@ -34,6 +34,9 @@ export async function GET(request: Request) {
     storeName: string | null;
     fetched: number;
     newOrders: number;
+    skippedExisting: number;
+    skippedNonCod: number;
+    skippedNoPhone: number;
     errors: string[];
   }> = [];
 
@@ -61,6 +64,9 @@ export async function GET(request: Request) {
       storeName: m.youcanStoreName,
       fetched: 0,
       newOrders: 0,
+      skippedExisting: 0,
+      skippedNonCod: 0,
+      skippedNoPhone: 0,
       errors: [],
     };
 
@@ -137,7 +143,7 @@ export async function GET(request: Request) {
         const orderId = String(order.id);
 
         // Skip if already processed
-        if (existingSet.has(orderId)) continue;
+        if (existingSet.has(orderId)) { result.skippedExisting++; continue; }
 
         // Skip non-COD orders
         // YouCan API: gateway_type is at payment.gateway_type (not payment.payload.gateway)
@@ -146,6 +152,7 @@ export async function GET(request: Request) {
           order.payment?.payload?.gateway;
         if (gateway && gateway !== "cod" && gateway !== "cash_on_delivery") {
           console.log(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): non-COD gateway="${gateway}"`);
+          result.skippedNonCod++;
           continue;
         }
 
@@ -156,6 +163,7 @@ export async function GET(request: Request) {
           order.payment?.address?.[0]?.phone;
         if (!phone) {
           console.log(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): missing phone, customer=${order.customer?.first_name ?? "?"} ${order.customer?.last_name ?? "?"}`);
+          result.skippedNoPhone++;
           continue;
         }
 
