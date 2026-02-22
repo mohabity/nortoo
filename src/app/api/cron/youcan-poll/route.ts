@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { merchants, orders, auditLogs } from "@/db/schema";
-import { and, eq, isNotNull, desc, sql } from "drizzle-orm";
+import { and, eq, isNotNull, inArray } from "drizzle-orm";
 import { decryptSafe } from "@/lib/encryption";
-import { processIncomingOrder, type IngestParams } from "@/lib/ingest";
+import { processIncomingOrder } from "@/lib/ingest";
 import { parseYouCanPayload } from "@/lib/order-pipeline";
 import type { YouCanOrderPayload } from "@/types/youcan";
 
@@ -11,15 +11,15 @@ import type { YouCanOrderPayload } from "@/types/youcan";
  * GET /api/cron/youcan-poll
  *
  * Polling fallback for YouCan webhooks.
- * Runs every 5 minutes via Vercel Cron.
+ * Runs daily at 6am UTC via Vercel Cron (Hobby plan limit).
  *
  * For each merchant with a YouCan store:
- * 1. Fetch recent orders from YouCan API (last 30 minutes)
+ * 1. Fetch recent orders from YouCan API (all pages)
  * 2. Check which ones are already in our DB (by externalId)
  * 3. Ingest any missing orders through the normal pipeline
  *
  * This is a safety net — if a webhook fails or YouCan stops sending them,
- * orders are still captured within ~5 minutes.
+ * orders are still captured at the next cron run.
  */
 export async function GET(request: Request) {
   // Vercel Cron auth
@@ -72,60 +72,79 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // ── Fetch recent orders from YouCan ──
-      // Include customer, payment, shipping, variants for full data
-      const apiUrl = new URL("https://api.youcan.shop/orders");
-      apiUrl.searchParams.set("include", "customer,payment,shipping,variants");
-      // YouCan API returns newest first by default
+      // ── Fetch orders from YouCan (paginated) ──
+      // Fetch up to 3 pages (30 orders) to avoid timeouts on cron
+      const allOrders: YouCanOrderPayload[] = [];
+      let nextPageUrl: string | null = null;
+      const maxPages = 3;
 
-      const ordersRes = await fetch(apiUrl.toString(), {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      if (!ordersRes.ok) {
-        const errText = await ordersRes.text();
-        if (ordersRes.status === 401) {
-          result.errors.push("Token expired or invalid");
+      for (let page = 1; page <= maxPages; page++) {
+        let apiUrl: URL;
+        if (nextPageUrl) {
+          apiUrl = new URL(nextPageUrl);
         } else {
-          result.errors.push(`API error: ${ordersRes.status} ${errText.substring(0, 200)}`);
+          apiUrl = new URL("https://api.youcan.shop/orders");
+          apiUrl.searchParams.set("include", "customer,payment,shipping,variants");
         }
-        results.push(result);
-        continue;
+
+        const ordersRes = await fetch(apiUrl.toString(), {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (!ordersRes.ok) {
+          const errText = await ordersRes.text();
+          if (ordersRes.status === 401) {
+            result.errors.push("Token expired or invalid");
+          } else {
+            result.errors.push(`API error: ${ordersRes.status} ${errText.substring(0, 200)}`);
+          }
+          break;
+        }
+
+        const ordersData = await ordersRes.json();
+        const pageOrders: YouCanOrderPayload[] = ordersData.data || ordersData || [];
+        allOrders.push(...pageOrders);
+
+        // Check for next page
+        const paginationLinks = ordersData.meta?.pagination?.links;
+        nextPageUrl = paginationLinks?.next || null;
+        if (!nextPageUrl) break;
       }
 
-      const ordersData = await ordersRes.json();
-      const youcanOrders: YouCanOrderPayload[] = ordersData.data || ordersData || [];
-      result.fetched = youcanOrders.length;
+      result.fetched = allOrders.length;
 
-      if (youcanOrders.length === 0) {
+      if (allOrders.length === 0) {
         results.push(result);
         continue;
       }
 
       // ── Check which orders already exist in our DB ──
-      const externalIds = youcanOrders.map((o) => String(o.id));
+      const externalIds = allOrders.map((o) => String(o.id));
       const existingOrders = await db
         .select({ externalId: orders.externalId })
         .from(orders)
         .where(
           and(
             eq(orders.merchantId, m.id),
-            sql`${orders.externalId} = ANY(${externalIds})`
+            inArray(orders.externalId, externalIds)
           )
         );
 
       const existingSet = new Set(existingOrders.map((o) => o.externalId));
 
       // ── Process missing orders ──
-      for (const order of youcanOrders) {
+      for (const order of allOrders) {
         const orderId = String(order.id);
 
         // Skip if already processed
         if (existingSet.has(orderId)) continue;
 
         // Skip non-COD orders
-        const gateway = order.payment?.payload?.gateway;
-        if (gateway && gateway !== "cod") continue;
+        // YouCan API: gateway_type is at payment.gateway_type (not payment.payload.gateway)
+        const gateway =
+          (order.payment as any)?.gateway_type ||
+          order.payment?.payload?.gateway;
+        if (gateway && gateway !== "cod" && gateway !== "cash_on_delivery") continue;
 
         // Skip orders without phone
         const phone =
@@ -135,7 +154,6 @@ export async function GET(request: Request) {
         if (!phone) continue;
 
         try {
-          // Parse via existing pipeline
           const merchantSettings = {
             id: m.id,
             verifyThreshold: m.verifyThreshold,
