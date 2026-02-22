@@ -399,6 +399,19 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     decision = "flag"; // Downgrade to flag when auto-block is disabled
   }
 
+  // ── 5a. No shipping address → mandatory verification ──
+  if (!shippingAddress || shippingAddress.trim().length === 0) {
+    if (decision === "ship") {
+      decision = "verify";
+    }
+    scoringResult.factors.push({
+      rule: "R_NO_ADDRESS",
+      points: 0,
+      reason: "Adresse de livraison manquante — vérification obligatoire",
+      category: "address",
+    });
+  }
+
   // ── 5b. Generate human-readable explanation ──
   const explanation = generateExplanation(
     scoringResult.score,
