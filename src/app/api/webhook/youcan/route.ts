@@ -112,10 +112,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── 2b. HMAC signature verification (if configured) ──
-    const webhookSecret = process.env.YOUCAN_WEBHOOK_SECRET;
+    // ── 2b. HMAC signature verification ──
+    // Per YouCan docs: signing key = OAuth Client Secret
+    // Fallback to legacy YOUCAN_WEBHOOK_SECRET for backward compat
+    const webhookSecret = process.env.YOUCAN_CLIENT_SECRET || process.env.YOUCAN_WEBHOOK_SECRET;
     const signature = request.headers.get("x-youcan-signature");
-    if (webhookSecret) {
+    if (webhookSecret && signature) {
       if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
         console.error("[Webhook YouCan] Invalid HMAC signature");
         return NextResponse.json(
@@ -123,10 +125,10 @@ export async function POST(request: Request) {
           { status: 403 }
         );
       }
-    } else if (signature) {
-      // Secret not configured but signature present — log for visibility
+    } else if (signature && !webhookSecret) {
+      // Signature present but no secret configured — log for visibility
       console.warn(
-        "[Webhook YouCan] x-youcan-signature present but YOUCAN_WEBHOOK_SECRET not set — skipping verification"
+        "[Webhook YouCan] x-youcan-signature present but no signing key available — skipping verification"
       );
     }
 

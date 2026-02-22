@@ -210,11 +210,38 @@ export async function GET(request: NextRequest) {
       auditAction = "youcan_register";
     }
 
-    // ── 4. Subscribe to order.create webhook ──
+    // ── 4. Cleanup + Subscribe to order.create webhook ──
+    // YouCan allows max 3 subscriptions per store, 1 per event type.
+    // We cleanup first to avoid stale/invalid subscriptions, then re-subscribe.
     const webhookUrl = `${appUrl}/api/webhook/youcan?key=${apiKey}`;
     let webhookOk = false;
 
     try {
+      // Step 4a: List existing webhooks and remove them all
+      try {
+        const listRes = await fetch("https://api.youcan.shop/resthooks/list", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (listRes.ok) {
+          const hooks: Array<{ id: string; event: string }> = await listRes.json();
+          for (const hook of hooks) {
+            try {
+              await fetch(`https://api.youcan.shop/resthooks/unsubscribe/${hook.id}`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+            } catch {
+              // Non-critical — continue cleanup
+            }
+          }
+        }
+      } catch {
+        // List/cleanup failed — still try to subscribe
+        console.warn("[YouCan OAuth] Webhook cleanup failed, proceeding with subscribe");
+      }
+
+      // Step 4b: Subscribe to order.create (the only valid order event per YouCan docs)
       const webhookRes = await fetch("https://api.youcan.shop/resthooks/subscribe", {
         method: "POST",
         headers: {
