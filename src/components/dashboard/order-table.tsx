@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { deliveryLabel, cn } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
@@ -114,6 +114,96 @@ function SelectAllCheckbox({
   );
 }
 
+// ── Column resize logic ──
+
+const COLUMN_KEYS = [
+  "score",
+  "analysis",
+  "client",
+  "city",
+  "amount",
+  "decision",
+  "pipeline",
+  "status",
+  "product",
+] as const;
+
+const DEFAULT_WIDTHS: Record<string, number> = {
+  score: 70,
+  analysis: 180,
+  client: 150,
+  city: 110,
+  amount: 100,
+  decision: 100,
+  pipeline: 110,
+  status: 110,
+  product: 160,
+};
+
+const COL_WIDTHS_KEY = "nortoo-order-col-widths";
+const MIN_COL_WIDTH = 60;
+
+function loadColumnWidths(): Record<string, number> {
+  if (typeof window === "undefined") return { ...DEFAULT_WIDTHS };
+  try {
+    const saved = localStorage.getItem(COL_WIDTHS_KEY);
+    if (saved) return { ...DEFAULT_WIDTHS, ...JSON.parse(saved) };
+  } catch { /* ignore */ }
+  return { ...DEFAULT_WIDTHS };
+}
+
+function saveColumnWidths(widths: Record<string, number>) {
+  try {
+    localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(widths));
+  } catch { /* ignore */ }
+}
+
+function ResizeHandle({
+  onResize,
+  onReset,
+}: {
+  onResize: (delta: number) => void;
+  onReset: () => void;
+}) {
+  const startXRef = useRef(0);
+
+  function handleMouseDown(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    startXRef.current = e.clientX;
+
+    function onMouseMove(ev: MouseEvent) {
+      const delta = ev.clientX - startXRef.current;
+      startXRef.current = ev.clientX;
+      onResize(delta);
+    }
+
+    function onMouseUp() {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    }
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onReset();
+      }}
+      className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-mint/30 active:bg-mint/50 transition-colors z-10"
+      title="Drag to resize · Double-click to reset"
+    />
+  );
+}
+
 export function OrderTable({
   orders,
   onRowClick,
@@ -128,11 +218,39 @@ export function OrderTable({
   const hasSelection = !!onToggle;
   const colSpan = hasSelection ? 10 : 9;
 
+  // Column widths state
+  const [colWidths, setColWidths] = useState<Record<string, number>>(loadColumnWidths);
+
+  function handleColResize(colKey: string, delta: number) {
+    setColWidths((prev) => {
+      const next = { ...prev, [colKey]: Math.max(MIN_COL_WIDTH, (prev[colKey] ?? DEFAULT_WIDTHS[colKey]) + delta) };
+      saveColumnWidths(next);
+      return next;
+    });
+  }
+
+  function handleColReset(colKey: string) {
+    setColWidths((prev) => {
+      const next = { ...prev, [colKey]: DEFAULT_WIDTHS[colKey] };
+      saveColumnWidths(next);
+      return next;
+    });
+  }
+
   const hl = (text: string | null | undefined) =>
     searchQuery ? highlightText(text, searchQuery) : (text ?? "\u2014");
 
+  const headStyle = (key: string) => ({ width: colWidths[key] ?? DEFAULT_WIDTHS[key], minWidth: MIN_COL_WIDTH });
+
   return (
-    <Table>
+    <div className="overflow-x-auto">
+    <Table className="table-fixed">
+      <colgroup>
+        {hasSelection && <col style={{ width: 44 }} />}
+        {COLUMN_KEYS.map((key) => (
+          <col key={key} style={{ width: colWidths[key] ?? DEFAULT_WIDTHS[key] }} />
+        ))}
+      </colgroup>
       <TableHeader>
         <TableRow>
           {hasSelection && (
@@ -143,15 +261,41 @@ export function OrderTable({
               />
             </TableHead>
           )}
-          <TableHead className="text-center w-[70px]">{t("orders.table.score")}</TableHead>
-          <TableHead>{t("orders.table.analysis")}</TableHead>
-          <TableHead>{t("orders.table.client")}</TableHead>
-          <TableHead>{t("orders.table.city")}</TableHead>
-          <TableHead className="text-right">{t("orders.table.amount")}</TableHead>
-          <TableHead className="text-center">{t("orders.table.decision")}</TableHead>
-          <TableHead className="text-center">{t("orders.table.pipeline")}</TableHead>
-          <TableHead>{t("orders.table.status")}</TableHead>
-          <TableHead>{t("orders.table.product")}</TableHead>
+          <TableHead className="text-center relative" style={headStyle("score")}>
+            {t("orders.table.score")}
+            <ResizeHandle onResize={(d) => handleColResize("score", d)} onReset={() => handleColReset("score")} />
+          </TableHead>
+          <TableHead className="relative" style={headStyle("analysis")}>
+            {t("orders.table.analysis")}
+            <ResizeHandle onResize={(d) => handleColResize("analysis", d)} onReset={() => handleColReset("analysis")} />
+          </TableHead>
+          <TableHead className="relative" style={headStyle("client")}>
+            {t("orders.table.client")}
+            <ResizeHandle onResize={(d) => handleColResize("client", d)} onReset={() => handleColReset("client")} />
+          </TableHead>
+          <TableHead className="relative" style={headStyle("city")}>
+            {t("orders.table.city")}
+            <ResizeHandle onResize={(d) => handleColResize("city", d)} onReset={() => handleColReset("city")} />
+          </TableHead>
+          <TableHead className="text-right relative" style={headStyle("amount")}>
+            {t("orders.table.amount")}
+            <ResizeHandle onResize={(d) => handleColResize("amount", d)} onReset={() => handleColReset("amount")} />
+          </TableHead>
+          <TableHead className="text-center relative" style={headStyle("decision")}>
+            {t("orders.table.decision")}
+            <ResizeHandle onResize={(d) => handleColResize("decision", d)} onReset={() => handleColReset("decision")} />
+          </TableHead>
+          <TableHead className="text-center relative" style={headStyle("pipeline")}>
+            {t("orders.table.pipeline")}
+            <ResizeHandle onResize={(d) => handleColResize("pipeline", d)} onReset={() => handleColReset("pipeline")} />
+          </TableHead>
+          <TableHead className="relative" style={headStyle("status")}>
+            {t("orders.table.status")}
+            <ResizeHandle onResize={(d) => handleColResize("status", d)} onReset={() => handleColReset("status")} />
+          </TableHead>
+          <TableHead className="relative" style={headStyle("product")}>
+            {t("orders.table.product")}
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -197,7 +341,7 @@ export function OrderTable({
                 <TableCell className="text-center">
                   <ScoreBadge score={order.fraudScore} size="sm" />
                 </TableCell>
-                <TableCell className="max-w-[180px]">
+                <TableCell className="overflow-hidden">
                   <p className="text-xs text-fog truncate">
                     {order.scoreExplanation
                       ? (() => {
@@ -252,7 +396,7 @@ export function OrderTable({
                 <TableCell className="text-sm text-fog">
                   {deliveryLabel(order.deliveryStatus, locale)}
                 </TableCell>
-                <TableCell className="max-w-[160px] truncate text-sm text-fog">
+                <TableCell className="truncate text-sm text-fog">
                   {hl(order.productName)}
                 </TableCell>
               </TableRow>
@@ -261,5 +405,6 @@ export function OrderTable({
         )}
       </TableBody>
     </Table>
+    </div>
   );
 }

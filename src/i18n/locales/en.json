@@ -168,6 +168,7 @@
   },
   "orders": {
     "title": "Orders",
+    "refresh": "Refresh",
     "totalCount": "{count} order total",
     "totalCountPlural": "{count} orders total",
     "search": {
@@ -190,8 +191,12 @@
     },
     "pagination": {
       "page": "Page {current} of {total}",
+      "showing": "Showing {from}–{to} of {total}",
+      "perPage": "per page",
       "previous": "Previous",
-      "next": "Next"
+      "next": "Next",
+      "first": "First page",
+      "last": "Last page"
     },
     "export": {
       "csv": "Export CSV",

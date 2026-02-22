@@ -6,8 +6,11 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Search,
   Download,
+  RefreshCw,
   X,
   User,
   MapPin,
@@ -23,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useSelection } from "@/hooks/use-selection";
 import { FeatureGate } from "@/components/feature-gate";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/provider";
 
 // ── Types ──
@@ -137,6 +141,19 @@ function OrdersContent() {
   const currentSearch = searchParams.get("search") ?? "";
   const selectedOrderId = searchParams.get("selected");
 
+  // Page size — URL > localStorage > default 20
+  const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+  const PAGE_SIZE_KEY = "nortoo-orders-per-page";
+  const urlPerPage = searchParams.get("per_page");
+  const [perPage, setPerPage] = useState<number>(() => {
+    if (urlPerPage) return parseInt(urlPerPage, 10) || 20;
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(PAGE_SIZE_KEY);
+      if (saved) return parseInt(saved, 10) || 20;
+    }
+    return 20;
+  });
+
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [meta, setMeta] = useState<OrdersMeta>({
     page: 1,
@@ -184,7 +201,7 @@ function OrdersContent() {
     setLoading(true);
     const params = new URLSearchParams();
     params.set("page", String(currentPage));
-    params.set("per_page", "20");
+    params.set("per_page", String(perPage));
     if (currentDecision !== "all") params.set("decision", currentDecision);
     if (currentPipeline !== "all") params.set("pipeline", currentPipeline);
     if (currentSearch) params.set("search", currentSearch);
@@ -196,7 +213,7 @@ function OrdersContent() {
       setMeta(
         json.meta ?? {
           page: 1,
-          perPage: 20,
+          perPage,
           total: 0,
           totalPages: 0,
           counts: EMPTY_COUNTS,
@@ -211,7 +228,7 @@ function OrdersContent() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, currentDecision, currentPipeline, currentSearch]);
+  }, [currentPage, perPage, currentDecision, currentPipeline, currentSearch]);
 
   useEffect(() => {
     fetchOrders();
@@ -344,6 +361,25 @@ function OrdersContent() {
   function handleSearchFocus() {
     setSearchFocused(true);
     setRecentSearches(getRecentSearches());
+  }
+
+  // Page size change — persist to localStorage, reset to page 1
+  function handlePerPageChange(newSize: number) {
+    setPerPage(newSize);
+    localStorage.setItem(PAGE_SIZE_KEY, String(newSize));
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("per_page", String(newSize));
+    params.delete("page"); // Reset to page 1
+    if (selectionCount > 0) clearSelection();
+    router.push(`/dashboard/orders?${params.toString()}`);
+  }
+
+  // Refresh
+  const [refreshing, setRefreshing] = useState(false);
+  async function handleRefresh() {
+    setRefreshing(true);
+    await fetchOrders();
+    setRefreshing(false);
   }
 
   function handleRowClick(orderId: number) {
@@ -668,6 +704,17 @@ function OrdersContent() {
             )}
           </div>
 
+          {/* Refresh button */}
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="h-10 lg:h-9 inline-flex items-center justify-center rounded-full border border-silk bg-white px-3 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+            aria-label={t("orders.refresh")}
+            title={t("orders.refresh")}
+          >
+            <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+          </button>
+
           {/* Export CSV — Starter+ */}
           <FeatureGate feature="csv_export" mode="lock">
             <button
@@ -747,34 +794,125 @@ function OrdersContent() {
       )}
 
       {/* ── Pagination ── */}
-      {meta.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-fog hidden sm:block">
-            {t("orders.pagination.page", { current: meta.page, total: meta.totalPages })}
-          </p>
-          <p className="text-sm text-fog sm:hidden">
-            {meta.page}/{meta.totalPages}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={meta.page <= 1}
-              onClick={() => setFilter("page", String(meta.page - 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">{t("orders.pagination.previous")}</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={meta.page >= meta.totalPages}
-              onClick={() => setFilter("page", String(meta.page + 1))}
-            >
-              <span className="hidden sm:inline mr-1">{t("orders.pagination.next")}</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+      {meta.total > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left: info + page size selector */}
+          <div className="flex items-center gap-3 text-sm text-fog">
+            <span className="hidden sm:inline">
+              {t("orders.pagination.showing", {
+                from: Math.min((meta.page - 1) * perPage + 1, meta.total),
+                to: Math.min(meta.page * perPage, meta.total),
+                total: meta.total,
+              })}
+            </span>
+            <span className="sm:hidden">
+              {meta.page}/{meta.totalPages}
+            </span>
+            <span className="text-silk hidden sm:inline">|</span>
+            <div className="flex items-center gap-1.5">
+              <select
+                value={perPage}
+                onChange={(e) => handlePerPageChange(Number(e.target.value))}
+                className="h-8 rounded-md border border-silk bg-white px-2 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30 cursor-pointer"
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <span className="text-fog text-sm">{t("orders.pagination.perPage")}</span>
+            </div>
           </div>
+
+          {/* Right: page navigation */}
+          {meta.totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              {/* First page */}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={meta.page <= 1}
+                onClick={() => setFilter("page", "1")}
+                className="h-8 w-8 p-0"
+                aria-label={t("orders.pagination.first")}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              {/* Previous */}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={meta.page <= 1}
+                onClick={() => setFilter("page", String(meta.page - 1))}
+                className="h-8 w-8 p-0"
+                aria-label={t("orders.pagination.previous")}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Page numbers */}
+              {(() => {
+                const pages: (number | "...")[] = [];
+                const total = meta.totalPages;
+                const current = meta.page;
+
+                if (total <= 7) {
+                  for (let i = 1; i <= total; i++) pages.push(i);
+                } else {
+                  pages.push(1);
+                  if (current > 3) pages.push("...");
+                  const start = Math.max(2, current - 1);
+                  const end = Math.min(total - 1, current + 1);
+                  for (let i = start; i <= end; i++) pages.push(i);
+                  if (current < total - 2) pages.push("...");
+                  pages.push(total);
+                }
+
+                return pages.map((p, i) =>
+                  p === "..." ? (
+                    <span key={`dots-${i}`} className="px-1 text-mist text-sm">
+                      …
+                    </span>
+                  ) : (
+                    <Button
+                      key={p}
+                      variant={p === current ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilter("page", String(p))}
+                      className={cn(
+                        "h-8 w-8 p-0 text-sm",
+                        p === current && "bg-midnight text-white hover:bg-midnight/90"
+                      )}
+                    >
+                      {p}
+                    </Button>
+                  )
+                );
+              })()}
+
+              {/* Next */}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={meta.page >= meta.totalPages}
+                onClick={() => setFilter("page", String(meta.page + 1))}
+                className="h-8 w-8 p-0"
+                aria-label={t("orders.pagination.next")}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              {/* Last page */}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={meta.page >= meta.totalPages}
+                onClick={() => setFilter("page", String(meta.totalPages))}
+                className="h-8 w-8 p-0"
+                aria-label={t("orders.pagination.last")}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
