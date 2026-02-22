@@ -33,8 +33,6 @@ export async function GET() {
         id: merchants.id,
         youcanStoreName: merchants.youcanStoreName,
         youcanStoreId: merchants.youcanStoreId,
-        businessName: merchants.businessName,
-        contactEmail: merchants.contactEmail,
       })
       .from(merchants)
       .where(eq(merchants.id, merchantId));
