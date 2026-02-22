@@ -14,9 +14,9 @@
 
 import { db } from "@/db/index";
 import { customers, orders, auditLogs, oppositionList, notifications, merchants } from "@/db/schema";
-import { and, eq, or, isNull, sql } from "drizzle-orm";
+import { and, eq, or, isNull, gt, sql } from "drizzle-orm";
 import { hashPhone, phoneLast4 } from "@/lib/hash";
-import { scoreOrder, type ScoringResult } from "@/lib/scoring";
+import { scoreOrder, type ScoringResult, type VelocityData } from "@/lib/scoring";
 import { executePipeline } from "@/lib/pipeline";
 import { normalizeProductId, updateProductStats, getProductRtoRate } from "@/lib/product-stats";
 import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } from "@/lib/city-stats";
@@ -310,14 +310,73 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     }
   }
 
-  // ── 4. Score order ──
+  // ── 3e. Velocity pre-calculation (v2) ──
+  let velocity: VelocityData | undefined;
+  if (customerId) {
+    try {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      // Query 1: Order counts + cumulative amount by time window
+      const [velocityStats] = await db
+        .select({
+          ordersLast1h: sql<number>`COUNT(*) FILTER (WHERE ${orders.createdAt} >= ${oneHourAgo})`,
+          ordersLast24h: sql<number>`COUNT(*) FILTER (WHERE ${orders.createdAt} >= ${twentyFourHoursAgo})`,
+          totalAmountLast24h: sql<number>`COALESCE(SUM(${orders.total}) FILTER (WHERE ${orders.createdAt} >= ${twentyFourHoursAgo}), 0)`,
+          ordersLast7d: sql<number>`COUNT(*)`,
+        })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.merchantId, merchantId),
+            eq(orders.customerId, customerId),
+            gt(orders.createdAt, sevenDaysAgo),
+            eq(orders.isTest, false)
+          )
+        );
+
+      // Query 2: Distinct addresses in last 24h
+      const [addrStats] = await db
+        .select({
+          distinctAddresses: sql<number>`COUNT(DISTINCT ${orders.shippingAddress})`,
+        })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.merchantId, merchantId),
+            eq(orders.customerId, customerId),
+            gt(orders.createdAt, twentyFourHoursAgo),
+            eq(orders.isTest, false)
+          )
+        );
+
+      velocity = {
+        ordersLast1h: Number(velocityStats?.ordersLast1h ?? 0),
+        ordersLast24h: Number(velocityStats?.ordersLast24h ?? 0),
+        totalAmountLast24h: Number(velocityStats?.totalAmountLast24h ?? 0),
+        ordersLast7d: Number(velocityStats?.ordersLast7d ?? 0),
+        distinctAddressesLast24h: Number(addrStats?.distinctAddresses ?? 0),
+      };
+    } catch (err) {
+      console.error("[Ingest] Velocity calculation failed (non-blocking):", err);
+    }
+  }
+
+  // ── 4. Score order (v2 — 24 rules, 8 categories) ──
+  const orderDate = new Date();
   const scoringResult: ScoringResult = scoreOrder(
     {
       total,
       city: shippingCity,
       address: shippingAddress,
       hour: orderHour,
+      dayOfWeek: orderDate.getDay(),
+      customerName,
+      quantity,
       customer: customerHistory,
+      velocity,
       productRtoRate,
       productTotalOrders,
       cityRtoRate,

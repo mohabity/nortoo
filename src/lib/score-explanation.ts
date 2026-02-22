@@ -15,22 +15,55 @@ export interface ScoreExplanation {
 
 /** Emoji prefix per rule family */
 const RULE_EMOJI: Record<string, string> = {
+  // History
   R1_LOYAL: "\u2705",
   R2_KNOWN: "\u2705",
   R3_RECIDIVIST: "\u26A0\uFE0F",
   R4_ONE_FAIL: "\u26A0\uFE0F",
   R5_NEW: "\u2139\uFE0F",
-  R6_VERY_HIGH: "\uD83D\uDCB0",
+  // Velocity (v2)
+  R13_BURST_1H: "\u26A1",
+  R14_BURST_24H: "\u26A1",
+  R15_MULTI_ADDR: "\u26A1",
+  R16_HIGH_VALUE_24H: "\u26A1",
+  R17_STEADY: "\u2705",
+  // Amount
+  R6_EXTREME: "\uD83D\uDCB0",
+  "R6b_VERY_HIGH": "\uD83D\uDCB0",
   R7_HIGH: "\uD83D\uDCB0",
+  R7b_ROUND: "\uD83D\uDCB0",
+  "R7c_LOW": "\uD83D\uDCB0",
+  // Geography
   R8b_ZONE_RISK: "\uD83D\uDCCD",
   R8_GEO_RISK: "\uD83D\uDCCD",
+  R8_STATIC_HIGH: "\uD83D\uDCCD",
+  R8_STATIC_MED: "\uD83D\uDCCD",
+  R8c_SAFE_CITY: "\uD83D\uDCCD",
   R8_RISKY_ZONE: "\uD83D\uDCCD",
-  R9_SHORT_ADDR: "\uD83D\uDCDD",
+  // Address
+  R9_VERY_SHORT: "\uD83D\uDCDD",
+  R9b_SHORT: "\uD83D\uDCDD",
   R10_GIBBERISH: "\uD83D\uDCDD",
   R10_NO_ADDR: "\uD83D\uDCDD",
-  R11_NIGHT: "\uD83C\uDF19",
+  R10b_NUMBERS: "\uD83D\uDCDD",
+  R10c_GOOD_ADDR: "\uD83D\uDCDD",
+  // Name (v2)
+  R18_NO_NAME: "\uD83D\uDC64",
+  R19_GIBBERISH_NAME: "\uD83D\uDC64",
+  R20_SUSPECT_NAME: "\uD83D\uDC64",
+  R21_SINGLE_WORD: "\uD83D\uDC64",
+  // Product
   R12_SKU_RISK: "\uD83D\uDCE6",
+  R12_SKU_SAFE: "\uD83D\uDCE6",
+  R22_HIGH_QTY: "\uD83D\uDCE6",
+  // Temporality
+  R11_DEEP_NIGHT: "\uD83C\uDF19",
+  R11b_NIGHT: "\uD83C\uDF19",
+  R11c_PEAK: "\u2600\uFE0F",
+  R11_NIGHT: "\uD83C\uDF19",
+  // Network
   R_NETWORK: "\uD83C\uDF10",
+  // Other
   OPPOSITION: "\uD83D\uDEAB",
 };
 
