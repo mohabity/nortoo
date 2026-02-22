@@ -4,6 +4,8 @@ import { extractApiKey, validateApiKey } from "@/lib/api-key";
 import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
 import { verifyWebhookSignature } from "@/lib/webhook-verify";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
+import { db } from "@/db/index";
+import { auditLogs } from "@/db/schema";
 import type { YouCanOrderPayload } from "@/types/youcan";
 
 /** Max body size: 1 MB */
@@ -145,6 +147,21 @@ export async function POST(request: Request) {
     const gateway = payload.payment?.payload?.gateway;
     if (gateway && gateway !== "cod") {
       console.log("[Webhook YouCan] Non-COD order ignored, gateway:", gateway);
+      // Audit log so merchants can see why an order was rejected
+      db.insert(auditLogs).values({
+        merchantId: merchant.id,
+        actor: "system",
+        action: "order_rejected",
+        targetType: "webhook",
+        targetId: payload.id || payload.ref || "unknown",
+        details: JSON.stringify({
+          reason: "non_cod",
+          gateway,
+          ref: payload.ref,
+          customerName: `${payload.customer?.first_name ?? ""} ${payload.customer?.last_name ?? ""}`.trim(),
+          total: payload.total,
+        }),
+      }).catch((e) => console.error("[Webhook YouCan] Audit log error:", e));
       return NextResponse.json({
         data: null,
         message: "Non-COD order ignored",
@@ -159,6 +176,20 @@ export async function POST(request: Request) {
 
     if (!phone) {
       console.error("[Webhook YouCan] No phone found in payload");
+      // Audit log so merchants can see why an order was rejected
+      db.insert(auditLogs).values({
+        merchantId: merchant.id,
+        actor: "system",
+        action: "order_rejected",
+        targetType: "webhook",
+        targetId: payload.id || payload.ref || "unknown",
+        details: JSON.stringify({
+          reason: "missing_phone",
+          ref: payload.ref,
+          customerName: `${payload.customer?.first_name ?? ""} ${payload.customer?.last_name ?? ""}`.trim(),
+          total: payload.total,
+        }),
+      }).catch((e) => console.error("[Webhook YouCan] Audit log error:", e));
       return NextResponse.json(
         { error: "Customer phone is required" },
         { status: 400 }

@@ -14,7 +14,7 @@ const ordersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   per_page: z.coerce.number().int().min(1).max(100).default(20),
   decision: z.enum(["all", "ship", "verify", "flag", "block"]).default("all"),
-  pipeline: z.enum(["all", "needs_review", "escalated", "auto_blocked", "merchant_override", "auto_shipped"]).default("all"),
+  pipeline: z.enum(["all", "needs_review", "escalated", "auto_blocked", "merchant_override", "auto_shipped", "pending"]).default("all"),
   city: z.string().max(100).default("all"),
   status: z.string().max(100).default("all"),
   score_min: z.coerce.number().int().min(0).max(100).optional(),

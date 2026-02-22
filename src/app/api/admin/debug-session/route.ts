@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/db/index";
-import { orders, merchants } from "@/db/schema";
-import { eq, count, desc } from "drizzle-orm";
+import { orders, merchants, webhookQueue } from "@/db/schema";
+import { eq, count, desc, and, or } from "drizzle-orm";
 import { cookies } from "next/headers";
 
 /**
@@ -10,14 +10,20 @@ import { cookies } from "next/headers";
  * Diagnostic: shows which merchant the current session resolves to,
  * and how many orders exist for that merchant.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // Session info
     const session = await auth();
     const cookieStore = await cookies();
     const legacyCookie = cookieStore.get("nortoo_merchant")?.value;
 
-    const merchantId = session?.user?.merchantId;
+    // Allow ?merchant=3 for direct DB check (no session needed)
+    const url = new URL(request.url);
+    const queryMerchant = url.searchParams.get("merchant");
+
+    const merchantId = queryMerchant
+      ? parseInt(queryMerchant, 10)
+      : session?.user?.merchantId;
 
     if (!merchantId) {
       return NextResponse.json({
@@ -57,7 +63,7 @@ export async function GET() {
       .from(orders)
       .where(eq(orders.merchantId, merchantId))
       .orderBy(desc(orders.createdAt))
-      .limit(3);
+      .limit(20);
 
     // Also count by isTest
     const testCounts = await db
@@ -69,6 +75,39 @@ export async function GET() {
       .where(eq(orders.merchantId, merchantId))
       .groupBy(orders.isTest);
 
+    // Check webhook_queue for failed/dead entries
+    const failedWebhooks = await db
+      .select({
+        id: webhookQueue.id,
+        status: webhookQueue.status,
+        attempts: webhookQueue.attempts,
+        errorMessage: webhookQueue.errorMessage,
+        source: webhookQueue.source,
+        createdAt: webhookQueue.createdAt,
+      })
+      .from(webhookQueue)
+      .where(
+        and(
+          eq(webhookQueue.merchantId, merchantId),
+          or(
+            eq(webhookQueue.status, "failed"),
+            eq(webhookQueue.status, "dead")
+          )
+        )
+      )
+      .orderBy(desc(webhookQueue.createdAt))
+      .limit(10);
+
+    // Count webhook_queue by status
+    const queueCounts = await db
+      .select({
+        status: webhookQueue.status,
+        count: count(),
+      })
+      .from(webhookQueue)
+      .where(eq(webhookQueue.merchantId, merchantId))
+      .groupBy(webhookQueue.status);
+
     return NextResponse.json({
       sessionMerchantId: merchantId,
       sessionEmail: session?.user?.email,
@@ -77,6 +116,10 @@ export async function GET() {
       totalOrders: orderCount?.count ?? 0,
       testCounts,
       latestOrders,
+      webhookQueue: {
+        counts: queueCounts,
+        failedOrDead: failedWebhooks,
+      },
     });
   } catch (error) {
     return NextResponse.json(

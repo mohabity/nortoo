@@ -144,14 +144,20 @@ export async function GET(request: Request) {
         const gateway =
           (order.payment as any)?.gateway_type ||
           order.payment?.payload?.gateway;
-        if (gateway && gateway !== "cod" && gateway !== "cash_on_delivery") continue;
+        if (gateway && gateway !== "cod" && gateway !== "cash_on_delivery") {
+          console.log(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): non-COD gateway="${gateway}"`);
+          continue;
+        }
 
         // Skip orders without phone
         const phone =
           order.customer?.phone ||
           order.shipping?.address?.[0]?.phone ||
           order.payment?.address?.[0]?.phone;
-        if (!phone) continue;
+        if (!phone) {
+          console.log(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): missing phone, customer=${order.customer?.first_name ?? "?"} ${order.customer?.last_name ?? "?"}`);
+          continue;
+        }
 
         try {
           const merchantSettings = {

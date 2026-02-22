@@ -208,6 +208,12 @@ function OrdersContent() {
 
     try {
       const res = await fetch(`/api/orders?${params.toString()}`);
+      if (!res.ok) {
+        console.error(`[Orders] API error ${res.status}:`, await res.text());
+        addToast({ type: "error", message: `Erreur chargement commandes (${res.status})` });
+        setOrders([]);
+        return;
+      }
       const json = await res.json();
       setOrders(json.data ?? []);
       setMeta(
@@ -223,7 +229,8 @@ function OrdersContent() {
       if (currentSearch) {
         saveRecentSearch(currentSearch, json.meta?.total ?? 0);
       }
-    } catch {
+    } catch (err) {
+      console.error("[Orders] Network error:", err);
       setOrders([]);
     } finally {
       setLoading(false);
