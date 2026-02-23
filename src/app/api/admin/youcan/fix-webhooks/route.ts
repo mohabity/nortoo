@@ -100,24 +100,38 @@ export async function POST(request: Request) {
         }
       }
 
-      // ── Step 3: Re-subscribe to order.create ONLY ──
+      // ── Step 3: Subscribe to order events ──
+      // YouCan may not fire order.create for COD orders (unpaid on creation).
+      // Subscribe to both order.create and order.update to catch all cases.
       const webhookUrl = `${appUrl}/api/webhook/youcan?key=${m.apiKey}`;
-      const subRes = await fetch("https://api.youcan.shop/resthooks/subscribe", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          target_url: webhookUrl,
-          event: "order.create",
-        }),
-      });
+      const events = ["order.create", "order.update"];
+      const subscribeErrors: string[] = [];
 
-      if (subRes.ok) {
+      for (const event of events) {
+        const subRes = await fetch("https://api.youcan.shop/resthooks/subscribe", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            target_url: webhookUrl,
+            event,
+          }),
+        });
+
+        if (!subRes.ok) {
+          const errText = await subRes.text();
+          subscribeErrors.push(`${event}: ${subRes.status} ${errText.substring(0, 100)}`);
+        }
+      }
+
+      if (subscribeErrors.length === 0) {
         result.subscribed = true;
       } else {
-        result.error = `Subscribe failed: ${subRes.status} ${await subRes.text()}`;
+        // Partial success is still considered subscribed if at least one worked
+        result.subscribed = subscribeErrors.length < events.length;
+        result.error = subscribeErrors.join("; ");
       }
 
       // ── Audit log ──

@@ -43,6 +43,15 @@ const youcanPayloadSchema = z.object({
  * If processing fails, the cron retry will pick it up.
  */
 export async function POST(request: Request) {
+  // ── 0. Catch-all log — proves YouCan is calling us ──
+  const reqUrl = request.url;
+  const reqHeaders = Object.fromEntries(
+    ["content-type", "x-youcan-signature", "x-nortoo-key", "x-codpilot-key", "user-agent"]
+      .map((h) => [h, request.headers.get(h)])
+      .filter(([, v]) => v)
+  );
+  console.log("[Webhook YouCan] ── INCOMING ──", JSON.stringify({ url: reqUrl, headers: reqHeaders }));
+
   try {
     // ── 1. Auth by API key (fast, no heavy DB) ──
     const apiKey = extractApiKey(request);
