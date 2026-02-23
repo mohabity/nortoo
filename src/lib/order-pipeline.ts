@@ -22,11 +22,12 @@ const COD_GATEWAY_VALUES = new Set([
 /**
  * Check if a gateway value represents Cash-On-Delivery.
  * Accepts: undefined/null (no gateway = default to COD), known COD values.
- * Case-insensitive.
+ * Handles strings, numbers, and case-insensitive matching.
  */
-export function isCodGateway(value: string | undefined | null): boolean {
-  if (!value) return true; // no gateway info = assume COD (safe default)
-  return COD_GATEWAY_VALUES.has(value.toLowerCase().trim());
+export function isCodGateway(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") return true;
+  const str = String(value).toLowerCase().trim();
+  return COD_GATEWAY_VALUES.has(str);
 }
 
 interface MerchantSettings {
