@@ -36,6 +36,7 @@ export const merchants = pgTable("merchants", {
 
   // Billing
   plan: text("plan").notNull().default("trial"), // trial | starter | pro | scale
+  billingStatus: text("billing_status").notNull().default("trial"), // trial | active | past_due | cancelled
   inviteCode: text("invite_code"),               // invite code used at signup
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
@@ -561,6 +562,29 @@ export const webhookQueue = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// USAGE LOGS — Monthly usage history per merchant (billing)
+// ═══════════════════════════════════════════════════════════
+export const usageLogs = pgTable(
+  "usage_logs",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    month: text("month").notNull(), // "2026-03"
+    ordersScored: integer("orders_scored").notNull().default(0),
+    ordersBlocked: integer("orders_blocked").notNull().default(0),
+    totalValue: real("total_value").notNull().default(0),
+    blockedValue: real("blocked_value").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("idx_usage_merchant_month").on(table.merchantId, table.month),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
@@ -572,6 +596,7 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   productStats: many(productStats),
   cityStats: many(cityStats),
   zoneStats: many(zoneStats),
+  usageLogs: many(usageLogs),
 }));
 
 export const usersRelations = relations(users, ({ one }) => ({
@@ -636,6 +661,13 @@ export const cityStatsRelations = relations(cityStats, ({ one }) => ({
 export const zoneStatsRelations = relations(zoneStats, ({ one }) => ({
   merchant: one(merchants, {
     fields: [zoneStats.merchantId],
+    references: [merchants.id],
+  }),
+}));
+
+export const usageLogsRelations = relations(usageLogs, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [usageLogs.merchantId],
     references: [merchants.id],
   }),
 }));

@@ -4,6 +4,7 @@ import { merchants, orders, auditLogs } from "@/db/schema";
 import { and, eq, isNotNull, inArray } from "drizzle-orm";
 import { decryptSafe } from "@/lib/encryption";
 import { processIncomingOrder } from "@/lib/ingest";
+import { QuotaExceededError } from "@/lib/quota";
 import { parseYouCanPayload, isCodGateway } from "@/lib/order-pipeline";
 import type { YouCanOrderPayload } from "@/types/youcan";
 
@@ -186,6 +187,10 @@ export async function GET(request: Request) {
           await processIncomingOrder(ingestParams);
           result.newOrders++;
         } catch (err) {
+          if (err instanceof QuotaExceededError) {
+            result.errors.push(`Quota exceeded for merchant ${m.id}: ${err.quota.reason}`);
+            break; // Stop processing this merchant's orders
+          }
           const errMsg = err instanceof Error ? err.message : String(err);
           result.errors.push(`Order ${orderId}: ${errMsg.substring(0, 100)}`);
         }

@@ -155,6 +155,12 @@ export function OrderCard({
             {order.externalRef && (
               <span className="font-mono">{hl(order.externalRef)}</span>
             )}
+            <span className="text-mist">·</span>
+            <span className="text-mist font-mono">
+              {new Date(order.createdAt).toLocaleDateString(locale, { day: "2-digit", month: "short" })}
+              {" "}
+              {new Date(order.createdAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+            </span>
             {order.shippingCity && (
               <>
                 <span className="text-mist">·</span>

@@ -241,6 +241,44 @@ function OrdersContent() {
     fetchOrders();
   }, [fetchOrders]);
 
+  // ── Auto-sync YouCan on first load ──
+  // Silently poll YouCan in background to recover orders missed by webhooks.
+  // Only runs once per mount — subsequent fetches are via the refresh button.
+  const hasSynced = useRef(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncYouCan = useCallback(async (): Promise<number> => {
+    try {
+      setSyncing(true);
+      const res = await fetch("/api/sync/youcan", { method: "POST" });
+      if (!res.ok) return 0;
+      const json = await res.json();
+      return json.synced ?? 0;
+    } catch {
+      return 0;
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasSynced.current) return;
+    hasSynced.current = true;
+
+    // Run sync in background, then refresh if new orders found
+    syncYouCan().then((synced) => {
+      if (synced > 0) {
+        fetchOrders();
+        addToast({
+          type: "success",
+          message: synced === 1
+            ? t("orders.sync.recovered", { count: synced })
+            : t("orders.sync.recoveredPlural", { count: synced }),
+        });
+      }
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Sync search input with URL param
   useEffect(() => {
     setSearchInput(currentSearch);
@@ -381,12 +419,24 @@ function OrdersContent() {
     router.push(`/dashboard/orders?${params.toString()}`);
   }
 
-  // Refresh
+  // Refresh — sync YouCan first, then reload orders
   const [refreshing, setRefreshing] = useState(false);
   async function handleRefresh() {
     setRefreshing(true);
-    await fetchOrders();
-    setRefreshing(false);
+    try {
+      const synced = await syncYouCan();
+      await fetchOrders();
+      if (synced > 0) {
+        addToast({
+          type: "success",
+          message: synced === 1
+            ? t("orders.sync.recovered", { count: synced })
+            : t("orders.sync.recoveredPlural", { count: synced }),
+        });
+      }
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   function handleRowClick(orderId: number) {
@@ -711,15 +761,20 @@ function OrdersContent() {
             )}
           </div>
 
-          {/* Refresh button */}
+          {/* Refresh + Sync button */}
           <button
             onClick={handleRefresh}
-            disabled={refreshing}
-            className="h-10 lg:h-9 inline-flex items-center justify-center rounded-full border border-silk bg-white px-3 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+            disabled={refreshing || syncing}
+            className="h-10 lg:h-9 inline-flex items-center gap-1.5 justify-center rounded-full border border-silk bg-white px-3 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
             aria-label={t("orders.refresh")}
             title={t("orders.refresh")}
           >
-            <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+            <RefreshCw className={cn("h-4 w-4", (refreshing || syncing) && "animate-spin")} />
+            {(refreshing || syncing) && (
+              <span className="hidden sm:inline text-xs text-mist">
+                {t("orders.sync.syncing")}
+              </span>
+            )}
           </button>
 
           {/* Export CSV — Starter+ */}

@@ -162,7 +162,8 @@
     "chart": {
       "title": "Tendance des commandes",
       "orders": "Commandes",
-      "avgScore": "Score moyen"
+      "avgScore": "Score moyen",
+      "noData": "Pas encore de données pour le graphique"
     },
     "recentOrders": "Commandes récentes"
   },
@@ -221,10 +222,16 @@
       "errorOverride": "Erreur lors de l'override",
       "networkError": "Erreur réseau"
     },
+    "sync": {
+      "syncing": "Sync...",
+      "recovered": "{count} nouvelle commande importée",
+      "recoveredPlural": "{count} nouvelles commandes importées"
+    },
     "table": {
       "score": "Score",
       "analysis": "Analyse",
       "client": "Client",
+      "date": "Date",
       "city": "Ville",
       "amount": "Montant",
       "decision": "Décision",

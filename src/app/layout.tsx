@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { I18nProvider } from "@/i18n/provider";
+import { CookieBanner } from "@/components/CookieBanner";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -57,6 +58,7 @@ export default function RootLayout({
     >
       <body className="font-body">
         <I18nProvider>{children}</I18nProvider>
+        <CookieBanner />
       </body>
     </html>
   );

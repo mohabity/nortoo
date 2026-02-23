@@ -4,6 +4,7 @@ import { extractApiKey, validateApiKey } from "@/lib/api-key";
 import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
 import { verifyWebhookSignature } from "@/lib/webhook-verify";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
+import { QuotaExceededError } from "@/lib/quota";
 import { isCodGateway } from "@/lib/order-pipeline";
 import { db } from "@/db/index";
 import { auditLogs } from "@/db/schema";
@@ -230,6 +231,18 @@ export async function POST(request: Request) {
     try {
       await processWebhook(queueId);
     } catch (error) {
+      // Quota exceeded → return 429 so YouCan knows order wasn't processed
+      if (error instanceof QuotaExceededError) {
+        return NextResponse.json(
+          {
+            status: "quota_exceeded",
+            reason: error.quota.reason,
+            current: error.quota.current,
+            limit: error.quota.limit,
+          },
+          { status: 429 }
+        );
+      }
       // Processing failed, but webhook is enqueued — retry cron will handle it
       console.error(
         `[Webhook YouCan] Immediate processing failed for queue ${queueId}, will retry:`,

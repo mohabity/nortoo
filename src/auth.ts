@@ -13,9 +13,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Mot de passe", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email as string;
+        const rawEmail = credentials?.email as string;
         const password = credentials?.password as string;
-        if (!email || !password) return null;
+        if (!rawEmail || !password) return null;
+        const email = rawEmail.trim().toLowerCase();
 
         // 1. Try users table first (normal flow)
         const results = await db

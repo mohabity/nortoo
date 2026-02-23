@@ -18,6 +18,7 @@ import { and, eq, or, isNull, gt, sql } from "drizzle-orm";
 import { hashPhone, phoneLast4 } from "@/lib/hash";
 import { scoreOrder, type ScoringResult, type VelocityData } from "@/lib/scoring";
 import { executePipeline } from "@/lib/pipeline";
+import { checkQuota, recordUsage, QuotaExceededError } from "@/lib/quota";
 import { normalizeProductId, updateProductStats, getProductRtoRate } from "@/lib/product-stats";
 import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } from "@/lib/city-stats";
 import { parseAddress } from "@/lib/address-parser";
@@ -88,6 +89,14 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     shippingAddress,
     orderHour,
   } = params;
+
+  // ── 0. Quota check — block if trial expired or quota exceeded ──
+  if (!params.isTest) {
+    const quota = await checkQuota(merchantId);
+    if (!quota.allowed) {
+      throw new QuotaExceededError(quota.reason, quota);
+    }
+  }
 
   // Resolve product ID: use external ID if available, otherwise slugify name
   const resolvedProductId = rawProductId
@@ -562,6 +571,13 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
         .where(eq(merchants.id, merchantId));
     } catch (err) {
       console.error("[Ingest] Monthly order counter increment failed (non-blocking):", err);
+    }
+
+    // Record usage in monthly usage logs (billing history)
+    try {
+      await recordUsage(merchantId, decision, total);
+    } catch (err) {
+      console.error("[Ingest] Usage recording failed (non-blocking):", err);
     }
   }
 

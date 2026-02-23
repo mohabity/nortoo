@@ -418,6 +418,7 @@ async function autoCreateMerchant(opts: {
       apiKey,
       apiKeyHash,
       plan: "trial",
+      billingStatus: "trial",
       trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
       currentMonthStart: new Date(),
       inviteCode: opts.inviteCode || null,

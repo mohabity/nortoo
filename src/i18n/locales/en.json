@@ -162,7 +162,8 @@
     "chart": {
       "title": "Orders trend",
       "orders": "Orders",
-      "avgScore": "Average score"
+      "avgScore": "Average score",
+      "noData": "No chart data available yet"
     },
     "recentOrders": "Recent orders"
   },
@@ -221,10 +222,16 @@
       "errorOverride": "Override error",
       "networkError": "Network error"
     },
+    "sync": {
+      "syncing": "Syncing...",
+      "recovered": "{count} new order imported",
+      "recoveredPlural": "{count} new orders imported"
+    },
     "table": {
       "score": "Score",
       "analysis": "Analysis",
       "client": "Client",
+      "date": "Date",
       "city": "City",
       "amount": "Amount",
       "decision": "Decision",

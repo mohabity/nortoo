@@ -16,6 +16,7 @@ import {
 } from "@/db/schema";
 import { eq, and, gt, sql } from "drizzle-orm";
 import { processIncomingOrder, type IngestParams } from "@/lib/ingest";
+import { QuotaExceededError } from "@/lib/quota";
 import { parseYouCanPayload, parseIngestPayload } from "@/lib/order-pipeline";
 import { validateApiKey } from "@/lib/api-key";
 
@@ -129,7 +130,23 @@ export async function processWebhook(queueId: number): Promise<void> {
       })
       .where(eq(webhookQueue.id, queueId));
   } catch (error) {
-    // 7. Handle failure
+    // 7a. Quota exceeded — don't retry (quota won't change), mark as failed immediately
+    if (error instanceof QuotaExceededError) {
+      await db
+        .update(webhookQueue)
+        .set({
+          status: "failed",
+          attempts: (webhook.attempts || 0) + 1,
+          lastAttemptAt: new Date(),
+          nextRetryAt: null,
+          errorMessage: error.message,
+        })
+        .where(eq(webhookQueue.id, queueId));
+
+      throw error; // Re-throw so webhook route can return 429
+    }
+
+    // 7b. Handle other failures (with retry)
     const attempts = (webhook.attempts || 0) + 1;
     const isExhausted = attempts >= (webhook.maxAttempts || 5);
     const errMsg =

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { extractApiKey, validateApiKey } from "@/lib/api-key";
 import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
+import { QuotaExceededError } from "@/lib/quota";
 
 /**
  * Universal ingest payload schema — quick validation before enqueue.
@@ -110,6 +111,18 @@ export async function POST(request: Request) {
     try {
       await processWebhook(queueId);
     } catch (error) {
+      // Quota exceeded → return 429
+      if (error instanceof QuotaExceededError) {
+        return NextResponse.json(
+          {
+            status: "quota_exceeded",
+            reason: error.quota.reason,
+            current: error.quota.current,
+            limit: error.quota.limit,
+          },
+          { status: 429 }
+        );
+      }
       console.error(
         `[Webhook Ingest] Immediate processing failed for queue ${queueId}, will retry:`,
         error

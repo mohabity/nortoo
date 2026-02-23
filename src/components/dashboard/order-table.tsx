@@ -120,6 +120,7 @@ const COLUMN_KEYS = [
   "score",
   "analysis",
   "client",
+  "date",
   "city",
   "amount",
   "decision",
@@ -132,6 +133,7 @@ const DEFAULT_WIDTHS: Record<string, number> = {
   score: 70,
   analysis: 180,
   client: 150,
+  date: 120,
   city: 110,
   amount: 100,
   decision: 100,
@@ -216,7 +218,7 @@ export function OrderTable({
 }: OrderTableProps) {
   const { t, locale } = useTranslation();
   const hasSelection = !!onToggle;
-  const colSpan = hasSelection ? 10 : 9;
+  const colSpan = hasSelection ? 11 : 10;
 
   // Column widths state
   const [colWidths, setColWidths] = useState<Record<string, number>>(loadColumnWidths);
@@ -272,6 +274,10 @@ export function OrderTable({
           <TableHead className="relative" style={headStyle("client")}>
             {t("orders.table.client")}
             <ResizeHandle onResize={(d) => handleColResize("client", d)} onReset={() => handleColReset("client")} />
+          </TableHead>
+          <TableHead className="relative" style={headStyle("date")}>
+            {t("orders.table.date")}
+            <ResizeHandle onResize={(d) => handleColResize("date", d)} onReset={() => handleColReset("date")} />
           </TableHead>
           <TableHead className="relative" style={headStyle("city")}>
             {t("orders.table.city")}
@@ -364,6 +370,12 @@ export function OrderTable({
                         ***{order.customerPhoneLast4}
                       </p>
                     )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-xs text-fog">
+                    <p>{new Date(order.createdAt).toLocaleDateString(locale, { day: "2-digit", month: "short" })}</p>
+                    <p className="text-mist font-mono">{new Date(order.createdAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}</p>
                   </div>
                 </TableCell>
                 <TableCell>{hl(order.shippingCity)}</TableCell>

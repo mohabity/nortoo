@@ -43,6 +43,13 @@
       "when": 1771667455606,
       "tag": "0005_sour_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771854512251,
+      "tag": "0006_free_warbird",
+      "breakpoints": true
     }
   ]
 }

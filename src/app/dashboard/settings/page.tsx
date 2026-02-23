@@ -215,6 +215,26 @@ function SettingsPageInner() {
         </div>
       </div>
 
+      {/* Legal footer */}
+      <div className="mt-12 pt-6 border-t border-border text-center text-xs text-ink-3 space-x-4">
+        <a href="/privacy" className="hover:text-ink-2 transition">
+          Confidentialité
+        </a>
+        <span>·</span>
+        <a href="/terms" className="hover:text-ink-2 transition">
+          CGU
+        </a>
+        <span>·</span>
+        <a href="/data-rights" className="hover:text-ink-2 transition">
+          Droits des données
+        </a>
+        <span>·</span>
+        <span>
+          © {new Date().getFullYear()} nortoo — Déclaration CNDP
+          n°[À compléter]
+        </span>
+      </div>
+
       {/* Toast container — above bottom nav on mobile */}
       <div className="fixed bottom-20 left-4 right-4 lg:bottom-6 lg:right-6 lg:left-auto z-50 space-y-2 lg:w-[340px]">
         {toasts.map((toast) => (

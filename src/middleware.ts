@@ -27,6 +27,7 @@ const PUBLIC_PATHS = [
   "/api/cron/",
   "/api/admin/",
   "/api/team/accept-invite",
+  "/admin/login",
   "/_next/",
   "/favicon.ico",
 ];
@@ -45,6 +46,16 @@ export async function middleware(request: NextRequest) {
 
   // Skip root page (it redirects to /dashboard, middleware will catch there)
   if (pathname === "/") {
+    return NextResponse.next();
+  }
+
+  // Admin panel: check nortoo_admin cookie (separate from Auth.js)
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
+    const adminCookie = request.cookies.get("nortoo_admin");
+    const adminSecret = process.env.ADMIN_SECRET;
+    if (!adminCookie?.value || !adminSecret || adminCookie.value !== adminSecret) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
     return NextResponse.next();
   }
 

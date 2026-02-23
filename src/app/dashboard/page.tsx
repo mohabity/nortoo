@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Coins,
   TrendingUp,
@@ -8,6 +9,8 @@ import {
   ShieldAlert,
   Timer,
   X,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import {
   AreaChart,
@@ -24,7 +27,9 @@ import { OrderCard } from "@/components/dashboard/order-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { QuickStartChecklist } from "@/components/dashboard/quick-start-checklist";
 import { useTranslation } from "@/i18n/provider";
+import { useToast } from "@/components/ui/toast";
 import { formatCurrency, formatNumber } from "@/lib/i18n-utils";
+import { cn } from "@/lib/utils";
 
 // ── Savings data type ──
 interface SavingsData {
@@ -49,97 +54,23 @@ interface UrgentOrder {
   escalationPriority: number | null;
 }
 
-// ── Mock chart data ──
-const chartData = [
-  { date: "01 Fév", commandes: 24, score: 38 },
-  { date: "02 Fév", commandes: 31, score: 42 },
-  { date: "03 Fév", commandes: 18, score: 35 },
-  { date: "04 Fév", commandes: 45, score: 48 },
-  { date: "05 Fév", commandes: 38, score: 41 },
-  { date: "06 Fév", commandes: 52, score: 44 },
-  { date: "07 Fév", commandes: 41, score: 39 },
-  { date: "08 Fév", commandes: 35, score: 36 },
-  { date: "09 Fév", commandes: 48, score: 43 },
-  { date: "10 Fév", commandes: 55, score: 47 },
-  { date: "11 Fév", commandes: 42, score: 40 },
-  { date: "12 Fév", commandes: 38, score: 37 },
-  { date: "13 Fév", commandes: 61, score: 45 },
-  { date: "14 Fév", commandes: 58, score: 42 },
-];
+// ── Stats data type ──
+interface StatsData {
+  totalOrders: number;
+  avgScore: number;
+  deliveryRate: number;
+  blockedCount: number;
+  ordersToday: number;
+  changeScore?: number;
+  changeDelivery?: number;
+}
 
-// ── Mock recent orders ──
-const recentOrders: OrderRow[] = [
-  {
-    id: 1,
-    externalRef: "#1847",
-    customerName: "Ahmed Benali",
-    customerPhoneLast4: "3456",
-    productName: "T-shirt Nike Dri-FIT",
-    total: 349,
-    shippingCity: "Casablanca",
-    fraudScore: 15,
-    decision: "ship",
-    deliveryStatus: "shipped",
-    pipelineStatus: "auto_shipped",
-    createdAt: "2026-02-18T10:30:00Z",
-  },
-  {
-    id: 2,
-    externalRef: "#1848",
-    customerName: "Fatima Zahra Idrissi",
-    customerPhoneLast4: "7821",
-    productName: "Robe Caftan",
-    total: 890,
-    shippingCity: "Rabat",
-    fraudScore: 35,
-    decision: "verify",
-    deliveryStatus: "pending",
-    pipelineStatus: "needs_review",
-    createdAt: "2026-02-18T09:15:00Z",
-  },
-  {
-    id: 3,
-    externalRef: "#1849",
-    customerName: "Youssef El Amrani",
-    customerPhoneLast4: "1234",
-    productName: "Montre Casio G-Shock",
-    total: 1250,
-    shippingCity: "Taza",
-    fraudScore: 75,
-    decision: "flag",
-    deliveryStatus: "pending",
-    pipelineStatus: "escalated",
-    createdAt: "2026-02-18T08:45:00Z",
-  },
-  {
-    id: 4,
-    externalRef: "#1850",
-    customerName: "Karim Tazi",
-    customerPhoneLast4: "9012",
-    productName: "Baskets Puma RS-X",
-    total: 680,
-    shippingCity: "Marrakech",
-    fraudScore: 25,
-    decision: "ship",
-    deliveryStatus: "delivered",
-    pipelineStatus: "auto_shipped",
-    createdAt: "2026-02-18T07:20:00Z",
-  },
-  {
-    id: 5,
-    externalRef: "#1851",
-    customerName: "xxxx",
-    customerPhoneLast4: "5678",
-    productName: "iPhone 15 Coque + Écouteurs",
-    total: 1850,
-    shippingCity: "Sidi Slimane",
-    fraudScore: 92,
-    decision: "block",
-    deliveryStatus: "cancelled",
-    pipelineStatus: "auto_blocked",
-    createdAt: "2026-02-18T03:12:00Z",
-  },
-];
+// ── Chart data type ──
+interface ChartPoint {
+  date: string;
+  commandes: number;
+  score: number;
+}
 
 function UrgentCountdown({ deadline }: { deadline: string }) {
   const { t } = useTranslation();
@@ -183,30 +114,106 @@ const BANNER_DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export default function DashboardPage() {
   const { t, locale } = useTranslation();
+  const { addToast } = useToast();
+  const router = useRouter();
   const [savings, setSavings] = useState<SavingsData | null>(null);
-  const [bannerDismissed, setBannerDismissed] = useState(true); // hidden by default until checked
+  const [stats, setStats] = useState<StatsData | null>(null);
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [bannerDismissed, setBannerDismissed] = useState(true);
   const [urgentOrders, setUrgentOrders] = useState<UrgentOrder[]>([]);
+  const [recentOrders, setRecentOrders] = useState<OrderRow[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+
+  // ── Sync & Refresh ──
+  const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const hasSynced = useRef(false);
+
+  const syncYouCan = useCallback(async (): Promise<number> => {
+    try {
+      setSyncing(true);
+      const res = await fetch("/api/sync/youcan", { method: "POST" });
+      if (!res.ok) return 0;
+      const json = await res.json();
+      return json.synced ?? 0;
+    } catch {
+      return 0;
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  const fetchRecentOrders = useCallback(() => {
+    setOrdersLoading(true);
+    fetch("/api/orders?per_page=5&page=1")
+      .then((r) => r.json())
+      .then((d) => { if (d.data) setRecentOrders(d.data); })
+      .catch(() => {})
+      .finally(() => setOrdersLoading(false));
+  }, []);
 
   const fetchUrgent = useCallback(() => {
     fetch("/api/dashboard/urgent")
       .then((r) => r.json())
-      .then((d) => {
-        if (d.data) setUrgentOrders(d.data);
-      })
+      .then((d) => { if (d.data) setUrgentOrders(d.data); })
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    // Fetch savings
+  const fetchStats = useCallback(() => {
+    fetch("/api/stats")
+      .then((r) => r.json())
+      .then((d) => { if (d.data) setStats(d.data); })
+      .catch(() => {});
+  }, []);
+
+  const fetchChart = useCallback(() => {
+    fetch("/api/dashboard/chart")
+      .then((r) => r.json())
+      .then((d) => { if (d.data) setChartData(d.data); })
+      .catch(() => {});
+  }, []);
+
+  const fetchSavings = useCallback(() => {
     fetch("/api/dashboard/savings?period=30d")
       .then((r) => r.json())
-      .then((d) => {
-        if (d.data) setSavings(d.data);
-      })
+      .then((d) => { if (d.data) setSavings(d.data); })
       .catch(() => {});
+  }, []);
 
-    // Fetch urgent orders + poll every 60s
+  function fetchAll() {
+    fetchRecentOrders();
     fetchUrgent();
+    fetchStats();
+    fetchChart();
+    fetchSavings();
+  }
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      const synced = await syncYouCan();
+      fetchAll();
+      if (synced > 0) {
+        addToast({
+          type: "success",
+          message: synced === 1
+            ? t("orders.sync.recovered", { count: synced })
+            : t("orders.sync.recoveredPlural", { count: synced }),
+        });
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  function handleOrderClick(orderId: number) {
+    router.push(`/dashboard/orders?selected=${orderId}`);
+  }
+
+  useEffect(() => {
+    fetchAll();
+
+    // Poll urgent every 60s
     const iv = setInterval(fetchUrgent, 60000);
 
     // Check banner dismissal
@@ -218,7 +225,25 @@ export default function DashboardPage() {
     }
 
     return () => clearInterval(iv);
-  }, [fetchUrgent]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Auto-sync YouCan on first load ──
+  useEffect(() => {
+    if (hasSynced.current) return;
+    hasSynced.current = true;
+
+    syncYouCan().then((synced) => {
+      if (synced > 0) {
+        fetchAll();
+        addToast({
+          type: "success",
+          message: synced === 1
+            ? t("orders.sync.recovered", { count: synced })
+            : t("orders.sync.recoveredPlural", { count: synced }),
+        });
+      }
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function dismissBanner() {
     localStorage.setItem(BANNER_DISMISS_KEY, String(Date.now()));
@@ -229,14 +254,30 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page title */}
-      <div>
-        <h1 className="font-display text-2xl font-bold text-midnight">
-          {t("dashboard.title")}
-        </h1>
-        <p className="text-sm text-fog">
-          {t("dashboard.subtitle")}
-        </p>
+      {/* Page title + refresh */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-midnight">
+            {t("dashboard.title")}
+          </h1>
+          <p className="text-sm text-fog">
+            {t("dashboard.subtitle")}
+          </p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing || syncing}
+          className="h-10 lg:h-9 inline-flex items-center gap-1.5 justify-center rounded-full border border-silk bg-white px-3 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+          aria-label={t("orders.refresh")}
+          title={t("orders.refresh")}
+        >
+          <RefreshCw className={cn("h-4 w-4", (refreshing || syncing) && "animate-spin")} />
+          {(refreshing || syncing) && (
+            <span className="hidden sm:inline text-xs text-mist">
+              {t("orders.sync.syncing")}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* ── Quick Start Checklist ── */}
@@ -359,9 +400,19 @@ export default function DashboardPage() {
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
             title={t("dashboard.kpi.avgScore")}
-            value="38"
-            change={t("dashboard.changes.ptsVsLastWeek", { pts: "-3" })}
-            changeType="positive"
+            value={stats ? String(stats.avgScore) : "—"}
+            change={
+              stats?.changeScore !== undefined
+                ? t("dashboard.changes.ptsVsLastWeek", { pts: `${stats.changeScore >= 0 ? "+" : ""}${stats.changeScore}` })
+                : undefined
+            }
+            changeType={
+              stats?.changeScore !== undefined
+                ? stats.changeScore <= 0
+                  ? "positive"
+                  : "negative"
+                : "neutral"
+            }
             icon={TrendingUp}
             iconColor="text-mint"
           />
@@ -369,9 +420,19 @@ export default function DashboardPage() {
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
             title={t("dashboard.kpi.deliveryRate")}
-            value="78%"
-            change={t("dashboard.changes.thisMonth", { value: "+5%" })}
-            changeType="positive"
+            value={stats ? `${stats.deliveryRate}%` : "—"}
+            change={
+              stats?.changeDelivery !== undefined
+                ? t("dashboard.changes.thisMonth", { value: `${stats.changeDelivery >= 0 ? "+" : ""}${stats.changeDelivery}%` })
+                : undefined
+            }
+            changeType={
+              stats?.changeDelivery !== undefined
+                ? stats.changeDelivery >= 0
+                  ? "positive"
+                  : "negative"
+                : "neutral"
+            }
             icon={Truck}
             iconColor="text-mint"
           />
@@ -379,8 +440,12 @@ export default function DashboardPage() {
         <div className="min-w-[240px] snap-start lg:min-w-0">
           <KpiCard
             title={t("dashboard.kpi.blocked")}
-            value="4"
-            change={t("dashboard.changes.ofTotal", { value: "6.9%" })}
+            value={stats ? String(stats.blockedCount) : "—"}
+            change={
+              stats
+                ? t("dashboard.changes.ofTotal", { value: stats.totalOrders > 0 ? `${((stats.blockedCount / stats.totalOrders) * 100).toFixed(1)}%` : "0%" })
+                : undefined
+            }
             changeType="neutral"
             icon={ShieldAlert}
             iconColor="text-violet"
@@ -394,6 +459,11 @@ export default function DashboardPage() {
           <CardTitle>{t("dashboard.chart.title")}</CardTitle>
         </CardHeader>
         <CardContent>
+          {chartData.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-fog">
+              {t("dashboard.chart.noData")}
+            </div>
+          ) : (
           <div className="h-[200px] lg:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -446,6 +516,7 @@ export default function DashboardPage() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -455,18 +526,51 @@ export default function DashboardPage() {
           <CardTitle>{t("dashboard.recentOrders")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Desktop: table */}
-          <div className="hidden lg:block">
-            <OrderTable orders={recentOrders} />
-          </div>
-          {/* Mobile: cards */}
-          <div className="flex flex-col gap-2 lg:hidden">
-            {recentOrders.map((order) => (
-              <OrderCard key={order.id} order={order} />
-            ))}
-          </div>
+          {ordersLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-mist" />
+              <span className="ml-2 text-sm text-fog">{t("common.loading")}</span>
+            </div>
+          ) : recentOrders.length === 0 ? (
+            <p className="text-center text-fog py-8 text-sm">
+              {t("orders.table.noOrders")}
+            </p>
+          ) : (
+            <>
+              {/* Desktop: table */}
+              <div className="hidden lg:block">
+                <OrderTable orders={recentOrders} onRowClick={handleOrderClick} />
+              </div>
+              {/* Mobile: cards */}
+              <div className="flex flex-col gap-2 lg:hidden">
+                {recentOrders.map((order) => (
+                  <OrderCard key={order.id} order={order} onClick={handleOrderClick} />
+                ))}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
+
+      {/* Legal footer */}
+      <div className="mt-12 pt-6 border-t border-border text-center text-xs text-ink-3 space-x-4">
+        <a href="/privacy" className="hover:text-ink-2 transition">
+          Confidentialité
+        </a>
+        <span>·</span>
+        <a href="/terms" className="hover:text-ink-2 transition">
+          CGU
+        </a>
+        <span>·</span>
+        <a href="/data-rights" className="hover:text-ink-2 transition">
+          Droits des données
+        </a>
+        <span>·</span>
+        <span>
+          © {new Date().getFullYear()} nortoo — Déclaration CNDP
+          n°[À compléter]
+        </span>
+      </div>
     </div>
   );
 }

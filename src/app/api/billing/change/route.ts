@@ -56,9 +56,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update plan — clear trialEndsAt if leaving trial
+    // Update plan — clear trialEndsAt and set billingStatus to active when upgrading
     const updateData: Record<string, unknown> = {
       plan: newPlan,
+      billingStatus: "active",
       updatedAt: new Date(),
     };
 

@@ -46,6 +46,13 @@ const config: Config = {
           bg: "rgba(59, 130, 246, 0.08)",
           soft: "rgba(59, 130, 246, 0.20)",
         },
+        lime: {
+          DEFAULT: "#C8FF00",
+          dark: "#B0E000",
+          deep: "#98C200",
+          bg: "rgba(200, 255, 0, 0.06)",
+          soft: "rgba(200, 255, 0, 0.20)",
+        },
       },
       fontFamily: {
         display: ["var(--f-display)", "sans-serif"],

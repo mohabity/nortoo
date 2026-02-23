@@ -60,7 +60,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, email, password } = parsed.data;
+  const { name, password } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
 
   // Check if email already exists (merchants or users)
   const [existingMerchant] = await db
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
       apiKey,
       apiKeyHash,
       plan: "trial",
+      billingStatus: "trial",
       trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
       currentMonthStart: new Date(),
       dataRetentionMonths: 24,
