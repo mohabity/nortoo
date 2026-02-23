@@ -42,7 +42,7 @@
     "react-dom": "^19.0",
     "recharts": "^2.15",
     "resend": "^6.9.2",
-    "stripe": "^17",
+    "stripe": "^20",
     "tailwind-merge": "^2.6",
     "zod": "^3.24"
   },
