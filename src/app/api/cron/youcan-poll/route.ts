@@ -37,6 +37,7 @@ export async function GET(request: Request) {
     skippedExisting: number;
     skippedNonCod: number;
     skippedNoPhone: number;
+    skippedGateways: string[];
     errors: string[];
   }> = [];
 
@@ -67,6 +68,7 @@ export async function GET(request: Request) {
       skippedExisting: 0,
       skippedNonCod: 0,
       skippedNoPhone: 0,
+      skippedGateways: [],
       errors: [],
     };
 
@@ -153,6 +155,8 @@ export async function GET(request: Request) {
         if (gateway && gateway !== "cod" && gateway !== "cash_on_delivery") {
           console.log(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): non-COD gateway="${gateway}"`);
           result.skippedNonCod++;
+          const gatewayInfo = `ref=${order.ref} gateway="${gateway}" gateway_type="${(order.payment as any)?.gateway_type ?? "N/A"}" payload.gateway="${order.payment?.payload?.gateway ?? "N/A"}"`;
+          if (result.skippedGateways.length < 5) result.skippedGateways.push(gatewayInfo);
           continue;
         }
 
