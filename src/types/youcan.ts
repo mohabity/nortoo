@@ -31,6 +31,7 @@ export interface YouCanOrderPayload {
   payment?: {
     status: number;
     status_text: string; // "pending" | "paid" | etc.
+    gateway_type?: string; // Numeric ID: "1" = COD, "7" = other, etc.
     payload?: {
       gateway: string; // "cod" | "credit_card" | etc.
       gateway_id?: string;

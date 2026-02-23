@@ -8,6 +8,27 @@
 import type { IngestParams } from "@/lib/ingest";
 import type { YouCanOrderPayload } from "@/types/youcan";
 
+// ── COD Gateway Detection ──
+// YouCan sends numeric gateway IDs (e.g. "1" = COD) or string names.
+// This set covers all known COD values from YouCan's API.
+const COD_GATEWAY_VALUES = new Set([
+  "cod",
+  "cash_on_delivery",
+  "cashondelivery",
+  "cash on delivery",
+  "1", // YouCan numeric ID for COD
+]);
+
+/**
+ * Check if a gateway value represents Cash-On-Delivery.
+ * Accepts: undefined/null (no gateway = default to COD), known COD values.
+ * Case-insensitive.
+ */
+export function isCodGateway(value: string | undefined | null): boolean {
+  if (!value) return true; // no gateway info = assume COD (safe default)
+  return COD_GATEWAY_VALUES.has(value.toLowerCase().trim());
+}
+
 interface MerchantSettings {
   id: number;
   verifyThreshold: number;

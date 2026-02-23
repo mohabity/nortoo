@@ -4,6 +4,7 @@ import { extractApiKey, validateApiKey } from "@/lib/api-key";
 import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
 import { verifyWebhookSignature } from "@/lib/webhook-verify";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
+import { isCodGateway } from "@/lib/order-pipeline";
 import { db } from "@/db/index";
 import { auditLogs } from "@/db/schema";
 import type { YouCanOrderPayload } from "@/types/youcan";
@@ -144,8 +145,10 @@ export async function POST(request: Request) {
     });
 
     // ── 3. Filter COD only ──
-    const gateway = payload.payment?.payload?.gateway;
-    if (gateway && gateway !== "cod") {
+    const gateway =
+      payload.payment?.gateway_type ??
+      payload.payment?.payload?.gateway;
+    if (!isCodGateway(gateway)) {
       console.log("[Webhook YouCan] Non-COD order ignored, gateway:", gateway);
       // Audit log so merchants can see why an order was rejected
       db.insert(auditLogs).values({

@@ -4,7 +4,7 @@ import { merchants, orders, auditLogs } from "@/db/schema";
 import { and, eq, isNotNull, inArray } from "drizzle-orm";
 import { decryptSafe } from "@/lib/encryption";
 import { processIncomingOrder } from "@/lib/ingest";
-import { parseYouCanPayload } from "@/lib/order-pipeline";
+import { parseYouCanPayload, isCodGateway } from "@/lib/order-pipeline";
 import type { YouCanOrderPayload } from "@/types/youcan";
 
 /**
@@ -148,14 +148,14 @@ export async function GET(request: Request) {
         if (existingSet.has(orderId)) { result.skippedExisting++; continue; }
 
         // Skip non-COD orders
-        // YouCan API: gateway_type is at payment.gateway_type (not payment.payload.gateway)
+        // YouCan API: gateway_type is at payment.gateway_type (numeric ID: "1" = COD)
         const gateway =
-          (order.payment as any)?.gateway_type ||
+          order.payment?.gateway_type ??
           order.payment?.payload?.gateway;
-        if (gateway && gateway !== "cod" && gateway !== "cash_on_delivery") {
+        if (!isCodGateway(gateway)) {
           console.log(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): non-COD gateway="${gateway}"`);
           result.skippedNonCod++;
-          const gatewayInfo = `ref=${order.ref} gateway="${gateway}" gateway_type="${(order.payment as any)?.gateway_type ?? "N/A"}" payload.gateway="${order.payment?.payload?.gateway ?? "N/A"}"`;
+          const gatewayInfo = `ref=${order.ref} gateway="${gateway}" gateway_type="${order.payment?.gateway_type ?? "N/A"}" payload.gateway="${order.payment?.payload?.gateway ?? "N/A"}"`;
           if (result.skippedGateways.length < 5) result.skippedGateways.push(gatewayInfo);
           continue;
         }
