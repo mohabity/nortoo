@@ -453,6 +453,7 @@
       "rto_costs": "Coûts RTO",
       "api": "Intégration & API",
       "notifications": "Notifications",
+      "phone_lists": "Listes",
       "privacy": "Données & Confidentialité",
       "billing": "Facturation"
     },
@@ -978,5 +979,31 @@
   "currency": {
     "dh": "DH",
     "perMonth": "/mois"
+  },
+  "phoneList": {
+    "title": "Listes de téléphones",
+    "description": "Gérez vos listes whitelist (VIP) et blacklist pour overrider le scoring automatiquement.",
+    "whitelist": "Whitelist",
+    "blacklist": "Blacklist",
+    "addPhone": "Numéro de téléphone",
+    "listTypeLabel": "Type de liste",
+    "reason": "Raison (optionnel)",
+    "reasonPlaceholder": "Ex: Client VIP, Fraudeur confirmé...",
+    "add": "Ajouter",
+    "added": "Numéro ajouté à la liste",
+    "removed": "Numéro retiré de la liste",
+    "error": "Une erreur est survenue",
+    "auto": "Auto",
+    "manual": "Manuel",
+    "empty": "Aucun numéro dans cette liste",
+    "remove": "Retirer",
+    "confirmYes": "Oui",
+    "confirmNo": "Non",
+    "filterAll": "Tout",
+    "colPhone": "Téléphone",
+    "colType": "Liste",
+    "colReason": "Raison",
+    "colSource": "Source",
+    "colDate": "Date"
   }
 }

@@ -453,6 +453,7 @@
       "rto_costs": "RTO Costs",
       "api": "Integration & API",
       "notifications": "Notifications",
+      "phone_lists": "Lists",
       "privacy": "Data & Privacy",
       "billing": "Billing"
     },
@@ -978,5 +979,31 @@
   "currency": {
     "dh": "MAD",
     "perMonth": "/mo"
+  },
+  "phoneList": {
+    "title": "Phone Lists",
+    "description": "Manage your whitelist (VIP) and blacklist to automatically override scoring.",
+    "whitelist": "Whitelist",
+    "blacklist": "Blacklist",
+    "addPhone": "Phone number",
+    "listTypeLabel": "List type",
+    "reason": "Reason (optional)",
+    "reasonPlaceholder": "E.g.: VIP client, Confirmed fraud...",
+    "add": "Add",
+    "added": "Number added to list",
+    "removed": "Number removed from list",
+    "error": "An error occurred",
+    "auto": "Auto",
+    "manual": "Manual",
+    "empty": "No numbers in this list",
+    "remove": "Remove",
+    "confirmYes": "Yes",
+    "confirmNo": "No",
+    "filterAll": "All",
+    "colPhone": "Phone",
+    "colType": "List",
+    "colReason": "Reason",
+    "colSource": "Source",
+    "colDate": "Date"
   }
 }

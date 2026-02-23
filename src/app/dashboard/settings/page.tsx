@@ -13,6 +13,7 @@ import {
   Coins,
   Timer,
   CreditCard,
+  ListFilter,
   Loader2,
   X,
 } from "lucide-react";
@@ -29,6 +30,7 @@ import { PrivacyTab } from "./components/PrivacyTab";
 import { RtoCostsTab } from "./components/RtoCostsTab";
 import { TeamTab } from "./components/TeamTab";
 import { BillingTab } from "./components/BillingTab";
+import { PhoneListTab } from "./components/PhoneListTab";
 
 // ── Tab definitions ──
 const TABS: TabMeta[] = [
@@ -40,6 +42,7 @@ const TABS: TabMeta[] = [
   { id: "rto_costs", labelKey: "settings.tabs.rto_costs", icon: Coins },
   { id: "api", labelKey: "settings.tabs.api", icon: KeyRound },
   { id: "notifications", labelKey: "settings.tabs.notifications", icon: Bell },
+  { id: "phone_lists", labelKey: "settings.tabs.phone_lists", icon: ListFilter },
   { id: "privacy", labelKey: "settings.tabs.privacy", icon: ShieldCheck },
   { id: "billing", labelKey: "settings.tabs.billing", icon: CreditCard },
 ];
@@ -210,6 +213,7 @@ function SettingsPageInner() {
           {activeTab === "rto_costs" && <RtoCostsTab {...baseProps} />}
           {activeTab === "api" && <ApiTab {...baseProps} />}
           {activeTab === "notifications" && <NotificationsTab {...baseProps} />}
+          {activeTab === "phone_lists" && <PhoneListTab {...baseProps} />}
           {activeTab === "privacy" && <PrivacyTab {...baseProps} />}
           {activeTab === "billing" && <BillingTab {...baseProps} />}
         </div>

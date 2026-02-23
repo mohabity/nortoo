@@ -13,7 +13,7 @@
  */
 
 import { db } from "@/db/index";
-import { customers, orders, auditLogs, oppositionList, notifications, merchants } from "@/db/schema";
+import { customers, orders, auditLogs, oppositionList, notifications, merchants, phoneList } from "@/db/schema";
 import { and, eq, or, isNull, gt, sql } from "drizzle-orm";
 import { hashPhone, phoneLast4 } from "@/lib/hash";
 import { scoreOrder, type ScoringResult, type VelocityData } from "@/lib/scoring";
@@ -108,6 +108,30 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
   // ── 1. Hash phone immediately — NEVER store raw (Art. 23) ──
   const phoneHash = hashPhone(phone);
   const last4 = phoneLast4(phone);
+
+  // ── 1b. Check blacklist / whitelist ──
+  const [listedPhone] = await db
+    .select({ listType: phoneList.listType, reason: phoneList.reason })
+    .from(phoneList)
+    .where(
+      and(eq(phoneList.merchantId, merchantId), eq(phoneList.phoneHash, phoneHash))
+    )
+    .limit(1);
+
+  let phoneListOverride: { decision: "ship" | "block"; reason: string } | null = null;
+  if (listedPhone) {
+    if (listedPhone.listType === "blacklist") {
+      phoneListOverride = {
+        decision: "block",
+        reason: `Blacklisted: ${listedPhone.reason || "Numéro bloqué par le marchand"}`,
+      };
+    } else {
+      phoneListOverride = {
+        decision: "ship",
+        reason: `Whitelisted: ${listedPhone.reason || "Client VIP"}`,
+      };
+    }
+  }
 
   // ── 2. Check opposition list (Art. 9) ──
   const [opposition] = await db
@@ -421,13 +445,26 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     });
   }
 
-  // ── 5b. Generate human-readable explanation ──
+  // ── 5b. Apply phone list override (whitelist/blacklist) ──
+  if (phoneListOverride) {
+    decision = phoneListOverride.decision;
+    scoringResult.factors.push({
+      rule: "R_PHONELIST",
+      points: 0,
+      reason: phoneListOverride.reason,
+      category: "override",
+    });
+  }
+
+  // ── 5c. Generate human-readable explanation ──
   const explanation = generateExplanation(
     scoringResult.score,
     decision,
     scoringResult.factors,
     scoringResult.confidence
   );
+
+  const now = new Date();
 
   // ── 6. Insert order + audit log ──
   const [insertedOrder] = await db
@@ -455,6 +492,10 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       fraudScore: scoringResult.score,
       riskLevel: scoringResult.riskLevel,
       decision,
+      overrideDecision: phoneListOverride ? phoneListOverride.decision : undefined,
+      overrideBy: phoneListOverride ? "phonelist" : undefined,
+      overrideReason: phoneListOverride ? phoneListOverride.reason : undefined,
+      overrideAt: phoneListOverride ? now : undefined,
       scoringFactors: JSON.stringify(scoringResult.factors),
       scoreExplanation: JSON.stringify(explanation),
       scoringVersion: scoringResult.version,
@@ -509,8 +550,6 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     orderRef: ref,
     customerName,
   });
-
-  const now = new Date();
 
   // ── 6c. Update order with pipeline status + escalation priority ──
   await db

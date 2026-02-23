@@ -56,6 +56,21 @@ export function normalizePhone(phone: string): string {
 }
 
 /**
+ * Mask a phone number for display in lists.
+ * Shows country code prefix + masked middle + last 3 digits.
+ * Example: "+212661234567" → "212XXXXXX567"
+ */
+export function maskPhone(phone: string): string {
+  const normalized = normalizePhone(phone); // "+212661234567"
+  const digits = normalized.replace(/\D/g, ""); // "212661234567"
+  if (digits.length <= 6) return digits; // Too short to mask
+  const prefix = digits.slice(0, 3);  // "212"
+  const suffix = digits.slice(-3);    // "567"
+  const middle = "X".repeat(digits.length - 6); // "XXXXXX"
+  return `${prefix}${middle}${suffix}`;
+}
+
+/**
  * Hash an IP address for audit logging.
  * We don't store raw IPs either.
  */

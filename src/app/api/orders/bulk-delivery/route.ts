@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
-import { orders, customers, auditLogs } from "@/db/schema";
+import { orders, customers, auditLogs, phoneList } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requirePermission, handlePermissionError } from "@/lib/permissions";
@@ -117,6 +117,46 @@ export async function POST(request: Request) {
               lastSeen: now,
             })
             .where(eq(customers.id, order.customerId));
+
+          // Auto-blacklist: ≥3 failed orders
+          try {
+            const [cust] = await db
+              .select({
+                phoneHash: customers.phoneHash,
+                phoneLast4: customers.phoneLast4,
+                failedOrders: customers.failedOrders,
+              })
+              .from(customers)
+              .where(eq(customers.id, order.customerId))
+              .limit(1);
+
+            if (cust && cust.phoneHash && (cust.failedOrders ?? 0) >= 2) {
+              const [alreadyListed] = await db
+                .select({ id: phoneList.id })
+                .from(phoneList)
+                .where(
+                  and(
+                    eq(phoneList.merchantId, merchantId),
+                    eq(phoneList.phoneHash, cust.phoneHash)
+                  )
+                )
+                .limit(1);
+
+              if (!alreadyListed) {
+                const failCount = (cust.failedOrders ?? 0) + 1;
+                await db.insert(phoneList).values({
+                  merchantId,
+                  phoneHash: cust.phoneHash,
+                  phoneMasked: cust.phoneLast4 ? `***${cust.phoneLast4}` : "***",
+                  listType: "blacklist",
+                  reason: `Auto-blacklist: ${failCount} retours`,
+                  addedBy: "auto",
+                });
+              }
+            }
+          } catch (autoErr) {
+            console.error("[BulkDelivery] Auto-blacklist check failed:", autoErr);
+          }
         }
       }
 

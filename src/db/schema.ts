@@ -562,6 +562,35 @@ export const webhookQueue = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// PHONE LIST — Blacklist / Whitelist (merchant-managed)
+// Overrides scoring decision: whitelist → ship, blacklist → block
+// ═══════════════════════════════════════════════════════════
+export const phoneList = pgTable(
+  "phone_list",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+
+    phoneHash: text("phone_hash").notNull(),    // SHA-256 (Art. 23)
+    phoneMasked: text("phone_masked").notNull(), // "212XXXXXX567"
+    listType: text("list_type").notNull(),       // "whitelist" | "blacklist"
+    reason: text("reason"),                      // Optional note
+    addedBy: text("added_by").notNull().default("merchant"), // "merchant" | "auto"
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("phone_list_merchant_phone_idx").on(
+      table.merchantId,
+      table.phoneHash
+    ),
+    index("phone_list_merchant_idx").on(table.merchantId),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // USAGE LOGS — Monthly usage history per merchant (billing)
 // ═══════════════════════════════════════════════════════════
 export const usageLogs = pgTable(
@@ -597,6 +626,7 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   cityStats: many(cityStats),
   zoneStats: many(zoneStats),
   usageLogs: many(usageLogs),
+  phoneList: many(phoneList),
 }));
 
 export const usersRelations = relations(users, ({ one }) => ({
@@ -668,6 +698,13 @@ export const zoneStatsRelations = relations(zoneStats, ({ one }) => ({
 export const usageLogsRelations = relations(usageLogs, ({ one }) => ({
   merchant: one(merchants, {
     fields: [usageLogs.merchantId],
+    references: [merchants.id],
+  }),
+}));
+
+export const phoneListRelations = relations(phoneList, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [phoneList.merchantId],
     references: [merchants.id],
   }),
 }));
