@@ -85,6 +85,8 @@ interface OrderTableProps {
   onToggleAll?: () => void;
   onRangeSelect?: (id: number) => void;
   selectAllState?: "none" | "some" | "all";
+  // Delivery update callback
+  onDeliveryUpdate?: (orderId: number, status: string) => void;
 }
 
 function SelectAllCheckbox({
@@ -215,6 +217,7 @@ export function OrderTable({
   onToggleAll,
   onRangeSelect,
   selectAllState = "none",
+  onDeliveryUpdate,
 }: OrderTableProps) {
   const { t, locale } = useTranslation();
   const hasSelection = !!onToggle;
@@ -405,8 +408,25 @@ export function OrderTable({
                       )}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-fog">
-                  {deliveryLabel(order.deliveryStatus, locale)}
+                <TableCell
+                  className="text-sm text-fog"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {onDeliveryUpdate ? (
+                    <select
+                      value={order.deliveryStatus}
+                      onChange={(e) => onDeliveryUpdate(order.id, e.target.value)}
+                      className="bg-white border border-silk rounded-xs px-1.5 py-0.5 text-xs text-midnight cursor-pointer hover:border-mint focus:ring-1 focus:ring-mint/40 focus:outline-none"
+                    >
+                      <option value="pending">{deliveryLabel("pending", locale)}</option>
+                      <option value="shipped">{deliveryLabel("shipped", locale)}</option>
+                      <option value="delivered">{deliveryLabel("delivered", locale)}</option>
+                      <option value="returned">{deliveryLabel("returned", locale)}</option>
+                      <option value="cancelled">{deliveryLabel("cancelled", locale)}</option>
+                    </select>
+                  ) : (
+                    deliveryLabel(order.deliveryStatus, locale)
+                  )}
                 </TableCell>
                 <TableCell className="truncate text-sm text-fog">
                   {hl(order.productName)}

@@ -10,6 +10,7 @@ import {
   ChevronsRight,
   Search,
   Download,
+  Upload,
   RefreshCw,
   X,
   User,
@@ -552,6 +553,99 @@ function OrdersContent() {
     addToast({ type: "info", message: t("orders.bulk.undone") });
   }
 
+  // ── Delivery update ──
+
+  async function handleDeliveryUpdate(orderId: number, status: string) {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/delivery`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        addToast({ type: "error", message: json.error ?? "Erreur mise à jour" });
+        return;
+      }
+      // Update local state immediately
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, deliveryStatus: status } : o))
+      );
+      addToast({ type: "success", message: t("orders.delivery.updated") });
+    } catch {
+      addToast({ type: "error", message: t("orders.delivery.error") });
+    }
+  }
+
+  // ── CSV delivery import ──
+
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const [csvLoading, setCsvLoading] = useState(false);
+
+  async function handleCsvImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCsvLoading(true);
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      if (lines.length < 2) {
+        addToast({ type: "error", message: "CSV vide ou invalide" });
+        return;
+      }
+
+      // Parse header
+      const header = lines[0].toLowerCase().split(",").map((h) => h.trim());
+      const refIdx = header.indexOf("ref");
+      const statusIdx = header.indexOf("status");
+
+      if (refIdx === -1 || statusIdx === -1) {
+        addToast({ type: "error", message: "CSV doit contenir les colonnes: ref, status" });
+        return;
+      }
+
+      const updates = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",").map((c) => c.trim());
+        const ref = cols[refIdx];
+        const status = cols[statusIdx];
+        if (ref && status && ["shipped", "delivered", "returned", "cancelled"].includes(status)) {
+          updates.push({ externalRef: ref, status });
+        }
+      }
+
+      if (updates.length === 0) {
+        addToast({ type: "error", message: "Aucune mise à jour valide dans le CSV" });
+        return;
+      }
+
+      const res = await fetch("/api/orders/bulk-delivery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        addToast({ type: "error", message: json.error ?? "Erreur import" });
+        return;
+      }
+
+      addToast({
+        type: "success",
+        message: `${json.data.updated} commande(s) mise(s) à jour, ${json.data.skipped} ignorée(s)`,
+      });
+      fetchOrders();
+    } catch {
+      addToast({ type: "error", message: "Erreur lecture du fichier CSV" });
+    } finally {
+      setCsvLoading(false);
+      // Reset input so same file can be re-imported
+      if (csvInputRef.current) csvInputRef.current.value = "";
+    }
+  }
+
   // Mobile search
   function openMobileSearch() {
     setMobileSearchOpen(true);
@@ -777,6 +871,28 @@ function OrdersContent() {
             )}
           </button>
 
+          {/* Import delivery CSV */}
+          <button
+            onClick={() => csvInputRef.current?.click()}
+            disabled={csvLoading}
+            className="h-10 lg:h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+            title="Importer livraisons (CSV)"
+          >
+            {csvLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">{t("orders.delivery.import")}</span>
+          </button>
+          <input
+            ref={csvInputRef}
+            type="file"
+            accept=".csv"
+            onChange={handleCsvImport}
+            className="hidden"
+          />
+
           {/* Export CSV — Starter+ */}
           <FeatureGate feature="csv_export" mode="lock">
             <button
@@ -833,6 +949,7 @@ function OrdersContent() {
                 onToggleAll={toggleAll}
                 onRangeSelect={rangeSelect}
                 selectAllState={selectAllState}
+                onDeliveryUpdate={handleDeliveryUpdate}
               />
             </CardContent>
           </Card>

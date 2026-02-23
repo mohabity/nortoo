@@ -222,6 +222,11 @@
       "errorOverride": "Override error",
       "networkError": "Network error"
     },
+    "delivery": {
+      "import": "Import deliveries",
+      "updated": "Delivery status updated",
+      "error": "Delivery update error"
+    },
     "sync": {
       "syncing": "Syncing...",
       "recovered": "{count} new order imported",
