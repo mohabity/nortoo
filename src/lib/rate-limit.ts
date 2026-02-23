@@ -31,6 +31,13 @@ export const apiLimiter = new Ratelimit({
   prefix: "rl:api",
 });
 
+/** Admin login: 5 attempts per 15 minutes per IP (strict) */
+export const adminLoginLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "15m"),
+  prefix: "rl:admin-login",
+});
+
 /**
  * Extract client IP from request headers (Vercel/Cloudflare compatible).
  */
