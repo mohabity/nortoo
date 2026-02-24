@@ -427,6 +427,28 @@
       "insteadOf": "au lieu de",
       "users": "utilisateurs"
     },
+    "billingInfo": {
+      "title": "Informations de facturation",
+      "companyName": "Raison sociale",
+      "companyNamePlaceholder": "Nom de votre entreprise",
+      "address": "Adresse de facturation",
+      "addressPlaceholder": "Adresse complète",
+      "ice": "ICE (Identifiant Commun de l'Entreprise)",
+      "save": "Enregistrer",
+      "saved": "Informations de facturation enregistrées",
+      "error": "Erreur lors de la sauvegarde"
+    },
+    "bankInfo": {
+      "title": "Coordonnées bancaires nortoo",
+      "description": "Effectuez vos virements à l'aide des coordonnées ci-dessous. Indiquez le numéro de facture en référence."
+    },
+    "invoices": {
+      "title": "Historique des factures",
+      "period": "Période",
+      "amountTTC": "Montant TTC",
+      "status": "Statut",
+      "empty": "Aucune facture pour le moment"
+    },
     "history": {
       "title": "Historique de facturation",
       "placeholder": "L'historique de facturation sera disponible prochainement.",
@@ -907,7 +929,9 @@
       "trialEnding": "Il reste {count} jour(s) d'essai. Passez à un plan payant pour ne rien perdre.",
       "limitReached": "Vous avez atteint la limite de {limit} commandes/mois. Vos commandes sont toujours scorées, mais pensez à upgrader.",
       "limitApproaching": "{current}/{limit} commandes ce mois ({percent}%). Pensez à upgrader si nécessaire.",
-      "seePlans": "Voir les plans"
+      "seePlans": "Voir les plans",
+      "overdue": "Facture impayée — Votre compte risque d'être suspendu. Réglez votre facture.",
+      "payNow": "Régler →"
     },
     "upgradeBanner": {
       "planRequired": "Plan {plan} requis",

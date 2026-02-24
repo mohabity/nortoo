@@ -21,6 +21,7 @@ export async function GET() {
   const [merchant] = await db
     .select({
       plan: merchants.plan,
+      billingStatus: merchants.billingStatus,
       trialEndsAt: merchants.trialEndsAt,
       currentMonthOrders: merchants.currentMonthOrders,
       currentMonthStart: merchants.currentMonthStart,
@@ -74,6 +75,7 @@ export async function GET() {
           limit: config.maxUsers,
         },
       },
+      billingStatus: merchant.billingStatus,
       trial,
       currentMonthStart: merchant.currentMonthStart?.toISOString() ?? null,
     },

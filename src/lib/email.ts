@@ -388,6 +388,123 @@ nortoo · Scoring anti-fraude COD`;
   };
 }
 
+// ═══════════════════════════════════════════════════════════
+// INVOICE — Nouvelle facture disponible
+// ═══════════════════════════════════════════════════════════
+
+export interface InvoiceEmailData {
+  merchantName: string;
+  invoiceNumber: string;
+  period: string;
+  amountTTC: string;
+  dueDate: string;
+  rib: string;
+  iban: string;
+  swift: string;
+}
+
+export function buildInvoiceEmail(data: InvoiceEmailData) {
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:'Helvetica Neue',Arial,sans-serif;background:#F8FAFC;padding:40px 20px">
+  <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden">
+    <div style="padding:24px 32px;border-bottom:1px solid #E2E8F0">
+      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">nortoo</span>
+    </div>
+    <div style="padding:32px">
+      <h2 style="font-size:1.1rem;color:#0B0F1A;margin:0 0 16px">Nouvelle facture disponible</h2>
+      <p style="font-size:0.9rem;color:#64748B;line-height:1.6;margin:0 0 8px">
+        Bonjour ${data.merchantName},
+      </p>
+      <p style="font-size:0.9rem;color:#64748B;line-height:1.6;margin:0 0 24px">
+        Votre facture <strong style="color:#0B0F1A">${data.invoiceNumber}</strong> pour la p\u00e9riode <strong style="color:#0B0F1A">${data.period}</strong> est disponible.
+      </p>
+      <div style="background:#F8FAFC;border-radius:10px;padding:16px;margin:0 0 24px">
+        <table style="width:100%;font-size:0.85rem;color:#64748B">
+          <tr><td style="padding:4px 0">Montant TTC</td><td style="padding:4px 0;text-align:right;font-weight:700;color:#0B0F1A">${data.amountTTC}</td></tr>
+          <tr><td style="padding:4px 0">\u00c9ch\u00e9ance</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#0B0F1A">${data.dueDate}</td></tr>
+        </table>
+      </div>
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:16px;margin:0 0 24px">
+        <p style="font-size:0.8rem;font-weight:600;color:#059669;margin:0 0 8px">Coordonn\u00e9es bancaires</p>
+        <p style="font-size:0.8rem;color:#64748B;line-height:1.6;margin:0">
+          RIB : ${data.rib}<br>IBAN : ${data.iban}<br>SWIFT : ${data.swift}
+        </p>
+        <p style="font-size:0.75rem;color:#94A3B8;margin:8px 0 0">R\u00e9f\u00e9rence virement : <strong>${data.invoiceNumber}</strong></p>
+      </div>
+      <a href="https://nortoo.io/dashboard/billing" style="display:inline-block;background:#00E5A0;color:#0B0F1A;font-weight:600;padding:12px 32px;border-radius:10px;text-decoration:none;font-size:0.9rem">
+        Voir ma facture
+      </a>
+    </div>
+    <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0">
+      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `Facture ${data.invoiceNumber} — nortoo\n\nBonjour ${data.merchantName},\n\nVotre facture ${data.invoiceNumber} pour la période ${data.period} est disponible.\n\nMontant TTC : ${data.amountTTC}\nÉchéance : ${data.dueDate}\n\nCoordonnées bancaires :\nRIB : ${data.rib}\nIBAN : ${data.iban}\nSWIFT : ${data.swift}\n\nRéférence virement : ${data.invoiceNumber}\n\nVoir ma facture : https://nortoo.io/dashboard/billing`;
+
+  return { subject: `Facture ${data.invoiceNumber} — nortoo`, html, text };
+}
+
+// ═══════════════════════════════════════════════════════════
+// OVERDUE — Rappel facture impayée
+// ═══════════════════════════════════════════════════════════
+
+export interface OverdueEmailData {
+  merchantName: string;
+  invoiceNumber: string;
+  amountTTC: string;
+  dueDate: string;
+  rib: string;
+  iban: string;
+  swift: string;
+}
+
+export function buildOverdueEmail(data: OverdueEmailData) {
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:'Helvetica Neue',Arial,sans-serif;background:#F8FAFC;padding:40px 20px">
+  <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden">
+    <div style="padding:24px 32px;border-bottom:1px solid #E2E8F0">
+      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">nortoo</span>
+    </div>
+    <div style="padding:32px">
+      <h2 style="font-size:1.1rem;color:#F43F5E;margin:0 0 16px">Facture impay\u00e9e</h2>
+      <p style="font-size:0.9rem;color:#64748B;line-height:1.6;margin:0 0 8px">Bonjour ${data.merchantName},</p>
+      <p style="font-size:0.9rem;color:#64748B;line-height:1.6;margin:0 0 24px">
+        Votre facture <strong style="color:#0B0F1A">${data.invoiceNumber}</strong> d'un montant de <strong style="color:#F43F5E">${data.amountTTC}</strong> est arriv\u00e9e \u00e0 \u00e9ch\u00e9ance le <strong>${data.dueDate}</strong> et reste impay\u00e9e.
+      </p>
+      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:16px;margin:0 0 24px">
+        <p style="font-size:0.85rem;color:#DC2626;font-weight:600;margin:0 0 6px">Risque de suspension</p>
+        <p style="font-size:0.8rem;color:#64748B;line-height:1.5;margin:0">Sans r\u00e8glement dans les plus brefs d\u00e9lais, votre compte pourra \u00eatre suspendu et le scoring de vos commandes interrompu.</p>
+      </div>
+      <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:16px;margin:0 0 24px">
+        <p style="font-size:0.8rem;font-weight:600;color:#059669;margin:0 0 8px">Coordonn\u00e9es bancaires</p>
+        <p style="font-size:0.8rem;color:#64748B;line-height:1.6;margin:0">
+          RIB : ${data.rib}<br>IBAN : ${data.iban}<br>SWIFT : ${data.swift}
+        </p>
+        <p style="font-size:0.75rem;color:#94A3B8;margin:8px 0 0">R\u00e9f\u00e9rence virement : <strong>${data.invoiceNumber}</strong></p>
+      </div>
+      <a href="https://nortoo.io/dashboard/billing" style="display:inline-block;background:#F43F5E;color:#FFFFFF;font-weight:600;padding:12px 32px;border-radius:10px;text-decoration:none;font-size:0.9rem">
+        R\u00e9gler ma facture
+      </a>
+    </div>
+    <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0">
+      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `Rappel : Facture ${data.invoiceNumber} impayée — nortoo\n\nBonjour ${data.merchantName},\n\nVotre facture ${data.invoiceNumber} d'un montant de ${data.amountTTC} est arrivée à échéance le ${data.dueDate} et reste impayée.\n\nSans règlement rapide, votre compte pourra être suspendu.\n\nCoordonnées bancaires :\nRIB : ${data.rib}\nIBAN : ${data.iban}\nSWIFT : ${data.swift}\n\nRéférence virement : ${data.invoiceNumber}\n\nRégler : https://nortoo.io/dashboard/billing`;
+
+  return { subject: `Rappel : Facture ${data.invoiceNumber} impayée — nortoo`, html, text };
+}
+
 export function buildTeamInviteEmail(
   inviteUrl: string,
   merchantName: string,

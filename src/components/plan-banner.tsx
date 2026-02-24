@@ -8,6 +8,7 @@ import { useTranslation } from "@/i18n/provider";
 
 interface PlanInfo {
   plan: string;
+  billingStatus?: string;
   trial: { daysRemaining: number; expiresAt: string } | null;
   usage: {
     orders: { current: number; limit: number; percent: number };
@@ -41,8 +42,15 @@ export function PlanBanner() {
   let message: string = "";
   let cta: string | null = null;
 
+  // Billing overdue (past_due)
+  if (data.billingStatus === "past_due") {
+    variant = "error";
+    icon = <AlertTriangle className="h-4 w-4 shrink-0" />;
+    message = t("components.planBanner.overdue");
+    cta = t("components.planBanner.payNow");
+  }
   // Trial expired
-  if (data.trial && data.trial.daysRemaining === 0) {
+  else if (data.trial && data.trial.daysRemaining === 0) {
     variant = "error";
     icon = <AlertTriangle className="h-4 w-4 shrink-0" />;
     message = t("components.planBanner.trialExpired");

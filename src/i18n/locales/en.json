@@ -427,6 +427,28 @@
       "insteadOf": "instead of",
       "users": "users"
     },
+    "billingInfo": {
+      "title": "Billing information",
+      "companyName": "Company name",
+      "companyNamePlaceholder": "Your company name",
+      "address": "Billing address",
+      "addressPlaceholder": "Full address",
+      "ice": "ICE (Common Business Identifier)",
+      "save": "Save",
+      "saved": "Billing information saved",
+      "error": "Error saving information"
+    },
+    "bankInfo": {
+      "title": "nortoo bank details",
+      "description": "Make your transfers using the details below. Include the invoice number as reference."
+    },
+    "invoices": {
+      "title": "Invoice history",
+      "period": "Period",
+      "amountTTC": "Amount (incl. tax)",
+      "status": "Status",
+      "empty": "No invoices yet"
+    },
     "history": {
       "title": "Billing history",
       "placeholder": "Billing history will be available soon.",
@@ -907,7 +929,9 @@
       "trialEnding": "{count} trial day(s) remaining. Switch to a paid plan to keep your data.",
       "limitReached": "You've reached the {limit} orders/month limit. Your orders are still scored, but consider upgrading.",
       "limitApproaching": "{current}/{limit} orders this month ({percent}%). Consider upgrading if needed.",
-      "seePlans": "View plans"
+      "seePlans": "View plans",
+      "overdue": "Unpaid invoice — Your account may be suspended. Please settle your invoice.",
+      "payNow": "Pay now →"
     },
     "upgradeBanner": {
       "planRequired": "{plan} plan required",

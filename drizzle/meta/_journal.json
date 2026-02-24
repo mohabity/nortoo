@@ -57,6 +57,13 @@
       "when": 1771860100873,
       "tag": "0007_nebulous_ogun",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1771929449136,
+      "tag": "0008_absent_sunfire",
+      "breakpoints": true
     }
   ]
 }

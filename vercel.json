@@ -28,6 +28,14 @@
     {
       "path": "/api/cron/weekly-report",
       "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/cron/generate-invoices",
+      "schedule": "0 0 2 * *"
+    },
+    {
+      "path": "/api/cron/mark-overdue",
+      "schedule": "0 8 * * *"
     }
   ]
 }

@@ -41,6 +41,11 @@ export const merchants = pgTable("merchants", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
 
+  // Billing info (virement bancaire)
+  billingName: text("billing_name"),        // Raison sociale
+  billingAddress: text("billing_address"),  // Adresse de facturation
+  billingICE: text("billing_ice"),          // Identifiant Commun de l'Entreprise
+
   // Plan usage tracking
   trialEndsAt: timestamp("trial_ends_at"),                              // null = no active trial
   currentMonthOrders: integer("current_month_orders").notNull().default(0),
@@ -591,6 +596,38 @@ export const phoneList = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// INVOICES — Factures mensuelles (virement bancaire)
+// ═══════════════════════════════════════════════════════════
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+
+    invoiceNumber: text("invoice_number").notNull().unique(), // "NRT-2026-0001"
+    period: text("period").notNull(),                         // "2026-03"
+    planAtInvoice: text("plan_at_invoice").notNull(),         // plan at time of invoice
+
+    amountHT: integer("amount_ht").notNull(),     // centimes (29900 = 299.00 DH)
+    tvaRate: integer("tva_rate").notNull().default(20),
+    amountTVA: integer("amount_tva").notNull(),   // centimes
+    amountTTC: integer("amount_ttc").notNull(),   // centimes
+
+    status: text("status").notNull().default("pending"), // pending | paid | overdue | cancelled
+    paidAt: timestamp("paid_at"),
+    paidNote: text("paid_note"),     // référence virement
+    dueDate: timestamp("due_date").notNull(),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("invoices_merchant_idx").on(table.merchantId),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // USAGE LOGS — Monthly usage history per merchant (billing)
 // ═══════════════════════════════════════════════════════════
 export const usageLogs = pgTable(
@@ -627,6 +664,7 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   zoneStats: many(zoneStats),
   usageLogs: many(usageLogs),
   phoneList: many(phoneList),
+  invoices: many(invoices),
 }));
 
 export const usersRelations = relations(users, ({ one }) => ({
@@ -705,6 +743,13 @@ export const usageLogsRelations = relations(usageLogs, ({ one }) => ({
 export const phoneListRelations = relations(phoneList, ({ one }) => ({
   merchant: one(merchants, {
     fields: [phoneList.merchantId],
+    references: [merchants.id],
+  }),
+}));
+
+export const invoicesRelations = relations(invoices, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [invoices.merchantId],
     references: [merchants.id],
   }),
 }));
