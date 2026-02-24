@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   Shield,
   TrendingUp,
@@ -7,14 +6,16 @@ import {
   Zap,
   Lock,
   FileText,
-  Users,
   ChevronRight,
   Check,
   ArrowRight,
 } from "lucide-react";
 
+const APP_URL = "https://app.nortoo.ma";
+
 /**
  * Landing page — nortoo · Scoring anti-fraude COD · Maroc
+ * Served on nortoo.ma — all app links point to app.nortoo.ma
  */
 export default function Home() {
   return (
@@ -22,25 +23,25 @@ export default function Home() {
       {/* ═══ Navbar ═══ */}
       <nav className="border-b border-[#1E293B] px-6 py-4 sticky top-0 bg-[#0B0F1A]/95 backdrop-blur-sm z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+          <a href="/" className="flex items-center gap-2">
             <img src="/nortoo-logo.png" alt="nortoo" className="h-7 w-auto" />
-          </Link>
+          </a>
           <div className="hidden md:flex items-center gap-6 text-sm text-[#94A3B8]">
             <a href="#features" className="hover:text-white transition">Fonctionnalit&eacute;s</a>
             <a href="#pricing" className="hover:text-white transition">Tarifs</a>
             <a href="#faq" className="hover:text-white transition">FAQ</a>
-            <Link href="/login" className="hover:text-white transition">Connexion</Link>
+            <a href={`${APP_URL}/login`} className="hover:text-white transition">Connexion</a>
             <a
-              href="/api/auth/youcan?mode=register"
+              href={`${APP_URL}/register`}
               className="bg-[#00E5A0] text-[#0B0F1A] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#00C78A] transition"
             >
               Commencer
             </a>
           </div>
           <div className="md:hidden flex items-center gap-3">
-            <Link href="/login" className="text-sm text-[#94A3B8] hover:text-white">Connexion</Link>
+            <a href={`${APP_URL}/login`} className="text-sm text-[#94A3B8] hover:text-white">Connexion</a>
             <a
-              href="/api/auth/youcan?mode=register"
+              href={`${APP_URL}/register`}
               className="bg-[#00E5A0] text-[#0B0F1A] px-3 py-1.5 rounded-lg font-semibold text-xs"
             >
               Commencer
@@ -66,19 +67,19 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href="/api/auth/youcan?mode=register"
+              href={`${APP_URL}/api/auth/youcan?mode=register`}
               className="inline-flex items-center justify-center gap-2 bg-[#5C6AC4] text-white px-6 py-3.5 rounded-xl font-semibold hover:bg-[#4F5BB5] transition text-sm"
             >
               <Plug className="w-4 h-4" />
               Commencer avec YouCan
             </a>
-            <Link
-              href="/register"
+            <a
+              href={`${APP_URL}/register`}
               className="inline-flex items-center justify-center gap-2 border border-[#334155] text-[#E2E8F0] px-6 py-3.5 rounded-xl font-semibold hover:bg-[#1E293B] transition text-sm"
             >
               Cr&eacute;er un compte
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -297,7 +298,7 @@ export default function Home() {
                   ))}
                 </ul>
                 <a
-                  href="/register"
+                  href={`${APP_URL}/register`}
                   className={`block text-center py-2.5 rounded-xl text-sm font-semibold transition ${
                     plan.highlight
                       ? "bg-[#00E5A0] text-[#0B0F1A] hover:bg-[#00C78A]"
@@ -369,7 +370,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href="/api/auth/youcan?mode=register"
+              href={`${APP_URL}/register`}
               className="inline-flex items-center justify-center gap-2 bg-[#00E5A0] text-[#0B0F1A] px-6 py-3.5 rounded-xl font-bold hover:bg-[#00C78A] transition text-sm"
             >
               Commencer gratuitement
@@ -405,9 +406,9 @@ export default function Home() {
             <div>
               <h4 className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider mb-3">L&eacute;gal</h4>
               <ul className="space-y-2 text-sm text-[#64748B]">
-                <li><Link href="/terms" className="hover:text-white transition">CGU</Link></li>
-                <li><Link href="/privacy" className="hover:text-white transition">Confidentialit&eacute;</Link></li>
-                <li><Link href="/data-rights" className="hover:text-white transition">Mes donn&eacute;es</Link></li>
+                <li><a href="/terms" className="hover:text-white transition">CGU</a></li>
+                <li><a href="/privacy" className="hover:text-white transition">Confidentialit&eacute;</a></li>
+                <li><a href="/data-rights" className="hover:text-white transition">Mes donn&eacute;es</a></li>
               </ul>
             </div>
             <div>

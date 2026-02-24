@@ -5,10 +5,20 @@ import type { NextRequest } from "next/server";
 /**
  * Auth Middleware — Auth.js v5 + cookie fallback (YouCan OAuth transition).
  *
+ * Domain routing:
+ *   nortoo.ma      → public pages only (landing, terms, privacy, data-rights)
+ *   app.nortoo.ma  → application (dashboard, login, register, API)
+ *
  * Protects /dashboard/* and /api/* (except webhooks/crons) routes.
  * Checks for Auth.js JWT token first, then falls back to the legacy
  * "nortoo_merchant" cookie for backward compatibility with YouCan OAuth flow.
  */
+
+const APP_HOST = "app.nortoo.ma";
+const MARKETING_HOST = "nortoo.ma";
+
+// Pages served on the marketing domain (nortoo.ma)
+const MARKETING_PATHS = ["/", "/terms", "/privacy", "/data-rights"];
 
 // Routes that DON'T need auth (webhooks use API key auth)
 const PUBLIC_PATHS = [
@@ -26,6 +36,7 @@ const PUBLIC_PATHS = [
   "/api/webhook/",
   "/api/cron/",
   "/api/admin/",
+  "/api/data-rights/submit",
   "/api/team/accept-invite",
   "/admin/login",
   "/_next/",
@@ -36,16 +47,31 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 }
 
+function isMarketingPath(pathname: string): boolean {
+  return MARKETING_PATHS.includes(pathname) || pathname.startsWith("/data-rights");
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host")?.replace(/:\d+$/, "") ?? "";
 
-  // Skip public paths
-  if (isPublicPath(pathname)) {
+  // ── Domain-based routing ──
+
+  // nortoo.ma (marketing) → only serve public pages, redirect app routes to app.nortoo.ma
+  if (host === MARKETING_HOST || host === `www.${MARKETING_HOST}`) {
+    if (!isMarketingPath(pathname) && !pathname.startsWith("/_next") && pathname !== "/favicon.ico" && !pathname.startsWith("/api/data-rights/submit")) {
+      return NextResponse.redirect(new URL(pathname, `https://${APP_HOST}`));
+    }
     return NextResponse.next();
   }
 
-  // Skip root page (it redirects to /dashboard, middleware will catch there)
-  if (pathname === "/") {
+  // app.nortoo.ma → redirect "/" to /dashboard (no landing page on app subdomain)
+  if (host === APP_HOST && pathname === "/") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // Skip public paths
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
