@@ -552,3 +552,113 @@ Ce lien expire dans 7 jours. Si vous n'attendiez pas cette invitation, ignorez c
 
   return { html, text };
 }
+
+// ═══════════════════════════════════════════════════════════
+// DATA RIGHTS — Confirmation + Notification interne
+// ═══════════════════════════════════════════════════════════
+
+export interface DataRightsConfirmationData {
+  reference: string;
+  typeLabel: string;
+  deadline: string;
+}
+
+export function buildDataRightsConfirmationEmail(data: DataRightsConfirmationData) {
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:'Helvetica Neue',Arial,sans-serif;background:#F8FAFC;padding:40px 20px">
+  <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden">
+    <div style="padding:24px 32px;border-bottom:1px solid #E2E8F0">
+      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">nortoo</span>
+    </div>
+    <div style="padding:32px">
+      <h2 style="font-size:1.1rem;color:#0B0F1A;margin:0 0 16px">Demande enregistr\u00e9e</h2>
+      <p style="font-size:0.9rem;color:#64748B;line-height:1.6;margin:0 0 24px">
+        Votre demande d'exercice de droits a bien \u00e9t\u00e9 re\u00e7ue et sera trait\u00e9e dans les meilleurs d\u00e9lais.
+      </p>
+      <div style="background:#F8FAFC;border-radius:10px;padding:16px;margin:0 0 24px">
+        <table style="width:100%;font-size:0.85rem;color:#64748B">
+          <tr><td style="padding:4px 0">R\u00e9f\u00e9rence</td><td style="padding:4px 0;text-align:right;font-weight:700;color:#0B0F1A;font-family:monospace">${data.reference}</td></tr>
+          <tr><td style="padding:4px 0">Type de demande</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#0B0F1A">${data.typeLabel}</td></tr>
+          <tr><td style="padding:4px 0">D\u00e9lai de r\u00e9ponse</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#0B0F1A">${data.deadline}</td></tr>
+        </table>
+      </div>
+      <p style="font-size:0.8rem;color:#64748B;line-height:1.5;margin:0 0 16px">
+        Conform\u00e9ment \u00e0 la <strong style="color:#0B0F1A">Loi 09-08</strong>, nous vous r\u00e9pondrons dans un d\u00e9lai maximum de <strong style="color:#0B0F1A">10 jours ouvrables</strong>.
+      </p>
+      <p style="font-size:0.75rem;color:#94A3B8;line-height:1.5;margin:0">
+        Si vous n'avez pas fait cette demande, veuillez ignorer cet email ou contacter support@nortoo.ma.
+      </p>
+    </div>
+    <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0">
+      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `Demande enregistr\u00e9e \u2014 nortoo\n\nVotre demande d'exercice de droits a bien \u00e9t\u00e9 re\u00e7ue.\n\nR\u00e9f\u00e9rence : ${data.reference}\nType : ${data.typeLabel}\nD\u00e9lai de r\u00e9ponse : ${data.deadline}\n\nConform\u00e9ment \u00e0 la Loi 09-08, nous vous r\u00e9pondrons dans un d\u00e9lai maximum de 10 jours ouvrables.\n\nSi vous n'avez pas fait cette demande, contactez support@nortoo.ma.`;
+
+  return {
+    subject: `Demande ${data.reference} enregistr\u00e9e \u2014 nortoo`,
+    html,
+    text,
+  };
+}
+
+export interface DataRightsNotificationData {
+  reference: string;
+  typeLabel: string;
+  phoneHashPartial: string;
+  requesterEmail: string;
+  details: string | null;
+  deadline: string;
+  merchantCount: number;
+}
+
+export function buildDataRightsNotificationEmail(data: DataRightsNotificationData) {
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:'Helvetica Neue',Arial,sans-serif;background:#F8FAFC;padding:40px 20px">
+  <div style="max-width:480px;margin:0 auto;background:#FFFFFF;border-radius:16px;border:1px solid #E2E8F0;overflow:hidden">
+    <div style="padding:24px 32px;border-bottom:1px solid #E2E8F0;background:#FFFBEB">
+      <span style="font-weight:900;font-size:1.3rem;letter-spacing:-0.04em;color:#0B0F1A">nortoo</span>
+      <span style="float:right;font-size:0.75rem;color:#92400E;font-weight:600;line-height:2.2">NOUVELLE DEMANDE</span>
+    </div>
+    <div style="padding:32px">
+      <h2 style="font-size:1.1rem;color:#0B0F1A;margin:0 0 16px">Demande d'exercice de droits</h2>
+      <div style="background:#F8FAFC;border-radius:10px;padding:16px;margin:0 0 16px">
+        <table style="width:100%;font-size:0.85rem;color:#64748B">
+          <tr><td style="padding:4px 0">R\u00e9f\u00e9rence</td><td style="padding:4px 0;text-align:right;font-weight:700;color:#0B0F1A;font-family:monospace">${data.reference}</td></tr>
+          <tr><td style="padding:4px 0">Type</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#0B0F1A">${data.typeLabel}</td></tr>
+          <tr><td style="padding:4px 0">Phone hash</td><td style="padding:4px 0;text-align:right;font-family:monospace;font-size:0.75rem;color:#64748B">${data.phoneHashPartial}</td></tr>
+          <tr><td style="padding:4px 0">Email demandeur</td><td style="padding:4px 0;text-align:right;color:#0B0F1A">${data.requesterEmail}</td></tr>
+          <tr><td style="padding:4px 0">Marchands concern\u00e9s</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#0B0F1A">${data.merchantCount}</td></tr>
+          <tr><td style="padding:4px 0">\u00c9ch\u00e9ance</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#F59E0B">${data.deadline}</td></tr>
+        </table>
+      </div>
+      ${data.details ? `<div style="background:#F1F5F9;border-radius:10px;padding:12px 16px;margin:0 0 16px">
+        <p style="font-size:0.75rem;font-weight:600;color:#64748B;margin:0 0 4px">D\u00e9tails :</p>
+        <p style="font-size:0.85rem;color:#0B0F1A;margin:0;line-height:1.5">${data.details}</p>
+      </div>` : ""}
+      <a href="https://app.nortoo.ma/dashboard/compliance" style="display:inline-block;background:#00E5A0;color:#0B0F1A;font-weight:600;padding:12px 32px;border-radius:10px;text-decoration:none;font-size:0.9rem">
+        Voir dans le dashboard
+      </a>
+    </div>
+    <div style="padding:16px 32px;background:#F8FAFC;border-top:1px solid #E2E8F0">
+      <p style="font-size:0.65rem;color:#CBD5E1;margin:0">nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `Nouvelle demande d'exercice de droits \u2014 nortoo\n\nR\u00e9f\u00e9rence : ${data.reference}\nType : ${data.typeLabel}\nPhone hash : ${data.phoneHashPartial}\nEmail demandeur : ${data.requesterEmail}\nMarchands concern\u00e9s : ${data.merchantCount}\n\u00c9ch\u00e9ance : ${data.deadline}\n${data.details ? `D\u00e9tails : ${data.details}` : ""}\n\nVoir dans le dashboard : https://app.nortoo.ma/dashboard/compliance`;
+
+  return {
+    subject: `[Action requise] Demande ${data.reference} \u2014 ${data.typeLabel}`,
+    html,
+    text,
+  };
+}

@@ -43,6 +43,7 @@ YouCan (commande COD)
 | /api/reports/monthly | GET | Monthly PDF report |
 | /api/settings | GET/PUT | Merchant thresholds + weights |
 | /api/team | GET/POST | Team management |
+| /api/data-rights/submit | POST | Public data rights request (Loi 09-08) |
 
 ## Scoring: 13 Rules
 
@@ -72,7 +73,7 @@ Base 25 → Client fiable -20/-10 → Recidiviste +30/+15 → Nouveau +10 → Mo
 - billing@nortoo.ma — facturation
 - admin@nortoo.ma — administration
 
-## Plans : Trial (0 DH) · Starter (299 DH) · Growth (599 DH) · Scale (1 499 DH)
+## Plans : Trial (0 DH) · Starter (299 DH) · Pro (699 DH) · Scale (1 499 DH)
 
 ## Compliance
 

@@ -12,17 +12,47 @@ export default function DataRightsPage() {
   const [details, setDetails] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{
+    reference: string;
+    deadlineFormatted: string;
+  } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    // Envoyer par email (pas directement à l'API — le client final n'est pas authentifié)
-    // En production, ceci enverrait un email à support@nortoo.ma via une API d'email
-    // Pour le MVP, on simule la soumission
-    await new Promise((r) => setTimeout(r, 1000));
-    setSubmitted(true);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/data-rights/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, phone, email, details: details || undefined }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          setError("Trop de demandes. Veuillez r\u00e9essayer dans quelques minutes.");
+        } else if (res.status === 400) {
+          setError("Veuillez v\u00e9rifier les informations saisies.");
+        } else {
+          setError(data.error || "Une erreur est survenue. R\u00e9essayez plus tard.");
+        }
+        return;
+      }
+
+      setResult({
+        reference: data.reference,
+        deadlineFormatted: data.deadlineFormatted,
+      });
+      setSubmitted(true);
+    } catch {
+      setError("Impossible de contacter le serveur. V\u00e9rifiez votre connexion.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const types: { id: RequestType; label: string; article: string }[] = [
@@ -39,7 +69,7 @@ export default function DataRightsPage() {
     },
   ];
 
-  if (submitted) {
+  if (submitted && result) {
     return (
       <div className="min-h-screen bg-[#0B0F1A] flex items-center justify-center px-6">
         <div className="max-w-md text-center">
@@ -47,23 +77,33 @@ export default function DataRightsPage() {
             &#10003;
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">
-            Demande enregistrée
+            Demande enregistr\u00e9e
           </h1>
           <p className="text-[#94A3B8] mb-6">
             Votre demande de{" "}
-            {types.find((t) => t.id === type)?.label.toLowerCase()} a été
-            envoyée. Nous vous répondrons dans un délai de{" "}
+            {types.find((t) => t.id === type)?.label.toLowerCase()} a \u00e9t\u00e9
+            envoy\u00e9e. Nous vous r\u00e9pondrons dans un d\u00e9lai de{" "}
             <strong className="text-white">10 jours ouvrables</strong> maximum,
-            conformément à l&apos;article 7 de la Loi 09-08.
+            conform\u00e9ment \u00e0 l&apos;article 7 de la Loi 09-08.
           </p>
-          <p className="text-sm text-[#64748B] mb-6">
-            Référence : DR-{Date.now().toString(36).toUpperCase()}
+          <div className="bg-[#1E293B] rounded-xl p-4 mb-6 text-left">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-[#64748B]">R\u00e9f\u00e9rence</span>
+              <span className="text-white font-mono font-bold">{result.reference}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-[#64748B]">R\u00e9ponse avant le</span>
+              <span className="text-[#00E5A0] font-semibold">{result.deadlineFormatted}</span>
+            </div>
+          </div>
+          <p className="text-xs text-[#64748B] mb-6">
+            Un email de confirmation a \u00e9t\u00e9 envoy\u00e9 \u00e0 votre adresse.
           </p>
           <Link
             href="/"
             className="inline-flex px-6 py-3 bg-[#00E5A0] text-[#0B0F1A] font-bold rounded-xl hover:bg-[#00C78A] transition"
           >
-            Retour à l&apos;accueil
+            Retour \u00e0 l&apos;accueil
           </Link>
         </div>
       </div>
@@ -80,7 +120,7 @@ export default function DataRightsPage() {
           </Link>
           <nav className="flex gap-4 text-sm text-[#94A3B8]">
             <Link href="/privacy" className="hover:text-white transition">
-              Confidentialité
+              Confidentialit\u00e9
             </Link>
             <Link href="/terms" className="hover:text-white transition">
               CGU
@@ -94,8 +134,8 @@ export default function DataRightsPage() {
           Exercer vos droits
         </h1>
         <p className="text-[#94A3B8] mb-8">
-          Conformément à la Loi 09-08, vous pouvez demander l&apos;accès, la
-          rectification ou la suppression de vos données personnelles.
+          Conform\u00e9ment \u00e0 la Loi 09-08, vous pouvez demander l&apos;acc\u00e8s, la
+          rectification ou la suppression de vos donn\u00e9es personnelles.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -123,13 +163,13 @@ export default function DataRightsPage() {
             </div>
           </div>
 
-          {/* Téléphone */}
+          {/* T\u00e9l\u00e9phone */}
           <div>
             <label
               htmlFor="phone"
               className="text-sm font-medium text-white mb-2 block"
             >
-              Numéro de téléphone associé à vos commandes *
+              Num\u00e9ro de t\u00e9l\u00e9phone associ\u00e9 \u00e0 vos commandes *
             </label>
             <input
               id="phone"
@@ -141,8 +181,8 @@ export default function DataRightsPage() {
               className="w-full px-4 py-3 rounded-xl bg-[#1E293B] border border-[#334155] text-white placeholder-[#64748B] focus:outline-none focus:border-[#00E5A0] transition"
             />
             <p className="text-xs text-[#64748B] mt-1">
-              Ce numéro permet d&apos;identifier vos données dans notre système
-              (stockées sous forme hashée).
+              Ce num\u00e9ro permet d&apos;identifier vos donn\u00e9es dans notre syst\u00e8me
+              (stock\u00e9es sous forme hash\u00e9e).
             </p>
           </div>
 
@@ -152,7 +192,7 @@ export default function DataRightsPage() {
               htmlFor="email"
               className="text-sm font-medium text-white mb-2 block"
             >
-              Email de réponse *
+              Email de r\u00e9ponse *
             </label>
             <input
               id="email"
@@ -165,16 +205,16 @@ export default function DataRightsPage() {
             />
           </div>
 
-          {/* Détails */}
+          {/* D\u00e9tails */}
           <div>
             <label
               htmlFor="details"
               className="text-sm font-medium text-white mb-2 block"
             >
               {type === "access" &&
-                "Précisez les données que vous souhaitez obtenir"}
+                "Pr\u00e9cisez les donn\u00e9es que vous souhaitez obtenir"}
               {type === "rectification" &&
-                "Précisez les données à corriger"}
+                "Pr\u00e9cisez les donn\u00e9es \u00e0 corriger"}
               {type === "deletion" &&
                 "Raison de la suppression (optionnel)"}
             </label>
@@ -185,22 +225,29 @@ export default function DataRightsPage() {
               rows={4}
               placeholder={
                 type === "access"
-                  ? "Je souhaite obtenir une copie de toutes les données associées à mon numéro..."
+                  ? "Je souhaite obtenir une copie de toutes les donn\u00e9es associ\u00e9es \u00e0 mon num\u00e9ro..."
                   : type === "rectification"
-                    ? "Mon nom est mal orthographié, la bonne version est..."
-                    : "Je souhaite que mes données soient supprimées..."
+                    ? "Mon nom est mal orthographi\u00e9, la bonne version est..."
+                    : "Je souhaite que mes donn\u00e9es soient supprim\u00e9es..."
               }
               className="w-full px-4 py-3 rounded-xl bg-[#1E293B] border border-[#334155] text-white placeholder-[#64748B] focus:outline-none focus:border-[#00E5A0] transition resize-none"
             />
           </div>
 
+          {/* Error */}
+          {error && (
+            <div className="bg-[#F43F5E]/10 border border-[#F43F5E]/30 rounded-xl p-4 text-sm text-[#F43F5E]">
+              {error}
+            </div>
+          )}
+
           {/* Info */}
           <div className="bg-[#1E293B] rounded-xl p-4 text-sm text-[#94A3B8]">
             <p>
-              Votre demande sera traitée dans un délai de{" "}
+              Votre demande sera trait\u00e9e dans un d\u00e9lai de{" "}
               <strong className="text-white">10 jours ouvrables</strong>. Nous
-              vérifierons votre identité avant de procéder. En cas de
-              difficulté, vous pouvez saisir la{" "}
+              v\u00e9rifierons votre identit\u00e9 avant de proc\u00e9der. En cas de
+              difficult\u00e9, vous pouvez saisir la{" "}
               <a
                 href="https://www.cndp.ma"
                 target="_blank"
@@ -227,10 +274,10 @@ export default function DataRightsPage() {
       {/* Footer */}
       <footer className="border-t border-[#1E293B] px-6 py-6 mt-12">
         <div className="max-w-xl mx-auto flex justify-between text-sm text-[#64748B]">
-          <span>© {new Date().getFullYear()} nortoo</span>
+          <span>&copy; {new Date().getFullYear()} nortoo</span>
           <div className="flex gap-4">
             <Link href="/privacy" className="hover:text-white transition">
-              Confidentialité
+              Confidentialit\u00e9
             </Link>
             <Link href="/terms" className="hover:text-white transition">
               CGU
