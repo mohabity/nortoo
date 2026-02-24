@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Shield,
   TrendingUp,
@@ -10,41 +12,48 @@ import {
   Check,
   ArrowRight,
 } from "lucide-react";
+import { useTranslation } from "@/i18n/provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const APP_URL = "https://app.nortoo.ma";
 
 /**
- * Landing page — nortoo · Scoring anti-fraude COD · Maroc
+ * Landing page — nortoo · COD fraud scoring · Morocco
  * Served on nortoo.ma — all app links point to app.nortoo.ma
+ * Bilingual (FR/EN) via useTranslation() · Light theme
  */
 export default function Home() {
+  const { t } = useTranslation();
+
   return (
-    <div className="min-h-screen bg-[#0B0F1A] text-[#E2E8F0]">
+    <div className="min-h-screen bg-white text-[#1E293B]">
       {/* ═══ Navbar ═══ */}
-      <nav className="border-b border-[#1E293B] px-6 py-4 sticky top-0 bg-[#0B0F1A]/95 backdrop-blur-sm z-50">
+      <nav className="border-b border-[#E2E8F0] px-6 py-4 sticky top-0 bg-white/95 backdrop-blur-sm z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <img src="/nortoo-logo.png" alt="nortoo" className="h-7 w-auto" />
           </a>
-          <div className="hidden md:flex items-center gap-6 text-sm text-[#94A3B8]">
-            <a href="#features" className="hover:text-white transition">Fonctionnalit&eacute;s</a>
-            <a href="#pricing" className="hover:text-white transition">Tarifs</a>
-            <a href="#faq" className="hover:text-white transition">FAQ</a>
-            <a href={`${APP_URL}/login`} className="hover:text-white transition">Connexion</a>
+          <div className="hidden md:flex items-center gap-6 text-sm text-[#64748B]">
+            <a href="#features" className="hover:text-[#0B0F1A] transition">{t("landing.nav.features")}</a>
+            <a href="#pricing" className="hover:text-[#0B0F1A] transition">{t("landing.nav.pricing")}</a>
+            <a href="#faq" className="hover:text-[#0B0F1A] transition">{t("landing.nav.faq")}</a>
+            <LanguageSwitcher />
+            <a href={`${APP_URL}/login`} className="hover:text-[#0B0F1A] transition">{t("landing.nav.signIn")}</a>
             <a
               href={`${APP_URL}/register`}
               className="bg-[#00E5A0] text-[#0B0F1A] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#00C78A] transition"
             >
-              Commencer
+              {t("landing.nav.getStarted")}
             </a>
           </div>
           <div className="md:hidden flex items-center gap-3">
-            <a href={`${APP_URL}/login`} className="text-sm text-[#94A3B8] hover:text-white">Connexion</a>
+            <LanguageSwitcher />
+            <a href={`${APP_URL}/login`} className="text-sm text-[#64748B] hover:text-[#0B0F1A]">{t("landing.nav.signIn")}</a>
             <a
               href={`${APP_URL}/register`}
               className="bg-[#00E5A0] text-[#0B0F1A] px-3 py-1.5 rounded-lg font-semibold text-xs"
             >
-              Commencer
+              {t("landing.nav.getStarted")}
             </a>
           </div>
         </div>
@@ -53,17 +62,16 @@ export default function Home() {
       {/* ═══ Hero ═══ */}
       <section className="px-6 py-20 md:py-32">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-[#00E5A0]/10 text-[#00E5A0] text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-[#00E5A0]/20">
+          <div className="inline-flex items-center gap-2 bg-[#00E5A0]/10 text-[#059669] text-xs font-semibold px-3 py-1.5 rounded-full mb-6 border border-[#00E5A0]/20">
             <Lock className="w-3 h-3" />
-            Conforme Loi 09-08 &middot; Donn&eacute;es h&eacute;berg&eacute;es en UE
+            {t("landing.hero.badge")}
           </div>
-          <h1 className="font-display text-4xl md:text-6xl font-black text-white leading-tight mb-6">
-            Bloquez la fraude COD,<br />
-            <span className="text-[#00E5A0]">exp&eacute;diez en confiance.</span>
+          <h1 className="font-display text-4xl md:text-6xl font-black text-[#0B0F1A] leading-tight mb-6">
+            {t("landing.hero.titleLine1")}<br />
+            <span className="text-[#00C78A]">{t("landing.hero.titleLine2")}</span>
           </h1>
-          <p className="text-lg md:text-xl text-[#94A3B8] max-w-2xl mx-auto mb-10 leading-relaxed">
-            30 &agrave; 50% des commandes COD &eacute;chouent au Maroc.
-            nortoo score chaque commande de 0 &agrave; 100 et vous dit lesquelles exp&eacute;dier.
+          <p className="text-lg md:text-xl text-[#64748B] max-w-2xl mx-auto mb-10 leading-relaxed">
+            {t("landing.hero.subtitle")}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
@@ -71,13 +79,13 @@ export default function Home() {
               className="inline-flex items-center justify-center gap-2 bg-[#5C6AC4] text-white px-6 py-3.5 rounded-xl font-semibold hover:bg-[#4F5BB5] transition text-sm"
             >
               <Plug className="w-4 h-4" />
-              Commencer avec YouCan
+              {t("landing.hero.ctaYoucan")}
             </a>
             <a
               href={`${APP_URL}/register`}
-              className="inline-flex items-center justify-center gap-2 border border-[#334155] text-[#E2E8F0] px-6 py-3.5 rounded-xl font-semibold hover:bg-[#1E293B] transition text-sm"
+              className="inline-flex items-center justify-center gap-2 border border-[#E2E8F0] text-[#1E293B] px-6 py-3.5 rounded-xl font-semibold hover:bg-[#F8FAFC] transition text-sm"
             >
-              Cr&eacute;er un compte
+              {t("landing.hero.ctaRegister")}
               <ArrowRight className="w-4 h-4" />
             </a>
           </div>
@@ -85,62 +93,62 @@ export default function Home() {
       </section>
 
       {/* ═══ Social proof ═══ */}
-      <section className="px-6 py-12 border-y border-[#1E293B]">
+      <section className="px-6 py-12 border-y border-[#E2E8F0]">
         <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8 text-center">
           <div>
-            <p className="text-3xl md:text-4xl font-black text-white">13</p>
-            <p className="text-sm text-[#64748B] mt-1">R&egrave;gles de scoring</p>
+            <p className="text-3xl md:text-4xl font-black text-[#0B0F1A]">24+</p>
+            <p className="text-sm text-[#94A3B8] mt-1">{t("landing.stats.rules")}</p>
           </div>
           <div>
-            <p className="text-3xl md:text-4xl font-black text-[#00E5A0]">&minus;50%</p>
-            <p className="text-sm text-[#64748B] mt-1">de RTO en moyenne</p>
+            <p className="text-3xl md:text-4xl font-black text-[#00C78A]">&minus;50%</p>
+            <p className="text-sm text-[#94A3B8] mt-1">{t("landing.stats.rto")}</p>
           </div>
           <div>
-            <p className="text-3xl md:text-4xl font-black text-white">0-100</p>
-            <p className="text-sm text-[#64748B] mt-1">Score par commande</p>
+            <p className="text-3xl md:text-4xl font-black text-[#0B0F1A]">0-100</p>
+            <p className="text-sm text-[#94A3B8] mt-1">{t("landing.stats.score")}</p>
           </div>
         </div>
       </section>
 
-      {/* ═══ Comment &ccedil;a marche ═══ */}
+      {/* ═══ How it works ═══ */}
       <section className="px-6 py-20">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">
-            Comment &ccedil;a marche
+          <h2 className="text-2xl md:text-3xl font-bold text-[#0B0F1A] text-center mb-4">
+            {t("landing.howItWorks.title")}
           </h2>
-          <p className="text-[#64748B] text-center mb-12 max-w-lg mx-auto">
-            En 3 &eacute;tapes, passez de 50% de RTO &agrave; un taux ma&icirc;tris&eacute;.
+          <p className="text-[#94A3B8] text-center mb-12 max-w-lg mx-auto">
+            {t("landing.howItWorks.subtitle")}
           </p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 step: "1",
                 icon: <Plug className="w-6 h-6" />,
-                title: "Connectez votre boutique",
-                desc: "Installez nortoo depuis le YouCan App Store. L\u2019int\u00e9gration se fait en 2 minutes via OAuth.",
+                title: t("landing.howItWorks.step1Title"),
+                desc: t("landing.howItWorks.step1Desc"),
               },
               {
                 step: "2",
                 icon: <Shield className="w-6 h-6" />,
-                title: "Chaque commande est scor\u00e9e",
-                desc: "13 r\u00e8gles analysent le client, le montant, la ville, l\u2019adresse et l\u2019historique. Score 0 (s\u00fbr) \u00e0 100 (frauduleux).",
+                title: t("landing.howItWorks.step2Title"),
+                desc: t("landing.howItWorks.step2Desc"),
               },
               {
                 step: "3",
                 icon: <TrendingUp className="w-6 h-6" />,
-                title: "Exp\u00e9diez en confiance",
-                desc: "Recevez une d\u00e9cision claire : Exp\u00e9dier, V\u00e9rifier, Signaler ou Bloquer. Votre RTO chute.",
+                title: t("landing.howItWorks.step3Title"),
+                desc: t("landing.howItWorks.step3Desc"),
               },
             ].map((item) => (
-              <div key={item.step} className="relative bg-[#1E293B]/50 rounded-2xl p-6 border border-[#334155]/50">
-                <div className="w-10 h-10 rounded-xl bg-[#00E5A0]/10 text-[#00E5A0] flex items-center justify-center mb-4">
+              <div key={item.step} className="relative bg-white rounded-2xl p-6 border border-[#E2E8F0] shadow-[0_2px_8px_rgba(0,0,0,.04)]">
+                <div className="w-10 h-10 rounded-xl bg-[#00E5A0]/10 text-[#059669] flex items-center justify-center mb-4">
                   {item.icon}
                 </div>
-                <div className="absolute top-6 right-6 w-8 h-8 rounded-full bg-[#0B0F1A] border border-[#334155] flex items-center justify-center text-xs font-bold text-[#64748B]">
+                <div className="absolute top-6 right-6 w-8 h-8 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-xs font-bold text-[#94A3B8]">
                   {item.step}
                 </div>
-                <h3 className="font-semibold text-white mb-2">{item.title}</h3>
-                <p className="text-sm text-[#94A3B8] leading-relaxed">{item.desc}</p>
+                <h3 className="font-semibold text-[#0B0F1A] mb-2">{item.title}</h3>
+                <p className="text-sm text-[#64748B] leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -148,53 +156,53 @@ export default function Home() {
       </section>
 
       {/* ═══ Features ═══ */}
-      <section id="features" className="px-6 py-20 bg-[#0F172A]">
+      <section id="features" className="px-6 py-20 bg-[#F8FAFC]">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">
-            Tout ce qu&apos;il faut pour lutter contre la fraude COD
+          <h2 className="text-2xl md:text-3xl font-bold text-[#0B0F1A] text-center mb-4">
+            {t("landing.features.title")}
           </h2>
-          <p className="text-[#64748B] text-center mb-12 max-w-lg mx-auto">
-            Un outil complet, con&ccedil;u sp&eacute;cifiquement pour le march&eacute; marocain.
+          <p className="text-[#94A3B8] text-center mb-12 max-w-lg mx-auto">
+            {t("landing.features.subtitle")}
           </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
                 icon: <Shield className="w-5 h-5" />,
-                title: "Scoring 13 r\u00e8gles",
-                desc: "Client fiable, r\u00e9cidiviste, montant, zone risque, adresse suspecte, heure nocturne\u2026",
+                title: t("landing.features.scoring"),
+                desc: t("landing.features.scoringDesc"),
               },
               {
                 icon: <BarChart3 className="w-5 h-5" />,
-                title: "Dashboard temps r\u00e9el",
-                desc: "KPIs, graphiques, table de commandes avec d\u00e9tails de scoring en un clic.",
+                title: t("landing.features.dashboard"),
+                desc: t("landing.features.dashboardDesc"),
               },
               {
                 icon: <Zap className="w-5 h-5" />,
-                title: "D\u00e9cisions automatiques",
-                desc: "Seuils personnalisables : SHIP (0-30), VERIFY (31-65), FLAG (66-85), BLOCK (86-100).",
+                title: t("landing.features.decisions"),
+                desc: t("landing.features.decisionsDesc"),
               },
               {
                 icon: <Plug className="w-5 h-5" />,
-                title: "Int\u00e9gration YouCan",
-                desc: "Webhook automatique. Chaque commande COD est scor\u00e9e d\u00e8s sa cr\u00e9ation.",
+                title: t("landing.features.integration"),
+                desc: t("landing.features.integrationDesc"),
               },
               {
                 icon: <Lock className="w-5 h-5" />,
-                title: "Conforme Loi 09-08",
-                desc: "T\u00e9l\u00e9phones hash\u00e9s SHA-256, audit log, droits d\u2019acc\u00e8s/suppression, CNDP.",
+                title: t("landing.features.compliance"),
+                desc: t("landing.features.complianceDesc"),
               },
               {
                 icon: <FileText className="w-5 h-5" />,
-                title: "Rapports & exports",
-                desc: "Rapport hebdomadaire par email, export CSV, rapport PDF mensuel.",
+                title: t("landing.features.reports"),
+                desc: t("landing.features.reportsDesc"),
               },
             ].map((f) => (
-              <div key={f.title} className="bg-[#1E293B]/30 rounded-xl p-5 border border-[#334155]/30 hover:border-[#00E5A0]/30 transition">
-                <div className="w-9 h-9 rounded-lg bg-[#00E5A0]/10 text-[#00E5A0] flex items-center justify-center mb-3">
+              <div key={f.title} className="bg-white rounded-xl p-5 border border-[#E2E8F0] hover:border-[#00E5A0]/40 transition shadow-[0_1px_4px_rgba(0,0,0,.03)]">
+                <div className="w-9 h-9 rounded-lg bg-[#00E5A0]/10 text-[#059669] flex items-center justify-center mb-3">
                   {f.icon}
                 </div>
-                <h3 className="font-semibold text-white mb-1.5 text-sm">{f.title}</h3>
-                <p className="text-xs text-[#94A3B8] leading-relaxed">{f.desc}</p>
+                <h3 className="font-semibold text-[#0B0F1A] mb-1.5 text-sm">{f.title}</h3>
+                <p className="text-xs text-[#64748B] leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -204,66 +212,66 @@ export default function Home() {
       {/* ═══ Pricing ═══ */}
       <section id="pricing" className="px-6 py-20">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-4">
-            Tarifs simples, sans surprise
+          <h2 className="text-2xl md:text-3xl font-bold text-[#0B0F1A] text-center mb-4">
+            {t("landing.pricing.title")}
           </h2>
-          <p className="text-[#64748B] text-center mb-12 max-w-lg mx-auto">
-            Commencez gratuitement. Payez uniquement quand vous grandissez.
+          <p className="text-[#94A3B8] text-center mb-12 max-w-lg mx-auto">
+            {t("landing.pricing.subtitle")}
           </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                name: "Essai",
+                name: t("landing.pricing.trial"),
                 price: "0",
-                label: "14 jours gratuits",
-                orders: "50 commandes/mois",
-                users: "1 utilisateur",
-                features: ["Scoring anti-fraude", "Dashboard", "Recherche"],
-                cta: "Essayer gratuitement",
+                label: t("landing.pricing.trialLabel"),
+                orders: t("landing.pricing.trialOrders"),
+                users: t("landing.pricing.trialUsers"),
+                features: [t("features.scoring"), t("features.dashboard"), t("features.search")],
+                cta: t("landing.pricing.trialCta"),
                 highlight: false,
               },
               {
                 name: "Starter",
                 price: "299",
-                label: "DH/mois",
-                orders: "500 commandes/mois",
-                users: "1 utilisateur",
-                features: ["Scoring anti-fraude", "Dashboard", "Recherche", "Export CSV", "Actions en lot"],
-                cta: "Choisir Starter",
+                label: t("landing.pricing.currency"),
+                orders: t("landing.pricing.starterOrders"),
+                users: t("landing.pricing.starterUsers"),
+                features: [t("features.scoring"), t("features.dashboard"), t("features.search"), t("features.csv_export"), t("features.bulk_actions")],
+                cta: t("landing.pricing.starterCta"),
                 highlight: false,
               },
               {
                 name: "Pro",
                 price: "699",
-                label: "DH/mois",
-                orders: "2 000 commandes/mois",
-                users: "3 utilisateurs",
+                label: t("landing.pricing.currency"),
+                orders: t("landing.pricing.proOrders"),
+                users: t("landing.pricing.proUsers"),
                 features: [
-                  "Scoring anti-fraude",
-                  "Dashboard",
-                  "Recherche",
-                  "Export CSV",
-                  "Actions en lot",
-                  "Simulation scoring",
-                  "Pond\u00e9ration custom",
-                  "Rapport PDF mensuel",
+                  t("features.scoring"),
+                  t("features.dashboard"),
+                  t("features.search"),
+                  t("features.csv_export"),
+                  t("features.bulk_actions"),
+                  t("features.simulation"),
+                  t("features.custom_weights"),
+                  t("features.pdf_report"),
                 ],
-                cta: "Choisir Pro",
+                cta: t("landing.pricing.proCta"),
                 highlight: true,
               },
               {
                 name: "Scale",
                 price: "1 499",
-                label: "DH/mois",
-                orders: "Illimit\u00e9",
-                users: "10 utilisateurs",
+                label: t("landing.pricing.currency"),
+                orders: t("landing.pricing.scaleOrders"),
+                users: t("landing.pricing.scaleUsers"),
                 features: [
-                  "Tout Pro +",
-                  "Multi-utilisateurs",
-                  "Gestion des r\u00f4les",
-                  "Support prioritaire",
+                  t("landing.pricing.allProPlus"),
+                  t("features.multi_users"),
+                  t("features.roles"),
+                  t("landing.pricing.prioritySupport"),
                 ],
-                cta: "Choisir Scale",
+                cta: t("landing.pricing.scaleCta"),
                 highlight: false,
               },
             ].map((plan) => (
@@ -272,26 +280,26 @@ export default function Home() {
                 className={`rounded-2xl p-6 flex flex-col ${
                   plan.highlight
                     ? "bg-[#00E5A0]/5 border-2 border-[#00E5A0]/40 relative"
-                    : "bg-[#1E293B]/30 border border-[#334155]/50"
+                    : "bg-white border border-[#E2E8F0]"
                 }`}
               >
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00E5A0] text-[#0B0F1A] text-xs font-bold px-3 py-1 rounded-full">
-                    Populaire
+                    {t("landing.pricing.popular")}
                   </div>
                 )}
-                <h3 className="font-bold text-white text-lg mb-1">{plan.name}</h3>
+                <h3 className="font-bold text-[#0B0F1A] text-lg mb-1">{plan.name}</h3>
                 <div className="mb-4">
-                  <span className="text-3xl font-black text-white">{plan.price}</span>
-                  <span className="text-sm text-[#64748B] ml-1">{plan.label}</span>
+                  <span className="text-3xl font-black text-[#0B0F1A]">{plan.price}</span>
+                  <span className="text-sm text-[#94A3B8] ml-1">{plan.label}</span>
                 </div>
-                <div className="text-xs text-[#94A3B8] space-y-1 mb-4">
+                <div className="text-xs text-[#64748B] space-y-1 mb-4">
                   <p>{plan.orders}</p>
                   <p>{plan.users}</p>
                 </div>
                 <ul className="space-y-2 mb-6 flex-1">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-[#CBD5E1]">
+                    <li key={f} className="flex items-start gap-2 text-xs text-[#475569]">
                       <Check className="w-3.5 h-3.5 text-[#00E5A0] mt-0.5 flex-shrink-0" />
                       {f}
                     </li>
@@ -302,7 +310,7 @@ export default function Home() {
                   className={`block text-center py-2.5 rounded-xl text-sm font-semibold transition ${
                     plan.highlight
                       ? "bg-[#00E5A0] text-[#0B0F1A] hover:bg-[#00C78A]"
-                      : "border border-[#334155] text-[#E2E8F0] hover:bg-[#1E293B]"
+                      : "border border-[#E2E8F0] text-[#1E293B] hover:bg-[#F8FAFC]"
                   }`}
                 >
                   {plan.cta}
@@ -314,43 +322,28 @@ export default function Home() {
       </section>
 
       {/* ═══ FAQ ═══ */}
-      <section id="faq" className="px-6 py-20 bg-[#0F172A]">
+      <section id="faq" className="px-6 py-20 bg-[#F8FAFC]">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-12">
-            Questions fr&eacute;quentes
+          <h2 className="text-2xl md:text-3xl font-bold text-[#0B0F1A] text-center mb-12">
+            {t("landing.faq.title")}
           </h2>
           <div className="space-y-4">
             {[
-              {
-                q: "Comment fonctionne le scoring ?",
-                a: "Chaque commande COD est analys\u00e9e par 13 r\u00e8gles : historique client, montant, ville, adresse, heure, etc. Le r\u00e9sultat est un score de 0 (s\u00fbr) \u00e0 100 (suspect). Vous d\u00e9finissez les seuils de d\u00e9cision.",
-              },
-              {
-                q: "Est-ce compatible avec ma boutique YouCan ?",
-                a: "Oui. L\u2019installation se fait en 2 minutes via le YouCan App Store. nortoo re\u00e7oit automatiquement chaque commande COD via webhook et la score en temps r\u00e9el.",
-              },
-              {
-                q: "Mes donn\u00e9es sont-elles prot\u00e9g\u00e9es ?",
-                a: "Absolument. nortoo est conforme \u00e0 la Loi 09-08. Les t\u00e9l\u00e9phones sont hash\u00e9s SHA-256, les donn\u00e9es sont h\u00e9berg\u00e9es en UE (Frankfurt), et un audit log tra\u00e7ant chaque action est tenu.",
-              },
-              {
-                q: "Puis-je personnaliser les seuils ?",
-                a: "Oui. Depuis le dashboard, vous pouvez ajuster les seuils SHIP/VERIFY/FLAG/BLOCK, activer des presets par secteur, et m\u00eame personnaliser le poids de chaque r\u00e8gle (plan Pro+).",
-              },
-              {
-                q: "Comment est factur\u00e9 le service ?",
-                a: "Par virement bancaire mensuel. Une facture est g\u00e9n\u00e9r\u00e9e automatiquement avec TVA 20%. L\u2019essai de 14 jours est totalement gratuit, sans carte bancaire.",
-              },
+              { q: t("landing.faq.q1"), a: t("landing.faq.a1") },
+              { q: t("landing.faq.q2"), a: t("landing.faq.a2") },
+              { q: t("landing.faq.q3"), a: t("landing.faq.a3") },
+              { q: t("landing.faq.q4"), a: t("landing.faq.a4") },
+              { q: t("landing.faq.q5"), a: t("landing.faq.a5") },
             ].map((item) => (
               <details
                 key={item.q}
-                className="group bg-[#1E293B]/30 rounded-xl border border-[#334155]/30 overflow-hidden"
+                className="group bg-white rounded-xl border border-[#E2E8F0] overflow-hidden"
               >
-                <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-sm font-medium text-white hover:bg-[#1E293B]/50 transition list-none">
+                <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-sm font-medium text-[#0B0F1A] hover:bg-[#F8FAFC] transition list-none">
                   {item.q}
-                  <ChevronRight className="w-4 h-4 text-[#64748B] transition-transform group-open:rotate-90 flex-shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-[#94A3B8] transition-transform group-open:rotate-90 flex-shrink-0" />
                 </summary>
-                <div className="px-6 pb-4 text-sm text-[#94A3B8] leading-relaxed">
+                <div className="px-6 pb-4 text-sm text-[#64748B] leading-relaxed">
                   {item.a}
                 </div>
               </details>
@@ -362,18 +355,18 @@ export default function Home() {
       {/* ═══ CTA final ═══ */}
       <section className="px-6 py-20">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-            Pr&ecirc;t &agrave; r&eacute;duire votre RTO ?
+          <h2 className="text-2xl md:text-3xl font-bold text-[#0B0F1A] mb-4">
+            {t("landing.cta.title")}
           </h2>
-          <p className="text-[#94A3B8] mb-8">
-            Commencez avec 14 jours d&apos;essai gratuit. Aucune carte bancaire requise.
+          <p className="text-[#64748B] mb-8">
+            {t("landing.cta.subtitle")}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href={`${APP_URL}/register`}
               className="inline-flex items-center justify-center gap-2 bg-[#00E5A0] text-[#0B0F1A] px-6 py-3.5 rounded-xl font-bold hover:bg-[#00C78A] transition text-sm"
             >
-              Commencer gratuitement
+              {t("landing.cta.button")}
               <ArrowRight className="w-4 h-4" />
             </a>
           </div>
@@ -381,50 +374,50 @@ export default function Home() {
       </section>
 
       {/* ═══ Footer ═══ */}
-      <footer className="border-t border-[#1E293B] px-6 py-10">
+      <footer className="border-t border-[#E2E8F0] px-6 py-10">
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <img src="/nortoo-logo.png" alt="nortoo" className="h-6 w-auto" />
               </div>
-              <p className="text-xs text-[#64748B] leading-relaxed">
-                Scoring anti-fraude COD pour le e-commerce au Maroc.
+              <p className="text-xs text-[#94A3B8] leading-relaxed">
+                {t("landing.footer.description")}
               </p>
-              <p className="text-xs text-[#475569] mt-2 font-medium" dir="rtl">
+              <p className="text-xs text-[#94A3B8] mt-2 font-medium" dir="rtl">
                 &#x0646;&#x0648; &#x0631;.&#x062A;.&#x0648; &mdash; &#x0632;&#x064A;&#x0631;&#x0648; &#x0631;&#x062A;&#x0648;&#x0631;
               </p>
             </div>
             <div>
-              <h4 className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider mb-3">Produit</h4>
-              <ul className="space-y-2 text-sm text-[#64748B]">
-                <li><a href="#features" className="hover:text-white transition">Fonctionnalit&eacute;s</a></li>
-                <li><a href="#pricing" className="hover:text-white transition">Tarifs</a></li>
-                <li><a href="#faq" className="hover:text-white transition">FAQ</a></li>
+              <h4 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">{t("landing.footer.product")}</h4>
+              <ul className="space-y-2 text-sm text-[#94A3B8]">
+                <li><a href="#features" className="hover:text-[#0B0F1A] transition">{t("landing.nav.features")}</a></li>
+                <li><a href="#pricing" className="hover:text-[#0B0F1A] transition">{t("landing.nav.pricing")}</a></li>
+                <li><a href="#faq" className="hover:text-[#0B0F1A] transition">{t("landing.nav.faq")}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider mb-3">L&eacute;gal</h4>
-              <ul className="space-y-2 text-sm text-[#64748B]">
-                <li><a href="/terms" className="hover:text-white transition">CGU</a></li>
-                <li><a href="/privacy" className="hover:text-white transition">Confidentialit&eacute;</a></li>
-                <li><a href="/data-rights" className="hover:text-white transition">Mes donn&eacute;es</a></li>
+              <h4 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">{t("landing.footer.legal")}</h4>
+              <ul className="space-y-2 text-sm text-[#94A3B8]">
+                <li><a href="/terms" className="hover:text-[#0B0F1A] transition">{t("landing.footer.terms")}</a></li>
+                <li><a href="/privacy" className="hover:text-[#0B0F1A] transition">{t("landing.footer.privacy")}</a></li>
+                <li><a href="/data-rights" className="hover:text-[#0B0F1A] transition">{t("landing.footer.dataRights")}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider mb-3">Contact</h4>
-              <ul className="space-y-2 text-sm text-[#64748B]">
-                <li><a href="mailto:hello@nortoo.ma" className="hover:text-white transition">hello@nortoo.ma</a></li>
-                <li><a href="mailto:support@nortoo.ma" className="hover:text-white transition">support@nortoo.ma</a></li>
+              <h4 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">{t("landing.footer.contact")}</h4>
+              <ul className="space-y-2 text-sm text-[#94A3B8]">
+                <li><a href="mailto:hello@nortoo.ma" className="hover:text-[#0B0F1A] transition">hello@nortoo.ma</a></li>
+                <li><a href="mailto:support@nortoo.ma" className="hover:text-[#0B0F1A] transition">support@nortoo.ma</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-[#1E293B] pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-[#475569]">
-              &copy; {new Date().getFullYear()} nortoo &middot; Scoring anti-fraude COD &middot; Maroc
+          <div className="border-t border-[#E2E8F0] pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-xs text-[#94A3B8]">
+              &copy; {new Date().getFullYear()} {t("landing.footer.copyright")}
             </p>
-            <p className="text-xs text-[#334155]">
-              Donn&eacute;es h&eacute;berg&eacute;es en UE (Frankfurt) &middot; Conforme Loi 09-08
+            <p className="text-xs text-[#CBD5E1]">
+              {t("landing.footer.hosted")}
             </p>
           </div>
         </div>

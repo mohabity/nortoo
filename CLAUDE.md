@@ -45,7 +45,7 @@ YouCan (commande COD)
 | /api/team | GET/POST | Team management |
 | /api/data-rights/submit | POST | Public data rights request (Loi 09-08) |
 
-## Scoring: 13 Rules
+## Scoring: 24 Rules (38 checks)
 
 Base 25 → Client fiable -20/-10 → Recidiviste +30/+15 → Nouveau +10 → Montant +20/+10 → Zone risque ville +15 → Zone risque quartier +10 → Adresse +10/+15 → Nocturne +5 → SKU risk → Auto-adjustment geo
 

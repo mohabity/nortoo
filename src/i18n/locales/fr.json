@@ -1066,5 +1066,104 @@
     "colReason": "Raison",
     "colSource": "Source",
     "colDate": "Date"
+  },
+  "landing": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "faq": "FAQ",
+      "signIn": "Connexion",
+      "getStarted": "Commencer"
+    },
+    "hero": {
+      "badge": "Conforme Loi 09-08 · Données hébergées en UE",
+      "titleLine1": "Bloquez la fraude COD,",
+      "titleLine2": "expédiez en confiance.",
+      "subtitle": "30 à 50% des commandes COD échouent au Maroc. nortoo score chaque commande de 0 à 100 et vous dit lesquelles expédier.",
+      "ctaYoucan": "Commencer avec YouCan",
+      "ctaRegister": "Créer un compte"
+    },
+    "stats": {
+      "rules": "Règles de scoring",
+      "rto": "de RTO en moyenne",
+      "score": "Score par commande"
+    },
+    "howItWorks": {
+      "title": "Comment ça marche",
+      "subtitle": "En 3 étapes, passez de 50% de RTO à un taux maîtrisé.",
+      "step1Title": "Connectez votre boutique",
+      "step1Desc": "Installez nortoo depuis le YouCan App Store. L'intégration se fait en 2 minutes via OAuth.",
+      "step2Title": "Chaque commande est scorée",
+      "step2Desc": "Plus de 24 règles analysent le client, le montant, la ville, l'adresse et l'historique. Score 0 (sûr) à 100 (frauduleux).",
+      "step3Title": "Expédiez en confiance",
+      "step3Desc": "Recevez une décision claire : Expédier, Vérifier, Signaler ou Bloquer. Votre RTO chute."
+    },
+    "features": {
+      "title": "Tout ce qu'il faut pour lutter contre la fraude COD",
+      "subtitle": "Un outil complet, conçu spécifiquement pour le marché marocain.",
+      "scoring": "Scoring avancé",
+      "scoringDesc": "Plus de 24 règles : client fiable, récidiviste, montant, zone risque, adresse suspecte, heure nocturne…",
+      "dashboard": "Dashboard temps réel",
+      "dashboardDesc": "KPIs, graphiques, table de commandes avec détails de scoring en un clic.",
+      "decisions": "Décisions automatiques",
+      "decisionsDesc": "Seuils personnalisables : SHIP (0-30), VERIFY (31-65), FLAG (66-85), BLOCK (86-100).",
+      "integration": "Intégration YouCan",
+      "integrationDesc": "Webhook automatique. Chaque commande COD est scorée dès sa création.",
+      "compliance": "Conforme Loi 09-08",
+      "complianceDesc": "Téléphones hashés SHA-256, audit log, droits d'accès/suppression, CNDP.",
+      "reports": "Rapports & exports",
+      "reportsDesc": "Rapport hebdomadaire par email, export CSV, rapport PDF mensuel."
+    },
+    "pricing": {
+      "title": "Tarifs simples, sans surprise",
+      "subtitle": "Commencez gratuitement. Payez uniquement quand vous grandissez.",
+      "popular": "Populaire",
+      "trial": "Essai",
+      "trialLabel": "14 jours gratuits",
+      "trialOrders": "50 commandes/mois",
+      "trialUsers": "1 utilisateur",
+      "trialCta": "Essayer gratuitement",
+      "starterOrders": "500 commandes/mois",
+      "starterUsers": "1 utilisateur",
+      "starterCta": "Choisir Starter",
+      "proOrders": "2 000 commandes/mois",
+      "proUsers": "3 utilisateurs",
+      "proCta": "Choisir Pro",
+      "scaleOrders": "Illimité",
+      "scaleUsers": "10 utilisateurs",
+      "scaleCta": "Choisir Scale",
+      "currency": "DH/mois",
+      "allProPlus": "Tout Pro +",
+      "prioritySupport": "Support prioritaire"
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "q1": "Comment fonctionne le scoring ?",
+      "a1": "Chaque commande COD est analysée par plus de 24 règles : historique client, montant, ville, adresse, heure, etc. Le résultat est un score de 0 (sûr) à 100 (suspect). Vous définissez les seuils de décision.",
+      "q2": "Est-ce compatible avec ma boutique YouCan ?",
+      "a2": "Oui. L'installation se fait en 2 minutes via le YouCan App Store. nortoo reçoit automatiquement chaque commande COD via webhook et la score en temps réel.",
+      "q3": "Mes données sont-elles protégées ?",
+      "a3": "Absolument. nortoo est conforme à la Loi 09-08. Les téléphones sont hashés SHA-256, les données sont hébergées en UE (Frankfurt), et un audit log traçant chaque action est tenu.",
+      "q4": "Puis-je personnaliser les seuils ?",
+      "a4": "Oui. Depuis le dashboard, vous pouvez ajuster les seuils SHIP/VERIFY/FLAG/BLOCK, activer des presets par secteur, et même personnaliser le poids de chaque règle (plan Pro+).",
+      "q5": "Comment est facturé le service ?",
+      "a5": "Par virement bancaire mensuel. Une facture est générée automatiquement avec TVA 20%. L'essai de 14 jours est totalement gratuit, sans carte bancaire."
+    },
+    "cta": {
+      "title": "Prêt à réduire votre RTO ?",
+      "subtitle": "Commencez avec 14 jours d'essai gratuit. Aucune carte bancaire requise.",
+      "button": "Commencer gratuitement"
+    },
+    "footer": {
+      "description": "Scoring anti-fraude COD pour le e-commerce au Maroc.",
+      "product": "Produit",
+      "legal": "Légal",
+      "contact": "Contact",
+      "terms": "CGU",
+      "privacy": "Confidentialité",
+      "dataRights": "Mes données",
+      "copyright": "nortoo · Scoring anti-fraude COD · Maroc",
+      "hosted": "Données hébergées en UE (Frankfurt) · Conforme Loi 09-08"
+    }
   }
 }
