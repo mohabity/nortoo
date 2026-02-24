@@ -147,7 +147,7 @@ function drawFooter(doc: jsPDF, pageNum: number, totalPages: number) {
   setColor(doc, COLORS.fog);
   doc.setFont("helvetica", "normal");
   doc.text(
-    "nortoo  -  Scoring anti-fraude COD  -  nortoo.io",
+    "nortoo  -  Scoring anti-fraude COD  -  nortoo.ma",
     pageW / 2,
     pageH - 10,
     { align: "center" }

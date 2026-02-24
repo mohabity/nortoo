@@ -126,8 +126,8 @@ nortoo integrates with [YouCan](https://youcan.shop) via webhook, scores every C
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/mohabity/codpilot.git
-cd codpilot
+git clone https://github.com/mohabity/nortoo.git
+cd nortoo
 npm install
 ```
 
@@ -196,7 +196,7 @@ POST /api/webhook/ingest     Universal JSON endpoint
 POST /api/webhook/ping       Health check
 ```
 
-Authenticate with `x-codpilot-key` header or `?key=` query param.
+Authenticate with `x-nortoo-key` header (legacy `x-codpilot-key` also accepted) or `?key=` query param.
 
 **Universal ingest payload:**
 

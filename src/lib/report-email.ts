@@ -87,7 +87,7 @@ export function buildMonthlyReportEmail(data: MonthlyReportEmail): {
         <!-- Footer -->
         <tr><td style="padding:20px 32px;text-align:center;border-top:1px solid #e2e8f0">
           <p style="margin:0;font-size:11px;color:#94a3b8">
-            nortoo &middot; Scoring anti-fraude COD &middot; nortoo.io
+            nortoo &middot; Scoring anti-fraude COD &middot; nortoo.ma
           </p>
         </td></tr>
       </table>
@@ -107,7 +107,7 @@ ROI : ${data.kpis.roi}
 ${data.topInsight ? `\uD83D\uDCA1 ${data.topInsight}\n` : ""}
 T\u00E9l\u00E9charger le rapport : ${data.reportUrl}
 
-nortoo - Scoring anti-fraude COD - nortoo.io`;
+nortoo - Scoring anti-fraude COD - nortoo.ma`;
 
   return { html, text };
 }

@@ -62,7 +62,15 @@ Base 25 → Client fiable -20/-10 → Recidiviste +30/+15 → Nouveau +10 → Mo
 - Prefix : `nt_live_` (nouvelles cles)
 - Legacy : `cp_live_` (anciennes cles, toujours acceptees)
 - Header : `x-nortoo-key` (legacy `x-codpilot-key` aussi accepte)
-- Domaine : nortoo.io
+- Domaine : nortoo.ma
+
+## Emails officiels
+
+- noreply@nortoo.ma — expediteur transactionnel (Resend)
+- support@nortoo.ma — support client, privacy, data rights
+- hello@nortoo.ma — contact general
+- billing@nortoo.ma — facturation
+- admin@nortoo.ma — administration
 
 ## Plans : Trial (0 DH) · Starter (299 DH) · Growth (599 DH) · Scale (1 499 DH)
 

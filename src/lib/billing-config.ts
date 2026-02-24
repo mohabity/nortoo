@@ -19,8 +19,8 @@ export const COMPANY_INFO = {
   name: "NORTOO SARL",
   ice: "00000000000000", // placeholder
   address: "Casablanca, Maroc",
-  email: "billing@nortoo.io",
-  website: "nortoo.io",
+  email: "billing@nortoo.ma",
+  website: "nortoo.ma",
 } as const;
 
 /**

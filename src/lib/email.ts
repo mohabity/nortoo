@@ -11,7 +11,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
-const FROM = "nortoo <noreply@nortoo.io>";
+const FROM = "nortoo <noreply@nortoo.ma>";
 
 /**
  * Send an email via Resend. Falls back to console.log if no API key is set.
@@ -337,7 +337,7 @@ export function buildWeeklyReportEmail(data: WeeklyReport) {
 
     <!-- CTA -->
     <div style="padding:0 32px 32px;text-align:center">
-      <a href="https://nortoo.io/dashboard" style="display:inline-block;background:#00E5A0;color:#0B0F1A;font-weight:700;padding:14px 40px;border-radius:12px;text-decoration:none;font-size:14px">
+      <a href="https://nortoo.ma/dashboard" style="display:inline-block;background:#00E5A0;color:#0B0F1A;font-weight:700;padding:14px 40px;border-radius:12px;text-decoration:none;font-size:14px">
         Voir le dashboard →
       </a>
     </div>
@@ -348,7 +348,7 @@ export function buildWeeklyReportEmail(data: WeeklyReport) {
         nortoo · Scoring anti-fraude COD · نو ر.ت.و — زيرو رتور
       </p>
       <p style="font-size:10px;color:#334155;margin:6px 0 0;text-align:center">
-        Ce rapport est envoyé automatiquement chaque lundi. <a href="https://nortoo.io/dashboard/settings" style="color:#64748B;text-decoration:underline">Gérer les notifications</a>
+        Ce rapport est envoyé automatiquement chaque lundi. <a href="https://nortoo.ma/dashboard/settings" style="color:#64748B;text-decoration:underline">Gérer les notifications</a>
       </p>
     </div>
   </div>
@@ -376,7 +376,7 @@ ${deliveryTotal > 0 ? `LIVRAISON
 • Retournées : ${data.returnedCount} (${pct(data.returnedCount, deliveryTotal)})
 • Taux RTO réel : ${rtoRate}%
 ` : ""}
-Voir le dashboard : https://nortoo.io/dashboard
+Voir le dashboard : https://nortoo.ma/dashboard
 
 —
 nortoo · Scoring anti-fraude COD`;
@@ -433,7 +433,7 @@ export function buildInvoiceEmail(data: InvoiceEmailData) {
         </p>
         <p style="font-size:0.75rem;color:#94A3B8;margin:8px 0 0">R\u00e9f\u00e9rence virement : <strong>${data.invoiceNumber}</strong></p>
       </div>
-      <a href="https://nortoo.io/dashboard/billing" style="display:inline-block;background:#00E5A0;color:#0B0F1A;font-weight:600;padding:12px 32px;border-radius:10px;text-decoration:none;font-size:0.9rem">
+      <a href="https://nortoo.ma/dashboard/billing" style="display:inline-block;background:#00E5A0;color:#0B0F1A;font-weight:600;padding:12px 32px;border-radius:10px;text-decoration:none;font-size:0.9rem">
         Voir ma facture
       </a>
     </div>
@@ -444,7 +444,7 @@ export function buildInvoiceEmail(data: InvoiceEmailData) {
 </body>
 </html>`;
 
-  const text = `Facture ${data.invoiceNumber} — nortoo\n\nBonjour ${data.merchantName},\n\nVotre facture ${data.invoiceNumber} pour la période ${data.period} est disponible.\n\nMontant TTC : ${data.amountTTC}\nÉchéance : ${data.dueDate}\n\nCoordonnées bancaires :\nRIB : ${data.rib}\nIBAN : ${data.iban}\nSWIFT : ${data.swift}\n\nRéférence virement : ${data.invoiceNumber}\n\nVoir ma facture : https://nortoo.io/dashboard/billing`;
+  const text = `Facture ${data.invoiceNumber} — nortoo\n\nBonjour ${data.merchantName},\n\nVotre facture ${data.invoiceNumber} pour la période ${data.period} est disponible.\n\nMontant TTC : ${data.amountTTC}\nÉchéance : ${data.dueDate}\n\nCoordonnées bancaires :\nRIB : ${data.rib}\nIBAN : ${data.iban}\nSWIFT : ${data.swift}\n\nRéférence virement : ${data.invoiceNumber}\n\nVoir ma facture : https://nortoo.ma/dashboard/billing`;
 
   return { subject: `Facture ${data.invoiceNumber} — nortoo`, html, text };
 }
@@ -489,7 +489,7 @@ export function buildOverdueEmail(data: OverdueEmailData) {
         </p>
         <p style="font-size:0.75rem;color:#94A3B8;margin:8px 0 0">R\u00e9f\u00e9rence virement : <strong>${data.invoiceNumber}</strong></p>
       </div>
-      <a href="https://nortoo.io/dashboard/billing" style="display:inline-block;background:#F43F5E;color:#FFFFFF;font-weight:600;padding:12px 32px;border-radius:10px;text-decoration:none;font-size:0.9rem">
+      <a href="https://nortoo.ma/dashboard/billing" style="display:inline-block;background:#F43F5E;color:#FFFFFF;font-weight:600;padding:12px 32px;border-radius:10px;text-decoration:none;font-size:0.9rem">
         R\u00e9gler ma facture
       </a>
     </div>
@@ -500,7 +500,7 @@ export function buildOverdueEmail(data: OverdueEmailData) {
 </body>
 </html>`;
 
-  const text = `Rappel : Facture ${data.invoiceNumber} impayée — nortoo\n\nBonjour ${data.merchantName},\n\nVotre facture ${data.invoiceNumber} d'un montant de ${data.amountTTC} est arrivée à échéance le ${data.dueDate} et reste impayée.\n\nSans règlement rapide, votre compte pourra être suspendu.\n\nCoordonnées bancaires :\nRIB : ${data.rib}\nIBAN : ${data.iban}\nSWIFT : ${data.swift}\n\nRéférence virement : ${data.invoiceNumber}\n\nRégler : https://nortoo.io/dashboard/billing`;
+  const text = `Rappel : Facture ${data.invoiceNumber} impayée — nortoo\n\nBonjour ${data.merchantName},\n\nVotre facture ${data.invoiceNumber} d'un montant de ${data.amountTTC} est arrivée à échéance le ${data.dueDate} et reste impayée.\n\nSans règlement rapide, votre compte pourra être suspendu.\n\nCoordonnées bancaires :\nRIB : ${data.rib}\nIBAN : ${data.iban}\nSWIFT : ${data.swift}\n\nRéférence virement : ${data.invoiceNumber}\n\nRégler : https://nortoo.ma/dashboard/billing`;
 
   return { subject: `Rappel : Facture ${data.invoiceNumber} impayée — nortoo`, html, text };
 }
