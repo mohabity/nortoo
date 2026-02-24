@@ -96,6 +96,13 @@ export const users = pgTable(
     inviteToken: text("invite_token").unique(), // SHA-256 hash of raw token
     inviteExpiresAt: timestamp("invite_expires_at"),
     lastLoginAt: timestamp("last_login_at"),
+
+    // 2FA — TOTP
+    twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+    twoFactorSecret: text("two_factor_secret"),        // encrypted TOTP secret
+    twoFactorVerifiedAt: timestamp("two_factor_verified_at"),
+    twoFactorBackupCodes: text("two_factor_backup_codes"), // JSON array of hashed codes
+
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -224,7 +231,8 @@ export const orders = pgTable(
       table.merchantId,
       table.decision
     ),
-    index("orders_score_idx").on(table.fraudScore),
+    index("orders_merchant_score_idx").on(table.merchantId, table.fraudScore),
+    index("orders_merchant_delivery_idx").on(table.merchantId, table.deliveryStatus),
     index("orders_merchant_pipeline_idx").on(
       table.merchantId,
       table.pipelineStatus

@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/provider";
 import type { BaseTabProps } from "../types";
+import { TwoFactorSection } from "./TwoFactorSection";
 
 export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
   const { t } = useTranslation();
@@ -332,6 +333,9 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
           </Button>
         </CardContent>
       </Card>
+
+      {/* ═══ Authentification à deux facteurs ═══ */}
+      <TwoFactorSection onToast={onToast} />
 
       {/* ═══ Zone de danger ═══ */}
       <Card className="border-rose/30">

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n/provider";
 
 // ── Types ──
 
@@ -329,12 +330,19 @@ function OnboardingWizard() {
             )}
           >
             {step === 1 && (
-              <StepWelcome name={state?.merchantName ?? ""} onNext={next} />
+              <StepWelcome name={state?.merchantName ?? ""} onNext={(consent) => {
+                persistStep(1, { consent });
+                goToStep(2);
+              }} />
             )}
             {step === 2 && (
               <StepConnectStore
                 storeConnected={state?.storeConnected ?? false}
                 onNext={next}
+                onSkip={() => {
+                  persistStep(2);
+                  goToStep(3);
+                }}
               />
             )}
             {step === 3 && (
@@ -389,7 +397,20 @@ function OnboardingWizard() {
 // STEP 1 — Welcome
 // ═══════════════════════════════════════════════════════════
 
-function StepWelcome({ name, onNext }: { name: string; onNext: () => void }) {
+function StepWelcome({ name, onNext }: { name: string; onNext: (consent: boolean) => void }) {
+  const { t } = useTranslation();
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [showError, setShowError] = useState(false);
+
+  function handleNext() {
+    if (!consentChecked) {
+      setShowError(true);
+      return;
+    }
+    setShowError(false);
+    onNext(true);
+  }
+
   return (
     <div className="text-center space-y-5">
       <div className="text-5xl">{"🎯"}</div>
@@ -419,9 +440,35 @@ function StepWelcome({ name, onNext }: { name: string; onNext: () => void }) {
         ))}
       </div>
 
+      {/* Consent checkbox — Loi 09-08 Art. 5 */}
+      <div className="text-left max-w-[360px] mx-auto">
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consentChecked}
+            onChange={(e) => {
+              setConsentChecked(e.target.checked);
+              if (e.target.checked) setShowError(false);
+            }}
+            className="mt-0.5 h-4 w-4 rounded border-silk accent-mint shrink-0"
+          />
+          <span className="text-xs text-slate leading-relaxed">
+            {t("onboarding.consentLabel")}{" "}
+            <a href="/privacy" target="_blank" className="text-ocean hover:underline">
+              {t("onboarding.consentPrivacyLink")}
+            </a>
+          </span>
+        </label>
+        {showError && (
+          <p className="mt-1.5 ml-6.5 text-[11px] text-rose">
+            {t("onboarding.consentRequired")}
+          </p>
+        )}
+      </div>
+
       <div>
         <Button
-          onClick={onNext}
+          onClick={handleNext}
           className="w-full max-w-[320px] bg-mint hover:bg-mint-deep text-midnight font-semibold py-5"
         >
           C&apos;est parti <ArrowRight className="ml-2 h-4 w-4" />
@@ -441,10 +488,13 @@ function StepWelcome({ name, onNext }: { name: string; onNext: () => void }) {
 function StepConnectStore({
   storeConnected,
   onNext,
+  onSkip,
 }: {
   storeConnected: boolean;
   onNext: () => void;
+  onSkip: () => void;
 }) {
+  const { t } = useTranslation();
   const [autoAdvance, setAutoAdvance] = useState(false);
 
   useEffect(() => {
@@ -487,7 +537,7 @@ function StepConnectStore({
         </a>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-2">
         <p className="text-xs text-fog">
           Pas de boutique YouCan ?{" "}
           <button onClick={onNext} className="text-ocean hover:underline">
@@ -496,6 +546,15 @@ function StepConnectStore({
         </p>
         <p className="font-mono text-[0.55rem] text-mist">
           {"🔒 Connexion sécurisée OAuth — nortoo ne stocke pas vos identifiants YouCan"}
+        </p>
+        <button
+          onClick={onSkip}
+          className="text-xs text-mist hover:text-fog transition-colors"
+        >
+          {t("onboarding.skipStep")}
+        </button>
+        <p className="text-[11px] text-mist">
+          {t("onboarding.connectLater")}
         </p>
       </div>
     </div>

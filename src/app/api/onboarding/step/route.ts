@@ -10,6 +10,7 @@ const stepSchema = z.object({
   data: z
     .object({
       preset: z.enum(["permissive", "balanced", "conservative"]).optional(),
+      consent: z.boolean().optional(),
     })
     .optional(),
 });
@@ -50,6 +51,11 @@ export async function PUT(request: NextRequest) {
     onboardingStep: step,
     updatedAt: new Date(),
   };
+
+  // Step 1: record consent (Loi 09-08 Art. 5)
+  if (step === 1 && data?.consent === true) {
+    updates.consentRecordedAt = new Date();
+  }
 
   // Step 3: apply scoring preset
   if (step === 3 && data?.preset) {

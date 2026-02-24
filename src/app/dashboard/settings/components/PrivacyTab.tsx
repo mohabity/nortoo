@@ -92,7 +92,7 @@ const SUB_PROCESSORS = [
   },
 ];
 
-export function PrivacyTab({ settings, onToast }: BaseTabProps) {
+export function PrivacyTab({ settings, onToast, onRefresh }: BaseTabProps) {
   const { t, locale } = useTranslation();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
@@ -112,6 +112,23 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
         "info",
         t("settings.privacy.requestSubmitted")
       );
+    } finally {
+      setLoadingAction(null);
+    }
+  }
+
+  async function handleRecordConsent() {
+    setLoadingAction("consent");
+    try {
+      const res = await fetch("/api/settings/consent", { method: "POST" });
+      if (res.ok) {
+        onToast("success", t("settings.privacy.consentRecordedSuccess"));
+        await onRefresh();
+      } else {
+        onToast("error", t("common.error"));
+      }
+    } catch {
+      onToast("error", t("common.error"));
     } finally {
       setLoadingAction(null);
     }
@@ -148,12 +165,35 @@ export function PrivacyTab({ settings, onToast }: BaseTabProps) {
                 <Badge variant="mint">{settings.cndpDeclarationRef}</Badge>
               </div>
             )}
-            {connectedDate && (
+            {connectedDate ? (
               <div className="flex items-center justify-between px-4 py-3">
                 <span className="text-sm text-fog">
                   {t("settings.privacy.consentRecorded")}
                 </span>
                 <span className="text-sm text-slate">{connectedDate}</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div>
+                  <span className="text-sm text-fog">
+                    {t("settings.privacy.consentNotRecorded")}
+                  </span>
+                  <p className="text-xs text-mist mt-0.5">
+                    {t("settings.privacy.consentNotRecordedDesc")}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRecordConsent}
+                  disabled={loadingAction === "consent"}
+                  className="shrink-0"
+                >
+                  {loadingAction === "consent" && (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  )}
+                  {t("settings.privacy.recordConsent")}
+                </Button>
               </div>
             )}
             <div className="flex items-center justify-between px-4 py-3">

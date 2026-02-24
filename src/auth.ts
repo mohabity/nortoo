@@ -11,10 +11,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
+        totpCode: { label: "Code 2FA", type: "text" },
       },
       async authorize(credentials) {
         const rawEmail = credentials?.email as string;
         const password = credentials?.password as string;
+        const totpCode = (credentials?.totpCode as string) || "";
         if (!rawEmail || !password) return null;
         const email = rawEmail.trim().toLowerCase();
 
@@ -27,6 +29,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             userPasswordHash: users.passwordHash,
             userRole: users.role,
             userStatus: users.status,
+            userTwoFactorEnabled: users.twoFactorEnabled,
+            userTwoFactorSecret: users.twoFactorSecret,
             merchantId: merchants.id,
             merchantPlan: merchants.plan,
           })
@@ -49,6 +53,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const valid = await compare(password, row.userPasswordHash);
         if (!valid) return null;
+
+        // 2FA check: if enabled, require TOTP code
+        if (row.userTwoFactorEnabled && row.userTwoFactorSecret) {
+          if (!totpCode) {
+            // Signal that 2FA is required
+            throw new Error("2FA_REQUIRED");
+          }
+          const { verifyTOTPCode } = await import("@/lib/totp");
+          if (!verifyTOTPCode(row.userTwoFactorSecret, totpCode)) {
+            throw new Error("2FA_INVALID");
+          }
+        }
 
         // Update lastLoginAt
         await db

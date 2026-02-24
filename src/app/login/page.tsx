@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 import Link from "next/link";
-import { Loader2, Mail, Lock, Plug } from "lucide-react";
+import { Loader2, Mail, Lock, Plug, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
@@ -32,6 +32,8 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [needs2FA, setNeeds2FA] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(oauthError);
 
@@ -49,16 +51,32 @@ function LoginForm() {
       return;
     }
 
+    if (needs2FA && !totpCode) {
+      setError("Entrez le code 2FA de votre application");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const result = await signIn("credentials", {
         email,
         password,
+        totpCode: needs2FA ? totpCode : "",
         redirect: false,
       });
 
       if (result?.error) {
+        if (result.error.includes("2FA_REQUIRED")) {
+          setNeeds2FA(true);
+          setError("");
+          return;
+        }
+        if (result.error.includes("2FA_INVALID")) {
+          setError("Code 2FA incorrect. Réessayez.");
+          setTotpCode("");
+          return;
+        }
         setError("Email ou mot de passe incorrect");
         return;
       }
@@ -147,6 +165,36 @@ function LoginForm() {
                 </div>
               </div>
 
+              {/* 2FA Code */}
+              {needs2FA && (
+                <div>
+                  <label
+                    htmlFor="totp"
+                    className="block text-sm font-medium text-slate mb-1.5"
+                  >
+                    Code d&apos;authentification (2FA)
+                  </label>
+                  <div className="relative">
+                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
+                    <input
+                      id="totp"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
+                      autoFocus
+                      autoComplete="one-time-code"
+                      className="w-full min-h-[44px] rounded-sm border border-silk bg-white pl-10 pr-3 py-2.5 text-sm font-mono text-center tracking-widest placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-fog">
+                    Entrez le code de votre application d&apos;authentification
+                  </p>
+                </div>
+              )}
+
               {error && (
                 <p className="text-sm text-rose">{error}</p>
               )}
@@ -159,7 +207,7 @@ function LoginForm() {
                 {loading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                Se connecter
+                {needs2FA ? "Vérifier" : "Se connecter"}
               </Button>
             </form>
 
