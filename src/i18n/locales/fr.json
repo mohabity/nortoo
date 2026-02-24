@@ -808,7 +808,10 @@
       "statusPending": "En attente",
       "statusInProgress": "En cours",
       "statusProcessed": "Traité",
-      "statusRejected": "Refusé"
+      "statusRejected": "Refusé",
+      "empty": "Aucune demande pour le moment",
+      "overdue": "En retard",
+      "duesSoon": "Bientôt dû"
     },
     "audit": {
       "title": "Journal d'audit",
@@ -817,6 +820,7 @@
       "override": "Override",
       "accessRequest": "Demande d'accès",
       "deletion": "Suppression",
+      "objection": "Opposition",
       "settings": "Paramètres",
       "login": "Connexion",
       "export": "Export",
@@ -824,8 +828,41 @@
       "merchant": "Marchand",
       "consumer": "Consommateur",
       "admin": "Admin",
-      "viewAll": "Voir tout le journal"
-    }
+      "viewAll": "Voir tout le journal",
+      "empty": "Aucun log pour le moment"
+    },
+    "actions": {
+      "title": "Actions sur les droits",
+      "subtitle": "Exécuter les droits Loi 09-08 pour un consommateur",
+      "accessBtn": "Droit d'accès",
+      "accessDesc": "Consulter les données d'un consommateur (Art. 7)",
+      "deleteBtn": "Suppression",
+      "deleteDesc": "Supprimer les données d'un consommateur (Art. 8)",
+      "opposeBtn": "Opposition",
+      "opposeDesc": "Enregistrer l'opposition d'un consommateur (Art. 9)",
+      "phoneLabel": "Numéro de téléphone",
+      "phonePlaceholder": "06 12 34 56 78",
+      "reasonLabel": "Motif (optionnel)",
+      "reasonPlaceholder": "Raison de la demande...",
+      "execute": "Exécuter",
+      "deleteConfirm": "Supprimer les données",
+      "opposeConfirm": "Enregistrer l'opposition",
+      "deleteSuccess": "Données supprimées avec succès",
+      "opposeSuccess": "Opposition enregistrée avec succès",
+      "deleteResult": "{count} commande(s) anonymisée(s), client supprimé",
+      "totalOrders": "Commandes",
+      "successful": "Livrées",
+      "failed": "Échouées",
+      "since": "Depuis",
+      "opposed": "Opposé",
+      "decision": "Décision"
+    },
+    "cndp": {
+      "required": "Déclaration CNDP requise",
+      "requiredDesc": "Votre traitement de données doit être déclaré auprès de la CNDP (Commission Nationale).",
+      "ref": "Déclaration CNDP :"
+    },
+    "publicForm": "Formulaire public"
   },
   "components": {
     "orderSlideOver": {

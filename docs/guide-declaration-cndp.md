@@ -34,7 +34,7 @@ Type de formalité : **Déclaration préalable** (Art. 12-15)
 | **(d) Destinataires** | Le marchand propriétaire de la commande (accès via dashboard authentifié) |
 | **(e) Transfert international** | Oui — Union Européenne (Allemagne, région Frankfurt) — Hébergeurs : Vercel Inc. et Neon Inc. |
 | **(f) Durée de conservation** | 24 mois pour les données personnelles identifiantes, puis anonymisation. Statistiques agrégées conservées sans limite. |
-| **(g) Exercice des droits** | Via formulaire web : https://nortoo.ma/data-rights — Ou par email : support@nortoo.ma — Délai : 10 jours ouvrables |
+| **(g) Exercice des droits** | Via formulaire web : https://app.nortoo.ma/data-rights — Ou par email : support@nortoo.ma — Délai : 10 jours ouvrables |
 | **(h) Mesures de sécurité** | HTTPS, hash SHA-256 (téléphones), chiffrement AES-256-GCM (tokens), authentification signée HMAC, rate limiting, audit log immuable, monitoring Sentry (sans PII) |
 | **(i) Interconnexions** | Interconnexion avec la plateforme YouCan (réception des commandes via webhook). Pas de cession de données à des tiers. |
 

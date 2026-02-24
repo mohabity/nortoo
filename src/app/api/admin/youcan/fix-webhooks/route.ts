@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://nortoo.ma";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.nortoo.ma";
   const results: Array<{
     merchantId: number;
     storeName: string | null;

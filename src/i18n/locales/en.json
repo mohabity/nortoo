@@ -808,7 +808,10 @@
       "statusPending": "Pending",
       "statusInProgress": "In progress",
       "statusProcessed": "Processed",
-      "statusRejected": "Rejected"
+      "statusRejected": "Rejected",
+      "empty": "No requests yet",
+      "overdue": "Overdue",
+      "duesSoon": "Due soon"
     },
     "audit": {
       "title": "Audit log",
@@ -817,6 +820,7 @@
       "override": "Override",
       "accessRequest": "Access request",
       "deletion": "Deletion",
+      "objection": "Objection",
       "settings": "Settings",
       "login": "Login",
       "export": "Export",
@@ -824,8 +828,41 @@
       "merchant": "Merchant",
       "consumer": "Consumer",
       "admin": "Admin",
-      "viewAll": "View full log"
-    }
+      "viewAll": "View full log",
+      "empty": "No logs yet"
+    },
+    "actions": {
+      "title": "Data rights actions",
+      "subtitle": "Execute Law 09-08 rights for a consumer",
+      "accessBtn": "Right of access",
+      "accessDesc": "View a consumer's data (Art. 7)",
+      "deleteBtn": "Deletion",
+      "deleteDesc": "Delete a consumer's data (Art. 8)",
+      "opposeBtn": "Objection",
+      "opposeDesc": "Register a consumer's objection (Art. 9)",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "06 12 34 56 78",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "Reason for the request...",
+      "execute": "Execute",
+      "deleteConfirm": "Delete data",
+      "opposeConfirm": "Register objection",
+      "deleteSuccess": "Data deleted successfully",
+      "opposeSuccess": "Objection registered successfully",
+      "deleteResult": "{count} order(s) anonymized, customer deleted",
+      "totalOrders": "Orders",
+      "successful": "Delivered",
+      "failed": "Failed",
+      "since": "Since",
+      "opposed": "Opposed",
+      "decision": "Decision"
+    },
+    "cndp": {
+      "required": "CNDP declaration required",
+      "requiredDesc": "Your data processing must be declared to the CNDP (National Commission).",
+      "ref": "CNDP Declaration:"
+    },
+    "publicForm": "Public form"
   },
   "components": {
     "orderSlideOver": {

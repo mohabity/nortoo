@@ -62,7 +62,7 @@ Base 25 → Client fiable -20/-10 → Recidiviste +30/+15 → Nouveau +10 → Mo
 - Prefix : `nt_live_` (nouvelles cles)
 - Legacy : `cp_live_` (anciennes cles, toujours acceptees)
 - Header : `x-nortoo-key` (legacy `x-codpilot-key` aussi accepte)
-- Domaine : nortoo.ma
+- Domaine : nortoo.ma (app sur app.nortoo.ma)
 
 ## Emails officiels
 
