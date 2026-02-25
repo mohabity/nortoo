@@ -9,6 +9,7 @@ import {
   XCircle,
   RefreshCw,
   Plus,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +65,7 @@ export default function AdminInvoicesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Pay modal
   const [payModal, setPayModal] = useState<Invoice | null>(null);
@@ -185,6 +187,18 @@ export default function AdminInvoicesPage() {
         </div>
       )}
 
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Rechercher par n° facture ou marchand..."
+          className="w-full h-10 bg-[#0F172A] border border-[#334155] text-white text-sm rounded-sm pl-10 pr-4 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+        />
+      </div>
+
       {/* Filters */}
       <div className="flex items-center gap-2">
         {["all", "pending", "paid", "overdue", "cancelled"].map((s) => (
@@ -217,14 +231,23 @@ export default function AdminInvoicesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1E293B]">
-            {invoicesList.length === 0 ? (
+            {(() => {
+              const filtered = searchQuery
+                ? invoicesList.filter(
+                    (inv) =>
+                      inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      inv.merchantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      inv.merchantEmail.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                : invoicesList;
+              return filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
                   Aucune facture
                 </td>
               </tr>
             ) : (
-              invoicesList.map((inv) => (
+              filtered.map((inv) => (
                 <tr key={inv.id} className="bg-[#0F172A] hover:bg-[#1E293B]/50 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs text-white">{inv.invoiceNumber}</td>
                   <td className="px-4 py-3">
@@ -277,7 +300,8 @@ export default function AdminInvoicesPage() {
                   </td>
                 </tr>
               ))
-            )}
+            );
+            })()}
           </tbody>
         </table>
       </div>

@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { merchants } from "@/db/schema";
-import { count, eq, desc, asc, sql, gte, lte, ilike, or } from "drizzle-orm";
+import { eq, desc, asc, sql, gte, lte, ilike, or } from "drizzle-orm";
 import { isAdmin } from "@/lib/admin-auth";
 import { z } from "zod";
 
 const querySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  per_page: z.coerce.number().int().min(1).max(100).default(20),
   plan: z.enum(["trial", "starter", "pro", "scale"]).optional(),
   status: z.enum(["trial", "active", "past_due", "cancelled"]).optional(),
   search: z.string().optional(),
@@ -19,8 +17,8 @@ const querySchema = z.object({
 });
 
 /**
- * GET /api/admin/merchants
- * Paginated merchant list with filters.
+ * GET /api/admin/merchants/export
+ * CSV export of merchants (same filters as list endpoint).
  */
 export async function GET(request: Request) {
   if (!(await isAdmin(request))) {
@@ -31,7 +29,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const params = querySchema.parse(Object.fromEntries(url.searchParams));
 
-    // Build conditions
+    // Build conditions (same logic as list endpoint)
     const conditions = [];
     if (params.plan) {
       conditions.push(eq(merchants.plan, params.plan));
@@ -70,17 +68,7 @@ export async function GET(request: Request) {
     };
     const orderBy = sortMap[params.sort];
 
-    // Count total
-    const [totalResult] = await db
-      .select({ total: count() })
-      .from(merchants)
-      .where(whereClause);
-
-    const total = totalResult?.total ?? 0;
-    const totalPages = Math.ceil(total / params.per_page);
-    const offset = (params.page - 1) * params.per_page;
-
-    // Fetch merchants
+    // Fetch all matching merchants (no pagination)
     const data = await db
       .select({
         id: merchants.id,
@@ -94,17 +82,30 @@ export async function GET(request: Request) {
       })
       .from(merchants)
       .where(whereClause)
-      .orderBy(orderBy)
-      .limit(params.per_page)
-      .offset(offset);
+      .orderBy(orderBy);
 
-    return NextResponse.json({
-      data,
-      meta: {
-        page: params.page,
-        perPage: params.per_page,
-        total,
-        totalPages,
+    // Build CSV
+    const headers = ["id", "name", "email", "plan", "billingStatus", "currentMonthOrders", "trialEndsAt", "createdAt"];
+    const rows = data.map((m) =>
+      [
+        m.id,
+        `"${(m.name ?? "").replace(/"/g, '""')}"`,
+        `"${(m.email ?? "").replace(/"/g, '""')}"`,
+        m.plan,
+        m.billingStatus,
+        m.currentMonthOrders,
+        m.trialEndsAt ? new Date(m.trialEndsAt).toISOString() : "",
+        new Date(m.createdAt).toISOString(),
+      ].join(",")
+    );
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const date = new Date().toISOString().slice(0, 10);
+
+    return new Response(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="merchants-${date}.csv"`,
       },
     });
   } catch (err) {
@@ -114,7 +115,7 @@ export async function GET(request: Request) {
         { status: 400 }
       );
     }
-    console.error("[Admin Merchants] Error:", err);
+    console.error("[Admin Merchants Export] Error:", err);
     return NextResponse.json(
       { error: "Internal error" },
       { status: 500 }

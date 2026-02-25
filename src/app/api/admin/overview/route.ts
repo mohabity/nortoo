@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
-import { merchants, orders } from "@/db/schema";
-import { count, eq, sql, gte, and, desc } from "drizzle-orm";
+import { merchants, orders, invoices, auditLogs } from "@/db/schema";
+import { count, eq, sql, gte, lte, and, desc } from "drizzle-orm";
 import { isAdmin } from "@/lib/admin-auth";
 import { PLAN_CONFIGS, type PlanId } from "@/lib/plans";
 
@@ -18,6 +18,10 @@ export async function GET(request: Request) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Dates for alerts (trials expiring within 3 days)
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+
     const [
       totalResult,
       planCounts,
@@ -25,6 +29,9 @@ export async function GET(request: Request) {
       orders30dResult,
       blocked30dResult,
       topMerchants,
+      mrrHistory,
+      recentActivity,
+      expiringTrials,
     ] = await Promise.all([
       // 1. Total merchants
       db.select({ total: count() }).from(merchants),
@@ -82,6 +89,51 @@ export async function GET(request: Request) {
         .from(merchants)
         .orderBy(desc(merchants.currentMonthOrders))
         .limit(10),
+
+      // 7. MRR history — paid invoices grouped by month (last 6 months)
+      db
+        .select({
+          month: invoices.period,
+          total: sql<number>`SUM(${invoices.amountTTC})`,
+        })
+        .from(invoices)
+        .where(eq(invoices.status, "paid"))
+        .groupBy(invoices.period)
+        .orderBy(desc(invoices.period))
+        .limit(6),
+
+      // 8. Recent admin activity (last 10 actions)
+      db
+        .select({
+          id: auditLogs.id,
+          actor: auditLogs.actor,
+          action: auditLogs.action,
+          targetType: auditLogs.targetType,
+          targetId: auditLogs.targetId,
+          details: auditLogs.details,
+          createdAt: auditLogs.createdAt,
+        })
+        .from(auditLogs)
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(10),
+
+      // 9. Trials expiring within 3 days
+      db
+        .select({
+          id: merchants.id,
+          name: merchants.name,
+          email: merchants.email,
+          trialEndsAt: merchants.trialEndsAt,
+        })
+        .from(merchants)
+        .where(
+          and(
+            eq(merchants.billingStatus, "trial"),
+            lte(merchants.trialEndsAt, threeDaysFromNow),
+            gte(merchants.trialEndsAt, new Date())
+          )
+        )
+        .orderBy(merchants.trialEndsAt),
     ]);
 
     // Aggregate plan counts into a record
@@ -123,6 +175,12 @@ export async function GET(request: Request) {
         planCounts: planCountsMap,
         billingCounts: billingCountsMap,
         topMerchants,
+        mrrHistory: mrrHistory.reverse().map((r) => ({
+          month: r.month,
+          total: Number(r.total ?? 0) / 100, // centimes → DH
+        })),
+        recentActivity,
+        expiringTrials,
       },
     });
   } catch (err) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Loader2,
@@ -10,6 +10,8 @@ import {
   CalendarPlus,
   Power,
   PowerOff,
+  Search,
+  Download,
 } from "lucide-react";
 import { PlanBadge, StatusBadge } from "@/components/admin/admin-badges";
 import { getOrderLimit } from "@/lib/plans";
@@ -68,6 +70,21 @@ function MerchantsContent() {
   const [sort, setSort] = useState(
     searchParams.get("sort") ?? "created_desc"
   );
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [searchInput, setSearchInput] = useState(searchParams.get("search") ?? "");
+  const [createdAfter, setCreatedAfter] = useState("");
+  const [createdBefore, setCreatedBefore] = useState("");
+
+  // Debounce search
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  function handleSearchInput(value: string) {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearch(value);
+      setPage(1);
+    }, 300);
+  }
 
   const fetchMerchants = useCallback(async () => {
     setLoading(true);
@@ -77,6 +94,9 @@ function MerchantsContent() {
       params.set("per_page", "20");
       if (planFilter) params.set("plan", planFilter);
       if (statusFilter) params.set("status", statusFilter);
+      if (search) params.set("search", search);
+      if (createdAfter) params.set("created_after", createdAfter);
+      if (createdBefore) params.set("created_before", createdBefore);
       params.set("sort", sort);
 
       const res = await fetch(`/api/admin/merchants?${params}`);
@@ -95,11 +115,35 @@ function MerchantsContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, planFilter, statusFilter, sort, router]);
+  }, [page, planFilter, statusFilter, sort, search, createdAfter, createdBefore, router]);
 
   useEffect(() => {
     fetchMerchants();
   }, [fetchMerchants]);
+
+  // CSV Export
+  async function handleExport() {
+    const params = new URLSearchParams();
+    if (planFilter) params.set("plan", planFilter);
+    if (statusFilter) params.set("status", statusFilter);
+    if (search) params.set("search", search);
+    if (createdAfter) params.set("created_after", createdAfter);
+    if (createdBefore) params.set("created_before", createdBefore);
+    params.set("sort", sort);
+
+    const res = await fetch(`/api/admin/merchants/export?${params}`);
+    if (!res.ok) return;
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `merchants-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   // Actions
   async function executeAction(
@@ -115,7 +159,7 @@ function MerchantsContent() {
         body: JSON.stringify({ action, ...payload }),
       });
       if (res.ok) {
-        await fetchMerchants(); // Refresh list
+        await fetchMerchants();
       }
     } catch {
       // Silently handle
@@ -126,12 +170,24 @@ function MerchantsContent() {
 
   function quotaPercent(m: Merchant): string {
     const limit = getOrderLimit(m.plan);
-    if (limit === 0) return "∞";
+    if (limit === 0) return "\u221E";
     return `${Math.min(Math.round((m.currentMonthOrders / limit) * 100), 100)}%`;
   }
 
   return (
     <div className="space-y-4">
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fog" />
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => handleSearchInput(e.target.value)}
+          placeholder="Rechercher par nom ou email..."
+          className="w-full h-10 bg-midnight border border-slate text-white text-sm rounded-sm pl-10 pr-4 placeholder:text-fog/40 focus:outline-none focus:ring-1 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+        />
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <select
@@ -170,13 +226,39 @@ function MerchantsContent() {
           <option value="name_desc">Name Z-A</option>
         </select>
 
-        <button
-          onClick={fetchMerchants}
-          disabled={loading}
-          className="ml-auto flex items-center gap-2 px-3 py-1.5 text-sm text-mist hover:text-white border border-slate rounded-sm transition-colors"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-        </button>
+        {/* Date filters */}
+        <input
+          type="date"
+          value={createdAfter}
+          onChange={(e) => { setCreatedAfter(e.target.value); setPage(1); }}
+          title="Créé après"
+          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-2 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+        />
+        <input
+          type="date"
+          value={createdBefore}
+          onChange={(e) => { setCreatedBefore(e.target.value); setPage(1); }}
+          title="Créé avant"
+          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-2 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+        />
+
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            title="Exporter CSV"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-mist hover:text-white border border-slate rounded-sm transition-colors"
+          >
+            <Download className="w-3.5 h-3.5" />
+            CSV
+          </button>
+          <button
+            onClick={fetchMerchants}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-mist hover:text-white border border-slate rounded-sm transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -219,7 +301,8 @@ function MerchantsContent() {
               {merchants.map((m) => (
                 <tr
                   key={m.id}
-                  className="border-b border-slate/50 hover:bg-slate/20 transition-colors"
+                  onClick={() => router.push(`/admin/merchants/${m.id}`)}
+                  className="border-b border-slate/50 hover:bg-slate/20 cursor-pointer transition-colors"
                 >
                   <td className="px-4 py-3 text-white font-medium">{m.name}</td>
                   <td className="px-4 py-3 text-fog hidden md:table-cell">{m.email}</td>
@@ -238,7 +321,7 @@ function MerchantsContent() {
                   <td className="px-4 py-3 text-right text-fog hidden lg:table-cell">
                     {new Date(m.createdAt).toLocaleDateString("fr-FR")}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       {/* Change plan dropdown */}
                       <select
@@ -257,7 +340,7 @@ function MerchantsContent() {
                           .filter((p) => p !== m.plan)
                           .map((p) => (
                             <option key={p} value={p}>
-                              → {p}
+                              &rarr; {p}
                             </option>
                           ))}
                       </select>
