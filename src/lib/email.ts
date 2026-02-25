@@ -5,6 +5,7 @@ import * as React from "react";
 // Email components
 import { PasswordReset } from "@/emails/PasswordReset";
 import { EmailVerification } from "@/emails/EmailVerification";
+import { Welcome } from "@/emails/Welcome";
 import { TeamInvite } from "@/emails/TeamInvite";
 import { WeeklyReport as WeeklyReportComponent } from "@/emails/WeeklyReport";
 import { Invoice } from "@/emails/Invoice";
@@ -71,6 +72,17 @@ export async function buildPasswordResetEmail(resetUrl: string) {
 
 export async function buildEmailVerificationEmail(verifyUrl: string) {
   const element = React.createElement(EmailVerification, { verifyUrl });
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  return { html, text };
+}
+
+// ═══════════════════════════════════════════════════════════
+// WELCOME
+// ═══════════════════════════════════════════════════════════
+
+export async function buildWelcomeEmail(name: string, dashboardUrl: string) {
+  const element = React.createElement(Welcome, { name, dashboardUrl });
   const html = await render(element);
   const text = await render(element, { plainText: true });
   return { html, text };

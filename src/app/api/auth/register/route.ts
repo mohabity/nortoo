@@ -6,6 +6,7 @@ import { merchants, users, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import { buildWelcomeEmail, sendEmail } from "@/lib/email";
 import { authLimiter, getClientIp, isRateLimitConfigured } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
@@ -140,6 +141,18 @@ export async function POST(request: Request) {
 
   // Send verification email (non-blocking — don't fail registration)
   sendVerificationEmail(newMerchant.id, email).catch(() => {});
+
+  // Send welcome email (non-blocking)
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.nortoo.ma";
+  buildWelcomeEmail(name, `${APP_URL}/dashboard`)
+    .then((built) =>
+      sendEmail({
+        to: email,
+        subject: "Bienvenue sur nortoo — votre essai de 14 jours commence !",
+        ...built,
+      })
+    )
+    .catch(() => {});
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }
