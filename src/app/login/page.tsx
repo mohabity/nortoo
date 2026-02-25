@@ -28,7 +28,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/dashboard";
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const oauthError = searchParams.get("error") ?? "";
 
@@ -97,7 +97,7 @@ function LoginForm() {
         {/* Back to landing */}
         <div className="mb-6">
           <a
-            href="https://nortoo.ma"
+            href={`https://nortoo.ma?lang=${locale}`}
             className="inline-flex items-center gap-1.5 text-sm text-fog hover:text-slate transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

@@ -11,7 +11,7 @@ import { useTranslation } from "@/i18n/provider";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -85,7 +85,7 @@ export default function RegisterPage() {
         {/* Back to landing */}
         <div className="mb-6">
           <a
-            href="https://nortoo.ma"
+            href={`https://nortoo.ma?lang=${locale}`}
             className="inline-flex items-center gap-1.5 text-sm text-fog hover:text-slate transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
