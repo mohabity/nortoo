@@ -69,12 +69,16 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
   const [dict, setDict] = useState<Record<string, unknown>>(dictionaries[DEFAULT_LOCALE]);
 
-  // Initialize from cookie or browser language
+  // Initialize: URL param ?lang= > cookie > browser language > default
   useEffect(() => {
+    const urlLang = new URLSearchParams(window.location.search).get("lang") as Locale | null;
     const cookieLocale = getCookie(COOKIE_NAME) as Locale | null;
     let initialLocale: Locale = DEFAULT_LOCALE;
 
-    if (cookieLocale && LOCALES.includes(cookieLocale)) {
+    if (urlLang && LOCALES.includes(urlLang)) {
+      initialLocale = urlLang;
+      setCookie(COOKIE_NAME, initialLocale, 365);
+    } else if (cookieLocale && LOCALES.includes(cookieLocale)) {
       initialLocale = cookieLocale;
     } else if (typeof navigator !== "undefined") {
       const browserLang = navigator.language || "";

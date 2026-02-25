@@ -23,7 +23,7 @@ const APP_URL = "https://app.nortoo.ma";
  * Bilingual (FR/EN) via useTranslation() · Light theme
  */
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   return (
     <div className="min-h-screen bg-white text-[#1E293B]">
@@ -38,9 +38,9 @@ export default function Home() {
             <a href="#pricing" className="hover:text-[#0B0F1A] transition">{t("landing.nav.pricing")}</a>
             <a href="#faq" className="hover:text-[#0B0F1A] transition">{t("landing.nav.faq")}</a>
             <LanguageSwitcher />
-            <a href={`${APP_URL}/login`} className="hover:text-[#0B0F1A] transition">{t("landing.nav.signIn")}</a>
+            <a href={`${APP_URL}/login?lang=${locale}`} className="hover:text-[#0B0F1A] transition">{t("landing.nav.signIn")}</a>
             <a
-              href={`${APP_URL}/register`}
+              href={`${APP_URL}/register?lang=${locale}`}
               className="bg-[#00E5A0] text-[#0B0F1A] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#00C78A] transition"
             >
               {t("landing.nav.getStarted")}
@@ -48,9 +48,9 @@ export default function Home() {
           </div>
           <div className="md:hidden flex items-center gap-3">
             <LanguageSwitcher />
-            <a href={`${APP_URL}/login`} className="text-sm text-[#64748B] hover:text-[#0B0F1A]">{t("landing.nav.signIn")}</a>
+            <a href={`${APP_URL}/login?lang=${locale}`} className="text-sm text-[#64748B] hover:text-[#0B0F1A]">{t("landing.nav.signIn")}</a>
             <a
-              href={`${APP_URL}/register`}
+              href={`${APP_URL}/register?lang=${locale}`}
               className="bg-[#00E5A0] text-[#0B0F1A] px-3 py-1.5 rounded-lg font-semibold text-xs"
             >
               {t("landing.nav.getStarted")}
@@ -82,7 +82,7 @@ export default function Home() {
               {t("landing.hero.ctaYoucan")}
             </a>
             <a
-              href={`${APP_URL}/register`}
+              href={`${APP_URL}/register?lang=${locale}`}
               className="inline-flex items-center justify-center gap-2 border border-[#E2E8F0] text-[#1E293B] px-6 py-3.5 rounded-xl font-semibold hover:bg-[#F8FAFC] transition text-sm"
             >
               {t("landing.hero.ctaRegister")}
@@ -306,7 +306,7 @@ export default function Home() {
                   ))}
                 </ul>
                 <a
-                  href={`${APP_URL}/register`}
+                  href={`${APP_URL}/register?lang=${locale}`}
                   className={`block text-center py-2.5 rounded-xl text-sm font-semibold transition ${
                     plan.highlight
                       ? "bg-[#00E5A0] text-[#0B0F1A] hover:bg-[#00C78A]"
@@ -363,7 +363,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href={`${APP_URL}/register`}
+              href={`${APP_URL}/register?lang=${locale}`}
               className="inline-flex items-center justify-center gap-2 bg-[#00E5A0] text-[#0B0F1A] px-6 py-3.5 rounded-xl font-bold hover:bg-[#00C78A] transition text-sm"
             >
               {t("landing.cta.button")}
