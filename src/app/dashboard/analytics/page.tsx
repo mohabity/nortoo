@@ -56,6 +56,13 @@ interface SavingsApiData {
   };
   topProducts: { name: string; saved: number; count: number }[];
   topCities: { name: string; saved: number; count: number }[];
+  // WoW deltas for all KPIs
+  rtoRate: number;
+  rtoRateDelta: number;
+  deliveryRate: number;
+  deliveryRateDelta: number;
+  deliveredCount: number;
+  roiDelta: number | null;
   period: { days: number; from: string; to: string };
 }
 
@@ -873,12 +880,19 @@ export default function AnalyticsPage() {
           </div>
           <div className="mt-3">
             <p className="font-display text-2xl font-bold text-midnight">
-              {rtoRate}<span className="text-base font-semibold text-fog">%</span>
+              {savingsData?.rtoRate ?? rtoRate}<span className="text-base font-semibold text-fog">%</span>
             </p>
-            <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", rtoDelta <= 0 ? "text-mint-deep" : "text-rose")}>
-              {rtoDelta <= 0 ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
-              {rtoDelta} {t("analytics.kpi.ptsVsBaseline")} ({baseline}%)
-            </p>
+            {savingsData ? (
+              <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", savingsData.rtoRateDelta <= 0 ? "text-mint-deep" : "text-rose")}>
+                {savingsData.rtoRateDelta <= 0 ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
+                {savingsData.rtoRateDelta > 0 ? "+" : ""}{savingsData.rtoRateDelta} {t("analytics.kpi.ptsVsPreviousPeriod")}
+              </p>
+            ) : (
+              <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", rtoDelta <= 0 ? "text-mint-deep" : "text-rose")}>
+                {rtoDelta <= 0 ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
+                {rtoDelta} {t("analytics.kpi.ptsVsBaseline")} ({baseline}%)
+              </p>
+            )}
           </div>
         </div>
 
@@ -892,12 +906,19 @@ export default function AnalyticsPage() {
           </div>
           <div className="mt-3">
             <p className="font-display text-2xl font-bold text-midnight">
-              {deliveryRate}<span className="text-base font-semibold text-fog">%</span>
+              {savingsData?.deliveryRate ?? deliveryRate}<span className="text-base font-semibold text-fog">%</span>
             </p>
-            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-mint-deep">
-              <ArrowUpRight className="h-3 w-3" />
-              {formatNumber(totalDelivered, locale)} {t("analytics.kpi.deliveredOrders")}
-            </p>
+            {savingsData ? (
+              <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", savingsData.deliveryRateDelta >= 0 ? "text-mint-deep" : "text-rose")}>
+                {savingsData.deliveryRateDelta >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                {savingsData.deliveryRateDelta >= 0 ? "+" : ""}{savingsData.deliveryRateDelta} {t("analytics.kpi.ptsVsPreviousPeriod")}
+              </p>
+            ) : (
+              <p className="mt-1 flex items-center gap-1 text-xs font-medium text-mint-deep">
+                <ArrowUpRight className="h-3 w-3" />
+                {formatNumber(totalDelivered, locale)} {t("analytics.kpi.deliveredOrders")}
+              </p>
+            )}
           </div>
         </div>
 
@@ -911,11 +932,18 @@ export default function AnalyticsPage() {
           </div>
           <div className="mt-3">
             <p className="font-display text-2xl font-bold text-midnight">{roiDisplay}</p>
-            <p className="mt-1 text-xs font-medium text-fog">
-              {savingsData?.projectedMonthlySaved
-                ? `${formatNumber(savingsData.projectedMonthlySaved, locale)} ${t("analytics.kpi.projectedMonthly")}`
-                : "—"}
-            </p>
+            {savingsData?.roiDelta != null ? (
+              <p className={cn("mt-1 flex items-center gap-1 text-xs font-medium", savingsData.roiDelta >= 0 ? "text-mint-deep" : "text-rose")}>
+                {savingsData.roiDelta >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                {savingsData.roiDelta >= 0 ? "+" : ""}{savingsData.roiDelta}× {t("analytics.kpi.vsPreviousPeriod")}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs font-medium text-fog">
+                {savingsData?.projectedMonthlySaved
+                  ? `${formatNumber(savingsData.projectedMonthlySaved, locale)} ${t("analytics.kpi.projectedMonthly")}`
+                  : "—"}
+              </p>
+            )}
           </div>
         </div>
       </div>

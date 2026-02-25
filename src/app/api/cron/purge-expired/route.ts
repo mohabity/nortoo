@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { customers, orders, auditLogs, merchants } from "@/db/schema";
 import { and, eq, lt, sql, isNotNull } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
+import { withCronMonitoring } from "@/lib/cron-monitor";
 
 /**
  * GET /api/cron/purge-expired
@@ -19,108 +20,110 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const now = new Date();
-  let purgedCustomers = 0;
-  let purgedOrders = 0;
-
   try {
-    // ── 1. Find expired customers (retentionExpiresAt < now) ──
-    const expiredCustomers = await db
-      .select({ id: customers.id, merchantId: customers.merchantId })
-      .from(customers)
-      .where(
-        and(
-          isNotNull(customers.retentionExpiresAt),
-          lt(customers.retentionExpiresAt, now)
+    const result = await withCronMonitoring("purge-expired", async () => {
+      const now = new Date();
+      let purgedCustomers = 0;
+      let purgedOrders = 0;
+
+      // ── 1. Find expired customers (retentionExpiresAt < now) ──
+      const expiredCustomers = await db
+        .select({ id: customers.id, merchantId: customers.merchantId })
+        .from(customers)
+        .where(
+          and(
+            isNotNull(customers.retentionExpiresAt),
+            lt(customers.retentionExpiresAt, now)
+          )
         )
-      )
-      .limit(500);
+        .limit(500);
 
-    for (const customer of expiredCustomers) {
-      try {
-        // Audit log BEFORE deletion (Art. 23)
-        await db.insert(auditLogs).values({
-          merchantId: customer.merchantId,
-          actor: "system",
-          action: "data_purge",
-          targetType: "customer",
-          targetId: String(customer.id),
-          details: JSON.stringify({
-            reason: "retention_expired",
-            purgedAt: now.toISOString(),
-          }),
-        });
+      for (const customer of expiredCustomers) {
+        try {
+          // Audit log BEFORE deletion (Art. 23)
+          await db.insert(auditLogs).values({
+            merchantId: customer.merchantId,
+            actor: "system",
+            action: "data_purge",
+            targetType: "customer",
+            targetId: String(customer.id),
+            details: JSON.stringify({
+              reason: "retention_expired",
+              purgedAt: now.toISOString(),
+            }),
+          });
 
-        await db.delete(customers).where(eq(customers.id, customer.id));
-        purgedCustomers++;
-      } catch (err) {
-        console.error(
-          `[purge-expired] Failed to purge customer ${customer.id}:`,
-          err
-        );
+          await db.delete(customers).where(eq(customers.id, customer.id));
+          purgedCustomers++;
+        } catch (err) {
+          console.error(
+            `[purge-expired] Failed to purge customer ${customer.id}:`,
+            err
+          );
+        }
       }
-    }
 
-    // ── 2. Find expired orders (retentionExpiresAt < now) ──
-    const expiredOrders = await db
-      .select({ id: orders.id, merchantId: orders.merchantId })
-      .from(orders)
-      .where(
-        and(
-          isNotNull(orders.retentionExpiresAt),
-          lt(orders.retentionExpiresAt, now)
+      // ── 2. Find expired orders (retentionExpiresAt < now) ──
+      const expiredOrders = await db
+        .select({ id: orders.id, merchantId: orders.merchantId })
+        .from(orders)
+        .where(
+          and(
+            isNotNull(orders.retentionExpiresAt),
+            lt(orders.retentionExpiresAt, now)
+          )
         )
-      )
-      .limit(500);
+        .limit(500);
 
-    for (const order of expiredOrders) {
-      try {
-        // Audit log BEFORE deletion (Art. 23)
-        await db.insert(auditLogs).values({
-          merchantId: order.merchantId,
-          actor: "system",
-          action: "data_purge",
-          targetType: "order",
-          targetId: String(order.id),
-          details: JSON.stringify({
-            reason: "retention_expired",
-            purgedAt: now.toISOString(),
-          }),
-        });
+      for (const order of expiredOrders) {
+        try {
+          // Audit log BEFORE deletion (Art. 23)
+          await db.insert(auditLogs).values({
+            merchantId: order.merchantId,
+            actor: "system",
+            action: "data_purge",
+            targetType: "order",
+            targetId: String(order.id),
+            details: JSON.stringify({
+              reason: "retention_expired",
+              purgedAt: now.toISOString(),
+            }),
+          });
 
-        await db.delete(orders).where(eq(orders.id, order.id));
-        purgedOrders++;
-      } catch (err) {
-        console.error(
-          `[purge-expired] Failed to purge order ${order.id}:`,
-          err
-        );
+          await db.delete(orders).where(eq(orders.id, order.id));
+          purgedOrders++;
+        } catch (err) {
+          console.error(
+            `[purge-expired] Failed to purge order ${order.id}:`,
+            err
+          );
+        }
       }
-    }
 
-    // ── 3. Cleanup old audit logs (> merchant.dataRetentionMonths) ──
-    // Audit logs older than 24 months (default) are purged to limit DB growth.
-    // We use a global cutoff of 24 months since per-merchant would be expensive.
-    const retentionCutoff = new Date(now);
-    retentionCutoff.setMonth(retentionCutoff.getMonth() - 24);
+      // ── 3. Cleanup old audit logs (> merchant.dataRetentionMonths) ──
+      // Audit logs older than 24 months (default) are purged to limit DB growth.
+      // We use a global cutoff of 24 months since per-merchant would be expensive.
+      const retentionCutoff = new Date(now);
+      retentionCutoff.setMonth(retentionCutoff.getMonth() - 24);
 
-    const purgedAuditLogs = await db
-      .delete(auditLogs)
-      .where(lt(auditLogs.createdAt, retentionCutoff))
-      .returning({ id: auditLogs.id });
+      const purgedAuditLogs = await db
+        .delete(auditLogs)
+        .where(lt(auditLogs.createdAt, retentionCutoff))
+        .returning({ id: auditLogs.id });
 
-    console.log(
-      `[purge-expired] Purged: ${purgedCustomers} customers, ${purgedOrders} orders, ${purgedAuditLogs.length} audit logs`
-    );
+      console.log(
+        `[purge-expired] Purged: ${purgedCustomers} customers, ${purgedOrders} orders, ${purgedAuditLogs.length} audit logs`
+      );
 
-    return NextResponse.json({
-      data: {
+      return {
         purgedCustomers,
         purgedOrders,
         purgedAuditLogs: purgedAuditLogs.length,
         timestamp: now.toISOString(),
-      },
+      };
     });
+
+    return NextResponse.json({ data: result });
   } catch (err) {
     console.error("[purge-expired] Critical error:", err);
     return NextResponse.json(

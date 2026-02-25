@@ -140,7 +140,7 @@ export async function POST(request: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const inviteUrl = `${baseUrl}/invite?token=${rawToken}`;
     const roleLabel = ROLE_LABELS[role as Role] ?? role;
-    const { html, text } = buildTeamInviteEmail(
+    const { html, text } = await buildTeamInviteEmail(
       inviteUrl,
       merchant?.name ?? "nortoo",
       roleLabel

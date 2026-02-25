@@ -41,11 +41,12 @@ export async function POST(request: NextRequest) {
     // ── Rate limit by IP (5 req/hour) ──
     if (isRateLimitConfigured()) {
       const ip = getClientIp(request);
-      const { success } = await authLimiter.limit(`data-rights:${ip}`);
+      const { success, reset } = await authLimiter.limit(`data-rights:${ip}`);
       if (!success) {
+        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
         return NextResponse.json(
           { error: "Trop de demandes. Réessayez dans quelques minutes." },
-          { status: 429 }
+          { status: 429, headers: { "Retry-After": String(retryAfter) } }
         );
       }
     }
@@ -121,13 +122,13 @@ export async function POST(request: NextRequest) {
       year: "numeric",
     });
 
-    const confirmEmail = buildDataRightsConfirmationEmail({
+    const confirmEmail = await buildDataRightsConfirmationEmail({
       reference,
       typeLabel: typeLabels[type],
       deadline: deadlineStr,
     });
 
-    const notifEmail = buildDataRightsNotificationEmail({
+    const notifEmail = await buildDataRightsNotificationEmail({
       reference,
       typeLabel: typeLabels[type],
       phoneHashPartial: phoneHash.slice(0, 12) + "...",

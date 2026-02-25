@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono, Noto_Sans_Arabic } from "next/font/google";
 import { I18nProvider } from "@/i18n/provider";
 import { CookieBanner } from "@/components/CookieBanner";
 import "./globals.css";
@@ -20,6 +20,12 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--f-mono",
+  display: "swap",
+});
+
+const notoSansArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  variable: "--f-arabic",
   display: "swap",
 });
 
@@ -54,7 +60,9 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${outfit.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
+      dir="ltr"
+      suppressHydrationWarning
+      className={`${outfit.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} ${notoSansArabic.variable}`}
     >
       <body className="font-body">
         <I18nProvider>{children}</I18nProvider>

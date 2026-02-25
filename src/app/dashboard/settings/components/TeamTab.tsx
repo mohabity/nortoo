@@ -113,6 +113,9 @@ export function TeamTab({ onToast }: BaseTabProps) {
         setInviteName("");
         setInviteRole("operator");
         await fetchTeam();
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
       } else {
         onToast("error", json.error ?? t("settings.team.inviteError"));
       }

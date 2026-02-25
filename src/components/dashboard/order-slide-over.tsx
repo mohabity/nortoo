@@ -29,68 +29,7 @@ import { useTranslation } from "@/i18n/provider";
 import { formatDate, formatCurrency } from "@/lib/i18n-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/use-permissions";
-
-// ── Types ──
-
-interface ScoringFactor {
-  rule: string;
-  points: number;
-  reason: string;
-}
-
-interface CustomerData {
-  id: number;
-  name: string | null;
-  city: string | null;
-  phoneLast4: string | null;
-  totalOrders: number;
-  successfulOrders: number;
-  failedOrders: number;
-  firstSeen: string;
-}
-
-interface OrderDetail {
-  id: number;
-  externalRef: string | null;
-  customerName: string | null;
-  customerPhoneLast4: string | null;
-  productName: string | null;
-  total: number;
-  currency: string;
-  shippingCity: string | null;
-  shippingAddress: string | null;
-  parsedCity: string | null;
-  parsedZone: string | null;
-  parsedPostalCode: string | null;
-  addressConfidence: number | null;
-  fraudScore: number;
-  riskLevel: string;
-  decision: string;
-  overrideDecision: string | null;
-  overrideBy: string | null;
-  overrideReason: string | null;
-  overrideAt: string | null;
-  deliveryStatus: string;
-  pipelineStatus: string;
-  pipelineProcessedAt: string | null;
-  reviewDeadline: string | null;
-  escalatedAt: string | null;
-  escalationPriority: number | null;
-  merchantNotifiedAt: string | null;
-  scoringVersion: string | null;
-  scoreExplanation: {
-    summary: string;
-    factors: string[];
-    tip: string | null;
-    emoji: string;
-    confidenceLabel: string;
-  } | null;
-  createdAt: string;
-  scoredAt: string;
-  scoringFactors: ScoringFactor[];
-  confidence: number;
-  customer: CustomerData | null;
-}
+import type { OrderDetail, ScoringFactor, CustomerData } from "@/types/orders";
 
 // ── Helpers ──
 
@@ -236,7 +175,9 @@ export function OrderSlideOver({
         side={isMobile ? "bottom" : "right"}
         className={cn(
           "overflow-y-auto p-0",
-          isMobile && "h-[95vh] rounded-t-2xl"
+          isMobile
+            ? "h-[95vh] rounded-t-2xl"
+            : "w-full max-w-[680px]"
         )}
       >
         {/* Drag handle on mobile */}

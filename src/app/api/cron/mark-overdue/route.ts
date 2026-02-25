@@ -5,6 +5,7 @@ import { and, eq, lt } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { sendEmail, buildOverdueEmail } from "@/lib/email";
 import { formatAmountDH, BANK_INFO } from "@/lib/billing-config";
+import { withCronMonitoring } from "@/lib/cron-monitor";
 
 /**
  * GET /api/cron/mark-overdue
@@ -19,80 +20,81 @@ export async function GET(request: Request) {
   }
 
   try {
-    const now = new Date();
+    const result = await withCronMonitoring("mark-overdue", async () => {
+      const now = new Date();
 
-    // Find pending invoices past due date
-    const overdueInvoices = await db
-      .select({
-        id: invoices.id,
-        merchantId: invoices.merchantId,
-        invoiceNumber: invoices.invoiceNumber,
-        amountTTC: invoices.amountTTC,
-        dueDate: invoices.dueDate,
-      })
-      .from(invoices)
-      .where(
-        and(
-          eq(invoices.status, "pending"),
-          lt(invoices.dueDate, now)
-        )
-      );
+      // Find pending invoices past due date
+      const overdueInvoices = await db
+        .select({
+          id: invoices.id,
+          merchantId: invoices.merchantId,
+          invoiceNumber: invoices.invoiceNumber,
+          amountTTC: invoices.amountTTC,
+          dueDate: invoices.dueDate,
+        })
+        .from(invoices)
+        .where(
+          and(
+            eq(invoices.status, "pending"),
+            lt(invoices.dueDate, now)
+          )
+        );
 
-    let marked = 0;
+      let marked = 0;
 
-    for (const inv of overdueInvoices) {
-      // Mark as overdue
-      await db
-        .update(invoices)
-        .set({ status: "overdue" })
-        .where(eq(invoices.id, inv.id));
+      for (const inv of overdueInvoices) {
+        // Mark as overdue
+        await db
+          .update(invoices)
+          .set({ status: "overdue" })
+          .where(eq(invoices.id, inv.id));
 
-      // Set merchant billing status to past_due
-      await db
-        .update(merchants)
-        .set({ billingStatus: "past_due", updatedAt: now })
-        .where(eq(merchants.id, inv.merchantId));
+        // Set merchant billing status to past_due
+        await db
+          .update(merchants)
+          .set({ billingStatus: "past_due", updatedAt: now })
+          .where(eq(merchants.id, inv.merchantId));
 
-      // Get merchant info for email
-      const [merchant] = await db
-        .select({ name: merchants.name, email: merchants.email })
-        .from(merchants)
-        .where(eq(merchants.id, inv.merchantId))
-        .limit(1);
+        // Get merchant info for email
+        const [merchant] = await db
+          .select({ name: merchants.name, email: merchants.email })
+          .from(merchants)
+          .where(eq(merchants.id, inv.merchantId))
+          .limit(1);
 
-      if (merchant) {
-        const emailData = buildOverdueEmail({
-          merchantName: merchant.name,
-          invoiceNumber: inv.invoiceNumber,
-          amountTTC: formatAmountDH(inv.amountTTC),
-          dueDate: new Date(inv.dueDate).toLocaleDateString("fr-FR", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          }),
-          rib: BANK_INFO.rib,
-          iban: BANK_INFO.iban,
-          swift: BANK_INFO.swift,
-        });
+        if (merchant) {
+          const emailData = await buildOverdueEmail({
+            merchantName: merchant.name,
+            invoiceNumber: inv.invoiceNumber,
+            amountTTC: formatAmountDH(inv.amountTTC),
+            dueDate: new Date(inv.dueDate).toLocaleDateString("fr-FR", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }),
+            rib: BANK_INFO.rib,
+            iban: BANK_INFO.iban,
+            swift: BANK_INFO.swift,
+          });
 
-        await sendEmail({
-          to: merchant.email,
-          subject: emailData.subject,
-          html: emailData.html,
-          text: emailData.text,
-        });
+          await sendEmail({
+            to: merchant.email,
+            subject: emailData.subject,
+            html: emailData.html,
+            text: emailData.text,
+          });
+        }
+
+        marked++;
+        console.log(`[mark-overdue] ${inv.invoiceNumber} → overdue`);
       }
 
-      marked++;
-      console.log(`[mark-overdue] ${inv.invoiceNumber} → overdue`);
-    }
+      console.log(`[mark-overdue] ${marked} invoices marked as overdue`);
 
-    console.log(`[mark-overdue] ${marked} invoices marked as overdue`);
-
-    return NextResponse.json({
-      ok: true,
-      marked,
+      return { marked };
     });
+
+    return NextResponse.json({ data: result });
   } catch (err) {
     console.error("[mark-overdue] Error:", err);
     return NextResponse.json({ error: "Mark overdue failed" }, { status: 500 });

@@ -8,15 +8,17 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { type Locale, DEFAULT_LOCALE } from "./types";
+import { type Locale, LOCALES, DEFAULT_LOCALE, RTL_LOCALES } from "./types";
 import frDict from "./locales/fr.json";
 import enDict from "./locales/en.json";
+import arDict from "./locales/ar.json";
 
 // ── Dictionaries ──
 
 const dictionaries: Record<Locale, Record<string, unknown>> = {
   fr: frDict,
   en: enDict,
+  ar: arDict,
 };
 
 // ── Context ──
@@ -25,6 +27,7 @@ interface I18nContextValue {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
+  isRtl: boolean;
 }
 
 const I18nContext = createContext<I18nContextValue | undefined>(undefined);
@@ -56,6 +59,17 @@ function deepGet(obj: Record<string, unknown>, path: string): string | undefined
   return typeof current === "string" ? current : undefined;
 }
 
+// ── Direction helper ──
+
+function isRtlLocale(locale: Locale): boolean {
+  return RTL_LOCALES.includes(locale);
+}
+
+function applyLocaleToDocument(locale: Locale) {
+  document.documentElement.lang = locale;
+  document.documentElement.dir = isRtlLocale(locale) ? "rtl" : "ltr";
+}
+
 // ── Provider ──
 
 const COOKIE_NAME = "nortoo_lang";
@@ -69,25 +83,30 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const cookieLocale = getCookie(COOKIE_NAME) as Locale | null;
     let initialLocale: Locale = DEFAULT_LOCALE;
 
-    if (cookieLocale && (cookieLocale === "fr" || cookieLocale === "en")) {
+    if (cookieLocale && LOCALES.includes(cookieLocale)) {
       initialLocale = cookieLocale;
     } else if (typeof navigator !== "undefined") {
       const browserLang = navigator.language || "";
-      initialLocale = browserLang.startsWith("en") ? "en" : "fr";
-      // Persist the detected locale
+      if (browserLang.startsWith("ar")) {
+        initialLocale = "ar";
+      } else if (browserLang.startsWith("en")) {
+        initialLocale = "en";
+      } else {
+        initialLocale = "fr";
+      }
       setCookie(COOKIE_NAME, initialLocale, 365);
     }
 
     setLocaleState(initialLocale);
     setDict(dictionaries[initialLocale]);
-    document.documentElement.lang = initialLocale;
+    applyLocaleToDocument(initialLocale);
   }, []);
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
     setDict(dictionaries[newLocale]);
     setCookie(COOKIE_NAME, newLocale, 365);
-    document.documentElement.lang = newLocale;
+    applyLocaleToDocument(newLocale);
   }, []);
 
   const t = useCallback(
@@ -114,8 +133,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     [dict, locale]
   );
 
+  const isRtl = isRtlLocale(locale);
+
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, isRtl }}>
       {children}
     </I18nContext.Provider>
   );

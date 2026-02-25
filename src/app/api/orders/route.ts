@@ -2,17 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db/index";
 import { orders } from "@/db/schema";
-import { and, eq, gte, lte, like, or, desc, count } from "drizzle-orm";
+import { and, eq, gte, lte, lt, gt, like, or, desc, asc, count, sql } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
 import { expandSearch } from "@/lib/search";
+import { encodeCursor, decodeCursor } from "@/lib/cursor";
 
 /**
  * Zod schema for query params validation.
- * Uses coerce for numeric params (query params are always strings).
+ * Supports both page-based and cursor-based pagination.
  */
 const ordersQuerySchema = z.object({
+  // Page-based (legacy, still supported)
   page: z.coerce.number().int().min(1).default(1),
   per_page: z.coerce.number().int().min(1).max(100).default(20),
+  // Cursor-based (new)
+  cursor: z.string().optional(),
+  direction: z.enum(["next", "prev"]).default("next"),
+  // Filters
   decision: z.enum(["all", "ship", "verify", "flag", "block"]).default("all"),
   pipeline: z.enum(["all", "needs_review", "escalated", "auto_blocked", "merchant_override", "auto_shipped", "pending"]).default("all"),
   city: z.string().max(100).default("all"),
@@ -46,6 +52,8 @@ export async function GET(request: NextRequest) {
     const {
       page,
       per_page: perPage,
+      cursor,
+      direction,
       decision,
       pipeline,
       city,
@@ -54,6 +62,8 @@ export async function GET(request: NextRequest) {
       score_max: scoreMax,
       search,
     } = parsed.data;
+
+    const useCursor = !!cursor;
 
     // ── Base conditions (without decision filter) — for pill counts ──
     const baseConditions: ReturnType<typeof eq>[] = [
@@ -79,7 +89,6 @@ export async function GET(request: NextRequest) {
         if (group.length === 1) {
           baseConditions.push(like(orders.searchIndex, `%${group[0]}%`));
         } else {
-          // OR across aliases within a group
           baseConditions.push(
             or(...group.map((term) => like(orders.searchIndex, `%${term}%`)))!
           );
@@ -97,11 +106,95 @@ export async function GET(request: NextRequest) {
     if (pipeline && pipeline !== "all") {
       fullConditions.push(eq(orders.pipelineStatus, pipeline));
     }
+
     const where = and(...fullConditions);
 
-    // ── Run 3 queries in parallel ──
-    const [totalResult, countsResult, data] = await Promise.all([
-      // 1. Count for pagination (with decision filter)
+    // ── Cursor conditions (added on top of fullConditions) ──
+    const cursorConditions = [...fullConditions];
+    if (useCursor) {
+      const cursorData = decodeCursor(cursor);
+      if (!cursorData) {
+        return NextResponse.json(
+          { error: "Invalid cursor" },
+          { status: 400 }
+        );
+      }
+
+      const cursorTs = new Date(cursorData.ts);
+
+      if (direction === "next") {
+        cursorConditions.push(
+          or(
+            lt(orders.createdAt, cursorTs),
+            and(eq(orders.createdAt, cursorTs), lt(orders.id, cursorData.id))
+          )!
+        );
+      } else {
+        cursorConditions.push(
+          or(
+            gt(orders.createdAt, cursorTs),
+            and(eq(orders.createdAt, cursorTs), gt(orders.id, cursorData.id))
+          )!
+        );
+      }
+    }
+
+    const cursorWhere = useCursor ? and(...cursorConditions) : where;
+
+    // ── Select columns (shared) ──
+    const selectCols = {
+      id: orders.id,
+      externalRef: orders.externalRef,
+      customerName: orders.customerName,
+      customerPhoneLast4: orders.customerPhoneLast4,
+      productName: orders.productName,
+      total: orders.total,
+      shippingCity: orders.shippingCity,
+      fraudScore: orders.fraudScore,
+      decision: orders.decision,
+      overrideDecision: orders.overrideDecision,
+      deliveryStatus: orders.deliveryStatus,
+      pipelineStatus: orders.pipelineStatus,
+      scoreExplanation: orders.scoreExplanation,
+      reviewDeadline: orders.reviewDeadline,
+      escalationPriority: orders.escalationPriority,
+      createdAt: orders.createdAt,
+    };
+
+    // ── Build data query ──
+    let dataQuery;
+
+    if (useCursor) {
+      // Cursor mode: fetch perPage + 1 to detect hasMore
+      if (direction === "prev") {
+        dataQuery = db
+          .select(selectCols)
+          .from(orders)
+          .where(cursorWhere)
+          .orderBy(asc(orders.createdAt), asc(orders.id))
+          .limit(perPage + 1);
+      } else {
+        dataQuery = db
+          .select(selectCols)
+          .from(orders)
+          .where(cursorWhere)
+          .orderBy(desc(orders.createdAt), desc(orders.id))
+          .limit(perPage + 1);
+      }
+    } else {
+      // Page-based (legacy)
+      dataQuery = db
+        .select(selectCols)
+        .from(orders)
+        .where(where)
+        .orderBy(desc(orders.createdAt))
+        .limit(perPage)
+        .offset((page - 1) * perPage);
+    }
+
+    // ── Run queries in parallel ──
+    const [totalResult, countsResult, rawData] = await Promise.all([
+      // 1. Count for pagination (always uses filter conditions, never cursor)
       db.select({ count: count() }).from(orders).where(where),
 
       // 2. Grouped counts by decision (without decision filter — for pills)
@@ -115,30 +208,7 @@ export async function GET(request: NextRequest) {
         .groupBy(orders.decision),
 
       // 3. Paginated data
-      db
-        .select({
-          id: orders.id,
-          externalRef: orders.externalRef,
-          customerName: orders.customerName,
-          customerPhoneLast4: orders.customerPhoneLast4,
-          productName: orders.productName,
-          total: orders.total,
-          shippingCity: orders.shippingCity,
-          fraudScore: orders.fraudScore,
-          decision: orders.decision,
-          overrideDecision: orders.overrideDecision,
-          deliveryStatus: orders.deliveryStatus,
-          pipelineStatus: orders.pipelineStatus,
-          scoreExplanation: orders.scoreExplanation,
-          reviewDeadline: orders.reviewDeadline,
-          escalationPriority: orders.escalationPriority,
-          createdAt: orders.createdAt,
-        })
-        .from(orders)
-        .where(where)
-        .orderBy(desc(orders.createdAt))
-        .limit(perPage)
-        .offset((page - 1) * perPage),
+      dataQuery,
     ]);
 
     const total = totalResult[0]?.count ?? 0;
@@ -153,8 +223,50 @@ export async function GET(request: NextRequest) {
       counts.all += row.count;
     }
 
+    // ── Process results ──
+    if (useCursor) {
+      let data = [...rawData];
+      const hasMore = data.length > perPage;
+      if (hasMore) {
+        data = data.slice(0, perPage); // trim the extra row
+      }
+
+      // Reverse results for "prev" direction (since we sorted ASC)
+      if (direction === "prev") {
+        data.reverse();
+      }
+
+      // Build cursors from first/last items
+      const firstItem = data[0];
+      const lastItem = data[data.length - 1];
+
+      const nextCursor = hasMore && lastItem
+        ? encodeCursor(lastItem.createdAt, lastItem.id)
+        : undefined;
+
+      // prevCursor: if we got data and there was a cursor, there might be previous pages
+      const prevCursor = firstItem && cursor
+        ? encodeCursor(firstItem.createdAt, firstItem.id)
+        : undefined;
+
+      return NextResponse.json({
+        data,
+        meta: {
+          perPage,
+          total,
+          totalPages: Math.ceil(total / perPage),
+          page: 0, // not meaningful in cursor mode
+          hasMore,
+          nextCursor,
+          prevCursor,
+          counts,
+        },
+      });
+    }
+
+    // ── Page-based response (legacy) ──
     return NextResponse.json({
-      data,
+      data: rawData,
       meta: {
         page,
         perPage,

@@ -26,6 +26,7 @@
     "and": "and",
     "of": "of",
     "retry": "Retry",
+    "rateLimited": "Too many requests. Retry in {seconds} seconds.",
     "copied": "Copied",
     "copy": "Copy",
     "show": "Show",
@@ -195,9 +196,11 @@
       "showing": "Showing {from}–{to} of {total}",
       "perPage": "per page",
       "previous": "Previous",
+      "prev": "Prev",
       "next": "Next",
       "first": "First page",
-      "last": "Last page"
+      "last": "Last page",
+      "totalOrders": "orders"
     },
     "export": {
       "csv": "Export CSV",
@@ -271,6 +274,7 @@
       "roi": "nortoo ROI",
       "vsPreviousPeriod": "vs previous period",
       "ptsVsBaseline": "pts vs baseline",
+      "ptsVsPreviousPeriod": "pts vs previous period",
       "deliveredOrders": "delivered orders",
       "projectedMonthly": "MAD/mo projected"
     },
@@ -617,7 +621,23 @@
       "examples": "Integration examples",
       "examplesSubtitle": "Test the endpoint with cURL or integrate the JSON payload",
       "curlExample": "cURL Example",
-      "jsonPayload": "JSON Payload"
+      "jsonPayload": "JSON Payload",
+      "cronMonitoring": "Cron monitoring",
+      "cronMonitoringSubtitle": "Status of scheduled tasks",
+      "cronName": "Task",
+      "cronSchedule": "Schedule",
+      "cronLastRun": "Last run",
+      "cronDuration": "Duration",
+      "cronUnavailable": "Monitoring unavailable",
+      "cronStatus": {
+        "label": "Status",
+        "healthy": "Healthy",
+        "degraded": "Degraded",
+        "critical": "Critical",
+        "ok": "OK",
+        "error": "Error",
+        "overdue": "Overdue"
+      }
     },
     "notifications": {
       "email": {
@@ -625,14 +645,20 @@
         "subtitle": "Configure the alerts you want to receive",
         "blocked": "Blocked orders",
         "blockedDesc": "Receive an email for each automatically blocked order",
+        "needsReview": "Orders needing review",
+        "needsReviewDesc": "Alert when an order requires manual verification",
+        "flagged": "Flagged orders",
+        "flaggedDesc": "Notification for orders flagged as risky",
+        "escalation": "Escalations",
+        "escalationDesc": "Alert when an order is escalated after deadline expiration",
         "dailySummary": "Daily summary",
         "dailySummaryDesc": "Daily order recap sent at 9am",
         "weeklySummary": "Weekly summary",
         "weeklySummaryDesc": "Performance report sent every Monday at 9am",
-        "rtoAlert": "RTO rate alert",
-        "rtoAlertDesc": "Notification when RTO rate exceeds a threshold",
-        "threshold": "Threshold:",
-        "save": "Save preferences"
+        "webhookFailed": "Webhook failure",
+        "webhookFailedDesc": "Alert when a webhook fails after all retry attempts",
+        "save": "Save preferences",
+        "saved": "Notification preferences saved"
       },
       "whatsapp": {
         "title": "WhatsApp notifications",
@@ -659,6 +685,8 @@
       "consentRecordedSuccess": "Consent recorded successfully",
       "retentionPeriod": "Retention period",
       "retentionMonths": "{count} months",
+      "retentionSaved": "Retention period updated",
+      "retentionWarning": "Changes take effect at the next automatic purge cycle (3 AM).",
       "rightsTitle": "Your rights (Art. 7-9)",
       "rightsSubtitle": "Exercise your rights under Law 09-08",
       "requestSubmitted": "Data right request submitted successfully",
@@ -946,6 +974,11 @@
       "title": "Notifications",
       "markAllRead": "Mark all as read",
       "empty": "No notifications",
+      "archiveRead": "Archive read",
+      "active": "Active",
+      "archived": "Archived",
+      "noArchived": "No archived notifications",
+      "archive": "Archive",
       "timeAgo": {
         "justNow": "Just now",
         "minutes": "{count} min ago",

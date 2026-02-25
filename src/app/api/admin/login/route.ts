@@ -22,10 +22,11 @@ export async function POST(request: Request) {
   try {
     // ── Rate limiting ──
     if (isRateLimitConfigured()) {
-      const { success, remaining } = await adminLoginLimiter.limit(
+      const { success, remaining, reset } = await adminLoginLimiter.limit(
         `admin:${ip}`
       );
       if (!success) {
+        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
         console.warn(
           `[Admin Login] Rate limited — IP: ${ip}, remaining: ${remaining}`
         );
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
             error:
               "Trop de tentatives. Réessayez dans 15 minutes.",
           },
-          { status: 429 }
+          { status: 429, headers: { "Retry-After": String(retryAfter) } }
         );
       }
     }

@@ -22,7 +22,7 @@ export function BulkActionBar({
 
   return (
     <div
-      className="fixed bottom-16 left-0 right-0 lg:bottom-0 lg:left-64 z-40 animate-in slide-in-from-bottom-4 duration-200"
+      className="fixed bottom-16 start-0 end-0 lg:bottom-0 lg:start-64 z-40 animate-in slide-in-from-bottom-4 duration-200"
       role="toolbar"
       aria-label={t("orders.bulk.groupedActions")}
     >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, MessageSquare, Save, Loader2 } from "lucide-react";
 import {
   Card,
@@ -14,6 +14,27 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/provider";
 import type { BaseTabProps } from "../types";
+
+// ── Default preferences ──
+interface EmailPrefs {
+  order_auto_blocked: boolean;
+  order_needs_review: boolean;
+  order_flagged: boolean;
+  escalation: boolean;
+  daily_summary: boolean;
+  weekly_report: boolean;
+  webhook_failed: boolean;
+}
+
+const DEFAULT_PREFS: EmailPrefs = {
+  order_auto_blocked: true,
+  order_needs_review: true,
+  order_flagged: true,
+  escalation: true,
+  daily_summary: false,
+  weekly_report: true,
+  webhook_failed: true,
+};
 
 // ── Toggle switch ──
 function Toggle({
@@ -52,14 +73,12 @@ function ToggleRow({
   enabled,
   onChange,
   disabled = false,
-  children,
 }: {
   label: string;
   description: string;
   enabled: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
-  children?: React.ReactNode;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 py-3">
@@ -70,33 +89,85 @@ function ToggleRow({
         <p className={cn("text-xs mt-0.5", disabled ? "text-mist" : "text-fog")}>
           {description}
         </p>
-        {children}
       </div>
       <Toggle enabled={enabled} onChange={onChange} disabled={disabled} />
     </div>
   );
 }
 
-export function NotificationsTab({ onToast }: BaseTabProps) {
+// Notification type definitions for the UI
+const NOTIF_TYPES: { key: keyof EmailPrefs; labelKey: string; descKey: string }[] = [
+  { key: "order_auto_blocked", labelKey: "settings.notifications.email.blocked", descKey: "settings.notifications.email.blockedDesc" },
+  { key: "order_needs_review", labelKey: "settings.notifications.email.needsReview", descKey: "settings.notifications.email.needsReviewDesc" },
+  { key: "order_flagged", labelKey: "settings.notifications.email.flagged", descKey: "settings.notifications.email.flaggedDesc" },
+  { key: "escalation", labelKey: "settings.notifications.email.escalation", descKey: "settings.notifications.email.escalationDesc" },
+  { key: "daily_summary", labelKey: "settings.notifications.email.dailySummary", descKey: "settings.notifications.email.dailySummaryDesc" },
+  { key: "weekly_report", labelKey: "settings.notifications.email.weeklySummary", descKey: "settings.notifications.email.weeklySummaryDesc" },
+  { key: "webhook_failed", labelKey: "settings.notifications.email.webhookFailed", descKey: "settings.notifications.email.webhookFailedDesc" },
+];
+
+export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps) {
   const { t } = useTranslation();
-  // Email notification toggles
-  const [blockedOrders, setBlockedOrders] = useState(true);
-  const [dailySummary, setDailySummary] = useState(false);
-  const [weeklySummary, setWeeklySummary] = useState(true);
-  const [rtoAlert, setRtoAlert] = useState(false);
-  const [rtoThreshold, setRtoThreshold] = useState(30);
   const [saving, setSaving] = useState(false);
 
-  // WhatsApp toggles (disabled)
+  // Parse saved preferences or use defaults
+  const savedPrefs: EmailPrefs = (() => {
+    try {
+      if (settings.notificationPreferences) {
+        const parsed = typeof settings.notificationPreferences === "string"
+          ? JSON.parse(settings.notificationPreferences)
+          : settings.notificationPreferences;
+        return { ...DEFAULT_PREFS, ...parsed.email };
+      }
+    } catch { /* ignore parse errors */ }
+    return DEFAULT_PREFS;
+  })();
+
+  const [prefs, setPrefs] = useState<EmailPrefs>(savedPrefs);
+
+  // Sync if settings change externally
+  useEffect(() => {
+    try {
+      if (settings.notificationPreferences) {
+        const parsed = typeof settings.notificationPreferences === "string"
+          ? JSON.parse(settings.notificationPreferences)
+          : settings.notificationPreferences;
+        setPrefs({ ...DEFAULT_PREFS, ...parsed.email });
+      }
+    } catch { /* ignore */ }
+  }, [settings.notificationPreferences]);
+
+  // WhatsApp toggles (disabled / coming soon)
   const [waVerify] = useState(false);
   const [waConfirm] = useState(false);
   const [waReminder] = useState(false);
 
+  function updatePref(key: keyof EmailPrefs, value: boolean) {
+    setPrefs((prev) => ({ ...prev, [key]: value }));
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
-      await new Promise((r) => setTimeout(r, 500));
-      onToast("info", "Fonctionnalité bientôt disponible");
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          _type: "notifications",
+          notificationPreferences: { email: prefs },
+        }),
+      });
+      if (res.ok) {
+        await onRefresh();
+        onToast("success", t("settings.notifications.email.saved"));
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
+      } else {
+        onToast("error", t("common.error"));
+      }
+    } catch {
+      onToast("error", t("common.error"));
     } finally {
       setSaving(false);
     }
@@ -121,45 +192,15 @@ export function NotificationsTab({ onToast }: BaseTabProps) {
         </CardHeader>
         <CardContent>
           <div className="divide-y divide-silk">
-            <ToggleRow
-              label={t("settings.notifications.email.blocked")}
-              description={t("settings.notifications.email.blockedDesc")}
-              enabled={blockedOrders}
-              onChange={setBlockedOrders}
-            />
-            <ToggleRow
-              label={t("settings.notifications.email.dailySummary")}
-              description={t("settings.notifications.email.dailySummaryDesc")}
-              enabled={dailySummary}
-              onChange={setDailySummary}
-            />
-            <ToggleRow
-              label={t("settings.notifications.email.weeklySummary")}
-              description={t("settings.notifications.email.weeklySummaryDesc")}
-              enabled={weeklySummary}
-              onChange={setWeeklySummary}
-            />
-            <ToggleRow
-              label={t("settings.notifications.email.rtoAlert")}
-              description={t("settings.notifications.email.rtoAlertDesc")}
-              enabled={rtoAlert}
-              onChange={setRtoAlert}
-            >
-              {rtoAlert && (
-                <div className="mt-2 flex items-center gap-2">
-                  <label className="text-xs text-fog">{t("settings.notifications.email.threshold")}</label>
-                  <input
-                    type="number"
-                    min={10}
-                    max={80}
-                    value={rtoThreshold}
-                    onChange={(e) => setRtoThreshold(Number(e.target.value))}
-                    className="w-16 rounded-xs border border-silk bg-white px-2 py-1 text-sm font-mono text-midnight focus:outline-none focus:ring-2 focus:ring-mint/50"
-                  />
-                  <span className="text-xs text-fog">%</span>
-                </div>
-              )}
-            </ToggleRow>
+            {NOTIF_TYPES.map(({ key, labelKey, descKey }) => (
+              <ToggleRow
+                key={key}
+                label={t(labelKey)}
+                description={t(descKey)}
+                enabled={prefs[key]}
+                onChange={(v) => updatePref(key, v)}
+              />
+            ))}
           </div>
 
           <Button

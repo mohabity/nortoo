@@ -192,7 +192,7 @@ export async function POST(request: Request) {
   const [year, month] = period.split("-");
   const periodLabel = `${monthNames[parseInt(month, 10)]} ${year}`;
 
-  const emailData = buildInvoiceEmail({
+  const emailData = await buildInvoiceEmail({
     merchantName: merchant.name,
     invoiceNumber,
     period: periodLabel,

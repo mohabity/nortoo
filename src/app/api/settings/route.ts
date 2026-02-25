@@ -24,6 +24,7 @@ const merchantSelect = {
   rtoCostFixed: merchants.rtoCostFixed,
   rtoCostPercent: merchants.rtoCostPercent,
   dataRetentionMonths: merchants.dataRetentionMonths,
+  notificationPreferences: merchants.notificationPreferences,
   cndpDeclarationRef: merchants.cndpDeclarationRef,
   consentRecordedAt: merchants.consentRecordedAt,
   trialEndsAt: merchants.trialEndsAt,
@@ -250,6 +251,112 @@ export async function PUT(request: Request) {
       targetType: "merchant",
       targetId: String(merchantId),
       details: JSON.stringify({ previous: current, new: data }),
+    });
+
+    const [updated] = await db
+      .select(merchantSelect)
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    return NextResponse.json({ data: updated });
+  }
+
+  // Try notification preferences schema
+  const notifEmailSchema = z.object({
+    order_auto_blocked: z.boolean(),
+    order_needs_review: z.boolean(),
+    order_flagged: z.boolean(),
+    escalation: z.boolean(),
+    daily_summary: z.boolean(),
+    weekly_report: z.boolean(),
+    webhook_failed: z.boolean(),
+  });
+  const notifPrefsSchema = z.object({
+    _type: z.literal("notifications"),
+    notificationPreferences: z.object({ email: notifEmailSchema }),
+  });
+  const notifPrefsParsed = notifPrefsSchema.safeParse(body);
+  if (notifPrefsParsed.success) {
+    const data = notifPrefsParsed.data;
+    const prefsJson = JSON.stringify(data.notificationPreferences);
+
+    const [current] = await db
+      .select({ notificationPreferences: merchants.notificationPreferences })
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    await db
+      .update(merchants)
+      .set({ notificationPreferences: prefsJson, updatedAt: new Date() })
+      .where(eq(merchants.id, merchantId));
+
+    await db.insert(auditLogs).values({
+      merchantId,
+      userId,
+      actor: "merchant",
+      action: "settings_change",
+      targetType: "merchant",
+      targetId: String(merchantId),
+      details: JSON.stringify({
+        field: "notificationPreferences",
+        previous: current?.notificationPreferences,
+        new: prefsJson,
+      }),
+    });
+
+    const [updated] = await db
+      .select(merchantSelect)
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    return NextResponse.json({ data: updated });
+  }
+
+  // Try retention schema
+  const retentionSchema = z.object({
+    _type: z.literal("retention"),
+    dataRetentionMonths: z.number().int().min(6).max(60),
+  });
+  const retentionParsed = retentionSchema.safeParse(body);
+  if (retentionParsed.success) {
+    const data = retentionParsed.data;
+
+    const [current] = await db
+      .select({ dataRetentionMonths: merchants.dataRetentionMonths })
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    if (!current) {
+      return NextResponse.json(
+        { error: "Marchand introuvable" },
+        { status: 404 }
+      );
+    }
+
+    await db
+      .update(merchants)
+      .set({
+        dataRetentionMonths: data.dataRetentionMonths,
+        updatedAt: new Date(),
+      })
+      .where(eq(merchants.id, merchantId));
+
+    await db.insert(auditLogs).values({
+      merchantId,
+      userId,
+      actor: "merchant",
+      action: "settings_change",
+      targetType: "merchant",
+      targetId: String(merchantId),
+      details: JSON.stringify({
+        field: "dataRetentionMonths",
+        previous: current.dataRetentionMonths,
+        new: data.dataRetentionMonths,
+      }),
     });
 
     const [updated] = await db

@@ -30,11 +30,12 @@ export async function POST(request: Request) {
   // ── Rate limiting ──
   if (isRateLimitConfigured()) {
     const ip = getClientIp(request);
-    const { success } = await authLimiter.limit(`register:${ip}`);
+    const { success, reset } = await authLimiter.limit(`register:${ip}`);
     if (!success) {
+      const retryAfter = Math.ceil((reset - Date.now()) / 1000);
       return NextResponse.json(
         { error: "Trop de tentatives. Réessayez dans une minute." },
-        { status: 429 }
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
       );
     }
   }

@@ -22,7 +22,7 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-snow">
         <Sidebar />
         <MobileHeader />
-        <div className="lg:ml-64">
+        <div className="lg:ms-64">
           <Header />
           <Suspense fallback={null}>
             <ConnectedBanner />

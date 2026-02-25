@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
       eq(orders.decision, "flag")
     )!;
 
-    // Fetch current period + previous period in parallel
-    const [currentOrders, prevOrders] = await Promise.all([
+    // Fetch qualifying + all orders for current & previous periods
+    const [currentOrders, prevOrders, allCurrentOrders, allPrevOrders] = await Promise.all([
       db
         .select({
           total: orders.total,
@@ -90,6 +90,33 @@ export async function GET(request: NextRequest) {
             gte(orders.createdAt, prevSince),
             lte(orders.createdAt, since),
             qualifyingConditions
+          )
+        ),
+      // All orders current period (for RTO/delivery WoW)
+      db
+        .select({
+          deliveryStatus: orders.deliveryStatus,
+        })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.merchantId, merchantId),
+            eq(orders.isTest, false),
+            gte(orders.createdAt, since)
+          )
+        ),
+      // All orders previous period (for RTO/delivery WoW)
+      db
+        .select({
+          deliveryStatus: orders.deliveryStatus,
+        })
+        .from(orders)
+        .where(
+          and(
+            eq(orders.merchantId, merchantId),
+            eq(orders.isTest, false),
+            gte(orders.createdAt, prevSince),
+            lte(orders.createdAt, since)
           )
         ),
     ]);
@@ -170,6 +197,43 @@ export async function GET(request: NextRequest) {
         ? Math.round((projectedMonthlySaved / planPrice) * 10) / 10
         : null;
 
+    // Previous period ROI
+    const prevDailyAvg = periodDays > 0 ? prevTotalSaved / periodDays : 0;
+    const prevProjectedMonthly = Math.round(prevDailyAvg * 30);
+    const prevRoiMultiple =
+      planPrice > 0
+        ? Math.round((prevProjectedMonthly / planPrice) * 10) / 10
+        : null;
+    const roiDelta =
+      roiMultiple !== null && prevRoiMultiple !== null
+        ? Math.round((roiMultiple - prevRoiMultiple) * 10) / 10
+        : null;
+
+    // ── RTO & Delivery WoW deltas ──
+    const curTotal = allCurrentOrders.length;
+    const curReturned = allCurrentOrders.filter(
+      (o) => o.deliveryStatus === "returned"
+    ).length;
+    const curDelivered = allCurrentOrders.filter(
+      (o) => o.deliveryStatus === "delivered"
+    ).length;
+
+    const prevTotal = allPrevOrders.length;
+    const prevReturned = allPrevOrders.filter(
+      (o) => o.deliveryStatus === "returned"
+    ).length;
+    const prevDelivered = allPrevOrders.filter(
+      (o) => o.deliveryStatus === "delivered"
+    ).length;
+
+    const curRtoRate = curTotal > 0 ? Math.round((curReturned / curTotal) * 1000) / 10 : 0;
+    const prevRtoRate = prevTotal > 0 ? Math.round((prevReturned / prevTotal) * 1000) / 10 : 0;
+    const rtoRateDelta = Math.round((curRtoRate - prevRtoRate) * 10) / 10;
+
+    const curDeliveryRate = curTotal > 0 ? Math.round((curDelivered / curTotal) * 1000) / 10 : 0;
+    const prevDeliveryRate = prevTotal > 0 ? Math.round((prevDelivered / prevTotal) * 1000) / 10 : 0;
+    const deliveryRateDelta = Math.round((curDeliveryRate - prevDeliveryRate) * 10) / 10;
+
     // Top 5 products and cities
     const topProducts = [...productMap.entries()]
       .map(([name, data]) => ({ name, saved: Math.round(data.saved), count: data.count }))
@@ -197,6 +261,13 @@ export async function GET(request: NextRequest) {
         },
         topProducts,
         topCities,
+        // WoW deltas for all KPIs
+        rtoRate: curRtoRate,
+        rtoRateDelta,
+        deliveryRate: curDeliveryRate,
+        deliveryRateDelta,
+        deliveredCount: curDelivered,
+        roiDelta,
         period: {
           days: periodDays,
           from: since.toISOString(),

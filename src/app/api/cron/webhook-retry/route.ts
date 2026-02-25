@@ -4,6 +4,7 @@ import { webhookQueue } from "@/db/schema";
 import { and, eq, lt, lte, sql } from "drizzle-orm";
 import { processWebhook } from "@/lib/webhook-processor";
 import { verifyCronSecret } from "@/lib/cron-auth";
+import { withCronMonitoring } from "@/lib/cron-monitor";
 
 /**
  * GET /api/cron/webhook-retry
@@ -18,58 +19,64 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const now = new Date();
-  let processed = 0;
-  let succeeded = 0;
-  let failed = 0;
-
   try {
-    // ── 1. Fetch failed webhooks ready for retry ──
-    const pendingRetries = await db
-      .select({ id: webhookQueue.id })
-      .from(webhookQueue)
-      .where(
-        and(
-          eq(webhookQueue.status, "failed"),
-          lte(webhookQueue.nextRetryAt, now),
-          lt(webhookQueue.attempts, webhookQueue.maxAttempts)
-        )
-      )
-      .orderBy(webhookQueue.nextRetryAt)
-      .limit(20);
+    const result = await withCronMonitoring("webhook-retry", async () => {
+      const now = new Date();
+      let processed = 0;
+      let succeeded = 0;
+      let failed = 0;
 
-    // ── 2. Process each ──
-    for (const item of pendingRetries) {
-      processed++;
-      try {
-        await processWebhook(item.id);
-        succeeded++;
-      } catch {
-        failed++;
+      // ── 1. Fetch failed webhooks ready for retry ──
+      const pendingRetries = await db
+        .select({ id: webhookQueue.id })
+        .from(webhookQueue)
+        .where(
+          and(
+            eq(webhookQueue.status, "failed"),
+            lte(webhookQueue.nextRetryAt, now),
+            lt(webhookQueue.attempts, webhookQueue.maxAttempts)
+          )
+        )
+        .orderBy(webhookQueue.nextRetryAt)
+        .limit(20);
+
+      // ── 2. Process each ──
+      for (const item of pendingRetries) {
+        processed++;
+        try {
+          await processWebhook(item.id);
+          succeeded++;
+        } catch {
+          failed++;
+        }
       }
-    }
 
-    // ── 3. Cleanup: completed > 7 days ──
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    await db
-      .delete(webhookQueue)
-      .where(
-        and(
-          eq(webhookQueue.status, "completed"),
-          lt(webhookQueue.createdAt, sevenDaysAgo)
-        )
-      );
+      // ── 3. Cleanup: completed > 7 days ──
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      await db
+        .delete(webhookQueue)
+        .where(
+          and(
+            eq(webhookQueue.status, "completed"),
+            lt(webhookQueue.createdAt, sevenDaysAgo)
+          )
+        );
 
-    // ── 4. Cleanup: dead > 30 days ──
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    await db
-      .delete(webhookQueue)
-      .where(
-        and(
-          eq(webhookQueue.status, "dead"),
-          lt(webhookQueue.createdAt, thirtyDaysAgo)
-        )
-      );
+      // ── 4. Cleanup: dead > 30 days ──
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      await db
+        .delete(webhookQueue)
+        .where(
+          and(
+            eq(webhookQueue.status, "dead"),
+            lt(webhookQueue.createdAt, thirtyDaysAgo)
+          )
+        );
+
+      return { processed, succeeded, failed, timestamp: now.toISOString() };
+    });
+
+    return NextResponse.json({ data: result });
   } catch (error) {
     console.error("[Cron webhook-retry] Error:", error);
     return NextResponse.json(
@@ -77,8 +84,4 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    data: { processed, succeeded, failed, timestamp: now.toISOString() },
-  });
 }

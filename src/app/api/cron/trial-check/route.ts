@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { merchants, auditLogs } from "@/db/schema";
 import { and, eq, lte } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
+import { withCronMonitoring } from "@/lib/cron-monitor";
 
 /**
  * GET /api/cron/trial-check
@@ -19,69 +20,61 @@ export async function GET(request: Request) {
   }
 
   try {
-    const now = new Date();
+    const result = await withCronMonitoring("trial-check", async () => {
+      const now = new Date();
 
-    // Find all merchants with expired trials
-    const expiredMerchants = await db
-      .select({
-        id: merchants.id,
-        name: merchants.name,
-        email: merchants.email,
-        trialEndsAt: merchants.trialEndsAt,
-      })
-      .from(merchants)
-      .where(
-        and(
-          eq(merchants.billingStatus, "trial"),
-          lte(merchants.trialEndsAt, now)
-        )
+      // Find all merchants with expired trials
+      const expiredMerchants = await db
+        .select({
+          id: merchants.id,
+          name: merchants.name,
+          email: merchants.email,
+          trialEndsAt: merchants.trialEndsAt,
+        })
+        .from(merchants)
+        .where(
+          and(
+            eq(merchants.billingStatus, "trial"),
+            lte(merchants.trialEndsAt, now)
+          )
+        );
+
+      // Update billingStatus to "past_due" for all expired merchants
+      let updated = 0;
+      for (const m of expiredMerchants) {
+        try {
+          await db
+            .update(merchants)
+            .set({ billingStatus: "past_due", updatedAt: now })
+            .where(eq(merchants.id, m.id));
+
+          // Audit log (Art. 23)
+          await db.insert(auditLogs).values({
+            merchantId: m.id,
+            actor: "system",
+            action: "trial_expired",
+            targetType: "merchant",
+            targetId: String(m.id),
+            details: JSON.stringify({
+              trialEndsAt: m.trialEndsAt?.toISOString(),
+              newBillingStatus: "past_due",
+            }),
+          });
+
+          updated++;
+        } catch (err) {
+          console.error(`[trial-check] Error updating merchant ${m.id}:`, err);
+        }
+      }
+
+      console.log(
+        `[trial-check] Expired ${updated}/${expiredMerchants.length} trials at ${now.toISOString()}`
       );
 
-    if (expiredMerchants.length === 0) {
-      return NextResponse.json({
-        ok: true,
-        expired: 0,
-        message: "No expired trials found",
-      });
-    }
-
-    // Update billingStatus to "past_due" for all expired merchants
-    let updated = 0;
-    for (const m of expiredMerchants) {
-      try {
-        await db
-          .update(merchants)
-          .set({ billingStatus: "past_due", updatedAt: now })
-          .where(eq(merchants.id, m.id));
-
-        // Audit log (Art. 23)
-        await db.insert(auditLogs).values({
-          merchantId: m.id,
-          actor: "system",
-          action: "trial_expired",
-          targetType: "merchant",
-          targetId: String(m.id),
-          details: JSON.stringify({
-            trialEndsAt: m.trialEndsAt?.toISOString(),
-            newBillingStatus: "past_due",
-          }),
-        });
-
-        updated++;
-      } catch (err) {
-        console.error(`[trial-check] Error updating merchant ${m.id}:`, err);
-      }
-    }
-
-    console.log(
-      `[trial-check] Expired ${updated}/${expiredMerchants.length} trials at ${now.toISOString()}`
-    );
-
-    return NextResponse.json({
-      ok: true,
-      expired: updated,
-      total: expiredMerchants.length,
+      return { expired: updated, total: expiredMerchants.length };
     });
+
+    return NextResponse.json({ data: result });
   } catch (err) {
     console.error("[trial-check] Error:", err);
     return NextResponse.json(

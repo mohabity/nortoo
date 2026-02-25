@@ -41,7 +41,7 @@ export async function sendVerificationEmail(
   const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${rawToken}`;
 
   // Send email
-  const { html, text } = buildEmailVerificationEmail(verifyUrl);
+  const { html, text } = await buildEmailVerificationEmail(verifyUrl);
   const sent = await sendEmail({
     to: email,
     subject: "V\u00e9rifiez votre email \u2014 nortoo",

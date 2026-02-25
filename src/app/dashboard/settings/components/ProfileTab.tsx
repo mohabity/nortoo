@@ -83,6 +83,11 @@ export function ProfileTab({ settings, onRefresh, onToast }: BaseTabProps) {
       });
       const json = await res.json();
 
+      if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
+        return;
+      }
       if (!res.ok) {
         onToast("error", json.error || t("settings.profile.saveError"));
         return;

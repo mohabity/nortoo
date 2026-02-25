@@ -78,11 +78,12 @@ export async function POST(request: Request) {
 
     // ── Rate limiting per API key ──
     if (isRateLimitConfigured()) {
-      const { success } = await webhookLimiter.limit(`wh:${apiKey.slice(0, 16)}`);
+      const { success, reset } = await webhookLimiter.limit(`wh:${apiKey.slice(0, 16)}`);
       if (!success) {
+        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
         return NextResponse.json(
           { error: "Rate limit exceeded" },
-          { status: 429 }
+          { status: 429, headers: { "Retry-After": String(retryAfter) } }
         );
       }
     }

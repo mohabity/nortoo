@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Bell, CheckCheck, ExternalLink } from "lucide-react";
+import { Bell, CheckCheck, ExternalLink, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -20,6 +20,7 @@ interface Notification {
   message: string;
   severity: string;
   read: boolean;
+  archivedAt: string | null;
   actionUrl: string | null;
   createdAt: string;
 }
@@ -52,13 +53,14 @@ export function NotificationBell() {
   const [items, setItems] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { t } = useTranslation();
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (archived = false) => {
     try {
-      const res = await fetch("/api/notifications?per_page=15");
+      const res = await fetch(`/api/notifications?per_page=15${archived ? "&archived=true" : ""}`);
       if (!res.ok) return;
       const json = await res.json();
       setItems(json.data ?? []);
@@ -71,9 +73,14 @@ export function NotificationBell() {
   // Initial fetch + poll every 30s
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(() => fetchNotifications(), 30000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
+
+  // Refetch when toggling archived view
+  useEffect(() => {
+    fetchNotifications(showArchived);
+  }, [showArchived, fetchNotifications]);
 
   // Close on click outside (desktop only)
   useEffect(() => {
@@ -103,6 +110,19 @@ export function NotificationBell() {
     setLoading(false);
   }
 
+  async function archiveNotification(e: React.MouseEvent, id: number) {
+    e.stopPropagation();
+    await fetch(`/api/notifications/${id}/archive`, { method: "PUT" });
+    setItems((prev) => prev.filter((n) => n.id !== id));
+  }
+
+  async function archiveAllRead() {
+    setLoading(true);
+    await fetch("/api/notifications/archive-read", { method: "PUT" });
+    setItems((prev) => prev.filter((n) => !n.read));
+    setLoading(false);
+  }
+
   function handleNotificationClick(notification: Notification) {
     if (!notification.read) {
       markAsRead(notification.id);
@@ -121,23 +141,59 @@ export function NotificationBell() {
         <h3 className="font-display text-sm font-semibold text-midnight">
           {t("components.notifications.title")}
         </h3>
-        {unreadCount > 0 && (
-          <button
-            onClick={markAllRead}
-            disabled={loading}
-            className="flex items-center gap-1 text-xs text-ocean hover:text-ocean/80"
-          >
-            <CheckCheck className="h-3 w-3" />
-            {t("components.notifications.markAllRead")}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {!showArchived && unreadCount > 0 && (
+            <button
+              onClick={markAllRead}
+              disabled={loading}
+              className="flex items-center gap-1 text-xs text-ocean hover:text-ocean/80"
+            >
+              <CheckCheck className="h-3 w-3" />
+              {t("components.notifications.markAllRead")}
+            </button>
+          )}
+          {!showArchived && items.some((n) => n.read) && (
+            <button
+              onClick={archiveAllRead}
+              disabled={loading}
+              className="flex items-center gap-1 text-xs text-fog hover:text-midnight"
+            >
+              <Archive className="h-3 w-3" />
+              {t("components.notifications.archiveRead")}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tab bar: Active / Archived */}
+      <div className="flex border-b border-silk">
+        <button
+          onClick={() => setShowArchived(false)}
+          className={cn(
+            "flex-1 py-2 text-xs font-medium transition-colors",
+            !showArchived ? "text-ocean border-b-2 border-ocean" : "text-mist hover:text-fog"
+          )}
+        >
+          {t("components.notifications.active")}
+        </button>
+        <button
+          onClick={() => setShowArchived(true)}
+          className={cn(
+            "flex-1 py-2 text-xs font-medium transition-colors",
+            showArchived ? "text-ocean border-b-2 border-ocean" : "text-mist hover:text-fog"
+          )}
+        >
+          {t("components.notifications.archived")}
+        </button>
       </div>
 
       {/* List */}
       <div className="overflow-y-auto flex-1">
         {items.length === 0 ? (
           <div className="py-8 text-center text-sm text-mist">
-            {t("components.notifications.empty")}
+            {showArchived
+              ? t("components.notifications.noArchived")
+              : t("components.notifications.empty")}
           </div>
         ) : (
           items.map((n) => (
@@ -145,13 +201,14 @@ export function NotificationBell() {
               key={n.id}
               onClick={() => handleNotificationClick(n)}
               className={cn(
-                "w-full text-left px-4 py-3 border-b border-silk/50 hover:bg-snow/50 transition-colors border-l-[3px]",
+                "group w-full text-left px-4 py-3 border-b border-silk/50 hover:bg-snow/50 transition-colors border-l-[3px]",
                 SEVERITY_BORDER[n.severity] ?? "border-l-transparent",
-                !n.read && "bg-amber-bg"
+                !n.read && !showArchived && "bg-amber-bg",
+                showArchived && "opacity-60"
               )}
             >
               <div className="flex items-start gap-2">
-                {!n.read && (
+                {!n.read && !showArchived && (
                   <span
                     className={cn(
                       "mt-1.5 h-2 w-2 shrink-0 rounded-full",
@@ -163,7 +220,7 @@ export function NotificationBell() {
                   <p
                     className={cn(
                       "text-sm",
-                      n.read ? "text-fog" : "font-medium text-midnight"
+                      n.read || showArchived ? "text-fog" : "font-medium text-midnight"
                     )}
                   >
                     {n.title}
@@ -175,9 +232,22 @@ export function NotificationBell() {
                     {timeAgo(n.createdAt, t)}
                   </p>
                 </div>
-                {n.actionUrl && (
-                  <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-mist" />
-                )}
+                <div className="flex items-center gap-1 shrink-0">
+                  {!showArchived && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => archiveNotification(e, n.id)}
+                      className="mt-1 hidden group-hover:block p-0.5 text-mist hover:text-fog"
+                      title={t("components.notifications.archive")}
+                    >
+                      <Archive className="h-3 w-3" />
+                    </span>
+                  )}
+                  {n.actionUrl && (
+                    <ExternalLink className="mt-1 h-3 w-3 text-mist" />
+                  )}
+                </div>
               </div>
             </button>
           ))
@@ -194,7 +264,7 @@ export function NotificationBell() {
         className="relative"
         onClick={() => {
           setOpen(!open);
-          if (!open) fetchNotifications();
+          if (!open) fetchNotifications(showArchived);
         }}
       >
         <Bell className="h-4 w-4" />

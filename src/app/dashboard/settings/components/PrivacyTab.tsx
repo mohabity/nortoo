@@ -92,9 +92,13 @@ const SUB_PROCESSORS = [
   },
 ];
 
+const RETENTION_OPTIONS = [6, 12, 18, 24, 36, 48, 60];
+
 export function PrivacyTab({ settings, onToast, onRefresh }: BaseTabProps) {
   const { t, locale } = useTranslation();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [retentionMonths, setRetentionMonths] = useState(settings.dataRetentionMonths ?? 24);
+  const retentionChanged = retentionMonths !== (settings.dataRetentionMonths ?? 24);
 
   const connectedDate = settings.consentRecordedAt
     ? formatDate(settings.consentRecordedAt, locale, {
@@ -117,6 +121,30 @@ export function PrivacyTab({ settings, onToast, onRefresh }: BaseTabProps) {
     }
   }
 
+  async function handleSaveRetention() {
+    setLoadingAction("retention");
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _type: "retention", dataRetentionMonths: retentionMonths }),
+      });
+      if (res.ok) {
+        onToast("success", t("settings.privacy.retentionSaved"));
+        await onRefresh();
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
+      } else {
+        onToast("error", t("common.error"));
+      }
+    } catch {
+      onToast("error", t("common.error"));
+    } finally {
+      setLoadingAction(null);
+    }
+  }
+
   async function handleRecordConsent() {
     setLoadingAction("consent");
     try {
@@ -124,6 +152,9 @@ export function PrivacyTab({ settings, onToast, onRefresh }: BaseTabProps) {
       if (res.ok) {
         onToast("success", t("settings.privacy.consentRecordedSuccess"));
         await onRefresh();
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
       } else {
         onToast("error", t("common.error"));
       }
@@ -196,14 +227,45 @@ export function PrivacyTab({ settings, onToast, onRefresh }: BaseTabProps) {
                 </Button>
               </div>
             )}
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
               <span className="text-sm text-fog">
                 {t("settings.privacy.retentionPeriod")}
               </span>
-              <span className="text-sm font-medium text-midnight">
-                {t("settings.privacy.retentionMonths", { count: String(settings.dataRetentionMonths) })}
-              </span>
+              <div className="flex items-center gap-2">
+                <select
+                  value={retentionMonths}
+                  onChange={(e) => setRetentionMonths(Number(e.target.value))}
+                  className="rounded-md border border-silk bg-white px-2.5 py-1.5 text-sm font-medium text-midnight focus:outline-none focus:ring-2 focus:ring-mint/40"
+                >
+                  {RETENTION_OPTIONS.map((m) => (
+                    <option key={m} value={m}>
+                      {t("settings.privacy.retentionMonths", { count: String(m) })}
+                    </option>
+                  ))}
+                </select>
+                {retentionChanged && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSaveRetention}
+                    disabled={loadingAction === "retention"}
+                    className="shrink-0"
+                  >
+                    {loadingAction === "retention" && (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    )}
+                    {t("common.save")}
+                  </Button>
+                )}
+              </div>
             </div>
+            {retentionChanged && (
+              <div className="px-4 pb-3">
+                <p className="text-xs text-mist">
+                  {t("settings.privacy.retentionWarning")}
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

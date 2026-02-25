@@ -30,47 +30,7 @@ import { useTranslation } from "@/i18n/provider";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency, formatNumber } from "@/lib/i18n-utils";
 import { cn } from "@/lib/utils";
-
-// ── Savings data type ──
-interface SavingsData {
-  totalSaved: number;
-  ordersSaved: number;
-  avgSavedPerOrder: number;
-  projectedMonthlySaved: number;
-  roiMultiple: number | null;
-  deltaPercent: number;
-}
-
-// ── Urgent order type ──
-interface UrgentOrder {
-  id: number;
-  externalRef: string | null;
-  customerName: string | null;
-  total: number;
-  fraudScore: number;
-  decision: string;
-  pipelineStatus: string;
-  reviewDeadline: string | null;
-  escalationPriority: number | null;
-}
-
-// ── Stats data type ──
-interface StatsData {
-  totalOrders: number;
-  avgScore: number;
-  deliveryRate: number;
-  blockedCount: number;
-  ordersToday: number;
-  changeScore?: number;
-  changeDelivery?: number;
-}
-
-// ── Chart data type ──
-interface ChartPoint {
-  date: string;
-  commandes: number;
-  score: number;
-}
+import type { SavingsData, UrgentOrder, StatsData, ChartPoint } from "@/types/dashboard";
 
 function UrgentCountdown({ deadline }: { deadline: string }) {
   const { t } = useTranslation();

@@ -73,6 +73,9 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
       if (res.ok) {
         await onRefresh();
         onToast("success", t("settings.scoring.saved"));
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
       } else {
         onToast("error", t("settings.scoring.saveError"));
       }

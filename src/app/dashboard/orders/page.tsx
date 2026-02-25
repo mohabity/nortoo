@@ -29,30 +29,7 @@ import { useSelection } from "@/hooks/use-selection";
 import { FeatureGate } from "@/components/feature-gate";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/provider";
-
-// ── Types ──
-
-interface OrdersCounts {
-  all: number;
-  ship: number;
-  verify: number;
-  flag: number;
-  block: number;
-}
-
-interface OrdersMeta {
-  page: number;
-  perPage: number;
-  total: number;
-  totalPages: number;
-  counts: OrdersCounts;
-}
-
-interface SearchSuggestion {
-  type: "client" | "city" | "product";
-  value: string;
-  count: number;
-}
+import type { OrdersCounts, OrdersMeta, SearchSuggestion } from "@/types/orders";
 
 interface RecentSearch {
   query: string;
@@ -140,6 +117,8 @@ function OrdersContent() {
   const currentDecision = searchParams.get("decision") ?? "all";
   const currentPipeline = searchParams.get("pipeline") ?? "all";
   const currentSearch = searchParams.get("search") ?? "";
+  const currentCursor = searchParams.get("cursor") ?? undefined;
+  const currentDirection = (searchParams.get("direction") ?? "next") as "next" | "prev";
   const selectedOrderId = searchParams.get("selected");
 
   // Page size — URL > localStorage > default 20
@@ -166,6 +145,11 @@ function OrdersContent() {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(currentSearch);
   const [exportLoading, setExportLoading] = useState(false);
+
+  // Cursor-based pagination state — start in cursor mode if URL has cursor param
+  const [cursorMode, setCursorMode] = useState(!!currentCursor);
+  const [nextCursor, setNextCursor] = useState<string | undefined>();
+  const [prevCursor, setPrevCursor] = useState<string | undefined>();
 
   // Toast
   const { addToast } = useToast();
@@ -201,11 +185,18 @@ function OrdersContent() {
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    params.set("page", String(currentPage));
     params.set("per_page", String(perPage));
     if (currentDecision !== "all") params.set("decision", currentDecision);
     if (currentPipeline !== "all") params.set("pipeline", currentPipeline);
     if (currentSearch) params.set("search", currentSearch);
+
+    // Use cursor params if in cursor mode and a cursor is available
+    if (cursorMode && currentCursor) {
+      params.set("cursor", currentCursor);
+      params.set("direction", currentDirection);
+    } else {
+      params.set("page", String(currentPage));
+    }
 
     try {
       const res = await fetch(`/api/orders?${params.toString()}`);
@@ -217,18 +208,27 @@ function OrdersContent() {
       }
       const json = await res.json();
       setOrders(json.data ?? []);
-      setMeta(
-        json.meta ?? {
-          page: 1,
-          perPage,
-          total: 0,
-          totalPages: 0,
-          counts: EMPTY_COUNTS,
-        }
-      );
+      const responseMeta: OrdersMeta = json.meta ?? {
+        page: 1,
+        perPage,
+        total: 0,
+        totalPages: 0,
+        counts: EMPTY_COUNTS,
+      };
+      setMeta(responseMeta);
+
+      // Auto-switch to cursor mode for large datasets
+      if (responseMeta.total > 10_000 && !cursorMode) {
+        setCursorMode(true);
+      }
+
+      // Store cursor values from response
+      setNextCursor(responseMeta.nextCursor);
+      setPrevCursor(responseMeta.prevCursor);
+
       // Save to recent searches
       if (currentSearch) {
-        saveRecentSearch(currentSearch, json.meta?.total ?? 0);
+        saveRecentSearch(currentSearch, responseMeta.total ?? 0);
       }
     } catch (err) {
       console.error("[Orders] Network error:", err);
@@ -236,7 +236,7 @@ function OrdersContent() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, perPage, currentDecision, currentPipeline, currentSearch]);
+  }, [currentPage, perPage, currentDecision, currentPipeline, currentSearch, cursorMode, currentCursor, currentDirection]);
 
   useEffect(() => {
     fetchOrders();
@@ -352,6 +352,33 @@ function OrdersContent() {
       params.set(key, value);
     }
     if (key !== "page" && key !== "selected") params.delete("page");
+    // Clean up cursor params when changing filters (not page navigation)
+    if (key !== "page" && key !== "selected") {
+      params.delete("cursor");
+      params.delete("direction");
+    }
+    router.push(`/dashboard/orders?${params.toString()}`);
+  }
+
+  // ── Cursor-based navigation ──
+
+  function goNextCursor() {
+    if (!nextCursor) return;
+    if (selectionCount > 0) clearSelection();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+    params.set("cursor", nextCursor);
+    params.set("direction", "next");
+    router.push(`/dashboard/orders?${params.toString()}`);
+  }
+
+  function goPrevCursor() {
+    if (!prevCursor) return;
+    if (selectionCount > 0) clearSelection();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+    params.set("cursor", prevCursor);
+    params.set("direction", "prev");
     router.push(`/dashboard/orders?${params.toString()}`);
   }
 
@@ -416,6 +443,11 @@ function OrdersContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.set("per_page", String(newSize));
     params.delete("page"); // Reset to page 1
+    params.delete("cursor"); // Reset cursor pagination
+    params.delete("direction");
+    // Reset cursor state so the next fetch starts from the beginning
+    setNextCursor(undefined);
+    setPrevCursor(undefined);
     if (selectionCount > 0) clearSelection();
     router.push(`/dashboard/orders?${params.toString()}`);
   }
@@ -977,16 +1009,25 @@ function OrdersContent() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Left: info + page size selector */}
           <div className="flex items-center gap-3 text-sm text-fog">
-            <span className="hidden sm:inline">
-              {t("orders.pagination.showing", {
-                from: Math.min((meta.page - 1) * perPage + 1, meta.total),
-                to: Math.min(meta.page * perPage, meta.total),
-                total: meta.total,
-              })}
-            </span>
-            <span className="sm:hidden">
-              {meta.page}/{meta.totalPages}
-            </span>
+            {!cursorMode && (
+              <>
+                <span className="hidden sm:inline">
+                  {t("orders.pagination.showing", {
+                    from: Math.min((meta.page - 1) * perPage + 1, meta.total),
+                    to: Math.min(meta.page * perPage, meta.total),
+                    total: meta.total,
+                  })}
+                </span>
+                <span className="sm:hidden">
+                  {meta.page}/{meta.totalPages}
+                </span>
+              </>
+            )}
+            {cursorMode && (
+              <span>
+                {meta.total.toLocaleString()} {t("orders.pagination.totalOrders")}
+              </span>
+            )}
             <span className="text-silk hidden sm:inline">|</span>
             <div className="flex items-center gap-1.5">
               <select
@@ -1002,16 +1043,16 @@ function OrdersContent() {
             </div>
           </div>
 
-          {/* Right: page navigation */}
-          {meta.totalPages > 1 && (
+          {/* Right: page-based navigation */}
+          {!cursorMode && meta.totalPages > 1 && (
             <div className="flex items-center gap-1">
-              {/* First page */}
+              {/* First page — hidden on mobile */}
               <Button
                 variant="outline"
                 size="sm"
                 disabled={meta.page <= 1}
                 onClick={() => setFilter("page", "1")}
-                className="h-8 w-8 p-0"
+                className="hidden sm:flex h-8 w-8 p-0"
                 aria-label={t("orders.pagination.first")}
               >
                 <ChevronsLeft className="h-4 w-4" />
@@ -1028,7 +1069,7 @@ function OrdersContent() {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
 
-              {/* Page numbers */}
+              {/* Page numbers — hidden on mobile */}
               {(() => {
                 const pages: (number | "...")[] = [];
                 const total = meta.totalPages;
@@ -1046,25 +1087,29 @@ function OrdersContent() {
                   pages.push(total);
                 }
 
-                return pages.map((p, i) =>
-                  p === "..." ? (
-                    <span key={`dots-${i}`} className="px-1 text-mist text-sm">
-                      …
-                    </span>
-                  ) : (
-                    <Button
-                      key={p}
-                      variant={p === current ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilter("page", String(p))}
-                      className={cn(
-                        "h-8 w-8 p-0 text-sm",
-                        p === current && "bg-midnight text-white hover:bg-midnight/90"
-                      )}
-                    >
-                      {p}
-                    </Button>
-                  )
+                return (
+                  <span className="hidden sm:contents">
+                    {pages.map((p, i) =>
+                      p === "..." ? (
+                        <span key={`dots-${i}`} className="px-1 text-mist text-sm">
+                          …
+                        </span>
+                      ) : (
+                        <Button
+                          key={p}
+                          variant={p === current ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setFilter("page", String(p))}
+                          className={cn(
+                            "h-8 w-8 p-0 text-sm",
+                            p === current && "bg-midnight text-white hover:bg-midnight/90"
+                          )}
+                        >
+                          {p}
+                        </Button>
+                      )
+                    )}
+                  </span>
                 );
               })()}
 
@@ -1079,16 +1124,44 @@ function OrdersContent() {
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              {/* Last page */}
+              {/* Last page — hidden on mobile */}
               <Button
                 variant="outline"
                 size="sm"
                 disabled={meta.page >= meta.totalPages}
                 onClick={() => setFilter("page", String(meta.totalPages))}
-                className="h-8 w-8 p-0"
+                className="hidden sm:flex h-8 w-8 p-0"
                 aria-label={t("orders.pagination.last")}
               >
                 <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Right: cursor-based navigation */}
+          {cursorMode && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!prevCursor}
+                onClick={goPrevCursor}
+                className="h-8 px-3"
+                aria-label={t("orders.pagination.previous")}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                {t("orders.pagination.prev")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!nextCursor || meta.hasMore === false}
+                onClick={goNextCursor}
+                className="h-8 px-3"
+                aria-label={t("orders.pagination.next")}
+              >
+                {t("orders.pagination.next")}
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           )}

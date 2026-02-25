@@ -18,6 +18,7 @@ import { eq, and, gt, sql } from "drizzle-orm";
 import { processIncomingOrder, type IngestParams } from "@/lib/ingest";
 import { QuotaExceededError } from "@/lib/quota";
 import { parseYouCanPayload, parseIngestPayload } from "@/lib/order-pipeline";
+import { shouldNotify } from "@/lib/notification-helper";
 import { validateApiKey } from "@/lib/api-key";
 
 // ── Enqueue ──────────────────────────────────────────────
@@ -169,15 +170,17 @@ export async function processWebhook(queueId: number): Promise<void> {
       .where(eq(webhookQueue.id, queueId));
 
     if (isExhausted) {
-      // Critical notification for merchant
-      await db.insert(notifications).values({
-        merchantId: webhook.merchantId,
-        type: "webhook_failed",
-        title: "Commande non traitée",
-        message: `Un webhook ${webhook.source} n'a pas pu être traité après ${webhook.maxAttempts} tentatives. ID: ${queueId}. Erreur: ${errMsg.substring(0, 200)}`,
-        severity: "critical",
-        actionUrl: "/dashboard/settings",
-      });
+      // Critical notification for merchant (check preferences)
+      if (await shouldNotify(webhook.merchantId, "webhook_failed")) {
+        await db.insert(notifications).values({
+          merchantId: webhook.merchantId,
+          type: "webhook_failed",
+          title: "Commande non traitée",
+          message: `Un webhook ${webhook.source} n'a pas pu être traité après ${webhook.maxAttempts} tentatives. ID: ${queueId}. Erreur: ${errMsg.substring(0, 200)}`,
+          severity: "critical",
+          actionUrl: "/dashboard/settings",
+        });
+      }
 
       // Audit log
       await db.insert(auditLogs).values({

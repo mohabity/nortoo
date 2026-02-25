@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   KeyRound,
   Copy,
@@ -12,6 +12,7 @@ import {
   Code2,
   Loader2,
   AlertTriangle,
+  Activity,
 } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
@@ -22,8 +23,40 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/provider";
 import type { BaseTabProps } from "../types";
+
+// ── Cron health types ──
+interface CronStatus {
+  name: string;
+  schedule: string;
+  lastRun: string | null;
+  lastStatus: string | null;
+  lastDurationMs: number | null;
+  lastError: string | null;
+  isOverdue: boolean;
+  status: "healthy" | "warning" | "critical";
+}
+
+interface CronHealthData {
+  status: "healthy" | "degraded" | "critical";
+  checkedAt: string;
+  crons: CronStatus[];
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  healthy: "bg-mint",
+  warning: "bg-amber",
+  critical: "bg-rose",
+};
+
+const STATUS_BADGE: Record<string, "mint" | "ocean" | "default"> = {
+  healthy: "mint",
+  degraded: "ocean",
+  critical: "default",
+};
 
 export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
   const { t } = useTranslation();
@@ -34,6 +67,26 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
   const [copiedPayload, setCopiedPayload] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+
+  // Cron health state
+  const [cronHealth, setCronHealth] = useState<CronHealthData | null>(null);
+  const [cronLoading, setCronLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchHealth() {
+      try {
+        const res = await fetch("/api/cron/health");
+        if (res.ok) {
+          setCronHealth(await res.json());
+        }
+      } catch {
+        // Non-critical, silently fail
+      } finally {
+        setCronLoading(false);
+      }
+    }
+    fetchHealth();
+  }, []);
 
   const webhookUrl =
     typeof window !== "undefined"
@@ -64,6 +117,9 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
         await onRefresh();
         onToast("success", t("settings.api.regenerated"));
         setShowKey(true);
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
       } else {
         onToast("error", t("settings.api.regenerateError"));
       }
@@ -73,6 +129,24 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
       setRegenerating(false);
       setShowRegenerateModal(false);
     }
+  }
+
+  function formatDuration(ms: number | null): string {
+    if (ms === null) return "—";
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+
+  function formatTimeAgo(iso: string | null): string {
+    if (!iso) return t("common.never");
+    const diff = Date.now() - new Date(iso).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return t("components.notifications.timeAgo.justNow");
+    if (minutes < 60) return t("components.notifications.timeAgo.minutes", { count: minutes });
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return t("components.notifications.timeAgo.hours", { count: hours });
+    const days = Math.floor(hours / 24);
+    return t("components.notifications.timeAgo.days", { count: days });
   }
 
   const curlExample = `curl -X POST ${webhookUrl} \\
@@ -240,6 +314,100 @@ export function ApiTab({ settings, onRefresh, onToast }: BaseTabProps) {
               )}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* ═══ Monitoring Crons ═══ */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-violet" />
+              <div>
+                <CardTitle className="text-base">
+                  {t("settings.api.cronMonitoring")}
+                </CardTitle>
+                <CardDescription>
+                  {t("settings.api.cronMonitoringSubtitle")}
+                </CardDescription>
+              </div>
+            </div>
+            {cronHealth && (
+              <Badge variant={STATUS_BADGE[cronHealth.status] ?? "default"}>
+                {t(`settings.api.cronStatus.${cronHealth.status}`)}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {cronLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-mist" />
+            </div>
+          ) : cronHealth ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-silk">
+                    <th className="pb-2 text-left font-medium text-fog">
+                      {t("settings.api.cronName")}
+                    </th>
+                    <th className="pb-2 text-left font-medium text-fog">
+                      {t("settings.api.cronSchedule")}
+                    </th>
+                    <th className="pb-2 text-left font-medium text-fog">
+                      {t("settings.api.cronLastRun")}
+                    </th>
+                    <th className="pb-2 text-left font-medium text-fog">
+                      {t("settings.api.cronDuration")}
+                    </th>
+                    <th className="pb-2 text-left font-medium text-fog">
+                      {t("settings.api.cronStatus.label")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-silk">
+                  {cronHealth.crons.map((cron) => (
+                    <tr key={cron.name}>
+                      <td className="py-2.5 font-mono text-xs text-midnight">
+                        {cron.name}
+                      </td>
+                      <td className="py-2.5 text-xs text-fog">
+                        {cron.schedule}
+                      </td>
+                      <td className="py-2.5 text-xs text-slate">
+                        {formatTimeAgo(cron.lastRun)}
+                      </td>
+                      <td className="py-2.5 font-mono text-xs text-slate">
+                        {formatDuration(cron.lastDurationMs)}
+                      </td>
+                      <td className="py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={cn(
+                              "h-2 w-2 rounded-full",
+                              STATUS_COLORS[cron.status] ?? "bg-mist"
+                            )}
+                          />
+                          <span className="text-xs text-slate">
+                            {cron.lastStatus === "error"
+                              ? t("settings.api.cronStatus.error")
+                              : cron.isOverdue
+                                ? t("settings.api.cronStatus.overdue")
+                                : t("settings.api.cronStatus.ok")}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-mist text-center py-4">
+              {t("settings.api.cronUnavailable")}
+            </p>
+          )}
         </CardContent>
       </Card>
 

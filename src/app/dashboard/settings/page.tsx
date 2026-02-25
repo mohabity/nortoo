@@ -64,9 +64,9 @@ function ToastItem({
     <div
       className={cn(
         "flex items-center gap-3 rounded-sm border bg-white px-4 py-3 shadow-lg animate-in slide-in-from-right-5",
-        toast.type === "success" && "border-l-4 border-l-mint",
-        toast.type === "error" && "border-l-4 border-l-rose",
-        toast.type === "info" && "border-l-4 border-l-ocean"
+        toast.type === "success" && "border-s-4 border-s-mint",
+        toast.type === "error" && "border-s-4 border-s-rose",
+        toast.type === "info" && "border-s-4 border-s-ocean"
       )}
     >
       <p className="text-sm text-slate flex-1">{toast.message}</p>
@@ -141,7 +141,7 @@ function SettingsPageInner() {
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="h-6 w-6 animate-spin text-mist" />
-        <span className="ml-2 text-sm text-fog">{t("common.loading")}</span>
+        <span className="ms-2 text-sm text-fog">{t("common.loading")}</span>
       </div>
     );
   }
@@ -180,7 +180,7 @@ function SettingsPageInner() {
       {/* Tab Layout */}
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar / Tab Navigation */}
-        <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto no-scrollbar lg:overflow-x-visible lg:w-[220px] lg:shrink-0 pb-2 lg:pb-0">
+        <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto no-scrollbar snap-x snap-mandatory lg:overflow-x-visible lg:w-[220px] lg:shrink-0 pb-2 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -189,11 +189,11 @@ function SettingsPageInner() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 min-h-[44px] text-sm font-medium text-left transition-colors",
-                  "lg:border-l-[3px]",
+                  "flex items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 min-h-[44px] text-sm font-medium text-start transition-colors snap-start",
+                  "lg:border-s-[3px]",
                   isActive
-                    ? "bg-mint-bg text-mint-deep lg:border-l-mint"
-                    : "text-fog hover:bg-snow hover:text-slate lg:border-l-transparent"
+                    ? "bg-mint-bg text-mint-deep lg:border-s-mint"
+                    : "text-fog hover:bg-snow hover:text-slate lg:border-s-transparent"
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />

@@ -26,6 +26,7 @@
     "and": "et",
     "of": "sur",
     "retry": "Réessayer",
+    "rateLimited": "Trop de requêtes. Réessayez dans {seconds} secondes.",
     "copied": "Copié",
     "copy": "Copier",
     "show": "Afficher",
@@ -195,9 +196,11 @@
       "showing": "Affichage {from}–{to} sur {total}",
       "perPage": "par page",
       "previous": "Précédente",
+      "prev": "Préc.",
       "next": "Suivante",
       "first": "Première page",
-      "last": "Dernière page"
+      "last": "Dernière page",
+      "totalOrders": "commandes"
     },
     "export": {
       "csv": "Exporter CSV",
@@ -271,6 +274,7 @@
       "roi": "ROI nortoo",
       "vsPreviousPeriod": "vs période précédente",
       "ptsVsBaseline": "pts vs baseline",
+      "ptsVsPreviousPeriod": "pts vs période précédente",
       "deliveredOrders": "commandes livrées",
       "projectedMonthly": "DH/mois projeté"
     },
@@ -617,7 +621,23 @@
       "examples": "Exemples d'intégration",
       "examplesSubtitle": "Testez l'endpoint avec cURL ou intégrez le payload JSON",
       "curlExample": "Exemple cURL",
-      "jsonPayload": "Payload JSON"
+      "jsonPayload": "Payload JSON",
+      "cronMonitoring": "Monitoring des crons",
+      "cronMonitoringSubtitle": "Statut des tâches planifiées",
+      "cronName": "Tâche",
+      "cronSchedule": "Fréquence",
+      "cronLastRun": "Dernier run",
+      "cronDuration": "Durée",
+      "cronUnavailable": "Monitoring indisponible",
+      "cronStatus": {
+        "label": "Statut",
+        "healthy": "Opérationnel",
+        "degraded": "Dégradé",
+        "critical": "Critique",
+        "ok": "OK",
+        "error": "Erreur",
+        "overdue": "En retard"
+      }
     },
     "notifications": {
       "email": {
@@ -625,14 +645,20 @@
         "subtitle": "Configurez les alertes que vous souhaitez recevoir",
         "blocked": "Commandes bloquées",
         "blockedDesc": "Recevez un e-mail à chaque commande bloquée automatiquement",
+        "needsReview": "Commandes à vérifier",
+        "needsReviewDesc": "Alerte quand une commande nécessite une vérification manuelle",
+        "flagged": "Commandes signalées",
+        "flaggedDesc": "Notification pour les commandes marquées à risque",
+        "escalation": "Escalades",
+        "escalationDesc": "Alerte quand une commande est escaladée après expiration du délai",
         "dailySummary": "Résumé quotidien",
         "dailySummaryDesc": "Récapitulatif des commandes du jour envoyé à 9h",
         "weeklySummary": "Résumé hebdomadaire",
         "weeklySummaryDesc": "Rapport de performance envoyé chaque lundi à 9h",
-        "rtoAlert": "Alerte taux RTO",
-        "rtoAlertDesc": "Notification quand le taux RTO dépasse un seuil",
-        "threshold": "Seuil :",
-        "save": "Enregistrer les préférences"
+        "webhookFailed": "Échec webhook",
+        "webhookFailedDesc": "Alerte quand un webhook échoue après toutes les tentatives",
+        "save": "Enregistrer les préférences",
+        "saved": "Préférences de notification enregistrées"
       },
       "whatsapp": {
         "title": "Notifications WhatsApp",
@@ -659,6 +685,8 @@
       "consentRecordedSuccess": "Consentement enregistré avec succès",
       "retentionPeriod": "Durée de conservation",
       "retentionMonths": "{count} mois",
+      "retentionSaved": "Durée de conservation mise à jour",
+      "retentionWarning": "La modification prend effet au prochain cycle de purge automatique (3h du matin).",
       "rightsTitle": "Vos droits (Art. 7-9)",
       "rightsSubtitle": "Exercez vos droits conformément à la Loi 09-08",
       "requestSubmitted": "Demande de droit soumise avec succès",
@@ -946,6 +974,11 @@
       "title": "Notifications",
       "markAllRead": "Tout marquer lu",
       "empty": "Aucune notification",
+      "archiveRead": "Archiver les lues",
+      "active": "Actives",
+      "archived": "Archivées",
+      "noArchived": "Aucune notification archivée",
+      "archive": "Archiver",
       "timeAgo": {
         "justNow": "À l'instant",
         "minutes": "Il y a {count} min",

@@ -68,6 +68,7 @@ export const merchants = pgTable("merchants", {
   cndpDeclarationRef: text("cndp_declaration_ref"),
   consentRecordedAt: timestamp("consent_recorded_at"),
   dataRetentionMonths: integer("data_retention_months").notNull().default(24),
+  notificationPreferences: text("notification_preferences"), // JSON
 
   // Onboarding
   onboardingStep: integer("onboarding_step").notNull().default(0),
@@ -332,6 +333,7 @@ export const notifications = pgTable(
     message: text("message").notNull(),
     severity: text("severity").notNull().default("info"), // "info" | "warning" | "critical"
     read: boolean("read").notNull().default(false),
+    archivedAt: timestamp("archived_at"),
     actionUrl: text("action_url"),
 
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -655,6 +657,28 @@ export const usageLogs = pgTable(
   },
   (table) => [
     uniqueIndex("idx_usage_merchant_month").on(table.merchantId, table.month),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
+// CRON RUNS — Monitoring des jobs planifiés
+// ═══════════════════════════════════════════════════════════
+export const cronRuns = pgTable(
+  "cron_runs",
+  {
+    id: serial("id").primaryKey(),
+    cronName: text("cron_name").notNull(),
+    status: text("status").notNull(), // "success" | "error"
+    startedAt: timestamp("started_at").notNull(),
+    finishedAt: timestamp("finished_at"),
+    durationMs: integer("duration_ms"),
+    error: text("error"),
+    metrics: text("metrics"), // JSON
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("cron_runs_name_idx").on(table.cronName),
+    index("cron_runs_created_idx").on(table.createdAt),
   ]
 );
 

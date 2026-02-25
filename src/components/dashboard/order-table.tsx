@@ -8,6 +8,7 @@ import { PipelineBadge } from "./pipeline-badge";
 import { highlightText } from "@/lib/highlight";
 import { useTranslation } from "@/i18n/provider";
 import { formatCurrency } from "@/lib/i18n-utils";
+import type { OrderRow } from "@/types/orders";
 import {
   Table,
   TableBody,
@@ -16,6 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+export type { OrderRow } from "@/types/orders";
 
 function CountdownBadge({ deadline }: { deadline: string }) {
   const { t } = useTranslation();
@@ -54,25 +57,6 @@ function CountdownBadge({ deadline }: { deadline: string }) {
       {remaining}
     </span>
   );
-}
-
-export interface OrderRow {
-  id: number;
-  externalRef: string | null;
-  customerName: string | null;
-  customerPhoneLast4: string | null;
-  productName: string | null;
-  total: number;
-  shippingCity: string | null;
-  fraudScore: number;
-  decision: string;
-  overrideDecision?: string | null;
-  deliveryStatus: string;
-  pipelineStatus: string;
-  scoreExplanation?: string | null;
-  reviewDeadline?: string | null;
-  escalationPriority?: number | null;
-  createdAt: string;
 }
 
 interface OrderTableProps {
@@ -286,7 +270,7 @@ export function OrderTable({
             {t("orders.table.city")}
             <ResizeHandle onResize={(d) => handleColResize("city", d)} onReset={() => handleColReset("city")} />
           </TableHead>
-          <TableHead className="text-right relative" style={headStyle("amount")}>
+          <TableHead className="text-end relative" style={headStyle("amount")}>
             {t("orders.table.amount")}
             <ResizeHandle onResize={(d) => handleColResize("amount", d)} onReset={() => handleColReset("amount")} />
           </TableHead>
@@ -382,7 +366,7 @@ export function OrderTable({
                   </div>
                 </TableCell>
                 <TableCell>{hl(order.shippingCity)}</TableCell>
-                <TableCell className="text-right font-mono">
+                <TableCell className="text-end font-mono">
                   {formatCurrency(order.total, locale)}
                 </TableCell>
                 <TableCell className="text-center">
@@ -392,7 +376,7 @@ export function OrderTable({
                   />
                   {order.overrideDecision && (
                     <span
-                      className="ml-1 text-[10px] text-mist"
+                      className="ms-1 text-[10px] text-mist"
                       title="Override actif"
                     >
                       *

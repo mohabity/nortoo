@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
   const resetUrl = `${baseUrl}/reset-password?token=${rawToken}`;
 
   // Send email
-  const { html, text } = buildPasswordResetEmail(resetUrl);
+  const { html, text } = await buildPasswordResetEmail(resetUrl);
   await sendEmail({
     to: user.email,
     subject: "Réinitialisation de mot de passe — nortoo",

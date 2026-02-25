@@ -41,7 +41,7 @@ export function Sidebar() {
   });
 
   return (
-    <aside className="hidden lg:block fixed left-0 top-0 z-40 h-screen w-64 border-r border-silk bg-white">
+    <aside className="hidden lg:block fixed start-0 top-0 z-40 h-screen w-64 border-e border-silk bg-white">
       {/* Logo */}
       <div className="flex h-16 items-center border-b border-silk px-6">
         <Link href="/dashboard" className="flex items-center">
@@ -76,7 +76,7 @@ export function Sidebar() {
       </nav>
 
       {/* Plan info — clickable */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-silk p-4">
+      <div className="absolute bottom-0 start-0 end-0 border-t border-silk p-4">
         <Link
           href="/dashboard/billing"
           className="block rounded-sm bg-snow p-3 hover:bg-mint-bg/30 transition-colors group"
@@ -86,7 +86,7 @@ export function Sidebar() {
           {planDescription && (
             <p className="mt-1 text-xs text-mist">
               {planDescription}
-              <span className="ml-1 text-mint-deep opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="ms-1 text-mint-deep opacity-0 group-hover:opacity-100 transition-opacity">
                 {t("common.manage")}
               </span>
             </p>

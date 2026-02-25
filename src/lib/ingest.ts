@@ -19,6 +19,7 @@ import { hashPhone, phoneLast4 } from "@/lib/hash";
 import { scoreOrder, type ScoringResult, type VelocityData } from "@/lib/scoring";
 import { executePipeline } from "@/lib/pipeline";
 import { checkQuota, recordUsage, QuotaExceededError } from "@/lib/quota";
+import { shouldNotify } from "@/lib/notification-helper";
 import { normalizeProductId, updateProductStats, getProductRtoRate } from "@/lib/product-stats";
 import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } from "@/lib/city-stats";
 import { parseAddress } from "@/lib/address-parser";
@@ -183,7 +184,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       details: JSON.stringify({ score: 25, decision: "flag", reason: "opposition_active" }),
     });
 
-    if (!params.isTest) {
+    if (!params.isTest && await shouldNotify(merchantId, "order_flagged")) {
       await db.insert(notifications).values({
         merchantId,
         orderId: insertedOrder.id,
@@ -563,8 +564,8 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     })
     .where(eq(orders.id, insertedOrder.id));
 
-  // ── 6d. Insert notification (skip for test orders) ──
-  if (!params.isTest) {
+  // ── 6d. Insert notification (skip for test orders, check preferences) ──
+  if (!params.isTest && await shouldNotify(merchantId, pipelineResult.notificationType)) {
     await db.insert(notifications).values({
       merchantId,
       orderId: insertedOrder.id,
