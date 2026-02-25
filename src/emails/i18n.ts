@@ -1,0 +1,372 @@
+import type { Locale } from "@/i18n/types";
+
+/**
+ * Email translation dictionary — FR/EN for all merchant-facing templates.
+ *
+ * Uses plain Unicode characters (not HTML entities).
+ * Interpolation: {placeholder} replaced at runtime by t().
+ */
+const emailDict = {
+  // ── Global ──
+  "global.footer.tagline": {
+    fr: "nortoo · Scoring anti-fraude COD · نو ر.ت.و",
+    en: "nortoo · COD Anti-Fraud Scoring · نو ر.ت.و",
+  },
+  "global.footer.weekly_auto": {
+    fr: "Ce rapport est envoyé automatiquement chaque lundi.",
+    en: "This report is sent automatically every Monday.",
+  },
+  "global.footer.manage_notifications": {
+    fr: "Gérer les notifications",
+    en: "Manage notifications",
+  },
+  "global.support_hint": {
+    fr: "Besoin d'aide ? Répondez à cet email ou contactez",
+    en: "Need help? Reply to this email or contact",
+  },
+
+  // ── Email Verification ──
+  "emailVerification.preview": {
+    fr: "Vérifiez votre adresse email nortoo",
+    en: "Verify your nortoo email address",
+  },
+  "emailVerification.subject": {
+    fr: "Vérifiez votre email — nortoo",
+    en: "Verify your email — nortoo",
+  },
+  "emailVerification.heading": {
+    fr: "Vérifiez votre email",
+    en: "Verify your email",
+  },
+  "emailVerification.body": {
+    fr: "Bienvenue sur nortoo ! Cliquez sur le bouton ci-dessous pour vérifier votre adresse email.",
+    en: "Welcome to nortoo! Click the button below to verify your email address.",
+  },
+  "emailVerification.cta": {
+    fr: "Vérifier mon email",
+    en: "Verify my email",
+  },
+  "emailVerification.expiry": {
+    fr: "Ce lien expire dans 24 heures.",
+    en: "This link expires in 24 hours.",
+  },
+
+  // ── Password Reset ──
+  "passwordReset.preview": {
+    fr: "Réinitialisez votre mot de passe nortoo",
+    en: "Reset your nortoo password",
+  },
+  "passwordReset.subject": {
+    fr: "Réinitialisation de mot de passe — nortoo",
+    en: "Password reset — nortoo",
+  },
+  "passwordReset.heading": {
+    fr: "Réinitialisation de mot de passe",
+    en: "Password reset",
+  },
+  "passwordReset.body": {
+    fr: "Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
+    en: "You requested a password reset. Click the button below to choose a new password.",
+  },
+  "passwordReset.cta": {
+    fr: "Réinitialiser mon mot de passe",
+    en: "Reset my password",
+  },
+  "passwordReset.expiry": {
+    fr: "Ce lien expire dans 1 heure. Si vous n'avez pas fait cette demande, ignorez cet email.",
+    en: "This link expires in 1 hour. If you didn't request this, ignore this email.",
+  },
+
+  // ── Welcome ──
+  "welcome.preview": {
+    fr: "Bienvenue sur nortoo — votre essai de 14 jours commence",
+    en: "Welcome to nortoo — your 14-day trial starts now",
+  },
+  "welcome.subject": {
+    fr: "Bienvenue sur nortoo — votre essai de 14 jours commence !",
+    en: "Welcome to nortoo — your 14-day trial starts now!",
+  },
+  "welcome.heading": {
+    fr: "Bienvenue sur nortoo, {name} !",
+    en: "Welcome to nortoo, {name}!",
+  },
+  "welcome.body": {
+    fr: "Votre compte est créé et votre essai gratuit de 14 jours commence dès maintenant. nortoo analyse chaque commande COD et vous aide à bloquer les retours avant qu'ils ne coûtent cher.",
+    en: "Your account is created and your free 14-day trial starts now. nortoo analyses every COD order and helps you block returns before they cost you.",
+  },
+  "welcome.steps_heading": {
+    fr: "3 étapes pour démarrer :",
+    en: "3 steps to get started:",
+  },
+  "welcome.step1_label": {
+    fr: "Connectez votre boutique",
+    en: "Connect your store",
+  },
+  "welcome.step1_detail": {
+    fr: "YouCan en un clic, ou via notre API universelle.",
+    en: "YouCan in one click, or via our universal API.",
+  },
+  "welcome.step2_label": {
+    fr: "Configurez vos seuils de scoring",
+    en: "Configure your scoring thresholds",
+  },
+  "welcome.step2_detail": {
+    fr: "choisissez un preset (Permissif, Équilibré ou Strict) ou ajustez finement.",
+    en: "choose a preset (Permissive, Balanced or Strict) or fine-tune manually.",
+  },
+  "welcome.step3_label": {
+    fr: "Regardez vos commandes se scorer",
+    en: "Watch your orders get scored",
+  },
+  "welcome.step3_detail": {
+    fr: "chaque commande reçoit un score 0-100 en temps réel.",
+    en: "every order gets a 0–100 score in real time.",
+  },
+  "welcome.cta": {
+    fr: "Accéder à mon dashboard",
+    en: "Go to my dashboard",
+  },
+
+  // ── Team Invite ──
+  "teamInvite.preview": {
+    fr: "Vous êtes invité(e) à rejoindre {merchantName} sur nortoo",
+    en: "You've been invited to join {merchantName} on nortoo",
+  },
+  "teamInvite.subject": {
+    fr: "Invitation à rejoindre {merchantName} sur nortoo",
+    en: "Invitation to join {merchantName} on nortoo",
+  },
+  "teamInvite.heading": {
+    fr: "Vous êtes invité(e) !",
+    en: "You're invited!",
+  },
+  "teamInvite.body1": {
+    fr: "Vous avez été invité(e) à rejoindre {merchantName} sur nortoo en tant que {roleLabel}.",
+    en: "You've been invited to join {merchantName} on nortoo as {roleLabel}.",
+  },
+  "teamInvite.body2": {
+    fr: "Cliquez sur le bouton ci-dessous pour créer votre mot de passe et activer votre compte.",
+    en: "Click the button below to create your password and activate your account.",
+  },
+  "teamInvite.cta": {
+    fr: "Accepter l'invitation",
+    en: "Accept invitation",
+  },
+  "teamInvite.expiry": {
+    fr: "Ce lien expire dans 7 jours. Si vous n'attendiez pas cette invitation, ignorez cet email.",
+    en: "This link expires in 7 days. If you weren't expecting this invitation, ignore this email.",
+  },
+
+  // ── Invoice ──
+  "invoice.preview": {
+    fr: "Facture {invoiceNumber} disponible",
+    en: "Invoice {invoiceNumber} available",
+  },
+  "invoice.subject": {
+    fr: "Facture {invoiceNumber} — nortoo",
+    en: "Invoice {invoiceNumber} — nortoo",
+  },
+  "invoice.heading": {
+    fr: "Nouvelle facture disponible",
+    en: "New invoice available",
+  },
+  "invoice.greeting": {
+    fr: "Bonjour {merchantName},",
+    en: "Hello {merchantName},",
+  },
+  "invoice.body": {
+    fr: "Votre facture {invoiceNumber} pour la période {period} est disponible.",
+    en: "Your invoice {invoiceNumber} for the period {period} is available.",
+  },
+  "invoice.amount_label": {
+    fr: "Montant TTC",
+    en: "Amount incl. tax",
+  },
+  "invoice.due_label": {
+    fr: "Échéance",
+    en: "Due date",
+  },
+  "invoice.bank_heading": {
+    fr: "Coordonnées bancaires",
+    en: "Bank details",
+  },
+  "invoice.transfer_ref": {
+    fr: "Référence virement :",
+    en: "Transfer reference:",
+  },
+  "invoice.cta": {
+    fr: "Voir ma facture",
+    en: "View my invoice",
+  },
+
+  // ── Overdue ──
+  "overdue.preview": {
+    fr: "Rappel : Facture {invoiceNumber} impayée",
+    en: "Reminder: Invoice {invoiceNumber} unpaid",
+  },
+  "overdue.subject": {
+    fr: "Rappel : Facture {invoiceNumber} impayée — nortoo",
+    en: "Reminder: Invoice {invoiceNumber} unpaid — nortoo",
+  },
+  "overdue.heading": {
+    fr: "Facture impayée",
+    en: "Unpaid invoice",
+  },
+  "overdue.greeting": {
+    fr: "Bonjour {merchantName},",
+    en: "Hello {merchantName},",
+  },
+  "overdue.body": {
+    fr: "Votre facture {invoiceNumber} d'un montant de {amountTTC} est arrivée à échéance le {dueDate} et reste impayée.",
+    en: "Your invoice {invoiceNumber} for {amountTTC} was due on {dueDate} and remains unpaid.",
+  },
+  "overdue.warning_heading": {
+    fr: "Risque de suspension",
+    en: "Suspension risk",
+  },
+  "overdue.warning_body": {
+    fr: "Sans règlement dans les plus brefs délais, votre compte pourra être suspendu et le scoring de vos commandes interrompu.",
+    en: "Without payment as soon as possible, your account may be suspended and order scoring interrupted.",
+  },
+  "overdue.bank_heading": {
+    fr: "Coordonnées bancaires",
+    en: "Bank details",
+  },
+  "overdue.transfer_ref": {
+    fr: "Référence virement :",
+    en: "Transfer reference:",
+  },
+  "overdue.cta": {
+    fr: "Régler ma facture",
+    en: "Pay my invoice",
+  },
+
+  // ── Weekly Report ──
+  "weeklyReport.preview": {
+    fr: "Rapport semaine {weekRange} — {totalOrders} commandes",
+    en: "Weekly report {weekRange} — {totalOrders} orders",
+  },
+  "weeklyReport.sub_header": {
+    fr: "Rapport hebdomadaire",
+    en: "Weekly report",
+  },
+  "weeklyReport.title": {
+    fr: "Résumé de la semaine",
+    en: "Weekly summary",
+  },
+  "weeklyReport.greeting": {
+    fr: "Bonjour {merchantName}",
+    en: "Hello {merchantName}",
+  },
+  "weeklyReport.kpi_scored": {
+    fr: "Commandes scorées",
+    en: "Scored orders",
+  },
+  "weeklyReport.kpi_blocked": {
+    fr: "Commandes bloquées",
+    en: "Blocked orders",
+  },
+  "weeklyReport.kpi_block_pct": {
+    fr: "{blockRate}% du total",
+    en: "{blockRate}% of total",
+  },
+  "weeklyReport.kpi_avg_score": {
+    fr: "Score moyen",
+    en: "Average score",
+  },
+  "weeklyReport.kpi_savings": {
+    fr: "Économies",
+    en: "Savings",
+  },
+  "weeklyReport.kpi_savings_sub": {
+    fr: "{blockedOrders} fraudes évitées",
+    en: "{blockedOrders} frauds avoided",
+  },
+  "weeklyReport.decisions_heading": {
+    fr: "Répartition des décisions",
+    en: "Decision breakdown",
+  },
+  "weeklyReport.delivery_heading": {
+    fr: "Feedback livraison",
+    en: "Delivery feedback",
+  },
+  "weeklyReport.delivered": {
+    fr: "Livrées",
+    en: "Delivered",
+  },
+  "weeklyReport.returned": {
+    fr: "Retournées",
+    en: "Returned",
+  },
+  "weeklyReport.rto_rate": {
+    fr: "Taux RTO réel :",
+    en: "Actual RTO rate:",
+  },
+  "weeklyReport.cities_heading": {
+    fr: "Villes les plus risquées",
+    en: "Highest-risk cities",
+  },
+  "weeklyReport.cities_col_city": {
+    fr: "Ville",
+    en: "City",
+  },
+  "weeklyReport.cities_col_orders": {
+    fr: "Commandes",
+    en: "Orders",
+  },
+  "weeklyReport.cities_col_block_rate": {
+    fr: "Taux blocage",
+    en: "Block rate",
+  },
+  "weeklyReport.insights_heading": {
+    fr: "Insights",
+    en: "Insights",
+  },
+  "weeklyReport.no_insights": {
+    fr: "Aucun insight notable cette semaine.",
+    en: "No notable insights this week.",
+  },
+  "weeklyReport.cta": {
+    fr: "Voir le dashboard →",
+    en: "View dashboard →",
+  },
+  "weeklyReport.insight_volume_up": {
+    fr: "📈 Volume en hausse : +{diff} commandes vs semaine précédente.",
+    en: "📈 Volume up: +{diff} orders vs last week.",
+  },
+  "weeklyReport.insight_less_blocked": {
+    fr: "✅ Moins de blocages cette semaine ({blockedOrders} vs {prevWeekBlocked}).",
+    en: "✅ Fewer blocks this week ({blockedOrders} vs {prevWeekBlocked}).",
+  },
+  "weeklyReport.insight_savings": {
+    fr: "💰 Économies estimées : {savings} DH grâce au scoring nortoo.",
+    en: "💰 Estimated savings: {savings} MAD thanks to nortoo scoring.",
+  },
+  "weeklyReport.insight_rto_high": {
+    fr: "⚠️ Taux RTO élevé ({rtoRate}%). Vérifiez les retours de cette semaine.",
+    en: "⚠️ High RTO rate ({rtoRate}%). Review this week's returns.",
+  },
+  "weeklyReport.insight_risky_city": {
+    fr: "🏙️ {city} reste la ville la plus risquée ({blockRate}% blocage).",
+    en: "🏙️ {city} remains the highest-risk city ({blockRate}% block rate).",
+  },
+} as const satisfies Record<string, { fr: string; en: string }>;
+
+// ─────────────────────────────────────────────────────────────
+// Accessor: t(locale, key, params?)
+// ─────────────────────────────────────────────────────────────
+
+type EmailDictKey = keyof typeof emailDict;
+
+export function t(
+  locale: Locale,
+  key: EmailDictKey,
+  params?: Record<string, string | number>,
+): string {
+  const entry = emailDict[key];
+  const raw: string = entry[locale] ?? entry["fr"];
+  if (!params) return raw;
+  return raw.replace(/\{(\w+)\}/g, (_, k: string) =>
+    params[k] !== undefined ? String(params[k]) : `{${k}}`,
+  );
+}

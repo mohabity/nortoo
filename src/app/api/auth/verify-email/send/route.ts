@@ -4,6 +4,7 @@ import { merchants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import type { Locale } from "@/i18n/types";
 
 // ── In-memory rate limit: 3 requests per merchant per hour ──
 const rateLimitMap = new Map<number, { count: number; firstAt: number }>();
@@ -40,6 +41,7 @@ export async function POST() {
     .select({
       email: merchants.email,
       emailVerified: merchants.emailVerified,
+      locale: merchants.locale,
     })
     .from(merchants)
     .where(eq(merchants.id, merchantId))
@@ -69,7 +71,8 @@ export async function POST() {
   }
 
   // Send verification email
-  const sent = await sendVerificationEmail(merchantId, merchant.email);
+  const locale = (merchant.locale ?? "fr") as Locale;
+  const sent = await sendVerificationEmail(merchantId, merchant.email, locale);
 
   const response: Record<string, unknown> = { success: true };
   if (!sent) {

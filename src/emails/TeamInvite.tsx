@@ -1,21 +1,26 @@
 import { Text, Button } from "@react-email/components";
 import * as React from "react";
 import { NortooLayout } from "./components/Layout";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
 
 interface TeamInviteProps {
   inviteUrl: string;
   merchantName: string;
   roleLabel: string;
+  locale?: Locale;
 }
 
 export function TeamInvite({
   inviteUrl,
   merchantName,
   roleLabel,
+  locale = "fr",
 }: TeamInviteProps) {
   return (
     <NortooLayout
-      preview={`Vous \u00eates invit\u00e9(e) \u00e0 rejoindre ${merchantName} sur nortoo`}
+      preview={t(locale, "teamInvite.preview", { merchantName })}
+      locale={locale}
     >
       <Text
         style={{
@@ -25,7 +30,7 @@ export function TeamInvite({
           fontWeight: 600,
         }}
       >
-        Vous &ecirc;tes invit&eacute;(e) !
+        {t(locale, "teamInvite.heading")}
       </Text>
       <Text
         style={{
@@ -35,9 +40,7 @@ export function TeamInvite({
           margin: "0 0 8px",
         }}
       >
-        Vous avez &eacute;t&eacute; invit&eacute;(e) &agrave; rejoindre{" "}
-        <strong style={{ color: "#0B0F1A" }}>{merchantName}</strong> sur nortoo
-        en tant que <strong style={{ color: "#0B0F1A" }}>{roleLabel}</strong>.
+        {t(locale, "teamInvite.body1", { merchantName, roleLabel })}
       </Text>
       <Text
         style={{
@@ -47,8 +50,7 @@ export function TeamInvite({
           margin: "0 0 24px",
         }}
       >
-        Cliquez sur le bouton ci-dessous pour cr&eacute;er votre mot de passe et
-        activer votre compte.
+        {t(locale, "teamInvite.body2")}
       </Text>
       <Button
         href={inviteUrl}
@@ -63,7 +65,7 @@ export function TeamInvite({
           fontSize: "0.9rem",
         }}
       >
-        Accepter l&apos;invitation
+        {t(locale, "teamInvite.cta")}
       </Button>
       <Text
         style={{
@@ -73,8 +75,7 @@ export function TeamInvite({
           lineHeight: 1.5,
         }}
       >
-        Ce lien expire dans 7 jours. Si vous n&apos;attendiez pas cette
-        invitation, ignorez cet email.
+        {t(locale, "teamInvite.expiry")}
       </Text>
     </NortooLayout>
   );

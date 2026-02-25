@@ -1,14 +1,23 @@
 import { Text, Button } from "@react-email/components";
 import * as React from "react";
 import { NortooLayout } from "./components/Layout";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
 
 interface EmailVerificationProps {
   verifyUrl: string;
+  locale?: Locale;
 }
 
-export function EmailVerification({ verifyUrl }: EmailVerificationProps) {
+export function EmailVerification({
+  verifyUrl,
+  locale = "fr",
+}: EmailVerificationProps) {
   return (
-    <NortooLayout preview="V\u00e9rifiez votre adresse email nortoo">
+    <NortooLayout
+      preview={t(locale, "emailVerification.preview")}
+      locale={locale}
+    >
       <Text
         style={{
           fontSize: "1.1rem",
@@ -17,7 +26,7 @@ export function EmailVerification({ verifyUrl }: EmailVerificationProps) {
           fontWeight: 600,
         }}
       >
-        V&eacute;rifiez votre email
+        {t(locale, "emailVerification.heading")}
       </Text>
       <Text
         style={{
@@ -27,8 +36,7 @@ export function EmailVerification({ verifyUrl }: EmailVerificationProps) {
           margin: "0 0 24px",
         }}
       >
-        Bienvenue sur nortoo ! Cliquez sur le bouton ci-dessous pour
-        v&eacute;rifier votre adresse email.
+        {t(locale, "emailVerification.body")}
       </Text>
       <Button
         href={verifyUrl}
@@ -43,7 +51,7 @@ export function EmailVerification({ verifyUrl }: EmailVerificationProps) {
           fontSize: "0.9rem",
         }}
       >
-        V&eacute;rifier mon email
+        {t(locale, "emailVerification.cta")}
       </Button>
       <Text
         style={{
@@ -53,7 +61,7 @@ export function EmailVerification({ verifyUrl }: EmailVerificationProps) {
           lineHeight: 1.5,
         }}
       >
-        Ce lien expire dans 24 heures.
+        {t(locale, "emailVerification.expiry")}
       </Text>
     </NortooLayout>
   );

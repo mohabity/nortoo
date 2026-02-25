@@ -5,6 +5,7 @@ import { and, eq, gte, lte, sql, count, avg, ne } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { sendEmail, buildWeeklyReportEmail, type WeeklyReport } from "@/lib/email";
 import { withCronMonitoring } from "@/lib/cron-monitor";
+import type { Locale } from "@/i18n/types";
 
 /**
  * GET /api/cron/weekly-report
@@ -47,6 +48,7 @@ export async function GET(request: Request) {
           email: merchants.email,
           rtoCostFixed: merchants.rtoCostFixed,
           rtoCostPercent: merchants.rtoCostPercent,
+          locale: merchants.locale,
         })
         .from(merchants)
         .where(ne(merchants.billingStatus, "cancelled"));
@@ -160,7 +162,8 @@ export async function GET(request: Request) {
           };
 
           // ── Build and send email ──
-          const { subject, html, text } = await buildWeeklyReportEmail(reportData);
+          const locale = (merchant.locale ?? "fr") as Locale;
+          const { subject, html, text } = await buildWeeklyReportEmail(reportData, locale);
           const ok = await sendEmail({
             to: merchant.email,
             subject,

@@ -9,15 +9,18 @@ import {
   Preview,
 } from "@react-email/components";
 import * as React from "react";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
 
 interface DarkLayoutProps {
   children: React.ReactNode;
   preview?: string;
+  locale?: Locale;
 }
 
-export function NortooDarkLayout({ children, preview }: DarkLayoutProps) {
+export function NortooDarkLayout({ children, preview, locale = "fr" }: DarkLayoutProps) {
   return (
-    <Html lang="fr" dir="ltr">
+    <Html lang={locale} dir="ltr">
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -81,7 +84,7 @@ export function NortooDarkLayout({ children, preview }: DarkLayoutProps) {
                 textAlign: "center" as const,
               }}
             >
-              {"nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648 \u2014 \u0632\u064a\u0631\u0648 \u0631\u062a\u0648\u0631"}
+              {t(locale, "global.footer.tagline")}
             </Text>
             <Text
               style={{
@@ -91,12 +94,12 @@ export function NortooDarkLayout({ children, preview }: DarkLayoutProps) {
                 textAlign: "center" as const,
               }}
             >
-              Ce rapport est envoy&eacute; automatiquement chaque lundi.{" "}
+              {t(locale, "global.footer.weekly_auto")}{" "}
               <Link
                 href="https://app.nortoo.ma/dashboard/settings"
                 style={{ color: "#64748B", textDecoration: "underline" }}
               >
-                G&eacute;rer les notifications
+                {t(locale, "global.footer.manage_notifications")}
               </Link>
             </Text>
           </Section>

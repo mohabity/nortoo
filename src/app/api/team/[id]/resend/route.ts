@@ -10,6 +10,7 @@ import {
   type Role,
 } from "@/lib/permissions";
 import { sendEmail, buildTeamInviteEmail } from "@/lib/email";
+import type { Locale } from "@/i18n/types";
 
 /**
  * POST /api/team/[id]/resend
@@ -74,7 +75,7 @@ export async function POST(
 
     // Get merchant name for email
     const [merchant] = await db
-      .select({ name: merchants.name })
+      .select({ name: merchants.name, locale: merchants.locale })
       .from(merchants)
       .where(eq(merchants.id, ctx.merchantId))
       .limit(1);
@@ -83,15 +84,17 @@ export async function POST(
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const inviteUrl = `${baseUrl}/invite?token=${rawToken}`;
     const roleLabel = ROLE_LABELS[targetUser.role as Role] ?? targetUser.role;
-    const { html, text } = await buildTeamInviteEmail(
+    const locale = (merchant?.locale ?? "fr") as Locale;
+    const { subject, html, text } = await buildTeamInviteEmail(
       inviteUrl,
       merchant?.name ?? "nortoo",
-      roleLabel
+      roleLabel,
+      locale
     );
 
     sendEmail({
       to: targetUser.email,
-      subject: `Invitation à rejoindre ${merchant?.name ?? "nortoo"} sur nortoo`,
+      subject,
       html,
       text,
     }).catch(() => {});

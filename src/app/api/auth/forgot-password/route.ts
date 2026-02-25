@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { db } from "@/db/index";
-import { users, passwordResetTokens, auditLogs } from "@/db/schema";
+import { users, merchants, passwordResetTokens, auditLogs } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
+import type { Locale } from "@/i18n/types";
 
 // ── In-memory rate limit: 3 requests per email per hour ──
 const rateLimitMap = new Map<string, { count: number; firstAt: number }>();
@@ -72,6 +73,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // Lookup merchant locale
+  const [merchantRow] = await db
+    .select({ locale: merchants.locale })
+    .from(merchants)
+    .where(eq(merchants.id, user.merchantId))
+    .limit(1);
+  const locale = (merchantRow?.locale ?? "fr") as Locale;
+
   // Invalidate all existing unused tokens for this user
   await db
     .update(passwordResetTokens)
@@ -101,10 +110,10 @@ export async function POST(request: NextRequest) {
   const resetUrl = `${baseUrl}/reset-password?token=${rawToken}`;
 
   // Send email
-  const { html, text } = await buildPasswordResetEmail(resetUrl);
+  const { subject, html, text } = await buildPasswordResetEmail(resetUrl, locale);
   await sendEmail({
     to: user.email,
-    subject: "Réinitialisation de mot de passe — nortoo",
+    subject,
     html,
     text,
   });

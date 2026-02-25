@@ -1,6 +1,8 @@
 import { Text, Section, Button } from "@react-email/components";
 import * as React from "react";
 import { NortooLayout } from "./components/Layout";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
 
 interface OverdueProps {
   merchantName: string;
@@ -10,6 +12,7 @@ interface OverdueProps {
   rib: string;
   iban: string;
   swift: string;
+  locale?: Locale;
 }
 
 export function Overdue({
@@ -20,10 +23,12 @@ export function Overdue({
   rib,
   iban,
   swift,
+  locale = "fr",
 }: OverdueProps) {
   return (
     <NortooLayout
-      preview={`Rappel : Facture ${invoiceNumber} impay\u00e9e`}
+      preview={t(locale, "overdue.preview", { invoiceNumber })}
+      locale={locale}
     >
       <Text
         style={{
@@ -33,7 +38,7 @@ export function Overdue({
           fontWeight: 600,
         }}
       >
-        Facture impay&eacute;e
+        {t(locale, "overdue.heading")}
       </Text>
       <Text
         style={{
@@ -43,7 +48,7 @@ export function Overdue({
           margin: "0 0 8px",
         }}
       >
-        Bonjour {merchantName},
+        {t(locale, "overdue.greeting", { merchantName })}
       </Text>
       <Text
         style={{
@@ -53,11 +58,7 @@ export function Overdue({
           margin: "0 0 24px",
         }}
       >
-        Votre facture{" "}
-        <strong style={{ color: "#0B0F1A" }}>{invoiceNumber}</strong> d&apos;un
-        montant de <strong style={{ color: "#F43F5E" }}>{amountTTC}</strong> est
-        arriv&eacute;e &agrave; &eacute;ch&eacute;ance le{" "}
-        <strong>{dueDate}</strong> et reste impay&eacute;e.
+        {t(locale, "overdue.body", { invoiceNumber, amountTTC, dueDate })}
       </Text>
 
       {/* Warning box */}
@@ -78,7 +79,7 @@ export function Overdue({
             margin: "0 0 6px",
           }}
         >
-          Risque de suspension
+          {t(locale, "overdue.warning_heading")}
         </Text>
         <Text
           style={{
@@ -88,8 +89,7 @@ export function Overdue({
             margin: 0,
           }}
         >
-          Sans r&egrave;glement dans les plus brefs d&eacute;lais, votre compte
-          pourra &ecirc;tre suspendu et le scoring de vos commandes interrompu.
+          {t(locale, "overdue.warning_body")}
         </Text>
       </Section>
 
@@ -111,7 +111,7 @@ export function Overdue({
             margin: "0 0 8px",
           }}
         >
-          Coordonn&eacute;es bancaires
+          {t(locale, "overdue.bank_heading")}
         </Text>
         <Text
           style={{
@@ -134,7 +134,7 @@ export function Overdue({
             margin: "8px 0 0",
           }}
         >
-          R&eacute;f&eacute;rence virement :{" "}
+          {t(locale, "overdue.transfer_ref")}{" "}
           <strong>{invoiceNumber}</strong>
         </Text>
       </Section>
@@ -152,7 +152,7 @@ export function Overdue({
           fontSize: "0.9rem",
         }}
       >
-        R&eacute;gler ma facture
+        {t(locale, "overdue.cta")}
       </Button>
     </NortooLayout>
   );

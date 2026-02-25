@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { emailVerificationTokens, merchants, auditLogs } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { sendEmail, buildEmailVerificationEmail } from "@/lib/email";
+import type { Locale } from "@/i18n/types";
 
 /**
  * Generate a verification token, store SHA-256 in DB, send email.
@@ -10,7 +11,8 @@ import { sendEmail, buildEmailVerificationEmail } from "@/lib/email";
  */
 export async function sendVerificationEmail(
   merchantId: number,
-  email: string
+  email: string,
+  locale: Locale = "fr",
 ): Promise<boolean> {
   // Invalidate all existing unused tokens for this merchant
   await db
@@ -41,10 +43,10 @@ export async function sendVerificationEmail(
   const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${rawToken}`;
 
   // Send email
-  const { html, text } = await buildEmailVerificationEmail(verifyUrl);
+  const { html, text, subject } = await buildEmailVerificationEmail(verifyUrl, locale);
   const sent = await sendEmail({
     to: email,
-    subject: "V\u00e9rifiez votre email \u2014 nortoo",
+    subject,
     html,
     text,
   });

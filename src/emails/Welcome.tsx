@@ -1,15 +1,21 @@
 import { Text, Button, Hr } from "@react-email/components";
 import * as React from "react";
 import { NortooLayout } from "./components/Layout";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
 
 interface WelcomeProps {
   name: string;
   dashboardUrl: string;
+  locale?: Locale;
 }
 
-export function Welcome({ name, dashboardUrl }: WelcomeProps) {
+export function Welcome({ name, dashboardUrl, locale = "fr" }: WelcomeProps) {
   return (
-    <NortooLayout preview="Bienvenue sur nortoo — votre essai de 14 jours commence">
+    <NortooLayout
+      preview={t(locale, "welcome.preview")}
+      locale={locale}
+    >
       <Text
         style={{
           fontSize: "1.1rem",
@@ -18,7 +24,7 @@ export function Welcome({ name, dashboardUrl }: WelcomeProps) {
           fontWeight: 600,
         }}
       >
-        Bienvenue sur nortoo, {name}&nbsp;!
+        {t(locale, "welcome.heading", { name })}
       </Text>
 
       <Text
@@ -29,10 +35,7 @@ export function Welcome({ name, dashboardUrl }: WelcomeProps) {
           margin: "0 0 24px",
         }}
       >
-        Votre compte est cr&eacute;&eacute; et votre essai gratuit de{" "}
-        <strong style={{ color: "#0B0F1A" }}>14 jours</strong> commence
-        d&egrave;s maintenant. nortoo analyse chaque commande COD et vous aide
-        &agrave; bloquer les retours avant qu&apos;ils ne co&ucirc;tent cher.
+        {t(locale, "welcome.body")}
       </Text>
 
       <Hr
@@ -50,7 +53,7 @@ export function Welcome({ name, dashboardUrl }: WelcomeProps) {
           margin: "0 0 16px",
         }}
       >
-        3 &eacute;tapes pour d&eacute;marrer&nbsp;:
+        {t(locale, "welcome.steps_heading")}
       </Text>
 
       {/* Step 1 */}
@@ -64,8 +67,10 @@ export function Welcome({ name, dashboardUrl }: WelcomeProps) {
         }}
       >
         <strong style={{ color: "#00E5A0" }}>1.</strong>{" "}
-        <strong style={{ color: "#0B0F1A" }}>Connectez votre boutique</strong>{" "}
-        — YouCan en un clic, ou via notre API universelle.
+        <strong style={{ color: "#0B0F1A" }}>
+          {t(locale, "welcome.step1_label")}
+        </strong>{" "}
+        — {t(locale, "welcome.step1_detail")}
       </Text>
 
       {/* Step 2 */}
@@ -80,10 +85,9 @@ export function Welcome({ name, dashboardUrl }: WelcomeProps) {
       >
         <strong style={{ color: "#00E5A0" }}>2.</strong>{" "}
         <strong style={{ color: "#0B0F1A" }}>
-          Configurez vos seuils de scoring
+          {t(locale, "welcome.step2_label")}
         </strong>{" "}
-        — choisissez un preset (Permissif, &Eacute;quilibr&eacute; ou Strict)
-        ou ajustez finement.
+        — {t(locale, "welcome.step2_detail")}
       </Text>
 
       {/* Step 3 */}
@@ -98,9 +102,9 @@ export function Welcome({ name, dashboardUrl }: WelcomeProps) {
       >
         <strong style={{ color: "#00E5A0" }}>3.</strong>{" "}
         <strong style={{ color: "#0B0F1A" }}>
-          Regardez vos commandes se scorer
+          {t(locale, "welcome.step3_label")}
         </strong>{" "}
-        — chaque commande re&ccedil;oit un score 0-100 en temps r&eacute;el.
+        — {t(locale, "welcome.step3_detail")}
       </Text>
 
       <Button
@@ -116,7 +120,7 @@ export function Welcome({ name, dashboardUrl }: WelcomeProps) {
           fontSize: "0.9rem",
         }}
       >
-        Acc&eacute;der &agrave; mon dashboard
+        {t(locale, "welcome.cta")}
       </Button>
 
       <Text
@@ -127,7 +131,7 @@ export function Welcome({ name, dashboardUrl }: WelcomeProps) {
           lineHeight: 1.5,
         }}
       >
-        Besoin d&apos;aide ? R&eacute;pondez &agrave; cet email ou contactez{" "}
+        {t(locale, "global.support_hint")}{" "}
         <a
           href="mailto:support@nortoo.ma"
           style={{ color: "#00E5A0", textDecoration: "underline" }}

@@ -1,6 +1,8 @@
 import { Text, Section, Button } from "@react-email/components";
 import * as React from "react";
 import { NortooLayout } from "./components/Layout";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
 
 interface InvoiceProps {
   merchantName: string;
@@ -11,6 +13,7 @@ interface InvoiceProps {
   rib: string;
   iban: string;
   swift: string;
+  locale?: Locale;
 }
 
 export function Invoice({
@@ -22,9 +25,13 @@ export function Invoice({
   rib,
   iban,
   swift,
+  locale = "fr",
 }: InvoiceProps) {
   return (
-    <NortooLayout preview={`Facture ${invoiceNumber} disponible`}>
+    <NortooLayout
+      preview={t(locale, "invoice.preview", { invoiceNumber })}
+      locale={locale}
+    >
       <Text
         style={{
           fontSize: "1.1rem",
@@ -33,7 +40,7 @@ export function Invoice({
           fontWeight: 600,
         }}
       >
-        Nouvelle facture disponible
+        {t(locale, "invoice.heading")}
       </Text>
       <Text
         style={{
@@ -43,7 +50,7 @@ export function Invoice({
           margin: "0 0 8px",
         }}
       >
-        Bonjour {merchantName},
+        {t(locale, "invoice.greeting", { merchantName })}
       </Text>
       <Text
         style={{
@@ -53,10 +60,7 @@ export function Invoice({
           margin: "0 0 24px",
         }}
       >
-        Votre facture{" "}
-        <strong style={{ color: "#0B0F1A" }}>{invoiceNumber}</strong> pour la
-        p&eacute;riode <strong style={{ color: "#0B0F1A" }}>{period}</strong> est
-        disponible.
+        {t(locale, "invoice.body", { invoiceNumber, period })}
       </Text>
 
       {/* Amount info box */}
@@ -78,7 +82,9 @@ export function Invoice({
         >
           <tbody>
             <tr>
-              <td style={{ padding: "4px 0" }}>Montant TTC</td>
+              <td style={{ padding: "4px 0" }}>
+                {t(locale, "invoice.amount_label")}
+              </td>
               <td
                 style={{
                   padding: "4px 0",
@@ -91,7 +97,9 @@ export function Invoice({
               </td>
             </tr>
             <tr>
-              <td style={{ padding: "4px 0" }}>&Eacute;ch&eacute;ance</td>
+              <td style={{ padding: "4px 0" }}>
+                {t(locale, "invoice.due_label")}
+              </td>
               <td
                 style={{
                   padding: "4px 0",
@@ -125,7 +133,7 @@ export function Invoice({
             margin: "0 0 8px",
           }}
         >
-          Coordonn&eacute;es bancaires
+          {t(locale, "invoice.bank_heading")}
         </Text>
         <Text
           style={{
@@ -148,7 +156,7 @@ export function Invoice({
             margin: "8px 0 0",
           }}
         >
-          R&eacute;f&eacute;rence virement :{" "}
+          {t(locale, "invoice.transfer_ref")}{" "}
           <strong>{invoiceNumber}</strong>
         </Text>
       </Section>
@@ -166,7 +174,7 @@ export function Invoice({
           fontSize: "0.9rem",
         }}
       >
-        Voir ma facture
+        {t(locale, "invoice.cta")}
       </Button>
     </NortooLayout>
   );

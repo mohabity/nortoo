@@ -6,10 +6,12 @@ import { z } from "zod";
 import { getMerchantId } from "@/lib/merchant";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { auth } from "@/auth";
+import type { Locale } from "@/i18n/types";
 
 // ── Shared select columns ──
 const merchantSelect = {
   name: merchants.name,
+  locale: merchants.locale,
   domain: merchants.domain,
   email: merchants.email,
   emailVerified: merchants.emailVerified,
@@ -143,6 +145,7 @@ export async function PUT(request: Request) {
         name: merchants.name,
         email: merchants.email,
         emailVerified: merchants.emailVerified,
+        locale: merchants.locale,
       })
       .from(merchants)
       .where(eq(merchants.id, merchantId))
@@ -197,7 +200,8 @@ export async function PUT(request: Request) {
 
     // If email changed, send verification to the new email
     if (emailChanged) {
-      sendVerificationEmail(merchantId, normalizedEmail).catch(() => {});
+      const locale = (current.locale ?? "fr") as Locale;
+      sendVerificationEmail(merchantId, normalizedEmail, locale).catch(() => {});
     }
 
     const [updated] = await db

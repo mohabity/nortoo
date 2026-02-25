@@ -74,6 +74,9 @@ export const merchants = pgTable("merchants", {
   onboardingStep: integer("onboarding_step").notNull().default(0),
   onboardingCompletedAt: timestamp("onboarding_completed_at"),
 
+  // Preferences
+  locale: text("locale").notNull().default("fr"), // "fr" | "en"
+
   // Meta
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

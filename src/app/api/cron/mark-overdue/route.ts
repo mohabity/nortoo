@@ -6,6 +6,7 @@ import { verifyCronSecret } from "@/lib/cron-auth";
 import { sendEmail, buildOverdueEmail } from "@/lib/email";
 import { formatAmountDH, BANK_INFO } from "@/lib/billing-config";
 import { withCronMonitoring } from "@/lib/cron-monitor";
+import type { Locale } from "@/i18n/types";
 
 /**
  * GET /api/cron/mark-overdue
@@ -57,17 +58,19 @@ export async function GET(request: Request) {
 
         // Get merchant info for email
         const [merchant] = await db
-          .select({ name: merchants.name, email: merchants.email })
+          .select({ name: merchants.name, email: merchants.email, locale: merchants.locale })
           .from(merchants)
           .where(eq(merchants.id, inv.merchantId))
           .limit(1);
 
         if (merchant) {
+          const locale = (merchant.locale ?? "fr") as Locale;
+          const dateLocale = locale === "en" ? "en-US" : "fr-FR";
           const emailData = await buildOverdueEmail({
             merchantName: merchant.name,
             invoiceNumber: inv.invoiceNumber,
             amountTTC: formatAmountDH(inv.amountTTC),
-            dueDate: new Date(inv.dueDate).toLocaleDateString("fr-FR", {
+            dueDate: new Date(inv.dueDate).toLocaleDateString(dateLocale, {
               day: "numeric",
               month: "long",
               year: "numeric",
@@ -75,7 +78,7 @@ export async function GET(request: Request) {
             rib: BANK_INFO.rib,
             iban: BANK_INFO.iban,
             swift: BANK_INFO.swift,
-          });
+          }, locale);
 
           await sendEmail({
             to: merchant.email,

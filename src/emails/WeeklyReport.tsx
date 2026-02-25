@@ -1,6 +1,9 @@
 import { Text, Section, Button, Link } from "@react-email/components";
 import * as React from "react";
 import { NortooDarkLayout } from "./components/DarkLayout";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
+import { formatDate, formatNumber } from "@/lib/i18n-utils";
 
 interface WeeklyReportProps {
   merchantName: string;
@@ -21,15 +24,7 @@ interface WeeklyReportProps {
   topRiskCities: { city: string; orders: number; blockRate: number }[];
   prevWeekOrders?: number;
   prevWeekBlocked?: number;
-}
-
-function formatDateFr(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  locale?: Locale;
 }
 
 function pct(value: number, total: number): string {
@@ -39,7 +34,7 @@ function pct(value: number, total: number): string {
 
 function trendText(
   current: number,
-  previous: number | undefined
+  previous: number | undefined,
 ): { arrow: string; pctChange: number; color: string } | null {
   if (previous === undefined || previous === 0) return null;
   const diff = current - previous;
@@ -71,8 +66,14 @@ export function WeeklyReport({
   topRiskCities,
   prevWeekOrders,
   prevWeekBlocked,
+  locale = "fr",
 }: WeeklyReportProps) {
-  const weekRange = `${formatDateFr(weekStart)} \u2014 ${formatDateFr(weekEnd)}`;
+  const dateOpts: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  };
+  const weekRange = `${formatDate(weekStart, locale, dateOpts)} \u2014 ${formatDate(weekEnd, locale, dateOpts)}`;
   const blockRate =
     totalOrders > 0 ? Math.round((blockedOrders / totalOrders) * 100) : 0;
   const deliveryTotal = deliveredCount + returnedCount;
@@ -84,31 +85,44 @@ export function WeeklyReport({
   const ordersTrend = trendText(totalOrders, prevWeekOrders);
   const blockedTrend = trendText(blockedOrders, prevWeekBlocked);
 
+  const savingsFormatted = formatNumber(savings, locale);
+  const currencyLabel = locale === "en" ? "MAD" : "DH";
+
   // Build insights
   const insights: string[] = [];
   if (prevWeekOrders !== undefined && totalOrders > prevWeekOrders) {
     insights.push(
-      `\ud83d\udcc8 Volume en hausse : +${totalOrders - prevWeekOrders} commandes vs semaine pr\u00e9c\u00e9dente.`
+      t(locale, "weeklyReport.insight_volume_up", {
+        diff: totalOrders - prevWeekOrders,
+      }),
     );
   }
   if (prevWeekBlocked !== undefined && blockedOrders < prevWeekBlocked) {
     insights.push(
-      `\u2705 Moins de blocages cette semaine (${blockedOrders} vs ${prevWeekBlocked}).`
+      t(locale, "weeklyReport.insight_less_blocked", {
+        blockedOrders,
+        prevWeekBlocked,
+      }),
     );
   }
   if (savings > 0) {
     insights.push(
-      `\ud83d\udcb0 \u00c9conomies estim\u00e9es : ${savings.toLocaleString("fr-FR")} DH gr\u00e2ce au scoring nortoo.`
+      t(locale, "weeklyReport.insight_savings", {
+        savings: `${savingsFormatted} ${currencyLabel}`,
+      }),
     );
   }
   if (rtoRate > 20) {
     insights.push(
-      `\u26a0\ufe0f Taux RTO \u00e9lev\u00e9 (${rtoRate}%). V\u00e9rifiez les retours de cette semaine.`
+      t(locale, "weeklyReport.insight_rto_high", { rtoRate }),
     );
   }
   if (topRiskCities.length > 0 && topRiskCities[0].blockRate > 40) {
     insights.push(
-      `\ud83c\udfd9\ufe0f ${topRiskCities[0].city} reste la ville la plus risqu\u00e9e (${Math.round(topRiskCities[0].blockRate)}% blocage).`
+      t(locale, "weeklyReport.insight_risky_city", {
+        city: topRiskCities[0].city,
+        blockRate: Math.round(topRiskCities[0].blockRate),
+      }),
     );
   }
 
@@ -116,7 +130,11 @@ export function WeeklyReport({
 
   return (
     <NortooDarkLayout
-      preview={`Rapport semaine ${weekRange} \u2014 ${totalOrders} commandes`}
+      preview={t(locale, "weeklyReport.preview", {
+        weekRange,
+        totalOrders,
+      })}
+      locale={locale}
     >
       {/* Sub-header label */}
       <Section style={{ padding: "0 32px" }}>
@@ -128,7 +146,7 @@ export function WeeklyReport({
             textAlign: "right" as const,
           }}
         >
-          Rapport hebdomadaire
+          {t(locale, "weeklyReport.sub_header")}
         </Text>
       </Section>
 
@@ -142,13 +160,13 @@ export function WeeklyReport({
             color: "#FFFFFF",
           }}
         >
-          R&eacute;sum&eacute; de la semaine
+          {t(locale, "weeklyReport.title")}
         </Text>
         <Text style={{ margin: 0, fontSize: 13, color: "#64748B" }}>
           {weekRange}
         </Text>
         <Text style={{ margin: "4px 0 0", fontSize: 13, color: "#94A3B8" }}>
-          Bonjour {merchantName} {"\ud83d\udc4b"}
+          {t(locale, "weeklyReport.greeting", { merchantName })} {"\ud83d\udc4b"}
         </Text>
       </Section>
 
@@ -162,7 +180,7 @@ export function WeeklyReport({
         >
           <tbody>
             <tr>
-              {/* Commandes scorees */}
+              {/* Scored orders */}
               <td
                 style={{
                   background: "#1E293B",
@@ -181,7 +199,7 @@ export function WeeklyReport({
                     letterSpacing: "0.5px",
                   }}
                 >
-                  Commandes scor&eacute;es
+                  {t(locale, "weeklyReport.kpi_scored")}
                 </Text>
                 <Text
                   style={{
@@ -207,7 +225,7 @@ export function WeeklyReport({
                   )}
                 </Text>
               </td>
-              {/* Commandes bloquees */}
+              {/* Blocked orders */}
               <td
                 style={{
                   background: "#1E293B",
@@ -226,7 +244,7 @@ export function WeeklyReport({
                     letterSpacing: "0.5px",
                   }}
                 >
-                  Commandes bloqu&eacute;es
+                  {t(locale, "weeklyReport.kpi_blocked")}
                 </Text>
                 <Text
                   style={{
@@ -254,12 +272,12 @@ export function WeeklyReport({
                 <Text
                   style={{ margin: "4px 0 0", fontSize: 11, color: "#94A3B8" }}
                 >
-                  {blockRate}% du total
+                  {t(locale, "weeklyReport.kpi_block_pct", { blockRate })}
                 </Text>
               </td>
             </tr>
             <tr>
-              {/* Score moyen */}
+              {/* Average score */}
               <td
                 style={{
                   background: "#1E293B",
@@ -278,7 +296,7 @@ export function WeeklyReport({
                     letterSpacing: "0.5px",
                   }}
                 >
-                  Score moyen
+                  {t(locale, "weeklyReport.kpi_avg_score")}
                 </Text>
                 <Text
                   style={{
@@ -292,7 +310,7 @@ export function WeeklyReport({
                   {avgScore}
                 </Text>
               </td>
-              {/* Economies */}
+              {/* Savings */}
               <td
                 style={{
                   background:
@@ -312,7 +330,7 @@ export function WeeklyReport({
                     letterSpacing: "0.5px",
                   }}
                 >
-                  {"\ud83d\udcb0"} &Eacute;conomies
+                  {"\ud83d\udcb0"} {t(locale, "weeklyReport.kpi_savings")}
                 </Text>
                 <Text
                   style={{
@@ -323,12 +341,12 @@ export function WeeklyReport({
                     letterSpacing: "-1px",
                   }}
                 >
-                  {savings.toLocaleString("fr-FR")} DH
+                  {savingsFormatted} {currencyLabel}
                 </Text>
                 <Text
                   style={{ margin: "4px 0 0", fontSize: 11, color: "#6EE7B7" }}
                 >
-                  {blockedOrders} fraudes &eacute;vit&eacute;es
+                  {t(locale, "weeklyReport.kpi_savings_sub", { blockedOrders })}
                 </Text>
               </td>
             </tr>
@@ -348,7 +366,7 @@ export function WeeklyReport({
             letterSpacing: "0.5px",
           }}
         >
-          R&eacute;partition des d&eacute;cisions
+          {t(locale, "weeklyReport.decisions_heading")}
         </Text>
         <table
           width="100%"
@@ -502,7 +520,7 @@ export function WeeklyReport({
               letterSpacing: "0.5px",
             }}
           >
-            Feedback livraison
+            {t(locale, "weeklyReport.delivery_heading")}
           </Text>
           <table
             width="100%"
@@ -520,7 +538,7 @@ export function WeeklyReport({
                     fontWeight: 600,
                   }}
                 >
-                  {"\u2705"} Livr&eacute;es
+                  {"\u2705"} {t(locale, "weeklyReport.delivered")}
                 </td>
                 <td
                   style={{
@@ -552,7 +570,7 @@ export function WeeklyReport({
                     fontWeight: 600,
                   }}
                 >
-                  {"\u21a9\ufe0f"} Retourn&eacute;es
+                  {"\u21a9\ufe0f"} {t(locale, "weeklyReport.returned")}
                 </td>
                 <td
                   style={{
@@ -578,7 +596,7 @@ export function WeeklyReport({
             </tbody>
           </table>
           <Text style={{ margin: "8px 0 0", fontSize: 11, color: "#64748B" }}>
-            Taux RTO r&eacute;el :{" "}
+            {t(locale, "weeklyReport.rto_rate")}{" "}
             <span
               style={{
                 color: rtoRate > 20 ? "#F87171" : "#34D399",
@@ -604,7 +622,7 @@ export function WeeklyReport({
               letterSpacing: "0.5px",
             }}
           >
-            Villes les plus risqu&eacute;es
+            {t(locale, "weeklyReport.cities_heading")}
           </Text>
           <table
             width="100%"
@@ -625,7 +643,7 @@ export function WeeklyReport({
                     borderBottom: "1px solid #334155",
                   }}
                 >
-                  Ville
+                  {t(locale, "weeklyReport.cities_col_city")}
                 </th>
                 <th
                   style={{
@@ -638,7 +656,7 @@ export function WeeklyReport({
                     borderBottom: "1px solid #334155",
                   }}
                 >
-                  Commandes
+                  {t(locale, "weeklyReport.cities_col_orders")}
                 </th>
                 <th
                   style={{
@@ -651,7 +669,7 @@ export function WeeklyReport({
                     borderBottom: "1px solid #334155",
                   }}
                 >
-                  Taux blocage
+                  {t(locale, "weeklyReport.cities_col_block_rate")}
                 </th>
               </tr>
             </thead>
@@ -710,7 +728,7 @@ export function WeeklyReport({
             letterSpacing: "0.5px",
           }}
         >
-          {"\ud83d\udca1"} Insights
+          {"\ud83d\udca1"} {t(locale, "weeklyReport.insights_heading")}
         </Text>
         <ul style={{ margin: 0, padding: "0 0 0 20px" }}>
           {insights.length > 0 ? (
@@ -729,7 +747,7 @@ export function WeeklyReport({
             ))
           ) : (
             <li style={{ color: "#94A3B8", fontSize: 13 }}>
-              Aucun insight notable cette semaine.
+              {t(locale, "weeklyReport.no_insights")}
             </li>
           )}
         </ul>
@@ -752,7 +770,7 @@ export function WeeklyReport({
             fontSize: 14,
           }}
         >
-          Voir le dashboard {"\u2192"}
+          {t(locale, "weeklyReport.cta")}
         </Button>
       </Section>
     </NortooDarkLayout>

@@ -1,6 +1,9 @@
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import * as React from "react";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
+import { formatDate, formatNumber } from "@/lib/i18n-utils";
 
 // Email components
 import { PasswordReset } from "@/emails/PasswordReset";
@@ -59,33 +62,33 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
 // PASSWORD RESET
 // ═══════════════════════════════════════════════════════════
 
-export async function buildPasswordResetEmail(resetUrl: string) {
-  const element = React.createElement(PasswordReset, { resetUrl });
+export async function buildPasswordResetEmail(resetUrl: string, locale: Locale = "fr") {
+  const element = React.createElement(PasswordReset, { resetUrl, locale });
   const html = await render(element);
   const text = await render(element, { plainText: true });
-  return { html, text };
+  return { subject: t(locale, "passwordReset.subject"), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════
 // EMAIL VERIFICATION
 // ═══════════════════════════════════════════════════════════
 
-export async function buildEmailVerificationEmail(verifyUrl: string) {
-  const element = React.createElement(EmailVerification, { verifyUrl });
+export async function buildEmailVerificationEmail(verifyUrl: string, locale: Locale = "fr") {
+  const element = React.createElement(EmailVerification, { verifyUrl, locale });
   const html = await render(element);
   const text = await render(element, { plainText: true });
-  return { html, text };
+  return { subject: t(locale, "emailVerification.subject"), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════
 // WELCOME
 // ═══════════════════════════════════════════════════════════
 
-export async function buildWelcomeEmail(name: string, dashboardUrl: string) {
-  const element = React.createElement(Welcome, { name, dashboardUrl });
+export async function buildWelcomeEmail(name: string, dashboardUrl: string, locale: Locale = "fr") {
+  const element = React.createElement(Welcome, { name, dashboardUrl, locale });
   const html = await render(element);
   const text = await render(element, { plainText: true });
-  return { html, text };
+  return { subject: t(locale, "welcome.subject"), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -95,16 +98,18 @@ export async function buildWelcomeEmail(name: string, dashboardUrl: string) {
 export async function buildTeamInviteEmail(
   inviteUrl: string,
   merchantName: string,
-  roleLabel: string
+  roleLabel: string,
+  locale: Locale = "fr",
 ) {
   const element = React.createElement(TeamInvite, {
     inviteUrl,
     merchantName,
     roleLabel,
+    locale,
   });
   const html = await render(element);
   const text = await render(element, { plainText: true });
-  return { html, text };
+  return { subject: t(locale, "teamInvite.subject", { merchantName }), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -132,23 +137,20 @@ export interface WeeklyReport {
   prevWeekBlocked?: number;
 }
 
-export async function buildWeeklyReportEmail(data: WeeklyReport) {
-  const element = React.createElement(WeeklyReportComponent, data);
+export async function buildWeeklyReportEmail(data: WeeklyReport, locale: Locale = "fr") {
+  const element = React.createElement(WeeklyReportComponent, { ...data, locale });
   const html = await render(element);
   const text = await render(element, { plainText: true });
 
-  const weekRange = `${formatDateFr(data.weekStart)} — ${formatDateFr(data.weekEnd)}`;
+  const dateOpts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", year: "numeric" };
+  const weekRange = `${formatDate(data.weekStart, locale, dateOpts)} — ${formatDate(data.weekEnd, locale, dateOpts)}`;
+  const currencyLabel = locale === "en" ? "MAD" : "DH";
 
   return {
-    subject: `📊 Rapport semaine ${weekRange} — ${data.totalOrders} commandes · ${data.savings.toLocaleString("fr-FR")} DH économisés`,
+    subject: `📊 ${t(locale, "weeklyReport.preview", { weekRange, totalOrders: data.totalOrders })} · ${formatNumber(data.savings, locale)} ${currencyLabel}`,
     html,
     text,
   };
-}
-
-function formatDateFr(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -166,11 +168,11 @@ export interface InvoiceEmailData {
   swift: string;
 }
 
-export async function buildInvoiceEmail(data: InvoiceEmailData) {
-  const element = React.createElement(Invoice, data);
+export async function buildInvoiceEmail(data: InvoiceEmailData, locale: Locale = "fr") {
+  const element = React.createElement(Invoice, { ...data, locale });
   const html = await render(element);
   const text = await render(element, { plainText: true });
-  return { subject: `Facture ${data.invoiceNumber} — nortoo`, html, text };
+  return { subject: t(locale, "invoice.subject", { invoiceNumber: data.invoiceNumber }), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -187,15 +189,15 @@ export interface OverdueEmailData {
   swift: string;
 }
 
-export async function buildOverdueEmail(data: OverdueEmailData) {
-  const element = React.createElement(Overdue, data);
+export async function buildOverdueEmail(data: OverdueEmailData, locale: Locale = "fr") {
+  const element = React.createElement(Overdue, { ...data, locale });
   const html = await render(element);
   const text = await render(element, { plainText: true });
-  return { subject: `Rappel : Facture ${data.invoiceNumber} impayée — nortoo`, html, text };
+  return { subject: t(locale, "overdue.subject", { invoiceNumber: data.invoiceNumber }), html, text };
 }
 
 // ═══════════════════════════════════════════════════════════
-// DATA RIGHTS — Confirmation + Notification
+// DATA RIGHTS — Confirmation + Notification (FR only)
 // ═══════════════════════════════════════════════════════════
 
 export interface DataRightsConfirmationData {

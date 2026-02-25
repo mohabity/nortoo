@@ -8,15 +8,18 @@ import {
   Preview,
 } from "@react-email/components";
 import * as React from "react";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
 
 interface LayoutProps {
   children: React.ReactNode;
   preview?: string;
+  locale?: Locale;
 }
 
-export function NortooLayout({ children, preview }: LayoutProps) {
+export function NortooLayout({ children, preview, locale = "fr" }: LayoutProps) {
   return (
-    <Html lang="fr" dir="ltr">
+    <Html lang={locale} dir="ltr">
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -78,7 +81,7 @@ export function NortooLayout({ children, preview }: LayoutProps) {
                 margin: 0,
               }}
             >
-              {"nortoo \u00b7 Scoring anti-fraude COD \u00b7 \u0646\u0648 \u0631.\u062a.\u0648"}
+              {t(locale, "global.footer.tagline")}
             </Text>
           </Section>
         </Container>

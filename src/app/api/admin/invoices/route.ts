@@ -13,6 +13,7 @@ import {
 } from "@/lib/billing-config";
 import { getPlanConfig } from "@/lib/plans";
 import { sendEmail, buildInvoiceEmail } from "@/lib/email";
+import type { Locale } from "@/i18n/types";
 
 /**
  * GET /api/admin/invoices?status=pending|paid|overdue&merchantId=X
@@ -124,6 +125,7 @@ export async function POST(request: Request) {
       name: merchants.name,
       email: merchants.email,
       plan: merchants.plan,
+      locale: merchants.locale,
     })
     .from(merchants)
     .where(eq(merchants.id, merchantId))
@@ -185,19 +187,19 @@ export async function POST(request: Request) {
     .returning({ id: invoices.id, invoiceNumber: invoices.invoiceNumber });
 
   // Send invoice email
-  const monthNames = [
-    "", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-  ];
+  const locale = (merchant.locale ?? "fr") as Locale;
+  const dateLocale = locale === "en" ? "en-US" : "fr-FR";
   const [year, month] = period.split("-");
-  const periodLabel = `${monthNames[parseInt(month, 10)]} ${year}`;
+  const periodDate = new Date(parseInt(year), parseInt(month) - 1);
+  let periodLabel = periodDate.toLocaleDateString(dateLocale, { month: "long", year: "numeric" });
+  periodLabel = periodLabel.charAt(0).toUpperCase() + periodLabel.slice(1);
 
   const emailData = await buildInvoiceEmail({
     merchantName: merchant.name,
     invoiceNumber,
     period: periodLabel,
     amountTTC: formatAmountDH(amounts.amountTTC),
-    dueDate: dueDate.toLocaleDateString("fr-FR", {
+    dueDate: dueDate.toLocaleDateString(dateLocale, {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -205,7 +207,7 @@ export async function POST(request: Request) {
     rib: BANK_INFO.rib,
     iban: BANK_INFO.iban,
     swift: BANK_INFO.swift,
-  });
+  }, locale);
 
   await sendEmail({
     to: merchant.email,

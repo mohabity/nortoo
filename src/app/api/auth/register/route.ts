@@ -8,6 +8,7 @@ import { generateApiKey } from "@/lib/api-key";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { buildWelcomeEmail, sendEmail } from "@/lib/email";
 import { authLimiter, getClientIp, isRateLimitConfigured } from "@/lib/rate-limit";
+import type { Locale } from "@/i18n/types";
 
 const registerSchema = z.object({
   name: z
@@ -19,6 +20,7 @@ const registerSchema = z.object({
     .string()
     .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .max(100),
+  locale: z.enum(["fr", "en"]).optional().default("fr"),
 });
 
 /**
@@ -64,6 +66,7 @@ export async function POST(request: Request) {
 
   const { name, password } = parsed.data;
   const email = parsed.data.email.trim().toLowerCase();
+  const locale = parsed.data.locale as Locale;
 
   // Check if email already exists (merchants or users)
   const [existingMerchant] = await db
@@ -107,6 +110,7 @@ export async function POST(request: Request) {
       passwordHash,
       apiKey,
       apiKeyHash,
+      locale,
       plan: "trial",
       billingStatus: "trial",
       trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
@@ -140,16 +144,17 @@ export async function POST(request: Request) {
   });
 
   // Send verification email (non-blocking — don't fail registration)
-  sendVerificationEmail(newMerchant.id, email).catch(() => {});
+  sendVerificationEmail(newMerchant.id, email, locale).catch(() => {});
 
   // Send welcome email (non-blocking)
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.nortoo.ma";
-  buildWelcomeEmail(name, `${APP_URL}/dashboard`)
+  buildWelcomeEmail(name, `${APP_URL}/dashboard`, locale)
     .then((built) =>
       sendEmail({
         to: email,
-        subject: "Bienvenue sur nortoo — votre essai de 14 jours commence !",
-        ...built,
+        subject: built.subject,
+        html: built.html,
+        text: built.text,
       })
     )
     .catch(() => {});

@@ -13,11 +13,7 @@ import {
 } from "@/lib/billing-config";
 import { sendEmail, buildInvoiceEmail } from "@/lib/email";
 import { withCronMonitoring } from "@/lib/cron-monitor";
-
-const MONTH_NAMES = [
-  "", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-];
+import type { Locale } from "@/i18n/types";
 
 /**
  * GET /api/cron/generate-invoices
@@ -42,6 +38,7 @@ export async function GET(request: Request) {
           name: merchants.name,
           email: merchants.email,
           plan: merchants.plan,
+          locale: merchants.locale,
         })
         .from(merchants)
         .where(
@@ -106,13 +103,17 @@ export async function GET(request: Request) {
         });
 
         // Send email
-        const periodLabel = `${MONTH_NAMES[now.getMonth() + 1]} ${now.getFullYear()}`;
+        const locale = (merchant.locale ?? "fr") as Locale;
+        const dateLocale = locale === "en" ? "en-US" : "fr-FR";
+        const periodDate = new Date(now.getFullYear(), now.getMonth());
+        let periodLabel = periodDate.toLocaleDateString(dateLocale, { month: "long", year: "numeric" });
+        periodLabel = periodLabel.charAt(0).toUpperCase() + periodLabel.slice(1);
         const emailData = await buildInvoiceEmail({
           merchantName: merchant.name,
           invoiceNumber,
           period: periodLabel,
           amountTTC: formatAmountDH(amounts.amountTTC),
-          dueDate: dueDate.toLocaleDateString("fr-FR", {
+          dueDate: dueDate.toLocaleDateString(dateLocale, {
             day: "numeric",
             month: "long",
             year: "numeric",
@@ -120,7 +121,7 @@ export async function GET(request: Request) {
           rib: BANK_INFO.rib,
           iban: BANK_INFO.iban,
           swift: BANK_INFO.swift,
-        });
+        }, locale);
 
         await sendEmail({
           to: merchant.email,

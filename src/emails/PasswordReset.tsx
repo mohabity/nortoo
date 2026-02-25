@@ -1,14 +1,23 @@
 import { Text, Button } from "@react-email/components";
 import * as React from "react";
 import { NortooLayout } from "./components/Layout";
+import type { Locale } from "@/i18n/types";
+import { t } from "@/emails/i18n";
 
 interface PasswordResetProps {
   resetUrl: string;
+  locale?: Locale;
 }
 
-export function PasswordReset({ resetUrl }: PasswordResetProps) {
+export function PasswordReset({
+  resetUrl,
+  locale = "fr",
+}: PasswordResetProps) {
   return (
-    <NortooLayout preview="R\u00e9initialisez votre mot de passe nortoo">
+    <NortooLayout
+      preview={t(locale, "passwordReset.preview")}
+      locale={locale}
+    >
       <Text
         style={{
           fontSize: "1.1rem",
@@ -17,7 +26,7 @@ export function PasswordReset({ resetUrl }: PasswordResetProps) {
           fontWeight: 600,
         }}
       >
-        R&eacute;initialisation de mot de passe
+        {t(locale, "passwordReset.heading")}
       </Text>
       <Text
         style={{
@@ -27,9 +36,7 @@ export function PasswordReset({ resetUrl }: PasswordResetProps) {
           margin: "0 0 24px",
         }}
       >
-        Vous avez demand&eacute; &agrave; r&eacute;initialiser votre mot de
-        passe. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de
-        passe.
+        {t(locale, "passwordReset.body")}
       </Text>
       <Button
         href={resetUrl}
@@ -44,7 +51,7 @@ export function PasswordReset({ resetUrl }: PasswordResetProps) {
           fontSize: "0.9rem",
         }}
       >
-        R&eacute;initialiser mon mot de passe
+        {t(locale, "passwordReset.cta")}
       </Button>
       <Text
         style={{
@@ -54,8 +61,7 @@ export function PasswordReset({ resetUrl }: PasswordResetProps) {
           lineHeight: 1.5,
         }}
       >
-        Ce lien expire dans 1 heure. Si vous n&apos;avez pas fait cette
-        demande, ignorez cet email.
+        {t(locale, "passwordReset.expiry")}
       </Text>
     </NortooLayout>
   );
