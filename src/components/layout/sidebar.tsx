@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useTranslation } from "@/i18n/provider";
+import { useBilling } from "@/components/billing-context";
 
 const navItems = [
   { href: "/dashboard", labelKey: "nav.overview", icon: LayoutDashboard },
@@ -27,8 +28,11 @@ export function Sidebar() {
   const { data: session } = useSession();
   const { can } = usePermissions();
   const { t } = useTranslation();
+  const { plan: billingPlan, loading: billingLoading } = useBilling();
 
-  const plan = session?.user?.plan ?? "trial";
+  // Use real-time plan from BillingProvider (fetches /api/settings/plan),
+  // with fallback to JWT session plan (set at login) during loading
+  const plan = !billingLoading ? billingPlan : (session?.user?.plan ?? "trial");
   const planLabel = t(`plans.${plan}.name`);
   const planDescription = t(`plans.${plan}.description`);
 

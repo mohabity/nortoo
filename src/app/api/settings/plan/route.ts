@@ -45,13 +45,14 @@ export async function GET() {
     .from(users)
     .where(eq(users.merchantId, merchantId));
 
-  // Trial info
-  const trial = merchant.trialEndsAt
-    ? {
-        daysRemaining: trialDaysRemaining(merchant.trialEndsAt),
-        expiresAt: merchant.trialEndsAt.toISOString(),
-      }
-    : null;
+  // Trial info — only show when merchant is still on trial billing status
+  const trial =
+    merchant.billingStatus === "trial" && merchant.trialEndsAt
+      ? {
+          daysRemaining: trialDaysRemaining(merchant.trialEndsAt),
+          expiresAt: merchant.trialEndsAt.toISOString(),
+        }
+      : null;
 
   return NextResponse.json({
     data: {

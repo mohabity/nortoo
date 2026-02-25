@@ -14,6 +14,9 @@ import {
   Copy,
   Save,
   FileText,
+  CreditCard,
+  X,
+  CheckCircle,
 } from "lucide-react";
 import { PlanBadge } from "@/components/plan-badge";
 import {
@@ -69,6 +72,33 @@ interface Invoice {
   createdAt: string;
 }
 
+interface PendingUpgrade {
+  pending: boolean;
+  invoice?: {
+    id: number;
+    invoiceNumber: string;
+    plan: string;
+    planName: string;
+    amountHT: number;
+    amountTVA: number;
+    amountTTC: number;
+    dueDate: string | null;
+    createdAt: string;
+  };
+  bankInfo?: typeof BANK_INFO;
+}
+
+interface UpgradeConfirmation {
+  invoiceNumber: string;
+  plan: string;
+  planName: string;
+  amountHT: number;
+  amountTVA: number;
+  amountTTC: number;
+  dueDate: string;
+  bankInfo: typeof BANK_INFO;
+}
+
 // ── Colors ──
 
 const PLAN_CARD_BORDERS: Record<PlanId, string> = {
@@ -113,17 +143,21 @@ export default function BillingPage() {
   const [changing, setChanging] = useState<PlanId | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [pendingUpgrade, setPendingUpgrade] = useState<PendingUpgrade | null>(null);
+  const [upgradeModal, setUpgradeModal] = useState<UpgradeConfirmation | null>(null);
 
   const fetchAll = useCallback(async () => {
     try {
-      const [planRes, infoRes, invRes] = await Promise.all([
+      const [planRes, infoRes, invRes, upgradeRes] = await Promise.all([
         fetch("/api/settings/plan"),
         fetch("/api/billing/info"),
         fetch("/api/billing/invoices"),
+        fetch("/api/billing/upgrade-status"),
       ]);
       const planJson = await planRes.json();
       const infoJson = await infoRes.json();
       const invJson = await invRes.json();
+      const upgradeJson = await upgradeRes.json();
 
       if (planJson.data) setPlanData(planJson.data);
       if (infoJson.data) setBillingInfo({
@@ -132,6 +166,7 @@ export default function BillingPage() {
         billingICE: infoJson.data.billingICE || "",
       });
       if (invJson.data) setInvoicesList(invJson.data);
+      if (upgradeJson.data) setPendingUpgrade(upgradeJson.data);
     } catch {
       // silently fail
     } finally {
@@ -177,10 +212,20 @@ export default function BillingPage() {
         body: JSON.stringify({ plan: newPlan }),
       });
       const json = await res.json();
-      if (res.ok) {
-        setToast({ type: "success", message: t("billing.toast.planChanged", { plan: t(`plans.${newPlan}.name`) }) });
-        setLoading(true);
-        await fetchAll();
+      if (res.ok && json.data) {
+        // Show confirmation modal with invoice details and bank info
+        setUpgradeModal({
+          invoiceNumber: json.data.invoiceNumber,
+          plan: json.data.plan,
+          planName: json.data.planName,
+          amountHT: json.data.amountHT,
+          amountTVA: json.data.amountTVA,
+          amountTTC: json.data.amountTTC,
+          dueDate: json.data.dueDate,
+          bankInfo: json.data.bankInfo,
+        });
+        // Refresh data in background
+        fetchAll();
       } else {
         setToast({ type: "error", message: json.error || t("billing.toast.planChangeError") });
       }
@@ -314,6 +359,83 @@ export default function BillingPage() {
           </div>
         )}
       </div>
+
+      {/* Section 1b — Pending Upgrade Banner */}
+      {pendingUpgrade?.pending && pendingUpgrade.invoice && (
+        <div className="rounded-sm border-2 border-ocean/30 bg-ocean/5 p-6">
+          <div className="flex items-start gap-3">
+            <CreditCard className="h-5 w-5 text-ocean shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h2 className="font-display text-base font-semibold text-midnight">
+                Upgrade en attente — Plan {pendingUpgrade.invoice.planName}
+              </h2>
+              <p className="text-sm text-fog mt-1">
+                Effectuez le virement ci-dessous pour activer votre plan. Une fois le paiement confirmé, votre plan sera mis à jour automatiquement.
+              </p>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {/* Invoice details */}
+                <div className="rounded-sm bg-white border border-silk p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-fog">Facture</span>
+                    <span className="text-sm font-mono text-midnight">{pendingUpgrade.invoice.invoiceNumber}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-fog">Montant HT</span>
+                    <span className="text-sm text-midnight">{formatAmountDH(pendingUpgrade.invoice.amountHT)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-fog">TVA (20%)</span>
+                    <span className="text-sm text-midnight">{formatAmountDH(pendingUpgrade.invoice.amountTVA)}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-silk pt-2">
+                    <span className="text-xs font-medium text-midnight">Total TTC</span>
+                    <span className="text-sm font-bold text-midnight">{formatAmountDH(pendingUpgrade.invoice.amountTTC)}</span>
+                  </div>
+                  {pendingUpgrade.invoice.dueDate && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-fog">Échéance</span>
+                      <span className="text-xs text-mist">{formatDate(pendingUpgrade.invoice.dueDate, locale)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bank details */}
+                {pendingUpgrade.bankInfo && (
+                  <div className="rounded-sm bg-white border border-silk p-4 space-y-2">
+                    {[
+                      { label: "Banque", value: pendingUpgrade.bankInfo.bankName, key: "pend-bank" },
+                      { label: "Titulaire", value: pendingUpgrade.bankInfo.accountHolder, key: "pend-holder" },
+                      { label: "RIB", value: pendingUpgrade.bankInfo.rib, key: "pend-rib" },
+                    ].map(({ label, value, key }) => (
+                      <div key={key} className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs text-fog">{label}</span>
+                          <p className="text-sm font-mono text-midnight">{value}</p>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(value, key)}
+                          className="shrink-0 rounded-sm p-1 text-fog hover:text-midnight transition-colors"
+                          title="Copier"
+                        >
+                          {copied === key ? <Check className="h-3 w-3 text-mint" /> : <Copy className="h-3 w-3" />}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 flex items-center gap-2 rounded-sm bg-sun/5 border border-sun/20 px-3 py-2">
+                <Info className="h-3.5 w-3.5 text-sun-deep shrink-0" />
+                <p className="text-xs text-sun-deep">
+                  Indiquez <span className="font-mono font-bold">{pendingUpgrade.invoice.invoiceNumber}</span> en référence de votre virement.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Section 2 — Informations de facturation */}
       <div className="rounded-sm border border-silk bg-white p-6">
@@ -506,11 +628,12 @@ export default function BillingPage() {
                   )}
                 </ul>
                 <button
-                  disabled={isCurrent || isChanging || planId === "trial"}
+                  disabled={isCurrent || isChanging || planId === "trial" || (pendingUpgrade?.pending && isUpgrade)}
                   className={cn(
                     "mt-5 w-full rounded-sm px-4 py-2.5 text-sm font-medium transition-all",
                     isCurrent ? "border-2 border-mint bg-mint/5 text-mint cursor-not-allowed"
                       : planId === "trial" ? "bg-snow text-mist cursor-not-allowed"
+                      : (pendingUpgrade?.pending && isUpgrade) ? "bg-snow text-mist cursor-not-allowed"
                       : isNext ? cn("bg-gradient-to-r from-mint to-mint-deep text-midnight shadow-sm hover:shadow-lg hover:-translate-y-0.5", isChanging && "opacity-70")
                       : isUpgrade ? cn("border border-silk text-slate hover:border-mint/40 hover:text-mint", isChanging && "opacity-70")
                       : isDowngrade ? cn("border border-silk text-fog hover:border-rose/40 hover:text-rose", isChanging && "opacity-70")
@@ -521,6 +644,7 @@ export default function BillingPage() {
                   {isChanging ? <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                     : isCurrent ? t("billing.comparison.currentPlan")
                     : planId === "trial" ? "—"
+                    : (pendingUpgrade?.pending && isUpgrade) ? "Upgrade en cours..."
                     : isNext ? t("billing.comparison.upgradeTo", { plan: t(`plans.${planId}.name`) })
                     : isUpgrade ? t("billing.comparison.choose", { plan: t(`plans.${planId}.name`) })
                     : t("billing.comparison.downgrade")}
@@ -577,14 +701,18 @@ export default function BillingPage() {
           <button
             className={cn(
               "mt-6 w-full rounded-sm px-4 py-3 text-sm font-medium transition-all",
-              "bg-gradient-to-r from-mint to-mint-deep text-midnight shadow-sm hover:shadow-lg hover:-translate-y-0.5",
+              pendingUpgrade?.pending
+                ? "bg-snow text-mist cursor-not-allowed"
+                : "bg-gradient-to-r from-mint to-mint-deep text-midnight shadow-sm hover:shadow-lg hover:-translate-y-0.5",
               changing === nextPlanId && "opacity-70"
             )}
-            disabled={!!changing}
+            disabled={!!changing || !!pendingUpgrade?.pending}
             onClick={() => handleChangePlan(nextPlanId)}
           >
             {changing === nextPlanId ? (
               <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+            ) : pendingUpgrade?.pending ? (
+              "Upgrade en cours..."
             ) : (
               <>
                 {t("billing.comparison.upgradeTo", { plan: t(`plans.${nextPlanId}.name`) })}{" "}
@@ -592,6 +720,103 @@ export default function BillingPage() {
               </>
             )}
           </button>
+        </div>
+      )}
+
+      {/* Upgrade Confirmation Modal */}
+      {upgradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight/50 backdrop-blur-sm">
+          <div className="bg-white rounded-sm border border-silk shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+            {/* Modal header */}
+            <div className="flex items-center justify-between bg-mint/5 border-b border-mint/20 px-6 py-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-mint-deep" />
+                <h3 className="font-display text-lg font-semibold text-midnight">
+                  Demande d&apos;upgrade enregistrée
+                </h3>
+              </div>
+              <button
+                onClick={() => setUpgradeModal(null)}
+                className="rounded-sm p-1 text-fog hover:text-midnight transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-5">
+              <p className="text-sm text-slate">
+                Votre demande de passage au plan <span className="font-bold text-midnight">{upgradeModal.planName}</span> a été enregistrée.
+                Effectuez le virement ci-dessous pour activer votre plan.
+              </p>
+
+              {/* Invoice summary */}
+              <div className="rounded-sm bg-snow border border-silk p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-fog">Facture</span>
+                  <span className="text-sm font-mono font-medium text-midnight">{upgradeModal.invoiceNumber}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-fog">Montant HT</span>
+                  <span className="text-sm text-midnight">{formatAmountDH(upgradeModal.amountHT)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-fog">TVA (20%)</span>
+                  <span className="text-sm text-midnight">{formatAmountDH(upgradeModal.amountTVA)}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-silk pt-2">
+                  <span className="text-xs font-medium text-midnight">Total TTC</span>
+                  <span className="font-display text-lg font-bold text-midnight">{formatAmountDH(upgradeModal.amountTTC)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-fog">Échéance</span>
+                  <span className="text-xs text-mist">{formatDate(upgradeModal.dueDate, locale)}</span>
+                </div>
+              </div>
+
+              {/* Bank details */}
+              <div className="rounded-sm bg-snow border border-silk p-4 space-y-2">
+                <p className="text-xs font-medium text-fog mb-2">Coordonnées bancaires</p>
+                {[
+                  { label: "Banque", value: upgradeModal.bankInfo.bankName, key: "modal-bank" },
+                  { label: "Titulaire", value: upgradeModal.bankInfo.accountHolder, key: "modal-holder" },
+                  { label: "RIB", value: upgradeModal.bankInfo.rib, key: "modal-rib" },
+                  { label: "IBAN", value: upgradeModal.bankInfo.iban, key: "modal-iban" },
+                  { label: "SWIFT", value: upgradeModal.bankInfo.swift, key: "modal-swift" },
+                ].map(({ label, value, key }) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-fog">{label}</span>
+                      <p className="text-sm font-mono text-midnight">{value}</p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(value, key)}
+                      className="shrink-0 rounded-sm p-1.5 text-fog hover:text-midnight hover:bg-silk/50 transition-colors"
+                      title="Copier"
+                    >
+                      {copied === key ? <Check className="h-3.5 w-3.5 text-mint" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Reference reminder */}
+              <div className="flex items-center gap-2 rounded-sm bg-sun/5 border border-sun/20 px-3 py-2">
+                <Info className="h-3.5 w-3.5 text-sun-deep shrink-0" />
+                <p className="text-xs text-sun-deep">
+                  Indiquez <span className="font-mono font-bold">{upgradeModal.invoiceNumber}</span> en référence de votre virement.
+                </p>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-silk bg-snow/50">
+              <button
+                onClick={() => setUpgradeModal(null)}
+                className="w-full rounded-sm bg-midnight px-4 py-2.5 text-sm font-medium text-white hover:bg-midnight/90 transition-colors"
+              >
+                J&apos;ai compris
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

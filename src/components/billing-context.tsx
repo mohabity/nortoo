@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from "react";
+import { useSession } from "next-auth/react";
 
 export type BillingState =
   | "active"
@@ -37,6 +38,9 @@ export function useBilling() {
  * and exposes canMutate + billingState to all dashboard children.
  */
 export function BillingProvider({ children }: { children: ReactNode }) {
+  const { data: session, update: updateSession } = useSession();
+  const sessionSyncedRef = useRef(false);
+
   const [state, setState] = useState<BillingContextValue>({
     canMutate: true,
     billingState: "loading",
@@ -47,7 +51,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetch("/api/settings/plan")
       .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
+      .then(async (json) => {
         if (!json?.data) {
           setState((s) => ({ ...s, loading: false }));
           return;
@@ -73,10 +77,21 @@ export function BillingProvider({ children }: { children: ReactNode }) {
           billingState === "active" || billingState === "trial_active";
 
         setState({ canMutate, billingState, plan, loading: false });
+
+        // Sync session JWT if the plan has changed in DB (e.g., after upgrade)
+        if (
+          !sessionSyncedRef.current &&
+          session?.user?.plan &&
+          plan !== session.user.plan
+        ) {
+          sessionSyncedRef.current = true;
+          await updateSession();
+        }
       })
       .catch(() => {
         setState((s) => ({ ...s, loading: false }));
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -71,11 +71,16 @@ export async function PUT(
     .set(updateData)
     .where(eq(invoices.id, invoiceId));
 
-  // If marking as paid, reactivate merchant billing status
+  // If marking as paid, activate the merchant on the invoiced plan
   if (status === "paid") {
     await db
       .update(merchants)
-      .set({ billingStatus: "active", updatedAt: new Date() })
+      .set({
+        plan: invoice.planAtInvoice,    // upgrade to the invoiced plan
+        billingStatus: "active",
+        trialEndsAt: null,              // no longer on trial
+        updatedAt: new Date(),
+      })
       .where(eq(merchants.id, invoice.merchantId));
   }
 

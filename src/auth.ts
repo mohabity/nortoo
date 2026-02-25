@@ -89,7 +89,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.userId = Number(user.id);
         token.merchantId = (user as unknown as { merchantId: number })
@@ -97,6 +97,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = (user as unknown as { role: string }).role;
         token.plan = (user as unknown as { plan: string }).plan;
       }
+
+      // Re-fetch plan from DB when session is refreshed (e.g. after plan change)
+      if (trigger === "update" && token.merchantId) {
+        const [m] = await db
+          .select({ plan: merchants.plan })
+          .from(merchants)
+          .where(eq(merchants.id, token.merchantId as number))
+          .limit(1);
+        if (m) {
+          token.plan = m.plan;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
