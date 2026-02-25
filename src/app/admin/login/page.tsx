@@ -39,23 +39,23 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-midnight flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-snow p-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-[#C8FF00]/10 mb-4">
-            <Shield className="w-7 h-7 text-[#C8FF00]" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-midnight/5 mb-4">
+            <Shield className="w-7 h-7 text-midnight" />
           </div>
-          <h1 className="text-xl font-display font-bold text-white">
-            nortoo <span className="text-[#C8FF00]">admin</span>
+          <h1 className="text-xl font-display font-bold text-midnight">
+            nortoo <span className="text-mint-deep">admin</span>
           </h1>
-          <p className="text-sm text-mist mt-1">Panel d&apos;administration interne</p>
+          <p className="text-sm text-fog mt-1">Panel d&apos;administration interne</p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-mist mb-1.5">
+            <label htmlFor="password" className="block text-sm font-medium text-slate mb-1.5">
               Mot de passe
             </label>
             <div className="relative">
@@ -65,14 +65,14 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Entrez le mot de passe admin"
-                className="w-full px-4 py-2.5 bg-midnight border border-slate rounded-sm text-white placeholder:text-fog text-sm focus:outline-none focus:ring-2 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60 transition-colors"
+                className="w-full px-4 py-2.5 bg-white border border-silk rounded-sm text-midnight placeholder:text-mist text-sm focus:outline-none focus:ring-2 focus:ring-mint/40 focus:border-mint transition-colors"
                 autoFocus
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-fog hover:text-mist transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-mist hover:text-slate transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
           </div>
 
           {error && (
-            <div className="px-3 py-2 bg-rose/10 border border-rose/20 rounded-sm">
+            <div className="px-3 py-2 bg-rose/5 border border-rose/20 rounded-sm">
               <p className="text-sm text-rose">{error}</p>
             </div>
           )}
@@ -88,7 +88,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading || !password}
-            className="w-full py-2.5 bg-[#C8FF00] text-midnight font-semibold text-sm rounded-sm hover:bg-[#B0E000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-midnight text-white font-semibold text-sm rounded-sm hover:bg-midnight/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -101,7 +101,7 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-fog mt-6">
+        <p className="text-center text-xs text-mist mt-6">
           Accès réservé à l&apos;équipe nortoo
         </p>
       </div>
