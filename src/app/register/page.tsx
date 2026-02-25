@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { Loader2, Store, Mail, Lock, Plug } from "lucide-react";
+import { Loader2, Store, Mail, Lock, Plug, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/i18n/provider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,19 +26,19 @@ export default function RegisterPage() {
 
     // Client-side validation
     if (!name.trim() || name.trim().length < 2) {
-      setError("Le nom doit contenir au moins 2 caractères");
+      setError(t("auth.register.errors.nameMinLength"));
       return;
     }
     if (!email.trim() || !email.includes("@")) {
-      setError("Entrez une adresse email valide");
+      setError(t("auth.register.errors.invalidEmail"));
       return;
     }
     if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères");
+      setError(t("auth.register.errors.passwordMinLength"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
+      setError(t("auth.register.errors.passwordMismatch"));
       return;
     }
 
@@ -52,7 +54,7 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Erreur lors de l'inscription");
+        setError(data.error || t("auth.register.errors.registrationFailed"));
         return;
       }
 
@@ -64,14 +66,14 @@ export default function RegisterPage() {
       });
 
       if (signInResult?.error) {
-        setError("Compte créé mais erreur de connexion. Essayez de vous connecter.");
+        setError(t("auth.register.errors.signInAfterRegister"));
         return;
       }
 
       // 3. Redirect to dashboard
       router.push("/dashboard");
     } catch {
-      setError("Erreur de connexion au serveur");
+      setError(t("auth.register.errors.serverError"));
     } finally {
       setLoading(false);
     }
@@ -80,11 +82,22 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-snow px-4">
       <div className="w-full max-w-sm">
+        {/* Back to landing */}
+        <div className="mb-6">
+          <a
+            href="https://nortoo.ma"
+            className="inline-flex items-center gap-1.5 text-sm text-fog hover:text-slate transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t("auth.register.backToHome")}
+          </a>
+        </div>
+
         {/* Logo */}
         <div className="mb-8 text-center">
           <img src="/nortoo-logo.png" alt="nortoo" className="mx-auto h-9 w-auto" />
           <p className="mt-3 text-sm text-fog">
-            Scoring anti-fraude COD
+            {t("auth.register.tagline")}
           </p>
         </div>
 
@@ -92,10 +105,10 @@ export default function RegisterPage() {
         <Card>
           <CardHeader className="text-center pb-2">
             <h1 className="font-display text-lg font-semibold text-midnight">
-              Créer un compte
+              {t("auth.register.title")}
             </h1>
             <p className="text-sm text-fog">
-              Commencez à protéger vos commandes COD
+              {t("auth.register.subtitle")}
             </p>
           </CardHeader>
           <CardContent>
@@ -106,14 +119,14 @@ export default function RegisterPage() {
                   htmlFor="name"
                   className="block text-sm font-medium text-slate mb-1.5"
                 >
-                  Nom de la boutique
+                  {t("auth.register.shopName")}
                 </label>
                 <div className="relative">
                   <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
                   <input
                     id="name"
                     type="text"
-                    placeholder="Ma Boutique"
+                    placeholder={t("auth.register.shopNamePlaceholder")}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     autoComplete="organization"
@@ -129,14 +142,14 @@ export default function RegisterPage() {
                   htmlFor="email"
                   className="block text-sm font-medium text-slate mb-1.5"
                 >
-                  Adresse email
+                  {t("auth.register.email")}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
                   <input
                     id="email"
                     type="email"
-                    placeholder="vous@votreboutique.ma"
+                    placeholder={t("auth.register.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
@@ -151,14 +164,14 @@ export default function RegisterPage() {
                   htmlFor="password"
                   className="block text-sm font-medium text-slate mb-1.5"
                 >
-                  Mot de passe
+                  {t("auth.register.password")}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
                   <input
                     id="password"
                     type="password"
-                    placeholder="Minimum 8 caractères"
+                    placeholder={t("auth.register.passwordPlaceholder")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="new-password"
@@ -173,14 +186,14 @@ export default function RegisterPage() {
                   htmlFor="confirm-password"
                   className="block text-sm font-medium text-slate mb-1.5"
                 >
-                  Confirmer le mot de passe
+                  {t("auth.register.confirmPassword")}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
                   <input
                     id="confirm-password"
                     type="password"
-                    placeholder="Retapez le mot de passe"
+                    placeholder={t("auth.register.confirmPasswordPlaceholder")}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     autoComplete="new-password"
@@ -201,7 +214,7 @@ export default function RegisterPage() {
                 {loading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                Créer mon compte
+                {t("auth.register.submit")}
               </Button>
             </form>
 
@@ -211,7 +224,7 @@ export default function RegisterPage() {
                 <div className="w-full border-t border-silk" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-3 text-xs text-mist">ou</span>
+                <span className="bg-white px-3 text-xs text-mist">{t("auth.register.or")}</span>
               </div>
             </div>
 
@@ -221,23 +234,23 @@ export default function RegisterPage() {
               className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-[#5C6AC4] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4F5BB5]"
             >
               <Plug className="h-4 w-4" />
-              S&apos;inscrire avec YouCan
+              {t("auth.register.withYoucan")}
             </a>
 
             <p className="mt-4 text-center text-sm text-fog">
-              Déjà un compte ?{" "}
+              {t("auth.register.hasAccount")}{" "}
               <Link
                 href="/login"
                 className="font-medium text-mint-deep hover:underline"
               >
-                Se connecter
+                {t("auth.register.signIn")}
               </Link>
             </p>
           </CardContent>
         </Card>
 
         <p className="mt-6 text-center text-xs text-mist">
-          Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08
+          {t("auth.register.footer")}
         </p>
       </div>
     </div>

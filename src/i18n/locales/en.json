@@ -1091,7 +1091,22 @@
       "R11_DEEP_NIGHT": "Deep night order",
       "R11b_NIGHT": "Night order",
       "R11c_PEAK": "Business hours",
-      "R_NETWORK": "Network score"
+      "R_NETWORK": "Network score",
+      "R_NO_ADDRESS": "Missing shipping address",
+      "OPPOSITION": "Customer opposition"
+    },
+    "explanation": {
+      "reliable": "Reliable order",
+      "probablySafe": "Probably safe order",
+      "needsVerification": "Order needs verification",
+      "highRisk": "High risk detected",
+      "veryRisky": "Very risky order",
+      "tipVerify": "Tip: Call the customer to confirm the order before shipping.",
+      "tipFlag": "Tip: Thorough verification recommended — check customer history.",
+      "tipBlock": "Tip: Cancellation recommended — risk profile is very high.",
+      "confidenceHigh": "high",
+      "confidenceMedium": "medium",
+      "confidenceLow": "low"
     }
   },
   "currency": {
@@ -1229,5 +1244,36 @@
     "consentPrivacyLink": "View our privacy policy",
     "skipStep": "Skip this step →",
     "connectLater": "You can connect your store later from Settings"
+  },
+  "auth": {
+    "register": {
+      "tagline": "COD anti-fraud scoring",
+      "title": "Create an account",
+      "subtitle": "Start protecting your COD orders",
+      "shopName": "Store name",
+      "shopNamePlaceholder": "My Store",
+      "email": "Email address",
+      "emailPlaceholder": "you@yourstore.ma",
+      "password": "Password",
+      "passwordPlaceholder": "Minimum 8 characters",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "submit": "Create my account",
+      "or": "or",
+      "withYoucan": "Sign up with YouCan",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "footer": "Data hosted in 🇪🇺 Frankfurt — Law 09-08 compliant",
+      "backToHome": "Back",
+      "errors": {
+        "nameMinLength": "Name must be at least 2 characters",
+        "invalidEmail": "Enter a valid email address",
+        "passwordMinLength": "Password must be at least 8 characters",
+        "passwordMismatch": "Passwords do not match",
+        "registrationFailed": "Registration error",
+        "signInAfterRegister": "Account created but sign-in failed. Try logging in.",
+        "serverError": "Server connection error"
+      }
+    }
   }
 }

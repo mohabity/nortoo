@@ -1091,7 +1091,22 @@
       "R11_DEEP_NIGHT": "Commande en pleine nuit",
       "R11b_NIGHT": "Commande nocturne",
       "R11c_PEAK": "Heures de bureau",
-      "R_NETWORK": "Score réseau"
+      "R_NETWORK": "Score réseau",
+      "R_NO_ADDRESS": "Adresse de livraison manquante",
+      "OPPOSITION": "Opposition client"
+    },
+    "explanation": {
+      "reliable": "Commande fiable",
+      "probablySafe": "Commande plutôt sûre",
+      "needsVerification": "Commande à vérifier",
+      "highRisk": "Risque élevé détecté",
+      "veryRisky": "Commande très risquée",
+      "tipVerify": "Conseil : Appelez le client pour confirmer la commande avant expédition.",
+      "tipFlag": "Conseil : Vérification approfondie recommandée — consultez l'historique client.",
+      "tipBlock": "Conseil : Annulation recommandée — le profil de risque est très élevé.",
+      "confidenceHigh": "forte",
+      "confidenceMedium": "moyenne",
+      "confidenceLow": "faible"
     }
   },
   "currency": {
@@ -1229,5 +1244,36 @@
     "consentPrivacyLink": "Voir notre politique de confidentialité",
     "skipStep": "Passer cette étape →",
     "connectLater": "Vous pourrez connecter votre boutique plus tard depuis Paramètres"
+  },
+  "auth": {
+    "register": {
+      "tagline": "Scoring anti-fraude COD",
+      "title": "Créer un compte",
+      "subtitle": "Commencez à protéger vos commandes COD",
+      "shopName": "Nom de la boutique",
+      "shopNamePlaceholder": "Ma Boutique",
+      "email": "Adresse email",
+      "emailPlaceholder": "vous@votreboutique.ma",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Minimum 8 caractères",
+      "confirmPassword": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Retapez le mot de passe",
+      "submit": "Créer mon compte",
+      "or": "ou",
+      "withYoucan": "S'inscrire avec YouCan",
+      "hasAccount": "Déjà un compte ?",
+      "signIn": "Se connecter",
+      "footer": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08",
+      "backToHome": "Retour",
+      "errors": {
+        "nameMinLength": "Le nom doit contenir au moins 2 caractères",
+        "invalidEmail": "Entrez une adresse email valide",
+        "passwordMinLength": "Le mot de passe doit contenir au moins 8 caractères",
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "registrationFailed": "Erreur lors de l'inscription",
+        "signInAfterRegister": "Compte créé mais erreur de connexion. Essayez de vous connecter.",
+        "serverError": "Erreur de connexion au serveur"
+      }
+    }
   }
 }

@@ -24,15 +24,6 @@
     scroll-behavior: smooth;
   }
 
-  /* RTL: Arabic font family */
-  html[dir="rtl"] body {
-    font-family: var(--f-arabic), var(--f-body), sans-serif;
-  }
-
-  html[dir="rtl"] .font-display {
-    font-family: var(--f-arabic), var(--f-display), sans-serif;
-  }
-
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;

@@ -1,11 +1,10 @@
 import frDict from "@/i18n/locales/fr.json";
 import enDict from "@/i18n/locales/en.json";
-import arDict from "@/i18n/locales/ar.json";
 import type { Locale } from "@/i18n/types";
 
 // ── Dictionaries ──
 
-const dicts: Record<Locale, Record<string, unknown>> = { fr: frDict, en: enDict, ar: arDict };
+const dicts: Record<Locale, Record<string, unknown>> = { fr: frDict, en: enDict };
 
 // ── Deep lookup ──
 
@@ -54,15 +53,12 @@ export function formatCurrency(amount: number, locale: Locale = "fr"): string {
   if (locale === "en") {
     return new Intl.NumberFormat("en-US").format(rounded) + " MAD";
   }
-  if (locale === "ar") {
-    return new Intl.NumberFormat("ar-MA").format(rounded) + " د.م";
-  }
   return new Intl.NumberFormat("fr-MA").format(rounded) + " DH";
 }
 
 // ── Dates ──
 
-const DATE_LOCALES: Record<Locale, string> = { fr: "fr-FR", en: "en-US", ar: "ar-MA" };
+const DATE_LOCALES: Record<Locale, string> = { fr: "fr-FR", en: "en-US" };
 
 /**
  * Format a date with locale-aware options.

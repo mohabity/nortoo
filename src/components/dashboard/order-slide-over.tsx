@@ -30,6 +30,7 @@ import { formatDate, formatCurrency } from "@/lib/i18n-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/use-permissions";
 import type { OrderDetail, ScoringFactor, CustomerData } from "@/types/orders";
+import { translateExplanation } from "@/lib/translate-explanation";
 
 // ── Helpers ──
 
@@ -382,7 +383,12 @@ export function OrderSlideOver({
                                 : factor.points}
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-xs text-fog">{factor.reason}</td>
+                          <td className="px-3 py-2 text-xs text-fog">
+                            {(() => {
+                              const translated = t(`scoring.rules.${factor.rule}`);
+                              return translated.startsWith("scoring.rules.") ? factor.reason : translated;
+                            })()}
+                          </td>
                         </tr>
                       ))}
                       <tr className="border-t-2 border-silk bg-snow">
@@ -401,9 +407,8 @@ export function OrderSlideOver({
               </div>
             )}
 
-            {/* ── D bis. Explanation Card ── */}
+            {/* ── D bis. Explanation Card (translated at render time) ── */}
             {(() => {
-              const expl = order.scoreExplanation;
               const colorClass =
                 order.fraudScore <= 30
                   ? "bg-mint-light/50 border-mint/20"
@@ -412,7 +417,26 @@ export function OrderSlideOver({
                   : order.fraudScore <= 85
                   ? "bg-coral-light/50 border-coral/20"
                   : "bg-violet-light/50 border-violet/20";
-              return expl ? (
+
+              if (order.scoringFactors.length === 0) {
+                return (
+                  <div className="mx-6 mt-4 rounded-lg border border-silk bg-snow p-3">
+                    <p className="text-xs text-mist italic">
+                      {t("components.orderSlideOver.noAnalysis")}
+                    </p>
+                  </div>
+                );
+              }
+
+              const expl = translateExplanation(
+                order.fraudScore,
+                order.decision,
+                order.scoringFactors,
+                order.confidence,
+                t,
+              );
+
+              return (
                 <div className={`mx-6 mt-4 rounded-lg border p-4 ${colorClass}`}>
                   <p className="text-sm font-medium text-midnight">
                     {expl.summary}
@@ -431,12 +455,6 @@ export function OrderSlideOver({
                   )}
                   <p className="mt-1.5 text-[10px] text-mist">
                     {t("components.orderSlideOver.confidence", { value: expl.confidenceLabel })}
-                  </p>
-                </div>
-              ) : (
-                <div className="mx-6 mt-4 rounded-lg border border-silk bg-snow p-3">
-                  <p className="text-xs text-mist italic">
-                    {t("components.orderSlideOver.noAnalysis")}
                   </p>
                 </div>
               );
