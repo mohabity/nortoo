@@ -43,7 +43,15 @@ function pick<T>(arr: T[]): T {
  * Test orders are flagged isTest=true and excluded from all stats.
  */
 export async function POST() {
-  const merchantId = await getMerchantId();
+  let merchantId: number;
+  try {
+    merchantId = await getMerchantId();
+  } catch {
+    return NextResponse.json(
+      { error: "Non authentifié. Connectez-vous sur /login." },
+      { status: 401 }
+    );
+  }
 
   if (!checkRateLimit(merchantId)) {
     return NextResponse.json(
