@@ -1274,6 +1274,35 @@
         "signInAfterRegister": "Compte créé mais erreur de connexion. Essayez de vous connecter.",
         "serverError": "Erreur de connexion au serveur"
       }
+    },
+    "login": {
+      "tagline": "Scoring anti-fraude COD",
+      "title": "Connexion",
+      "subtitle": "Accédez à votre tableau de bord",
+      "email": "Adresse email",
+      "emailPlaceholder": "vous@votreboutique.ma",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Votre mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "twoFactorLabel": "Code d'authentification (2FA)",
+      "twoFactorPlaceholder": "000000",
+      "twoFactorHint": "Entrez le code de votre application d'authentification",
+      "submitLogin": "Se connecter",
+      "submitVerify": "Vérifier",
+      "or": "ou",
+      "withYoucan": "Se connecter avec YouCan",
+      "noAccount": "Pas encore de compte ?",
+      "register": "Créer un compte",
+      "footer": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08",
+      "backToHome": "Retour",
+      "errors": {
+        "invalidEmail": "Entrez une adresse email valide",
+        "emptyPassword": "Entrez votre mot de passe",
+        "empty2fa": "Entrez le code 2FA de votre application",
+        "invalid2fa": "Code 2FA incorrect. Réessayez.",
+        "invalidCredentials": "Email ou mot de passe incorrect",
+        "serverError": "Erreur de connexion au serveur"
+      }
     }
   }
 }

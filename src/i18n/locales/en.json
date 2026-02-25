@@ -1274,6 +1274,35 @@
         "signInAfterRegister": "Account created but sign-in failed. Try logging in.",
         "serverError": "Server connection error"
       }
+    },
+    "login": {
+      "tagline": "COD anti-fraud scoring",
+      "title": "Sign in",
+      "subtitle": "Access your dashboard",
+      "email": "Email address",
+      "emailPlaceholder": "you@yourstore.ma",
+      "password": "Password",
+      "passwordPlaceholder": "Your password",
+      "forgotPassword": "Forgot password?",
+      "twoFactorLabel": "Authentication code (2FA)",
+      "twoFactorPlaceholder": "000000",
+      "twoFactorHint": "Enter the code from your authenticator app",
+      "submitLogin": "Sign in",
+      "submitVerify": "Verify",
+      "or": "or",
+      "withYoucan": "Sign in with YouCan",
+      "noAccount": "Don't have an account?",
+      "register": "Create an account",
+      "footer": "Data hosted in 🇪🇺 Frankfurt — Law 09-08 compliant",
+      "backToHome": "Back",
+      "errors": {
+        "invalidEmail": "Enter a valid email address",
+        "emptyPassword": "Enter your password",
+        "empty2fa": "Enter the 2FA code from your app",
+        "invalid2fa": "Invalid 2FA code. Try again.",
+        "invalidCredentials": "Incorrect email or password",
+        "serverError": "Server connection error"
+      }
     }
   }
 }

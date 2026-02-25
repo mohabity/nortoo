@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 import Link from "next/link";
-import { Loader2, Mail, Lock, Plug, Shield } from "lucide-react";
+import { Loader2, Mail, Lock, Plug, Shield, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/i18n/provider";
 
 export default function LoginPage() {
   return (
@@ -27,6 +28,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/dashboard";
+  const { t } = useTranslation();
 
   const oauthError = searchParams.get("error") ?? "";
 
@@ -42,17 +44,17 @@ function LoginForm() {
     setError("");
 
     if (!email.trim() || !email.includes("@")) {
-      setError("Entrez une adresse email valide");
+      setError(t("auth.login.errors.invalidEmail"));
       return;
     }
 
     if (!password) {
-      setError("Entrez votre mot de passe");
+      setError(t("auth.login.errors.emptyPassword"));
       return;
     }
 
     if (needs2FA && !totpCode) {
-      setError("Entrez le code 2FA de votre application");
+      setError(t("auth.login.errors.empty2fa"));
       return;
     }
 
@@ -73,17 +75,17 @@ function LoginForm() {
           return;
         }
         if (result.error.includes("2FA_INVALID")) {
-          setError("Code 2FA incorrect. Réessayez.");
+          setError(t("auth.login.errors.invalid2fa"));
           setTotpCode("");
           return;
         }
-        setError("Email ou mot de passe incorrect");
+        setError(t("auth.login.errors.invalidCredentials"));
         return;
       }
 
       router.push(redirect);
     } catch {
-      setError("Erreur de connexion au serveur");
+      setError(t("auth.login.errors.serverError"));
     } finally {
       setLoading(false);
     }
@@ -92,11 +94,22 @@ function LoginForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-snow px-4">
       <div className="w-full max-w-sm">
+        {/* Back to landing */}
+        <div className="mb-6">
+          <a
+            href="https://nortoo.ma"
+            className="inline-flex items-center gap-1.5 text-sm text-fog hover:text-slate transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t("auth.login.backToHome")}
+          </a>
+        </div>
+
         {/* Logo */}
         <div className="mb-8 text-center">
           <img src="/nortoo-logo.png" alt="nortoo" className="mx-auto h-9 w-auto" />
           <p className="mt-3 text-sm text-fog">
-            Scoring anti-fraude COD
+            {t("auth.login.tagline")}
           </p>
         </div>
 
@@ -104,10 +117,10 @@ function LoginForm() {
         <Card className="border-0 shadow-none sm:border sm:border-silk sm:shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <CardHeader className="text-center pb-2">
             <h1 className="font-display text-lg font-semibold text-midnight">
-              Connexion
+              {t("auth.login.title")}
             </h1>
             <p className="text-sm text-fog">
-              Accédez à votre tableau de bord
+              {t("auth.login.subtitle")}
             </p>
           </CardHeader>
           <CardContent>
@@ -118,14 +131,14 @@ function LoginForm() {
                   htmlFor="email"
                   className="block text-sm font-medium text-slate mb-1.5"
                 >
-                  Adresse email
+                  {t("auth.login.email")}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
                   <input
                     id="email"
                     type="email"
-                    placeholder="vous@votreboutique.ma"
+                    placeholder={t("auth.login.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
@@ -142,13 +155,13 @@ function LoginForm() {
                     htmlFor="password"
                     className="block text-sm font-medium text-slate"
                   >
-                    Mot de passe
+                    {t("auth.login.password")}
                   </label>
                   <Link
                     href="/forgot-password"
                     className="text-[0.78rem] font-normal text-ocean hover:underline"
                   >
-                    Mot de passe oublié ?
+                    {t("auth.login.forgotPassword")}
                   </Link>
                 </div>
                 <div className="relative">
@@ -156,7 +169,7 @@ function LoginForm() {
                   <input
                     id="password"
                     type="password"
-                    placeholder="Votre mot de passe"
+                    placeholder={t("auth.login.passwordPlaceholder")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
@@ -172,7 +185,7 @@ function LoginForm() {
                     htmlFor="totp"
                     className="block text-sm font-medium text-slate mb-1.5"
                   >
-                    Code d&apos;authentification (2FA)
+                    {t("auth.login.twoFactorLabel")}
                   </label>
                   <div className="relative">
                     <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
@@ -181,7 +194,7 @@ function LoginForm() {
                       type="text"
                       inputMode="numeric"
                       maxLength={6}
-                      placeholder="000000"
+                      placeholder={t("auth.login.twoFactorPlaceholder")}
                       value={totpCode}
                       onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
                       autoFocus
@@ -190,7 +203,7 @@ function LoginForm() {
                     />
                   </div>
                   <p className="mt-1 text-xs text-fog">
-                    Entrez le code de votre application d&apos;authentification
+                    {t("auth.login.twoFactorHint")}
                   </p>
                 </div>
               )}
@@ -207,7 +220,7 @@ function LoginForm() {
                 {loading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {needs2FA ? "Vérifier" : "Se connecter"}
+                {needs2FA ? t("auth.login.submitVerify") : t("auth.login.submitLogin")}
               </Button>
             </form>
 
@@ -217,7 +230,7 @@ function LoginForm() {
                 <div className="w-full border-t border-silk" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-3 text-xs text-mist">ou</span>
+                <span className="bg-white px-3 text-xs text-mist">{t("auth.login.or")}</span>
               </div>
             </div>
 
@@ -227,23 +240,23 @@ function LoginForm() {
               className="inline-flex w-full min-h-[48px] items-center justify-center gap-2 rounded-sm bg-[#5C6AC4] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4F5BB5]"
             >
               <Plug className="h-4 w-4" />
-              Se connecter avec YouCan
+              {t("auth.login.withYoucan")}
             </a>
 
             <p className="mt-4 text-center text-sm text-fog">
-              Pas encore de compte ?{" "}
+              {t("auth.login.noAccount")}{" "}
               <Link
                 href="/register"
                 className="font-medium text-mint-deep hover:underline"
               >
-                Créer un compte
+                {t("auth.login.register")}
               </Link>
             </p>
           </CardContent>
         </Card>
 
         <p className="mt-6 pb-4 text-center text-xs text-mist" style={{ paddingBottom: "max(1rem, var(--safe-bottom))" }}>
-          Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08
+          {t("auth.login.footer")}
         </p>
       </div>
     </div>
