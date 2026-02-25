@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getMerchantId } from "@/lib/merchant";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { auth } from "@/auth";
+import { requireActiveBilling } from "@/lib/billing-guard";
 import type { Locale } from "@/i18n/types";
 
 // ── Shared select columns ──
@@ -110,6 +111,12 @@ const escalationConfigSchema = z.object({
 
 export async function PUT(request: Request) {
   const merchantId = await getMerchantId();
+
+  // Paywall check — block mutations when billing inactive
+  const billing = await requireActiveBilling(merchantId);
+  if (billing.blocked) {
+    return NextResponse.json(billing.response, { status: billing.status });
+  }
 
   // Get userId from session for audit log enrichment
   let userId: number | undefined;

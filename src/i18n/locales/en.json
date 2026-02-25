@@ -1025,7 +1025,14 @@
       "limitApproaching": "{current}/{limit} orders this month ({percent}%). Consider upgrading if needed.",
       "seePlans": "View plans",
       "overdue": "Unpaid invoice — Your account may be suspended. Please settle your invoice.",
-      "payNow": "Pay now →"
+      "payNow": "Pay now →",
+      "readOnly": "Your dashboard is read-only. Switch to a paid plan to unlock all features.",
+      "couponPlaceholder": "Coupon code",
+      "couponApply": "Apply",
+      "couponApplying": "Applying...",
+      "couponSuccess": "Coupon applied successfully!",
+      "couponError": "Invalid or expired coupon.",
+      "orUseCoupon": "or enter a coupon"
     },
     "upgradeBanner": {
       "planRequired": "{plan} plan required",

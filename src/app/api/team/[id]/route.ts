@@ -4,7 +4,7 @@ import { db } from "@/db/index";
 import { users, auditLogs } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import {
-  requirePermission,
+  requireActiveMerchant,
   handlePermissionError,
 } from "@/lib/permissions";
 
@@ -22,7 +22,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const ctx = await requirePermission("team:manage");
+    const ctx = await requireActiveMerchant("team:manage");
     const { id } = await params;
     const targetId = parseInt(id, 10);
     if (isNaN(targetId)) {
@@ -168,7 +168,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const ctx = await requirePermission("team:manage");
+    const ctx = await requireActiveMerchant("team:manage");
     const { id } = await params;
     const targetId = parseInt(id, 10);
     if (isNaN(targetId)) {

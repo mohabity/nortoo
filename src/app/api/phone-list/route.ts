@@ -3,7 +3,7 @@ import { db } from "@/db/index";
 import { phoneList, auditLogs } from "@/db/schema";
 import { and, eq, desc } from "drizzle-orm";
 import { z } from "zod";
-import { requirePermission, handlePermissionError } from "@/lib/permissions";
+import { requirePermission, requireActiveMerchant, handlePermissionError } from "@/lib/permissions";
 import { hashPhone, maskPhone } from "@/lib/hash";
 
 const addSchema = z.object({
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   let ctx;
   try {
-    ctx = await requirePermission("orders:write");
+    ctx = await requireActiveMerchant("orders:write");
   } catch (err) {
     return handlePermissionError(err);
   }
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   let ctx;
   try {
-    ctx = await requirePermission("orders:write");
+    ctx = await requireActiveMerchant("orders:write");
   } catch (err) {
     return handlePermissionError(err);
   }

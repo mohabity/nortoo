@@ -664,6 +664,55 @@ export const usageLogs = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// COUPONS — Promotional codes (trial extension + first month free)
+// ═══════════════════════════════════════════════════════════
+export const coupons = pgTable(
+  "coupons",
+  {
+    id: serial("id").primaryKey(),
+    code: text("code").notNull().unique(),            // UPPERCASE, e.g. "PROMO30"
+    type: text("type").notNull(),                     // "trial_extension" | "first_month_free"
+    value: text("value").notNull(),                   // days (e.g. "30") or plan id (e.g. "starter")
+    maxUses: integer("max_uses"),                     // null = unlimited
+    usedCount: integer("used_count").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    expiresAt: timestamp("expires_at"),               // null = never expires
+    createdBy: text("created_by").notNull(),          // admin identifier
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coupons_code_idx").on(table.code),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
+// COUPON REDEMPTIONS — Track who redeemed what
+// ═══════════════════════════════════════════════════════════
+export const couponRedemptions = pgTable(
+  "coupon_redemptions",
+  {
+    id: serial("id").primaryKey(),
+    couponId: integer("coupon_id")
+      .notNull()
+      .references(() => coupons.id),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    redeemedAt: timestamp("redeemed_at").notNull().defaultNow(),
+    effect: text("effect").notNull(),                 // JSON describing what happened
+  },
+  (table) => [
+    index("coupon_redemptions_coupon_idx").on(table.couponId),
+    index("coupon_redemptions_merchant_idx").on(table.merchantId),
+    uniqueIndex("coupon_redemptions_merchant_coupon_idx").on(
+      table.merchantId,
+      table.couponId
+    ),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // CRON RUNS — Monitoring des jobs planifiés
 // ═══════════════════════════════════════════════════════════
 export const cronRuns = pgTable(
@@ -700,6 +749,22 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   usageLogs: many(usageLogs),
   phoneList: many(phoneList),
   invoices: many(invoices),
+  couponRedemptions: many(couponRedemptions),
+}));
+
+export const couponsRelations = relations(coupons, ({ many }) => ({
+  redemptions: many(couponRedemptions),
+}));
+
+export const couponRedemptionsRelations = relations(couponRedemptions, ({ one }) => ({
+  coupon: one(coupons, {
+    fields: [couponRedemptions.couponId],
+    references: [coupons.id],
+  }),
+  merchant: one(merchants, {
+    fields: [couponRedemptions.merchantId],
+    references: [merchants.id],
+  }),
 }));
 
 export const usersRelations = relations(users, ({ one }) => ({

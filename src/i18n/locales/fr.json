@@ -1025,7 +1025,14 @@
       "limitApproaching": "{current}/{limit} commandes ce mois ({percent}%). Pensez à upgrader si nécessaire.",
       "seePlans": "Voir les plans",
       "overdue": "Facture impayée — Votre compte risque d'être suspendu. Réglez votre facture.",
-      "payNow": "Régler →"
+      "payNow": "Régler →",
+      "readOnly": "Votre dashboard est en lecture seule. Passez à un plan payant pour débloquer toutes les fonctionnalités.",
+      "couponPlaceholder": "Code coupon",
+      "couponApply": "Appliquer",
+      "couponApplying": "Application...",
+      "couponSuccess": "Coupon appliqué avec succès !",
+      "couponError": "Coupon invalide ou expiré.",
+      "orUseCoupon": "ou entrez un coupon"
     },
     "upgradeBanner": {
       "planRequired": "Plan {plan} requis",

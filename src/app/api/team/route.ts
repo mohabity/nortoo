@@ -6,6 +6,7 @@ import { users, merchants, auditLogs } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import {
   requirePermission,
+  requireActiveMerchant,
   handlePermissionError,
   ROLE_LABELS,
   type Role,
@@ -60,7 +61,7 @@ const inviteSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const ctx = await requirePermission("team:manage");
+    const ctx = await requireActiveMerchant("team:manage");
 
     let body: unknown;
     try {

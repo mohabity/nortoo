@@ -4,7 +4,7 @@ import { db } from "@/db/index";
 import { users, merchants, auditLogs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import {
-  requirePermission,
+  requireActiveMerchant,
   handlePermissionError,
   ROLE_LABELS,
   type Role,
@@ -22,7 +22,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const ctx = await requirePermission("team:manage");
+    const ctx = await requireActiveMerchant("team:manage");
     const { id } = await params;
     const targetId = parseInt(id, 10);
     if (isNaN(targetId)) {

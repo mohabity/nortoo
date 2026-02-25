@@ -11,6 +11,7 @@ export {
 } from "@/lib/permissions.shared";
 
 import { hasPermission, type Role, type Permission } from "@/lib/permissions.shared";
+import { requireActiveBilling } from "@/lib/billing-guard";
 
 // ── Auth context returned by requirePermission ──
 
@@ -55,6 +56,27 @@ export async function requirePermission(
   }
 
   return { merchantId, userId, role: role as Role, plan };
+}
+
+// ── Require permission + active billing (paywall) ──
+
+/**
+ * Combined check: permission + billing status.
+ * Use this instead of requirePermission() for mutation routes
+ * that should be blocked when trial is expired or billing is inactive.
+ */
+export async function requireActiveMerchant(
+  ...perms: Permission[]
+): Promise<AuthContext> {
+  const ctx = await requirePermission(...perms);
+  const billing = await requireActiveBilling(ctx.merchantId);
+  if (billing.blocked) {
+    throw new PermissionError(
+      billing.response?.error ?? "Compte inactif.",
+      billing.status ?? 402
+    );
+  }
+  return ctx;
 }
 
 // ── Handle permission errors in API routes ──

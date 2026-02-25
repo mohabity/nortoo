@@ -3,7 +3,7 @@ import { db } from "@/db/index";
 import { orders, customers, auditLogs, phoneList } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { requirePermission, handlePermissionError } from "@/lib/permissions";
+import { requireActiveMerchant, handlePermissionError } from "@/lib/permissions";
 
 const bulkSchema = z.object({
   updates: z
@@ -25,7 +25,7 @@ const bulkSchema = z.object({
 export async function POST(request: Request) {
   let ctx;
   try {
-    ctx = await requirePermission("orders:write");
+    ctx = await requireActiveMerchant("orders:write");
   } catch (err) {
     return handlePermissionError(err);
   }

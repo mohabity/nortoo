@@ -5,6 +5,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { getMerchantContext } from "@/lib/merchant";
 import { requireBulkAccess, handleFeatureGateError, BulkLimitError } from "@/lib/require-feature";
+import { requireActiveBilling } from "@/lib/billing-guard";
 
 const bulkOverrideSchema = z.object({
   orderIds: z.array(z.number().int().positive()).min(1).max(50),
@@ -24,6 +25,12 @@ const DECISION_LABELS: Record<string, string> = {
 
 export async function POST(request: Request) {
   const { merchantId, plan } = await getMerchantContext();
+
+  // Paywall check — block mutations when billing inactive
+  const billing = await requireActiveBilling(merchantId);
+  if (billing.blocked) {
+    return NextResponse.json(billing.response, { status: billing.status });
+  }
 
   // Parse body
   let body: unknown;

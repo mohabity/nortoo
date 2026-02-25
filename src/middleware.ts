@@ -38,6 +38,8 @@ const PUBLIC_PATHS = [
   "/api/admin/",
   "/api/data-rights/submit",
   "/api/team/accept-invite",
+  "/api/coupons/validate",
+  "/redeem",
   "/admin/login",
   "/_next/",
   "/favicon.ico",
