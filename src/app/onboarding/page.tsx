@@ -41,51 +41,7 @@ interface TestResult {
 
 type PresetKey = "permissive" | "balanced" | "conservative";
 
-// ── Preset data ──
-
-const PRESETS: {
-  key: PresetKey;
-  emoji: string;
-  label: string;
-  recommended?: boolean;
-  description: string;
-  thresholds: string;
-}[] = [
-  {
-    key: "permissive",
-    emoji: "🟢",
-    label: "Permissif",
-    description:
-      "Laisser passer un maximum de commandes. Idéal si vous avez peu de retours.",
-    thresholds: "Expédier < 45 · Bloquer > 95",
-  },
-  {
-    key: "balanced",
-    emoji: "🟡",
-    label: "Équilibré",
-    recommended: true,
-    description:
-      "Bon compromis entre ventes et protection. Idéal pour la plupart des boutiques.",
-    thresholds: "Expédier < 31 · Bloquer > 86",
-  },
-  {
-    key: "conservative",
-    emoji: "🔴",
-    label: "Strict",
-    description:
-      "Filtrer agressivement les commandes. Idéal si vous avez un taux de retour élevé.",
-    thresholds: "Expédier < 25 · Bloquer > 75",
-  },
-];
-
 const STEP_COUNT = 5;
-
-const DECISION_LABELS: Record<string, string> = {
-  ship: "Expédier",
-  verify: "Vérifier",
-  flag: "Signaler",
-  block: "Bloquer",
-};
 
 const DECISION_COLORS: Record<string, string> = {
   ship: "text-mint-deep",
@@ -113,6 +69,7 @@ export default function OnboardingPage() {
 function OnboardingWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const urlStep = searchParams.get("step");
   const connected = searchParams.get("connected");
 
@@ -242,7 +199,7 @@ function OnboardingWizard() {
         clearTimeout(t1);
         clearTimeout(t2);
         setTestState("error");
-        setTestError(json.error || "Erreur lors du test");
+        setTestError(json.error || t("onboarding.test.errorDefault"));
         return;
       }
 
@@ -254,7 +211,7 @@ function OnboardingWizard() {
       clearTimeout(t1);
       clearTimeout(t2);
       setTestState("error");
-      setTestError("Erreur réseau. Vérifiez votre connexion.");
+      setTestError(t("onboarding.test.errorNetwork"));
     }
   }
 
@@ -316,7 +273,7 @@ function OnboardingWizard() {
 
         {/* Step counter */}
         <p className="mb-4 text-center font-mono text-[0.55rem] text-mist uppercase tracking-wider">
-          Étape {step}/{STEP_COUNT}
+          {t("onboarding.stepCounter").replace("{step}", String(step)).replace("{total}", String(STEP_COUNT))}
         </p>
 
         {/* Card body */}
@@ -380,13 +337,13 @@ function OnboardingWizard() {
             onClick={handleSkipAll}
             className="text-xs text-mist hover:text-fog transition-colors"
           >
-            {"Passer la configuration →"}
+            {t("onboarding.skipAll")}
           </button>
         </div>
 
         {/* Footer */}
         <p className="mt-6 text-center text-[11px] text-mist">
-          {"Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08"}
+          {t("onboarding.hostedInEU")}
         </p>
       </div>
     </div>
@@ -416,19 +373,21 @@ function StepWelcome({ name, onNext }: { name: string; onNext: (consent: boolean
       <div className="text-5xl">{"🎯"}</div>
       <div>
         <h2 className="font-display text-xl sm:text-[1.4rem] font-bold text-midnight">
-          Bienvenue sur nortoo{name ? `, ${name}` : ""} !
+          {name
+            ? t("onboarding.welcome.titleWithName").replace("{name}", name)
+            : t("onboarding.welcome.title")}
         </h2>
         <p className="mt-2 text-sm text-fog">
-          Scorez vos commandes COD en temps réel et réduisez vos retours de 40%.
+          {t("onboarding.welcome.subtitle")}
         </p>
       </div>
 
       {/* Mini features */}
       <div className="flex flex-wrap justify-center gap-2">
         {[
-          { emoji: "🔍", label: "Score instantané" },
-          { emoji: "📊", label: "Dashboard live" },
-          { emoji: "🛡️", label: "Anti-fraude auto" },
+          { emoji: "🔍", label: t("onboarding.welcome.featureScore") },
+          { emoji: "📊", label: t("onboarding.welcome.featureDashboard") },
+          { emoji: "🛡️", label: t("onboarding.welcome.featureAntifraud") },
         ].map((f) => (
           <div
             key={f.label}
@@ -471,10 +430,10 @@ function StepWelcome({ name, onNext }: { name: string; onNext: (consent: boolean
           onClick={handleNext}
           className="w-full max-w-[320px] bg-mint hover:bg-mint-deep text-midnight font-semibold py-5"
         >
-          C&apos;est parti <ArrowRight className="ml-2 h-4 w-4" />
+          {t("onboarding.welcome.cta")} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
         <p className="mt-2 font-mono text-[0.55rem] text-mist">
-          Configuration en ~3 minutes
+          {t("onboarding.welcome.setupTime")}
         </p>
       </div>
     </div>
@@ -500,8 +459,8 @@ function StepConnectStore({
   useEffect(() => {
     if (storeConnected && !autoAdvance) {
       setAutoAdvance(true);
-      const t = setTimeout(onNext, 1500);
-      return () => clearTimeout(t);
+      const timer = setTimeout(onNext, 1500);
+      return () => clearTimeout(timer);
     }
   }, [storeConnected, autoAdvance, onNext]);
 
@@ -510,9 +469,9 @@ function StepConnectStore({
       <div className="text-center space-y-4 py-4">
         <CheckCircle2 className="h-12 w-12 text-mint-deep mx-auto" />
         <h2 className="font-display text-lg font-bold text-mint-deep">
-          Boutique connectée !
+          {t("onboarding.connect.connected")}
         </h2>
-        <p className="text-sm text-fog">Redirection en cours...</p>
+        <p className="text-sm text-fog">{t("onboarding.connect.redirecting")}</p>
       </div>
     );
   }
@@ -522,30 +481,30 @@ function StepConnectStore({
       <div className="text-5xl">{"🏪"}</div>
       <div>
         <h2 className="font-display text-xl font-bold text-midnight">
-          Connectez votre boutique YouCan
+          {t("onboarding.connect.title")}
         </h2>
         <p className="mt-2 text-sm text-fog">
-          nortoo s&apos;installe automatiquement. Vos commandes COD seront scorées en temps réel.
+          {t("onboarding.connect.subtitle")}
         </p>
       </div>
 
       <div>
         <a href="/api/auth/youcan">
           <Button className="w-full max-w-[320px] bg-mint hover:bg-mint-deep text-midnight font-semibold py-5">
-            Connecter YouCan <ArrowRight className="ml-2 h-4 w-4" />
+            {t("onboarding.connect.cta")} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </a>
       </div>
 
       <div className="space-y-2">
         <p className="text-xs text-fog">
-          Pas de boutique YouCan ?{" "}
+          {t("onboarding.connect.noYoucan")}{" "}
           <button onClick={onNext} className="text-ocean hover:underline">
-            {"Intégration manuelle via API →"}
+            {t("onboarding.connect.manualApi")}
           </button>
         </p>
         <p className="font-mono text-[0.55rem] text-mist">
-          {"🔒 Connexion sécurisée OAuth — nortoo ne stocke pas vos identifiants YouCan"}
+          {t("onboarding.connect.secureOauth")}
         </p>
         <button
           onClick={onSkip}
@@ -576,20 +535,54 @@ function StepConfigureScoring({
   onContinue: () => void;
   onSkip: () => void;
 }) {
+  const { t } = useTranslation();
+
+  const presets: {
+    key: PresetKey;
+    emoji: string;
+    label: string;
+    recommended?: boolean;
+    description: string;
+    thresholds: string;
+  }[] = [
+    {
+      key: "permissive",
+      emoji: "🟢",
+      label: t("onboarding.scoring.permissive"),
+      description: t("onboarding.scoring.permissiveDesc"),
+      thresholds: t("onboarding.scoring.permissiveThresholds"),
+    },
+    {
+      key: "balanced",
+      emoji: "🟡",
+      label: t("onboarding.scoring.balanced"),
+      recommended: true,
+      description: t("onboarding.scoring.balancedDesc"),
+      thresholds: t("onboarding.scoring.balancedThresholds"),
+    },
+    {
+      key: "conservative",
+      emoji: "🔴",
+      label: t("onboarding.scoring.conservative"),
+      description: t("onboarding.scoring.conservativeDesc"),
+      thresholds: t("onboarding.scoring.conservativeThresholds"),
+    },
+  ];
+
   return (
     <div className="space-y-5">
       <div className="text-center">
         <div className="text-5xl mb-3">{"⚙️"}</div>
         <h2 className="font-display text-xl font-bold text-midnight">
-          Choisissez votre niveau de filtrage
+          {t("onboarding.scoring.title")}
         </h2>
         <p className="mt-2 text-sm text-fog">
-          Comment voulez-vous traiter les commandes à risque ?
+          {t("onboarding.scoring.subtitle")}
         </p>
       </div>
 
       <div className="space-y-3">
-        {PRESETS.map((p) => {
+        {presets.map((p) => {
           const isSelected = selectedPreset === p.key;
           return (
             <button
@@ -611,7 +604,7 @@ function StepConfigureScoring({
                     </span>
                     {p.recommended && (
                       <span className="text-[10px] font-medium bg-mint-bg text-mint-deep px-1.5 py-0.5 rounded">
-                        recommandé
+                        {t("onboarding.scoring.recommended")}
                       </span>
                     )}
                   </div>
@@ -634,10 +627,10 @@ function StepConfigureScoring({
           onClick={onContinue}
           className="w-full max-w-[320px] bg-mint hover:bg-mint-deep text-midnight font-semibold py-5"
         >
-          Continuer <ArrowRight className="ml-2 h-4 w-4" />
+          {t("onboarding.scoring.continue")} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
         <button onClick={onSkip} className="text-xs text-mist hover:text-fog block mx-auto">
-          {"Garder les réglages par défaut →"}
+          {t("onboarding.scoring.keepDefaults")}
         </button>
       </div>
     </div>
@@ -665,12 +658,23 @@ function StepTestWebhook({
   onNext: () => void;
   onSkip: () => void;
 }) {
+  const { t } = useTranslation();
+
+  const decisionLabels: Record<string, string> = {
+    ship: t("onboarding.decision.ship"),
+    verify: t("onboarding.decision.verify"),
+    flag: t("onboarding.decision.flag"),
+    block: t("onboarding.decision.block"),
+  };
+
   const phases = [
-    "Commande envoyée",
-    testResult ? `Score calculé : ${testResult.score}/100` : "Score en cours...",
+    t("onboarding.test.phase1"),
     testResult
-      ? `Décision : ${DECISION_LABELS[testResult.decision] || testResult.decision}`
-      : "Décision en cours...",
+      ? t("onboarding.test.phase2").replace("{score}", String(testResult.score))
+      : t("onboarding.test.phase2Loading"),
+    testResult
+      ? t("onboarding.test.phase3").replace("{decision}", decisionLabels[testResult.decision] || testResult.decision)
+      : t("onboarding.test.phase3Loading"),
   ];
 
   return (
@@ -678,10 +682,10 @@ function StepTestWebhook({
       <div className="text-center">
         <div className="text-5xl mb-3">{"🧪"}</div>
         <h2 className="font-display text-xl font-bold text-midnight">
-          Testez la connexion
+          {t("onboarding.test.title")}
         </h2>
         <p className="mt-2 text-sm text-fog">
-          On envoie une fausse commande pour vérifier que tout fonctionne.
+          {t("onboarding.test.subtitle")}
         </p>
       </div>
 
@@ -692,7 +696,7 @@ function StepTestWebhook({
             onClick={onTest}
             className="w-full max-w-[320px] bg-mint hover:bg-mint-deep text-midnight font-semibold py-5"
           >
-            {"Envoyer une commande test 🚀"}
+            {t("onboarding.test.cta")}
           </Button>
         </div>
       )}
@@ -728,14 +732,14 @@ function StepTestWebhook({
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-mint-deep" />
               <span className="text-sm font-semibold text-mint-deep">
-                Test réussi en {testResult.durationMs}ms
+                {t("onboarding.test.successDuration").replace("{ms}", String(testResult.durationMs))}
               </span>
             </div>
 
             <div className="rounded-lg border border-silk bg-white p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-fog">
-                  Commande test {testResult.testOrder.ref}
+                  {t("onboarding.test.orderRef").replace("{ref}", testResult.testOrder.ref)}
                 </span>
                 <span className="font-mono text-sm font-bold text-midnight">
                   {testResult.score}/100
@@ -748,15 +752,15 @@ function StepTestWebhook({
                     DECISION_COLORS[testResult.decision] || "text-slate"
                   )}
                 >
-                  {"✅"} {DECISION_LABELS[testResult.decision] || testResult.decision}
+                  {"✅"} {decisionLabels[testResult.decision] || testResult.decision}
                 </span>
               </div>
               <p className="text-xs text-fog">
-                Client: {testResult.testOrder.customer} ·{" "}
+                {t("onboarding.test.client")}: {testResult.testOrder.customer} ·{" "}
                 {testResult.testOrder.city}
               </p>
               <p className="text-xs text-fog">
-                Montant: {testResult.testOrder.total} DH
+                {t("onboarding.test.amount")}: {testResult.testOrder.total} DH
               </p>
             </div>
           </div>
@@ -766,7 +770,7 @@ function StepTestWebhook({
               onClick={onNext}
               className="w-full max-w-[320px] bg-mint hover:bg-mint-deep text-midnight font-semibold py-5"
             >
-              Continuer <ArrowRight className="ml-2 h-4 w-4" />
+              {t("onboarding.test.continue")} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -779,7 +783,7 @@ function StepTestWebhook({
             <div className="flex items-center gap-2 mb-2">
               <XCircle className="h-5 w-5 text-rose" />
               <span className="text-sm font-semibold text-rose">
-                La connexion a échoué
+                {t("onboarding.test.failed")}
               </span>
             </div>
             <p className="text-xs text-fog">{testError}</p>
@@ -787,7 +791,7 @@ function StepTestWebhook({
           <div className="text-center">
             <Button onClick={onTest} variant="outline" className="w-full max-w-[320px]">
               <RefreshCw className="mr-2 h-4 w-4" />
-              Réessayer
+              {t("onboarding.test.retry")}
             </Button>
           </div>
         </div>
@@ -797,7 +801,7 @@ function StepTestWebhook({
       {(testState === "idle" || testState === "error") && (
         <div className="text-center">
           <button onClick={onSkip} className="text-xs text-mist hover:text-fog">
-            {"Passer cette étape →"}
+            {t("onboarding.test.skip")}
           </button>
         </div>
       )}
@@ -810,24 +814,26 @@ function StepTestWebhook({
 // ═══════════════════════════════════════════════════════════
 
 function StepDashboardReady({ onFinish }: { onFinish: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <div className="text-center space-y-5">
       <div className="text-5xl">{"🎉"}</div>
       <div>
         <h2 className="font-display text-xl font-bold text-midnight">
-          Votre dashboard est prêt !
+          {t("onboarding.ready.title")}
         </h2>
         <p className="mt-2 text-sm text-fog">
-          La prochaine commande COD de votre boutique sera scorée automatiquement.
+          {t("onboarding.ready.subtitle")}
         </p>
       </div>
 
       {/* Tips */}
       <div className="text-left space-y-3 rounded-lg bg-snow border border-silk p-4">
         {[
-          "Chaque commande est scorée de 0 (safe) à 100 (risque maximum)",
-          "Les commandes à risque sont signalées avec une notification",
-          "Vous pouvez override n'importe quelle décision manuellement",
+          t("onboarding.ready.tip1"),
+          t("onboarding.ready.tip2"),
+          t("onboarding.ready.tip3"),
         ].map((tip, i) => (
           <div key={i} className="flex items-start gap-2.5">
             <span className="text-sm shrink-0">{"💡"}</span>
@@ -841,13 +847,13 @@ function StepDashboardReady({ onFinish }: { onFinish: () => void }) {
           onClick={onFinish}
           className="w-full max-w-[320px] bg-mint hover:bg-mint-deep text-midnight font-semibold py-5"
         >
-          Voir mon dashboard <ArrowRight className="ml-2 h-4 w-4" />
+          {t("onboarding.ready.cta")} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
         <a
           href="/dashboard/settings"
           className="inline-block text-xs text-mist hover:text-fog"
         >
-          Personnaliser mes réglages
+          {t("onboarding.ready.customize")}
         </a>
       </div>
     </div>

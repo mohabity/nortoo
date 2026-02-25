@@ -1243,7 +1243,81 @@
     "consentRequired": "Vous devez accepter le traitement des données pour continuer",
     "consentPrivacyLink": "Voir notre politique de confidentialité",
     "skipStep": "Passer cette étape →",
-    "connectLater": "Vous pourrez connecter votre boutique plus tard depuis Paramètres"
+    "connectLater": "Vous pourrez connecter votre boutique plus tard depuis Paramètres",
+    "stepCounter": "Étape {step}/{total}",
+    "skipAll": "Passer la configuration →",
+    "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08",
+    "welcome": {
+      "title": "Bienvenue sur nortoo",
+      "titleWithName": "Bienvenue sur nortoo, {name} !",
+      "subtitle": "Scorez vos commandes COD en temps réel et réduisez vos retours de 40%.",
+      "featureScore": "Score instantané",
+      "featureDashboard": "Dashboard live",
+      "featureAntifraud": "Anti-fraude auto",
+      "cta": "C'est parti",
+      "setupTime": "Configuration en ~3 minutes"
+    },
+    "connect": {
+      "title": "Connectez votre boutique YouCan",
+      "subtitle": "nortoo s'installe automatiquement. Vos commandes COD seront scorées en temps réel.",
+      "cta": "Connecter YouCan",
+      "connected": "Boutique connectée !",
+      "redirecting": "Redirection en cours...",
+      "noYoucan": "Pas de boutique YouCan ?",
+      "manualApi": "Intégration manuelle via API →",
+      "secureOauth": "🔒 Connexion sécurisée OAuth — nortoo ne stocke pas vos identifiants YouCan"
+    },
+    "scoring": {
+      "title": "Choisissez votre niveau de filtrage",
+      "subtitle": "Comment voulez-vous traiter les commandes à risque ?",
+      "recommended": "recommandé",
+      "continue": "Continuer",
+      "keepDefaults": "Garder les réglages par défaut →",
+      "permissive": "Permissif",
+      "permissiveDesc": "Laisser passer un maximum de commandes. Idéal si vous avez peu de retours.",
+      "permissiveThresholds": "Expédier < 45 · Bloquer > 95",
+      "balanced": "Équilibré",
+      "balancedDesc": "Bon compromis entre ventes et protection. Idéal pour la plupart des boutiques.",
+      "balancedThresholds": "Expédier < 31 · Bloquer > 86",
+      "conservative": "Strict",
+      "conservativeDesc": "Filtrer agressivement les commandes. Idéal si vous avez un taux de retour élevé.",
+      "conservativeThresholds": "Expédier < 25 · Bloquer > 75"
+    },
+    "test": {
+      "title": "Testez la connexion",
+      "subtitle": "On envoie une fausse commande pour vérifier que tout fonctionne.",
+      "cta": "Envoyer une commande test 🚀",
+      "phase1": "Commande envoyée",
+      "phase2": "Score calculé : {score}/100",
+      "phase2Loading": "Score en cours...",
+      "phase3": "Décision : {decision}",
+      "phase3Loading": "Décision en cours...",
+      "successDuration": "Test réussi en {ms}ms",
+      "orderRef": "Commande test {ref}",
+      "client": "Client",
+      "amount": "Montant",
+      "continue": "Continuer",
+      "failed": "La connexion a échoué",
+      "retry": "Réessayer",
+      "skip": "Passer cette étape →",
+      "errorDefault": "Erreur lors du test",
+      "errorNetwork": "Erreur réseau. Vérifiez votre connexion."
+    },
+    "decision": {
+      "ship": "Expédier",
+      "verify": "Vérifier",
+      "flag": "Signaler",
+      "block": "Bloquer"
+    },
+    "ready": {
+      "title": "Votre dashboard est prêt !",
+      "subtitle": "La prochaine commande COD de votre boutique sera scorée automatiquement.",
+      "tip1": "Chaque commande est scorée de 0 (safe) à 100 (risque maximum)",
+      "tip2": "Les commandes à risque sont signalées avec une notification",
+      "tip3": "Vous pouvez override n'importe quelle décision manuellement",
+      "cta": "Voir mon dashboard",
+      "customize": "Personnaliser mes réglages"
+    }
   },
   "auth": {
     "register": {
@@ -1303,6 +1377,45 @@
         "invalidCredentials": "Email ou mot de passe incorrect",
         "serverError": "Erreur de connexion au serveur"
       }
+    },
+    "forgotPassword": {
+      "tagline": "Anti-Fraude RTO Intelligence",
+      "title": "Mot de passe oublié",
+      "subtitle": "Entrez votre email et nous vous enverrons un lien de réinitialisation.",
+      "emailLabel": "Adresse email",
+      "emailPlaceholder": "votre@email.com",
+      "submit": "Envoyer le lien →",
+      "backToLogin": "Retour à la connexion",
+      "sent": "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation. Vérifiez vos spams.",
+      "notReceived": "Pas reçu ? Vérifiez vos spams, ou essayez avec une autre adresse email.",
+      "errors": {
+        "invalidEmail": "Entrez une adresse email valide",
+        "tooMany": "Trop de demandes. Réessayez dans quelques minutes.",
+        "generic": "Une erreur est survenue",
+        "network": "Erreur de connexion au serveur"
+      },
+      "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08"
+    },
+    "resetPassword": {
+      "tagline": "Anti-Fraude RTO Intelligence",
+      "titleSuccess": "Mot de passe réinitialisé",
+      "titleForm": "Nouveau mot de passe",
+      "successMessage": "Mot de passe réinitialisé avec succès !",
+      "loginCta": "Se connecter →",
+      "newLinkCta": "Demander un nouveau lien →",
+      "passwordLabel": "Nouveau mot de passe",
+      "passwordPlaceholder": "Minimum 8 caractères",
+      "confirmLabel": "Confirmer le mot de passe",
+      "confirmPlaceholder": "Confirmez votre mot de passe",
+      "hintLength": "Au moins 8 caractères",
+      "hintMatch": "Les mots de passe correspondent",
+      "submit": "Réinitialiser →",
+      "errors": {
+        "noToken": "Lien invalide — aucun token trouvé.",
+        "generic": "Une erreur est survenue",
+        "network": "Erreur de connexion au serveur"
+      },
+      "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08"
     }
   }
 }

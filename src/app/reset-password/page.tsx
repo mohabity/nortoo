@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader2, Lock, CheckCircle2, XCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/i18n/provider";
 
 export default function ResetPasswordPage() {
   return (
@@ -22,6 +23,7 @@ export default function ResetPasswordPage() {
 }
 
 function ResetPasswordForm() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
 
@@ -42,7 +44,7 @@ function ResetPasswordForm() {
     setErrorType("");
 
     if (!token) {
-      setError("Lien invalide — aucun token trouvé.");
+      setError(t("auth.resetPassword.errors.noToken"));
       setErrorType("invalid");
       return;
     }
@@ -59,12 +61,12 @@ function ResetPasswordForm() {
       const json = await res.json();
 
       if (!res.ok) {
-        const msg = json.error || "Une erreur est survenue";
+        const msg = json.error || t("auth.resetPassword.errors.generic");
         setError(msg);
 
-        if (msg.includes("invalide") || msg.includes("utilisé")) {
+        if (msg.includes("invalide") || msg.includes("invalid") || msg.includes("utilisé") || msg.includes("used")) {
           setErrorType("invalid");
-        } else if (msg.includes("expiré")) {
+        } else if (msg.includes("expiré") || msg.includes("expired")) {
           setErrorType("expired");
         } else {
           setErrorType("generic");
@@ -74,7 +76,7 @@ function ResetPasswordForm() {
 
       setSuccess(true);
     } catch {
-      setError("Erreur de connexion au serveur");
+      setError(t("auth.resetPassword.errors.network"));
       setErrorType("generic");
     } finally {
       setLoading(false);
@@ -88,14 +90,14 @@ function ResetPasswordForm() {
         <div className="mb-8 text-center">
           <img src="/nortoo-logo.png" alt="nortoo" className="mx-auto h-9 w-auto" />
           <p className="mt-3 text-sm text-fog">
-            Anti-Fraude RTO Intelligence
+            {t("auth.resetPassword.tagline")}
           </p>
         </div>
 
         <Card className="border-0 shadow-none sm:border sm:border-silk sm:shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <CardHeader className="text-center pb-2">
             <h1 className="font-display text-lg font-semibold text-midnight">
-              {success ? "Mot de passe réinitialisé" : "Nouveau mot de passe"}
+              {success ? t("auth.resetPassword.titleSuccess") : t("auth.resetPassword.titleForm")}
             </h1>
           </CardHeader>
           <CardContent>
@@ -104,12 +106,12 @@ function ResetPasswordForm() {
                 <div className="flex flex-col items-center gap-3 py-4">
                   <CheckCircle2 className="h-10 w-10 text-mint" />
                   <p className="text-sm text-slate text-center">
-                    Mot de passe réinitialisé avec succès !
+                    {t("auth.resetPassword.successMessage")}
                   </p>
                 </div>
                 <Link href="/login">
                   <Button className="w-full min-h-[48px]">
-                    Se connecter →
+                    {t("auth.resetPassword.loginCta")}
                   </Button>
                 </Link>
               </div>
@@ -121,7 +123,7 @@ function ResetPasswordForm() {
                 </div>
                 <Link href="/forgot-password">
                   <Button className="w-full min-h-[48px]">
-                    Demander un nouveau lien →
+                    {t("auth.resetPassword.newLinkCta")}
                   </Button>
                 </Link>
               </div>
@@ -133,14 +135,14 @@ function ResetPasswordForm() {
                     htmlFor="password"
                     className="block text-sm font-medium text-slate mb-1.5"
                   >
-                    Nouveau mot de passe
+                    {t("auth.resetPassword.passwordLabel")}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
                     <input
                       id="password"
                       type="password"
-                      placeholder="Minimum 8 caractères"
+                      placeholder={t("auth.resetPassword.passwordPlaceholder")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       autoComplete="new-password"
@@ -165,14 +167,14 @@ function ResetPasswordForm() {
                     htmlFor="passwordConfirm"
                     className="block text-sm font-medium text-slate mb-1.5"
                   >
-                    Confirmer le mot de passe
+                    {t("auth.resetPassword.confirmLabel")}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
                     <input
                       id="passwordConfirm"
                       type="password"
-                      placeholder="Confirmez votre mot de passe"
+                      placeholder={t("auth.resetPassword.confirmPlaceholder")}
                       value={passwordConfirm}
                       onChange={(e) => setPasswordConfirm(e.target.value)}
                       autoComplete="new-password"
@@ -194,11 +196,11 @@ function ResetPasswordForm() {
                 <div className="space-y-1">
                   <p className={`text-xs flex items-center gap-1.5 ${isLongEnough ? "text-mint-deep" : "text-mist"}`}>
                     {isLongEnough ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                    Au moins 8 caractères
+                    {t("auth.resetPassword.hintLength")}
                   </p>
                   <p className={`text-xs flex items-center gap-1.5 ${doMatch ? "text-mint-deep" : "text-mist"}`}>
                     {doMatch ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                    Les mots de passe correspondent
+                    {t("auth.resetPassword.hintMatch")}
                   </p>
                 </div>
 
@@ -214,7 +216,7 @@ function ResetPasswordForm() {
                   {loading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  Réinitialiser →
+                  {t("auth.resetPassword.submit")}
                 </Button>
               </form>
             )}
@@ -222,7 +224,7 @@ function ResetPasswordForm() {
         </Card>
 
         <p className="mt-6 pb-4 text-center text-xs text-mist" style={{ paddingBottom: "max(1rem, var(--safe-bottom))" }}>
-          Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08
+          {t("auth.resetPassword.hostedInEU")}
         </p>
       </div>
     </div>

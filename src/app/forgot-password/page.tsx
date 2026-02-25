@@ -5,8 +5,10 @@ import Link from "next/link";
 import { Loader2, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/i18n/provider";
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,7 +19,7 @@ export default function ForgotPasswordPage() {
     setError("");
 
     if (!email.trim() || !email.includes("@")) {
-      setError("Entrez une adresse email valide");
+      setError(t("auth.forgotPassword.errors.invalidEmail"));
       return;
     }
 
@@ -31,19 +33,19 @@ export default function ForgotPasswordPage() {
       });
 
       if (res.status === 429) {
-        setError("Trop de demandes. Réessayez dans quelques minutes.");
+        setError(t("auth.forgotPassword.errors.tooMany"));
         return;
       }
 
       if (!res.ok) {
         const json = await res.json();
-        setError(json.error || "Une erreur est survenue");
+        setError(json.error || t("auth.forgotPassword.errors.generic"));
         return;
       }
 
       setSent(true);
     } catch {
-      setError("Erreur de connexion au serveur");
+      setError(t("auth.forgotPassword.errors.network"));
     } finally {
       setLoading(false);
     }
@@ -56,18 +58,18 @@ export default function ForgotPasswordPage() {
         <div className="mb-8 text-center">
           <img src="/nortoo-logo.png" alt="nortoo" className="mx-auto h-9 w-auto" />
           <p className="mt-3 text-sm text-fog">
-            Anti-Fraude RTO Intelligence
+            {t("auth.forgotPassword.tagline")}
           </p>
         </div>
 
         <Card className="border-0 shadow-none sm:border sm:border-silk sm:shadow-[0_2px_8px_rgba(0,0,0,.06)]">
           <CardHeader className="text-center pb-2">
             <h1 className="font-display text-lg font-semibold text-midnight">
-              Mot de passe oublié
+              {t("auth.forgotPassword.title")}
             </h1>
             {!sent && (
               <p className="text-sm text-fog">
-                Entrez votre email et nous vous enverrons un lien de réinitialisation.
+                {t("auth.forgotPassword.subtitle")}
               </p>
             )}
           </CardHeader>
@@ -77,12 +79,12 @@ export default function ForgotPasswordPage() {
                 <div className="flex flex-col items-center gap-3 py-4">
                   <CheckCircle2 className="h-10 w-10 text-mint" />
                   <p className="text-sm text-slate text-center leading-relaxed">
-                    Si un compte existe avec cet email, vous recevrez un lien de réinitialisation. Vérifiez vos spams.
+                    {t("auth.forgotPassword.sent")}
                   </p>
                 </div>
 
                 <p className="text-xs text-mist text-center">
-                  Pas reçu ? Vérifiez vos spams, ou essayez avec une autre adresse email.
+                  {t("auth.forgotPassword.notReceived")}
                 </p>
 
                 <Link
@@ -90,7 +92,7 @@ export default function ForgotPasswordPage() {
                   className="flex items-center justify-center gap-1.5 text-sm font-medium text-mint-deep hover:underline"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  Retour à la connexion
+                  {t("auth.forgotPassword.backToLogin")}
                 </Link>
               </div>
             ) : (
@@ -100,14 +102,14 @@ export default function ForgotPasswordPage() {
                     htmlFor="email"
                     className="block text-sm font-medium text-slate mb-1.5"
                   >
-                    Adresse email
+                    {t("auth.forgotPassword.emailLabel")}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
                     <input
                       id="email"
                       type="email"
-                      placeholder="votre@email.com"
+                      placeholder={t("auth.forgotPassword.emailPlaceholder")}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       autoComplete="email"
@@ -129,7 +131,7 @@ export default function ForgotPasswordPage() {
                   {loading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  Envoyer le lien →
+                  {t("auth.forgotPassword.submit")}
                 </Button>
 
                 <Link
@@ -137,7 +139,7 @@ export default function ForgotPasswordPage() {
                   className="flex items-center justify-center gap-1.5 text-sm font-medium text-mint-deep hover:underline"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  Retour à la connexion
+                  {t("auth.forgotPassword.backToLogin")}
                 </Link>
               </form>
             )}
@@ -145,7 +147,7 @@ export default function ForgotPasswordPage() {
         </Card>
 
         <p className="mt-6 pb-4 text-center text-xs text-mist" style={{ paddingBottom: "max(1rem, var(--safe-bottom))" }}>
-          Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08
+          {t("auth.forgotPassword.hostedInEU")}
         </p>
       </div>
     </div>
