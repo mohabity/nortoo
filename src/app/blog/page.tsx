@@ -1,6 +1,7 @@
 import { db } from "@/db/index";
 import { blogArticles } from "@/db/schema";
 import { and, eq, desc, count, sql } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { ArticleCard } from "@/components/blog/article-card";
 import Link from "next/link";
 import { getCategoryLabel } from "@/lib/blog/seo";
@@ -32,7 +33,16 @@ export default async function BlogPage({
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const catFilter = params.cat ?? null;
-  const locale = params.lang === "en" ? "en" : "fr";
+
+  // Language: ?lang= param > nortoo_lang cookie > default fr
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get("nortoo_lang")?.value;
+  const locale =
+    params.lang === "en" || params.lang === "fr"
+      ? params.lang
+      : cookieLang === "en"
+        ? "en"
+        : "fr";
 
   // Build conditions
   const conditions = [
@@ -101,29 +111,6 @@ export default async function BlogPage({
             : "Conseils, guides et analyses pour les marchands e-commerce COD au Maroc."}
         </p>
 
-        {/* Language switch */}
-        <div className="flex items-center justify-center gap-2 mt-4">
-          <Link
-            href={`/blog?lang=fr${catFilter ? `&cat=${catFilter}` : ""}`}
-            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-              locale === "fr"
-                ? "bg-midnight text-white border-midnight"
-                : "text-gray-500 border-gray-200 hover:border-gray-400"
-            }`}
-          >
-            FR
-          </Link>
-          <Link
-            href={`/blog?lang=en${catFilter ? `&cat=${catFilter}` : ""}`}
-            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-              locale === "en"
-                ? "bg-midnight text-white border-midnight"
-                : "text-gray-500 border-gray-200 hover:border-gray-400"
-            }`}
-          >
-            EN
-          </Link>
-        </div>
       </div>
 
       {/* Category filters */}

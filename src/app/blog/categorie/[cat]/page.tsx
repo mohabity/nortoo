@@ -1,6 +1,7 @@
 import { db } from "@/db/index";
 import { blogArticles } from "@/db/schema";
 import { and, eq, desc, count } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { ArticleCard } from "@/components/blog/article-card";
 import Link from "next/link";
 import { getCategoryLabel } from "@/lib/blog/seo";
@@ -17,14 +18,28 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ cat: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }): Promise<Metadata> {
   const { cat } = await params;
-  const label = getCategoryLabel(cat, "fr");
+  const sp = await searchParams;
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get("nortoo_lang")?.value;
+  const locale =
+    sp.lang === "en" || sp.lang === "fr"
+      ? sp.lang
+      : cookieLang === "en"
+        ? "en"
+        : "fr";
+  const label = getCategoryLabel(cat, locale);
   return {
     title: `${label} — Blog nortoo`,
-    description: `Articles ${label.toLowerCase()} pour les marchands e-commerce COD au Maroc.`,
+    description:
+      locale === "en"
+        ? `${label} articles for COD e-commerce merchants in Morocco.`
+        : `Articles ${label.toLowerCase()} pour les marchands e-commerce COD au Maroc.`,
   };
 }
 
@@ -37,7 +52,16 @@ export default async function BlogCategoryPage({
 }) {
   const { cat } = await params;
   const sp = await searchParams;
-  const locale = sp.lang === "en" ? "en" : "fr";
+
+  // Language: ?lang= param > nortoo_lang cookie > default fr
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get("nortoo_lang")?.value;
+  const locale =
+    sp.lang === "en" || sp.lang === "fr"
+      ? sp.lang
+      : cookieLang === "en"
+        ? "en"
+        : "fr";
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const perPage = 12;
 
