@@ -16,20 +16,16 @@ export function BlogShell({ children, serverLocale }: BlogShellProps) {
   const { t, locale, setLocale } = useTranslation();
   const router = useRouter();
   const prevLocale = useRef(locale);
-  const hasSynced = useRef(false);
 
-  // On mount: sync client locale with server-detected locale.
-  // This prevents the I18nProvider from overriding the cookie with
-  // browser language when the cookie was already set (e.g. "fr").
+  // On mount: if server detected a different locale than client default,
+  // force sync to match. This covers the initial page load.
   useEffect(() => {
-    if (!hasSynced.current && serverLocale && (serverLocale === "en" || serverLocale === "fr")) {
-      hasSynced.current = true;
-      if (locale !== serverLocale) {
-        setLocale(serverLocale);
-      }
+    if (serverLocale && (serverLocale === "en" || serverLocale === "fr") && locale !== serverLocale) {
+      setLocale(serverLocale);
       prevLocale.current = serverLocale;
     }
-  }, [serverLocale, locale, setLocale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // When locale changes (user clicks FR/EN), refresh server components
   // so they re-read the updated nortoo_lang cookie

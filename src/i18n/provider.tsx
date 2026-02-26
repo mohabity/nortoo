@@ -33,8 +33,13 @@ const I18nContext = createContext<I18nContextValue | undefined>(undefined);
 
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
-  return match ? match[2] : null;
+  // Robust cookie reading: prepend "; " so every cookie is prefixed with "; "
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length >= 2) {
+    return parts.pop()!.split(";").shift() || null;
+  }
+  return null;
 }
 
 function setCookie(name: string, value: string, days: number) {
@@ -74,19 +79,29 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const urlLang = new URLSearchParams(window.location.search).get("lang") as Locale | null;
     const cookieLocale = getCookie(COOKIE_NAME) as Locale | null;
     let initialLocale: Locale = DEFAULT_LOCALE;
+    let shouldPersist = false;
 
     if (urlLang && LOCALES.includes(urlLang)) {
+      // Explicit URL param — always persist
       initialLocale = urlLang;
-      setCookie(COOKIE_NAME, initialLocale, 365);
+      shouldPersist = true;
     } else if (cookieLocale && LOCALES.includes(cookieLocale)) {
+      // Cookie exists — use it, don't overwrite
       initialLocale = cookieLocale;
     } else if (typeof navigator !== "undefined") {
+      // No cookie, no URL param — detect from browser language
       const browserLang = navigator.language || "";
       if (browserLang.startsWith("en")) {
         initialLocale = "en";
       } else {
         initialLocale = "fr";
       }
+      shouldPersist = true;
+    }
+
+    // Only write cookie when explicitly needed (URL param or first visit)
+    // Never overwrite an existing cookie with browser detection
+    if (shouldPersist) {
       setCookie(COOKIE_NAME, initialLocale, 365);
     }
 
