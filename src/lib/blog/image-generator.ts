@@ -11,63 +11,109 @@ function getOpenAI(): OpenAI {
 }
 
 /**
- * Category-specific visual motifs for cinematic cover images
+ * Each category has a FUNDAMENTALLY different visual style, color palette,
+ * and art direction — ensuring images never look alike across categories.
  */
-const CATEGORY_THEMES: Record<string, string> = {
-  guide:
-    "glowing holographic checklist floating in space, translucent data panels, soft teal and emerald light trails",
-  "case-study":
-    "floating 3D bar charts with glass material, magnifying glass refracting light, connected data nodes glowing purple",
-  industry:
-    "rotating holographic globe with trade route lines, futuristic city skyline silhouette, indigo and blue volumetric light",
-  product:
-    "sleek product showcase on reflective surface, floating UI elements, warm amber and orange rim lighting",
-  news:
-    "dynamic burst of light particles, notification bell with glow effect, rose and magenta volumetric fog",
+const CATEGORY_STYLES: Record<
+  string,
+  { style: string; palette: string; elements: string }
+> = {
+  guide: {
+    style:
+      "Clean editorial photography, curated overhead flat-lay arrangement on a textured surface. Soft natural lighting with gentle shadows. Think Kinfolk magazine aesthetic.",
+    palette:
+      "warm amber, cream white, sage green, natural wood tones, matte terracotta",
+    elements:
+      "organized notebooks, precision tools, step-by-step diagrams drawn on paper, coffee cup, pencils, measurement instruments, sticky notes arranged in a system",
+  },
+  "case-study": {
+    style:
+      "Abstract data visualization rendered as fine art. Flowing geometric forms and mathematical curves transformed into a stunning landscape. Think Refik Anadol data sculptures.",
+    palette:
+      "deep ocean teal, burnished copper, midnight blue, subtle gold leaf accents, crystalline white",
+    elements:
+      "flowing data streams as rivers of light, growth curves as mountain ridges, network nodes as constellations, analytical shapes morphing into organic forms",
+  },
+  industry: {
+    style:
+      "Epic aerial cinematic shot with dramatic scale. Sweeping panoramic view combining commerce and geography. Think National Geographic meets Bloomberg Businessweek.",
+    palette:
+      "electric sapphire blue, chrome silver, warm sunrise orange and pink, deep space indigo",
+    elements:
+      "global shipping routes glowing on a dark ocean, container ships, cargo planes leaving trails, port cranes silhouetted against a dramatic sky, trade networks as light paths",
+  },
+  product: {
+    style:
+      "Ultra-premium product photography with floating elements. Clean minimalist showcase with impossible physics. Think Apple product launch visual.",
+    palette:
+      "clean white space, soft mint green accents, lavender mist, warm golden hour highlights, iridescent reflections",
+    elements:
+      "floating smartphone and laptop mockups, sleek dashboard interfaces with depth, glass-morphism UI panels, subtle particle effects, premium tech devices on invisible pedestals",
+  },
+  news: {
+    style:
+      "Dynamic abstract expressionism with kinetic energy. Bold graphic composition with movement and urgency. Think Bloomberg or Wired magazine cover illustration.",
+    palette:
+      "vibrant coral red, electric purple, hot magenta pink, golden yellow bursts, deep noir black",
+    elements:
+      "explosive energy bursts, speed lines and motion trails, breaking-through shattered glass effects, clock/time elements, bold geometric shapes in motion",
+  },
 };
 
 /**
- * Builds the DALL-E 3 prompt for a blog cover image.
- *
- * Style: cinematic 3D render, moody lighting, professional.
- * Consistent nortoo brand: dark backgrounds, mint/teal accents.
- * NO text, NO letters, NO words in the image.
+ * Extra compositional ideas shuffled randomly to add variety
+ * even within the same category across multiple generations.
+ */
+const COMPOSITION_VARIATIONS = [
+  "Use a dramatic diagonal composition with strong leading lines",
+  "Center the main subject with a symmetrical, balanced layout",
+  "Use the rule of thirds with the focal point in the upper right",
+  "Create depth with foreground elements slightly blurred and background sharp",
+  "Use a bird's-eye overhead perspective looking straight down",
+  "Frame the scene with a shallow depth of field and beautiful bokeh",
+  "Use a split composition with contrasting elements on each side",
+  "Create a spiral or golden ratio composition flowing from corner to center",
+];
+
+/**
+ * Builds a highly diverse prompt for GPT Image 1.
+ * Each call produces a unique image because:
+ * 1. Category determines fundamental art direction + palette
+ * 2. Article title drives the actual subject matter
+ * 3. Random composition variation adds layout diversity
  */
 function buildPrompt(title: string, category: string): string {
-  const theme = CATEGORY_THEMES[category] ?? CATEGORY_THEMES.guide;
+  const style = CATEGORY_STYLES[category] ?? CATEGORY_STYLES.guide;
+  const variation =
+    COMPOSITION_VARIATIONS[
+      Math.floor(Math.random() * COMPOSITION_VARIATIONS.length)
+    ];
 
-  return `Create a cinematic, photorealistic 3D render for a professional blog article hero image.
+  return `Create a premium, visually stunning blog cover image.
 
-TOPIC: "${title}"
+ARTICLE TOPIC: "${title}"
 
-STYLE REQUIREMENTS:
-- Cinematic 3D render with dramatic lighting, NOT flat, NOT cartoonish, NOT vector art
-- Dark moody atmosphere — deep navy/black background (#080C16) with volumetric lighting
-- Primary accent light: mint/cyan (#00E5A0) as rim light, glow, or accent illumination
-- Depth of field with bokeh — foreground sharp, background softly blurred
-- Photorealistic materials: glass, metal, frosted surfaces, reflective planes
-- Dramatic studio-quality lighting with soft shadows and caustics
-- Professional feel like Apple or Stripe marketing imagery
-- Abstract and conceptual — evoke the topic without being too literal
+ART DIRECTION: ${style.style}
+COLOR PALETTE: ${style.palette}
+VISUAL ELEMENTS: ${style.elements}
+COMPOSITION: ${variation}
 
-VISUAL COMPOSITION:
-- ${theme}
-- Include subtle e-commerce elements: a delivery package, smartphone, or shopping interface rendered as sleek 3D objects
-- Moroccan-inspired geometric patterns as subtle etched details on glass/metal surfaces
-- Floating holographic data elements: small charts, shield icons, score indicators with soft glow
-- Particles, light rays, or subtle lens flare for cinematic depth
+The image must VISUALLY TELL A STORY about "${title}" — not a generic abstract.
+Interpret the topic creatively and create something unique that captures its essence.
 
-CRITICAL RULES:
+QUALITY: This should look like it belongs in a premium tech/business publication.
+High-end editorial quality with intentional lighting, careful composition, and rich detail.
+Landscape format (wider than tall).
+
+STRICT RULES:
 - ABSOLUTELY NO TEXT, NO LETTERS, NO NUMBERS, NO WORDS anywhere in the image
-- No human faces or realistic people — only objects and abstract forms
+- No human faces or realistic people
 - No brand logos
-- Ultra-clean, premium aesthetic — this is for a fintech/SaaS blog
-- Wide format composition (landscape 16:9 ratio)
-- Rich detail but not cluttered — leave visual breathing room`;
+- Maintain visual breathing room — premium, not cluttered`;
 }
 
 /**
- * Generates a cover image for a blog article using DALL-E 3,
+ * Generates a cover image for a blog article using GPT Image 1,
  * uploads it to Vercel Blob (private store), and returns a proxy URL
  * that serves the image via `/api/blog/covers/[slug]`.
  */
@@ -76,31 +122,27 @@ export async function generateCoverImage(
   category: string,
   slug: string
 ): Promise<string> {
-  // 1. Generate image with DALL-E 3
   const prompt = buildPrompt(title, category);
 
-  const response = await getOpenAI().images.generate({
-    model: "dall-e-3",
+  // GPT Image 1: higher quality, more diverse, better prompt understanding
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const response = await (getOpenAI().images.generate as any)({
+    model: "gpt-image-1",
     prompt,
     n: 1,
-    size: "1792x1024", // Closest to 16:9 in DALL-E 3
-    quality: "standard", // Fast generation (~15s vs ~60s for HD)
-    style: "vivid",
+    size: "1536x1024",
+    quality: "high",
   });
 
-  const tempUrl = response.data?.[0]?.url;
-  if (!tempUrl) {
-    throw new Error("DALL-E 3 returned no image URL");
+  // GPT Image 1 returns base64 directly (no expiring URL to download)
+  const b64 = response.data?.[0]?.b64_json as string | undefined;
+  if (!b64) {
+    throw new Error("GPT Image 1 returned no image data");
   }
 
-  // 2. Download the image (DALL-E URLs expire after ~1h)
-  const imageResponse = await fetch(tempUrl);
-  if (!imageResponse.ok) {
-    throw new Error(`Failed to download DALL-E image: ${imageResponse.status}`);
-  }
-  const imageBuffer = await imageResponse.arrayBuffer();
+  const imageBuffer = Buffer.from(b64, "base64");
 
-  // 3. Upload to Vercel Blob (private store — served via proxy route)
+  // Upload to Vercel Blob (private store — served via proxy route)
   await put(`blog/covers/${slug}.png`, imageBuffer, {
     access: "private",
     contentType: "image/png",
@@ -108,6 +150,5 @@ export async function generateCoverImage(
     allowOverwrite: true,
   });
 
-  // 4. Return proxy URL — the actual image is served via /api/blog/covers/[slug]
   return `/api/blog/covers/${slug}`;
 }
