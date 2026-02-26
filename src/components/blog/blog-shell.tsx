@@ -7,10 +7,29 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 
 const APP_URL = "https://app.nortoo.ma";
 
-export function BlogShell({ children }: { children: React.ReactNode }) {
-  const { t, locale } = useTranslation();
+interface BlogShellProps {
+  children: React.ReactNode;
+  serverLocale?: string;
+}
+
+export function BlogShell({ children, serverLocale }: BlogShellProps) {
+  const { t, locale, setLocale } = useTranslation();
   const router = useRouter();
   const prevLocale = useRef(locale);
+  const hasSynced = useRef(false);
+
+  // On mount: sync client locale with server-detected locale.
+  // This prevents the I18nProvider from overriding the cookie with
+  // browser language when the cookie was already set (e.g. "fr").
+  useEffect(() => {
+    if (!hasSynced.current && serverLocale && (serverLocale === "en" || serverLocale === "fr")) {
+      hasSynced.current = true;
+      if (locale !== serverLocale) {
+        setLocale(serverLocale);
+      }
+      prevLocale.current = serverLocale;
+    }
+  }, [serverLocale, locale, setLocale]);
 
   // When locale changes (user clicks FR/EN), refresh server components
   // so they re-read the updated nortoo_lang cookie
