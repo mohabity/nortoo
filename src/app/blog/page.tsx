@@ -116,7 +116,7 @@ export default async function BlogPage({
       {/* Category filters */}
       <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
         <Link
-          href={`/blog?lang=${locale}`}
+          href="/blog"
           className={`text-xs px-4 py-2 rounded-full border transition-colors ${
             !catFilter
               ? "bg-mint/10 border-mint/30 text-mint-dark font-semibold"
@@ -128,7 +128,7 @@ export default async function BlogPage({
         {ALL_CATEGORIES.map((cat) => (
           <Link
             key={cat}
-            href={`/blog?lang=${locale}&cat=${cat}`}
+            href={`/blog?cat=${cat}`}
             className={`text-xs px-4 py-2 rounded-full border transition-colors ${
               catFilter === cat
                 ? "bg-mint/10 border-mint/30 text-mint-dark font-semibold"
@@ -172,7 +172,7 @@ export default async function BlogPage({
         <div className="flex items-center justify-center gap-3 mt-12">
           {page > 1 && (
             <Link
-              href={`/blog?lang=${locale}${catFilter ? `&cat=${catFilter}` : ""}&page=${page - 1}`}
+              href={`/blog?${catFilter ? `cat=${catFilter}&` : ""}page=${page - 1}`}
               className="text-sm px-4 py-2 border border-gray-200 rounded-sm text-gray-500 hover:text-midnight hover:border-gray-400 transition-colors"
             >
               ← {locale === "en" ? "Previous" : "Précédent"}
@@ -183,7 +183,7 @@ export default async function BlogPage({
           </span>
           {page < totalPages && (
             <Link
-              href={`/blog?lang=${locale}${catFilter ? `&cat=${catFilter}` : ""}&page=${page + 1}`}
+              href={`/blog?${catFilter ? `cat=${catFilter}&` : ""}page=${page + 1}`}
               className="text-sm px-4 py-2 border border-gray-200 rounded-sm text-gray-500 hover:text-midnight hover:border-gray-400 transition-colors"
             >
               {locale === "en" ? "Next" : "Suivant"} →

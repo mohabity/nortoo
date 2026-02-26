@@ -248,7 +248,7 @@ export default async function BlogArticlePage({
           </Link>
           <span>/</span>
           <Link
-            href={`/blog?cat=${article.category}&lang=${article.locale}`}
+            href={`/blog?cat=${article.category}`}
             className="hover:text-mint transition-colors"
           >
             {getCategoryLabel(article.category, article.locale)}

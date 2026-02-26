@@ -142,7 +142,7 @@ export default async function BlogCategoryPage({
         <div className="flex items-center justify-center gap-3 mt-12">
           {page > 1 && (
             <Link
-              href={`/blog/categorie/${cat}?lang=${locale}&page=${page - 1}`}
+              href={`/blog/categorie/${cat}?page=${page - 1}`}
               className="text-sm px-4 py-2 border border-gray-200 rounded-sm text-gray-500 hover:text-midnight transition-colors"
             >
               ←
@@ -153,7 +153,7 @@ export default async function BlogCategoryPage({
           </span>
           {page < totalPages && (
             <Link
-              href={`/blog/categorie/${cat}?lang=${locale}&page=${page + 1}`}
+              href={`/blog/categorie/${cat}?page=${page + 1}`}
               className="text-sm px-4 py-2 border border-gray-200 rounded-sm text-gray-500 hover:text-midnight transition-colors"
             >
               →
