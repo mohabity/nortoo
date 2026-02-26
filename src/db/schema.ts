@@ -829,6 +829,84 @@ export const blogConfig = pgTable("blog_config", {
 });
 
 // ═══════════════════════════════════════════════════════════
+// ANALYTICS — Métriques business + tracking
+// ═══════════════════════════════════════════════════════════
+
+/** Aggregated daily business metrics per merchant + global (merchantId = null) */
+export const dailyMetrics = pgTable(
+  "daily_metrics",
+  {
+    id: serial("id").primaryKey(),
+    date: text("date").notNull(), // "2026-02-26"
+    merchantId: integer("merchant_id").references(() => merchants.id, { onDelete: "cascade" }),
+
+    // Order counts
+    ordersReceived: integer("orders_received").notNull().default(0),
+    ordersScored: integer("orders_scored").notNull().default(0),
+    ordersConfirmed: integer("orders_confirmed").notNull().default(0),
+    ordersRejected: integer("orders_rejected").notNull().default(0),
+    ordersNoResponse: integer("orders_no_response").notNull().default(0),
+    ordersShipped: integer("orders_shipped").notNull().default(0),
+    ordersDelivered: integer("orders_delivered").notNull().default(0),
+    ordersReturned: integer("orders_returned").notNull().default(0),
+
+    // Score distribution
+    avgScore: real("avg_score").default(0),
+    scoreLow: integer("score_low").notNull().default(0),       // 0-30
+    scoreMedium: integer("score_medium").notNull().default(0),  // 31-65
+    scoreHigh: integer("score_high").notNull().default(0),      // 66-100
+
+    // WhatsApp (placeholder — not yet implemented)
+    whatsappSent: integer("whatsapp_sent").notNull().default(0),
+    whatsappDelivered: integer("whatsapp_delivered").notNull().default(0),
+    whatsappRead: integer("whatsapp_read").notNull().default(0),
+    whatsappReplied: integer("whatsapp_replied").notNull().default(0),
+
+    // Revenue (global only, merchantId = null)
+    mrrDh: integer("mrr_dh").notNull().default(0),
+    activeMerchants: integer("active_merchants").notNull().default(0),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("daily_metrics_date_merchant_idx").on(table.date, table.merchantId),
+    index("daily_metrics_date_idx").on(table.date),
+  ]
+);
+
+/** Individual server-side product events (fire-and-forget) */
+export const productEvents = pgTable(
+  "product_events",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id").references(() => merchants.id, { onDelete: "cascade" }),
+    userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+    eventName: text("event_name").notNull(),
+    eventData: text("event_data"), // JSON string
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("product_events_merchant_event_idx").on(table.merchantId, table.eventName),
+    index("product_events_event_idx").on(table.eventName),
+    index("product_events_created_idx").on(table.createdAt),
+  ]
+);
+
+/** Aggregated blog stats from Umami API (one row per day) */
+export const blogDailyStats = pgTable("blog_daily_stats", {
+  id: serial("id").primaryKey(),
+  date: text("date").notNull().unique(),
+  totalPageviews: integer("total_pageviews").notNull().default(0),
+  uniqueVisitors: integer("unique_visitors").notNull().default(0),
+  ctaClicks: integer("cta_clicks").notNull().default(0),
+  blogToSignup: integer("blog_to_signup").notNull().default(0),
+  topArticles: text("top_articles"),   // JSON
+  topReferrers: text("top_referrers"), // JSON
+  topCountries: text("top_countries"), // JSON
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ═══════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
@@ -844,6 +922,8 @@ export const merchantsRelations = relations(merchants, ({ many }) => ({
   phoneList: many(phoneList),
   invoices: many(invoices),
   couponRedemptions: many(couponRedemptions),
+  dailyMetrics: many(dailyMetrics),
+  productEvents: many(productEvents),
 }));
 
 export const couponsRelations = relations(coupons, ({ many }) => ({
@@ -965,5 +1045,23 @@ export const blogTopicsRelations = relations(blogTopics, ({ one }) => ({
     fields: [blogTopics.articleId],
     references: [blogArticles.id],
     relationName: "frArticle",
+  }),
+}));
+
+export const dailyMetricsRelations = relations(dailyMetrics, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [dailyMetrics.merchantId],
+    references: [merchants.id],
+  }),
+}));
+
+export const productEventsRelations = relations(productEvents, ({ one }) => ({
+  merchant: one(merchants, {
+    fields: [productEvents.merchantId],
+    references: [merchants.id],
+  }),
+  user: one(users, {
+    fields: [productEvents.userId],
+    references: [users.id],
   }),
 }));

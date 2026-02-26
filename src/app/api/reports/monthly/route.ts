@@ -13,6 +13,7 @@ import { requireVerifiedEmail } from "@/lib/email-verification";
 import { requireFeature, handleFeatureGateError } from "@/lib/require-feature";
 import { generateMonthlyReport, type ReportData } from "@/lib/report-generator";
 import { PLANS } from "@/lib/constants";
+import { logProductEvent, EVENTS } from "@/lib/analytics-server";
 
 // ── Rate limiting (in-memory) ──
 const exportCounts = new Map<number, { count: number; resetAt: number }>();
@@ -355,6 +356,12 @@ export async function GET(request: NextRequest) {
 
   // ── Generate PDF ──
   const pdfBuffer = await generateMonthlyReport(reportData);
+
+  // Analytics — fire-and-forget
+  logProductEvent(merchantId, EVENTS.PDF_EXPORTED, {
+    month: `${year}-${String(month).padStart(2, "0")}`,
+    totalOrders,
+  }, userId);
 
   // ── Audit log ──
   await db.insert(auditLogs).values({

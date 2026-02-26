@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/i18n/provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { ScrollTracker } from "@/components/tracking/scroll-tracker";
+import { trackEvent, LANDING_EVENTS } from "@/lib/analytics";
 
 const APP_URL = "https://app.nortoo.ma";
 
@@ -146,6 +148,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href={`${APP_URL}/api/auth/youcan?mode=register`}
+              onClick={() => trackEvent(LANDING_EVENTS.CTA_CLICK, { cta: "hero_youcan" })}
               className="inline-flex items-center justify-center gap-2 bg-[#5C6AC4] text-white px-6 py-3.5 rounded-xl font-semibold hover:bg-[#4F5BB5] transition text-sm"
             >
               <Plug className="w-4 h-4" />
@@ -153,6 +156,7 @@ export default function Home() {
             </a>
             <a
               href={`${APP_URL}/register?lang=${locale}`}
+              onClick={() => trackEvent(LANDING_EVENTS.CTA_CLICK, { cta: "hero_register" })}
               className="inline-flex items-center justify-center gap-2 border border-[#E2E8F0] text-[#1E293B] px-6 py-3.5 rounded-xl font-semibold hover:bg-[#F8FAFC] transition text-sm"
             >
               {t("landing.hero.ctaRegister")}
@@ -493,6 +497,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      <ScrollTracker />
     </div>
   );
 }

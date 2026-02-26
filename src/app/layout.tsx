@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { I18nProvider } from "@/i18n/provider";
 import { CookieBanner } from "@/components/CookieBanner";
@@ -57,6 +58,14 @@ export default function RootLayout({
       dir="ltr"
       className={`${outfit.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
     >
+      {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL && (
+        <Script
+          defer
+          data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+          src={process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL}
+          strategy="afterInteractive"
+        />
+      )}
       <body className="font-body">
         <I18nProvider>{children}</I18nProvider>
         <CookieBanner />
