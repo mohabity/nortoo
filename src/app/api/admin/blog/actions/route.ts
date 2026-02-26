@@ -11,6 +11,10 @@ import { z } from "zod";
 
 export const maxDuration = 120;
 
+/** Simple in-memory cooldown to prevent spamming expensive generation */
+const GENERATION_COOLDOWN_MS = 60_000; // 1 minute between generations
+let lastGenerationAt = 0;
+
 const actionSchema = z.object({
   action: z.enum(["pause", "resume", "generate-now", "retry-failed", "replenish-topics", "regenerate-covers", "generate-custom"]),
   force: z.boolean().optional(),
@@ -81,6 +85,16 @@ export async function POST(request: Request) {
     }
 
     case "generate-now": {
+      const now = Date.now();
+      if (now - lastGenerationAt < GENERATION_COOLDOWN_MS) {
+        const waitSec = Math.ceil((GENERATION_COOLDOWN_MS - (now - lastGenerationAt)) / 1000);
+        return NextResponse.json(
+          { error: `Veuillez attendre ${waitSec}s avant de relancer une génération.` },
+          { status: 429 }
+        );
+      }
+      lastGenerationAt = now;
+
       const baseUrl = getBaseUrl(request);
       const secret = process.env.CRON_SECRET;
 
@@ -210,6 +224,16 @@ export async function POST(request: Request) {
     }
 
     case "generate-custom": {
+      const nowCustom = Date.now();
+      if (nowCustom - lastGenerationAt < GENERATION_COOLDOWN_MS) {
+        const waitSec = Math.ceil((GENERATION_COOLDOWN_MS - (nowCustom - lastGenerationAt)) / 1000);
+        return NextResponse.json(
+          { error: `Veuillez attendre ${waitSec}s avant de relancer une génération.` },
+          { status: 429 }
+        );
+      }
+      lastGenerationAt = nowCustom;
+
       const topic = parsed.data.customTopic;
       if (!topic) {
         return NextResponse.json(

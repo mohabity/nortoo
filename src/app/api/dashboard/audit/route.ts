@@ -21,8 +21,8 @@ const auditQuerySchema = z.object({
     .enum(["all", "system", "merchant", "consumer", "admin"])
     .default("all"),
   action: z.string().max(50).optional(),
-  date_from: z.string().optional(),
-  date_to: z.string().optional(),
+  date_from: z.string().refine((s) => !isNaN(Date.parse(s)), { message: "Format de date invalide" }).optional(),
+  date_to: z.string().refine((s) => !isNaN(Date.parse(s)), { message: "Format de date invalide" }).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const parsed = auditQuerySchema.safeParse(raw);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid query parameters", details: parsed.error.issues },
+        { error: "Paramètres de requête invalides" },
         { status: 400 }
       );
     }
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     } catch {
       console.error("[audit:GET]", err);
       return NextResponse.json(
-        { error: "Internal server error" },
+        { error: "Erreur serveur interne" },
         { status: 500 }
       );
     }

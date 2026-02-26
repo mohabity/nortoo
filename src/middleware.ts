@@ -86,11 +86,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Admin panel: check nortoo_admin cookie (separate from Auth.js)
+  // Admin panel: check nortoo_admin HMAC cookie (separate from Auth.js)
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     const adminCookie = request.cookies.get("nortoo_admin");
     const adminSecret = process.env.ADMIN_SECRET;
-    if (!adminCookie?.value || !adminSecret || adminCookie.value !== adminSecret) {
+    if (!adminCookie?.value || !adminSecret) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+    const valid = await verifyAdminCookie(adminCookie.value, adminSecret);
+    if (!valid) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
     return NextResponse.next();
@@ -136,6 +140,37 @@ export async function middleware(request: NextRequest) {
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("redirect", pathname);
   return NextResponse.redirect(loginUrl);
+}
+
+/**
+ * Verify admin HMAC cookie using Web Crypto API (Edge-compatible).
+ * Cookie format: "nonce:hmac" where hmac = HMAC-SHA256(secret, nonce).
+ * Also accepts legacy raw secret cookies during transition.
+ */
+async function verifyAdminCookie(cookieValue: string, secret: string): Promise<boolean> {
+  const idx = cookieValue.indexOf(":");
+  if (idx === -1) {
+    // Legacy: raw secret cookie — direct comparison
+    return cookieValue === secret;
+  }
+  const nonce = cookieValue.slice(0, idx);
+  const providedHmac = cookieValue.slice(idx + 1);
+  try {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(nonce));
+    const expectedHmac = Array.from(new Uint8Array(sig))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    return providedHmac === expectedHmac;
+  } catch {
+    return false;
+  }
 }
 
 export const config = {

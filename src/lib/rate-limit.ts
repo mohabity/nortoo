@@ -59,3 +59,22 @@ export function isRateLimitConfigured(): boolean {
     process.env.UPSTASH_REDIS_REST_TOKEN
   );
 }
+
+/**
+ * Safe rate limit check — returns { success: true } if Redis is down or unconfigured.
+ * Prevents Redis outages from breaking the entire app.
+ */
+export async function safeLimit(
+  limiter: Ratelimit,
+  key: string
+): Promise<{ success: boolean; remaining: number; reset: number }> {
+  if (!isRateLimitConfigured()) {
+    return { success: true, remaining: -1, reset: 0 };
+  }
+  try {
+    return await limiter.limit(key);
+  } catch (err) {
+    console.error("[RateLimit] Redis error, allowing request:", err);
+    return { success: true, remaining: -1, reset: 0 };
+  }
+}

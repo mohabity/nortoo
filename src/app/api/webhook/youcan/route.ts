@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractApiKey, validateApiKey } from "@/lib/api-key";
-import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
+import { webhookLimiter, safeLimit } from "@/lib/rate-limit";
 import { verifyWebhookSignature } from "@/lib/webhook-verify";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
 import { QuotaExceededError } from "@/lib/quota";
@@ -44,22 +44,32 @@ const youcanPayloadSchema = z.object({
  * If processing fails, the cron retry will pick it up.
  */
 export async function POST(request: Request) {
-  // ── 0. Catch-all log — proves YouCan is calling us ──
-  const reqUrl = request.url;
-  const reqHeaders = Object.fromEntries(
-    ["content-type", "x-youcan-signature", "x-nortoo-key", "x-codpilot-key", "user-agent"]
-      .map((h) => [h, request.headers.get(h)])
-      .filter(([, v]) => v)
-  );
-  console.log("[Webhook YouCan] ── INCOMING ──", JSON.stringify({ url: reqUrl, headers: reqHeaders }));
+  // ── 0. Debug log (only when DEBUG_WEBHOOKS=true) ──
+  if (process.env.DEBUG_WEBHOOKS === "true") {
+    const reqHeaders = Object.fromEntries(
+      ["content-type", "x-youcan-signature", "x-nortoo-key", "x-codpilot-key", "user-agent"]
+        .map((h) => [h, request.headers.get(h)])
+        .filter(([, v]) => v)
+    );
+    console.log("[Webhook YouCan] ── INCOMING ──", JSON.stringify({ url: request.url, headers: reqHeaders }));
+  }
 
   try {
+    // ── 0b. Content-Type check ──
+    const ct = request.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+      return NextResponse.json(
+        { error: "Content-Type must be application/json" },
+        { status: 415 }
+      );
+    }
+
     // ── 1. Auth by API key (fast, no heavy DB) ──
     const apiKey = extractApiKey(request);
     if (!apiKey) {
       console.error("[Webhook YouCan] Missing API key");
       return NextResponse.json(
-        { error: "Missing API key. Set x-nortoo-key header or ?key= param." },
+        { error: "Clé API manquante. Définir x-nortoo-key header ou ?key= param." },
         { status: 401 }
       );
     }
@@ -71,21 +81,19 @@ export async function POST(request: Request) {
         apiKey.slice(0, 16) + "..."
       );
       return NextResponse.json(
-        { error: "Invalid API key" },
+        { error: "Clé API invalide" },
         { status: 401 }
       );
     }
 
     // ── Rate limiting per API key ──
-    if (isRateLimitConfigured()) {
-      const { success, reset } = await webhookLimiter.limit(`wh:${apiKey.slice(0, 16)}`);
-      if (!success) {
-        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
-        return NextResponse.json(
-          { error: "Rate limit exceeded" },
-          { status: 429, headers: { "Retry-After": String(retryAfter) } }
-        );
-      }
+    const { success: rlSuccess, reset: rlReset } = await safeLimit(webhookLimiter, `wh:${apiKey.slice(0, 16)}`);
+    if (!rlSuccess) {
+      const retryAfter = Math.ceil((rlReset - Date.now()) / 1000);
+      return NextResponse.json(
+        { error: "Limite de requêtes dépassée" },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
+      );
     }
 
     // ── 2. Read raw body (with size limit) ──
@@ -93,7 +101,7 @@ export async function POST(request: Request) {
     if (contentLength > MAX_BODY_SIZE) {
       console.error(`[Webhook YouCan] Payload too large: ${contentLength} bytes`);
       return NextResponse.json(
-        { error: "Payload too large" },
+        { error: "Payload trop volumineux" },
         { status: 413 }
       );
     }
@@ -105,7 +113,7 @@ export async function POST(request: Request) {
       if (rawBody.length > MAX_BODY_SIZE) {
         console.error(`[Webhook YouCan] Payload too large after read: ${rawBody.length} chars`);
         return NextResponse.json(
-          { error: "Payload too large" },
+          { error: "Payload trop volumineux" },
           { status: 413 }
         );
       }
@@ -113,15 +121,15 @@ export async function POST(request: Request) {
       if (!parsed.success) {
         console.error("[Webhook YouCan] Zod validation failed:", parsed.error.issues);
         return NextResponse.json(
-          { error: "Invalid payload structure", details: parsed.error.issues },
+          { error: "Structure de payload invalide" },
           { status: 400 }
         );
       }
       payload = parsed.data as unknown as YouCanOrderPayload;
-    } catch {
-      console.error("[Webhook YouCan] Invalid JSON body");
+    } catch (err) {
+      console.error("[Webhook YouCan] Invalid JSON body:", err);
       return NextResponse.json(
-        { error: "Invalid JSON payload" },
+        { error: "Payload JSON invalide" },
         { status: 400 }
       );
     }
@@ -135,7 +143,7 @@ export async function POST(request: Request) {
       if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
         console.error("[Webhook YouCan] Invalid HMAC signature");
         return NextResponse.json(
-          { error: "Invalid webhook signature" },
+          { error: "Signature webhook invalide" },
           { status: 403 }
         );
       }
@@ -146,23 +154,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // Log for debugging
-    console.log("[Webhook YouCan] Received:", {
-      id: payload.id,
-      ref: payload.ref,
-      total: payload.total,
-      gateway: payload.payment?.payload?.gateway,
-      merchantId: merchant.id,
-    });
+    if (process.env.DEBUG_WEBHOOKS === "true") {
+      console.log("[Webhook YouCan] Received:", {
+        id: payload.id,
+        ref: payload.ref,
+        total: payload.total,
+        gateway: payload.payment?.payload?.gateway,
+        merchantId: merchant.id,
+      });
+    }
 
     // ── 3. Filter COD only ──
     const gateway =
       payload.payment?.gateway_type ??
       payload.payment?.payload?.gateway;
     if (!isCodGateway(gateway)) {
-      console.log("[Webhook YouCan] Non-COD order ignored, gateway:", gateway);
       // Audit log so merchants can see why an order was rejected
-      db.insert(auditLogs).values({
+      await db.insert(auditLogs).values({
         merchantId: merchant.id,
         actor: "system",
         action: "order_rejected",
@@ -175,7 +183,7 @@ export async function POST(request: Request) {
           customerName: `${payload.customer?.first_name ?? ""} ${payload.customer?.last_name ?? ""}`.trim(),
           total: payload.total,
         }),
-      }).catch((e) => console.error("[Webhook YouCan] Audit log error:", e));
+      }).catch((err) => console.error("[Webhook YouCan] Audit log error:", err));
       return NextResponse.json({
         data: null,
         message: "Non-COD order ignored",
@@ -191,7 +199,7 @@ export async function POST(request: Request) {
     if (!phone) {
       console.error("[Webhook YouCan] No phone found in payload");
       // Audit log so merchants can see why an order was rejected
-      db.insert(auditLogs).values({
+      await db.insert(auditLogs).values({
         merchantId: merchant.id,
         actor: "system",
         action: "order_rejected",
@@ -205,7 +213,7 @@ export async function POST(request: Request) {
         }),
       }).catch((e) => console.error("[Webhook YouCan] Audit log error:", e));
       return NextResponse.json(
-        { error: "Customer phone is required" },
+        { error: "Numéro de téléphone client requis" },
         { status: 400 }
       );
     }
@@ -257,7 +265,7 @@ export async function POST(request: Request) {
     // Critical failure (even enqueue failed)
     console.error("[Webhook YouCan] Critical failure:", error);
     return NextResponse.json(
-      { error: "Internal error" },
+      { error: "Erreur interne" },
       { status: 500 }
     );
   }

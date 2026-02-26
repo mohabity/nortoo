@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { orders, customers, auditLogs, phoneList } from "@/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireActiveMerchant, handlePermissionError } from "@/lib/permissions";
 
@@ -41,130 +41,168 @@ export async function POST(request: Request) {
   const parsed = bulkSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Données invalides", details: parsed.error.issues },
+      { error: "Données invalides" },
       { status: 400 }
     );
   }
 
+  // ── Phase 1: Batch-fetch all referenced orders ──
+  const byId = parsed.data.updates.filter((u) => u.orderId);
+  const byRef = parsed.data.updates.filter((u) => !u.orderId && u.externalRef);
+
+  const orderIds = byId.map((u) => u.orderId!);
+  const externalRefs = byRef.map((u) => u.externalRef!);
+
+  const allOrders = [
+    ...(orderIds.length > 0
+      ? await db
+          .select({
+            id: orders.id,
+            externalRef: orders.externalRef,
+            deliveryStatus: orders.deliveryStatus,
+            customerId: orders.customerId,
+          })
+          .from(orders)
+          .where(and(inArray(orders.id, orderIds), eq(orders.merchantId, merchantId)))
+      : []),
+    ...(externalRefs.length > 0
+      ? await db
+          .select({
+            id: orders.id,
+            externalRef: orders.externalRef,
+            deliveryStatus: orders.deliveryStatus,
+            customerId: orders.customerId,
+          })
+          .from(orders)
+          .where(and(inArray(orders.externalRef, externalRefs), eq(orders.merchantId, merchantId)))
+      : []),
+  ];
+
+  const orderById = new Map(allOrders.map((o) => [o.id, o]));
+  const orderByRef = new Map(allOrders.filter((o) => o.externalRef).map((o) => [o.externalRef!, o]));
+
+  // ── Phase 2: Classify updates by target status ──
   let updated = 0;
   let skipped = 0;
   const errors: string[] = [];
+  const now = new Date();
+
+  const deliveredOrderIds: number[] = [];
+  const returnedOrderIds: number[] = [];
+  const shippedOrderIds: number[] = [];
+  const cancelledOrderIds: number[] = [];
+  const deliveredCustomerIds: number[] = [];
+  const returnedCustomerIds: number[] = [];
 
   for (const u of parsed.data.updates) {
-    try {
-      // Find order by ID or external ref
-      let order;
-      if (u.orderId) {
-        const [found] = await db
-          .select({
-            id: orders.id,
-            deliveryStatus: orders.deliveryStatus,
-            customerId: orders.customerId,
-          })
-          .from(orders)
-          .where(and(eq(orders.id, u.orderId), eq(orders.merchantId, merchantId)))
-          .limit(1);
-        order = found;
-      } else if (u.externalRef) {
-        const [found] = await db
-          .select({
-            id: orders.id,
-            deliveryStatus: orders.deliveryStatus,
-            customerId: orders.customerId,
-          })
-          .from(orders)
-          .where(
-            and(eq(orders.externalRef, u.externalRef), eq(orders.merchantId, merchantId))
-          )
-          .limit(1);
-        order = found;
-      }
+    const order = u.orderId ? orderById.get(u.orderId) : u.externalRef ? orderByRef.get(u.externalRef) : undefined;
 
-      if (!order) {
-        skipped++;
-        continue;
-      }
+    if (!order || order.deliveryStatus === u.status) {
+      skipped++;
+      continue;
+    }
 
-      // Skip if same status
-      if (order.deliveryStatus === u.status) {
-        skipped++;
-        continue;
-      }
+    if (u.status === "delivered") {
+      deliveredOrderIds.push(order.id);
+      if (order.customerId) deliveredCustomerIds.push(order.customerId);
+    } else if (u.status === "returned") {
+      returnedOrderIds.push(order.id);
+      if (order.customerId) returnedCustomerIds.push(order.customerId);
+    } else if (u.status === "shipped") {
+      shippedOrderIds.push(order.id);
+    } else {
+      cancelledOrderIds.push(order.id);
+    }
+    updated++;
+  }
 
-      const now = new Date();
+  // ── Phase 3: Batch updates by status ──
+  try {
+    const batchOps: Promise<unknown>[] = [];
 
-      // Update order
-      const updateData: Record<string, unknown> = { deliveryStatus: u.status };
-      if (u.status === "delivered") updateData.deliveredAt = now;
+    if (deliveredOrderIds.length > 0) {
+      batchOps.push(
+        db.update(orders).set({ deliveryStatus: "delivered", deliveredAt: now }).where(inArray(orders.id, deliveredOrderIds))
+      );
+    }
+    if (returnedOrderIds.length > 0) {
+      batchOps.push(
+        db.update(orders).set({ deliveryStatus: "returned" }).where(inArray(orders.id, returnedOrderIds))
+      );
+    }
+    if (shippedOrderIds.length > 0) {
+      batchOps.push(
+        db.update(orders).set({ deliveryStatus: "shipped" }).where(inArray(orders.id, shippedOrderIds))
+      );
+    }
+    if (cancelledOrderIds.length > 0) {
+      batchOps.push(
+        db.update(orders).set({ deliveryStatus: "cancelled" }).where(inArray(orders.id, cancelledOrderIds))
+      );
+    }
 
-      await db.update(orders).set(updateData).where(eq(orders.id, order.id));
+    await Promise.all(batchOps);
 
-      // Update customer counters
-      if (order.customerId && (u.status === "delivered" || u.status === "returned")) {
-        if (u.status === "delivered") {
-          await db
-            .update(customers)
-            .set({
-              successfulOrders: sql`${customers.successfulOrders} + 1`,
-              lastSeen: now,
-            })
-            .where(eq(customers.id, order.customerId));
-        } else {
-          await db
-            .update(customers)
-            .set({
-              failedOrders: sql`${customers.failedOrders} + 1`,
-              lastSeen: now,
-            })
-            .where(eq(customers.id, order.customerId));
+    // ── Phase 4: Batch customer counter updates ──
+    const counterOps: Promise<unknown>[] = [];
 
-          // Auto-blacklist: ≥3 failed orders
-          try {
-            const [cust] = await db
-              .select({
-                phoneHash: customers.phoneHash,
-                phoneLast4: customers.phoneLast4,
-                failedOrders: customers.failedOrders,
-              })
-              .from(customers)
-              .where(eq(customers.id, order.customerId))
-              .limit(1);
+    if (deliveredCustomerIds.length > 0) {
+      counterOps.push(
+        db.update(customers).set({ successfulOrders: sql`${customers.successfulOrders} + 1`, lastSeen: now })
+          .where(inArray(customers.id, [...new Set(deliveredCustomerIds)]))
+      );
+    }
+    if (returnedCustomerIds.length > 0) {
+      const uniqueReturned = [...new Set(returnedCustomerIds)];
+      counterOps.push(
+        db.update(customers).set({ failedOrders: sql`${customers.failedOrders} + 1`, lastSeen: now })
+          .where(inArray(customers.id, uniqueReturned))
+      );
+    }
 
-            if (cust && cust.phoneHash && (cust.failedOrders ?? 0) >= 2) {
-              const [alreadyListed] = await db
-                .select({ id: phoneList.id })
-                .from(phoneList)
-                .where(
-                  and(
-                    eq(phoneList.merchantId, merchantId),
-                    eq(phoneList.phoneHash, cust.phoneHash)
-                  )
-                )
-                .limit(1);
+    await Promise.all(counterOps);
 
-              if (!alreadyListed) {
-                const failCount = (cust.failedOrders ?? 0) + 1;
-                await db.insert(phoneList).values({
-                  merchantId,
-                  phoneHash: cust.phoneHash,
-                  phoneMasked: cust.phoneLast4 ? `***${cust.phoneLast4}` : "***",
-                  listType: "blacklist",
-                  reason: `Auto-blacklist: ${failCount} retours`,
-                  addedBy: "auto",
-                });
-              }
-            }
-          } catch (autoErr) {
-            console.error("[BulkDelivery] Auto-blacklist check failed:", autoErr);
+    // ── Phase 5: Auto-blacklist (batch) ──
+    if (returnedCustomerIds.length > 0) {
+      try {
+        const uniqueReturned = [...new Set(returnedCustomerIds)];
+        const custsToCheck = await db
+          .select({ id: customers.id, phoneHash: customers.phoneHash, phoneLast4: customers.phoneLast4, failedOrders: customers.failedOrders })
+          .from(customers)
+          .where(inArray(customers.id, uniqueReturned));
+
+        const toBlacklist = custsToCheck.filter((c) => c.phoneHash && (c.failedOrders ?? 0) >= 3);
+
+        if (toBlacklist.length > 0) {
+          const phoneHashes = toBlacklist.map((c) => c.phoneHash!);
+          const existing = await db
+            .select({ phoneHash: phoneList.phoneHash })
+            .from(phoneList)
+            .where(and(eq(phoneList.merchantId, merchantId), inArray(phoneList.phoneHash, phoneHashes)));
+          const existingSet = new Set(existing.map((e) => e.phoneHash));
+
+          const newEntries = toBlacklist
+            .filter((c) => !existingSet.has(c.phoneHash!))
+            .map((c) => ({
+              merchantId,
+              phoneHash: c.phoneHash!,
+              phoneMasked: c.phoneLast4 ? `***${c.phoneLast4}` : "***",
+              listType: "blacklist" as const,
+              reason: `Auto-blacklist: ${c.failedOrders ?? 0} retours`,
+              addedBy: "auto",
+            }));
+
+          if (newEntries.length > 0) {
+            await db.insert(phoneList).values(newEntries);
           }
         }
+      } catch (autoErr) {
+        console.error("[BulkDelivery] Auto-blacklist batch failed:", autoErr);
       }
-
-      updated++;
-    } catch (err) {
-      const ref = u.orderId ?? u.externalRef ?? "?";
-      errors.push(`Order ${ref}: ${err instanceof Error ? err.message : "unknown"}`);
     }
+  } catch (batchErr) {
+    console.error("[BulkDelivery] Batch update failed:", batchErr);
+    errors.push(`Erreur batch: ${batchErr instanceof Error ? batchErr.message : "inconnu"}`);
   }
 
   // Audit log (summary)
@@ -175,12 +213,7 @@ export async function POST(request: Request) {
     action: "bulk_delivery_update",
     targetType: "order",
     targetId: "bulk",
-    details: JSON.stringify({
-      total: parsed.data.updates.length,
-      updated,
-      skipped,
-      errors: errors.length,
-    }),
+    details: JSON.stringify({ total: parsed.data.updates.length, updated, skipped, errors: errors.length }),
   });
 
   return NextResponse.json({

@@ -5,7 +5,18 @@ import remarkRehype from "remark-rehype";
 import rehypeStringify from "rehype-stringify";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import readingTimeFn from "reading-time";
+
+// Allow standard blog HTML (tables, iframes for embeds) but block scripts/event handlers
+const sanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames ?? []), "iframe"],
+  attributes: {
+    ...defaultSchema.attributes,
+    iframe: ["src", "width", "height", "frameBorder", "allow", "allowFullScreen"],
+  },
+};
 
 export async function renderMarkdown(content: string): Promise<string> {
   try {
@@ -15,12 +26,12 @@ export async function renderMarkdown(content: string): Promise<string> {
       .use(remarkRehype, { allowDangerousHtml: true })
       .use(rehypeSlug)
       .use(rehypeAutolinkHeadings)
-      .use(rehypeStringify, { allowDangerousHtml: true })
+      .use(rehypeSanitize, sanitizeSchema)
+      .use(rehypeStringify)
       .process(content);
     return String(result);
   } catch (err) {
     console.error("[renderMarkdown] Failed to render markdown:", err);
-    // Fallback: return content wrapped in a <p> so the page still renders
     return `<div class="prose"><p>${content.slice(0, 500)}…</p><p><em>Erreur de rendu du contenu.</em></p></div>`;
   }
 }

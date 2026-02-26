@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { ADMIN_COOKIE_NAME } from "@/lib/admin-auth";
+import { ADMIN_COOKIE_NAME, createAdminToken } from "@/lib/admin-auth";
 import {
   adminLoginLimiter,
   getClientIp,
-  isRateLimitConfigured,
+  safeLimit,
 } from "@/lib/rate-limit";
 
 /**
@@ -21,23 +21,14 @@ export async function POST(request: Request) {
 
   try {
     // ── Rate limiting ──
-    if (isRateLimitConfigured()) {
-      const { success, remaining, reset } = await adminLoginLimiter.limit(
-        `admin:${ip}`
+    const { success, remaining, reset } = await safeLimit(adminLoginLimiter, `admin:${ip}`);
+    if (!success) {
+      const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+      console.warn(`[Admin Login] Rate limited — IP: ${ip}, remaining: ${remaining}`);
+      return NextResponse.json(
+        { error: "Trop de tentatives. Réessayez dans 15 minutes." },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
       );
-      if (!success) {
-        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
-        console.warn(
-          `[Admin Login] Rate limited — IP: ${ip}, remaining: ${remaining}`
-        );
-        return NextResponse.json(
-          {
-            error:
-              "Trop de tentatives. Réessayez dans 15 minutes.",
-          },
-          { status: 429, headers: { "Retry-After": String(retryAfter) } }
-        );
-      }
     }
 
     const { password } = await request.json();
@@ -76,7 +67,7 @@ export async function POST(request: Request) {
     );
 
     const response = NextResponse.json({ ok: true });
-    response.cookies.set(ADMIN_COOKIE_NAME, secret, {
+    response.cookies.set(ADMIN_COOKIE_NAME, createAdminToken(secret), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

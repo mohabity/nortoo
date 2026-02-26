@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { orders, notifications, auditLogs, merchants } from "@/db/schema";
-import { and, eq, lt, gte, asc, isNotNull, or, sql, desc } from "drizzle-orm";
+import { and, eq, lt, gte, asc, isNotNull, or, sql, desc, inArray } from "drizzle-orm";
 import { recalculateAllProductStats } from "@/lib/product-stats";
 import { recalculateAllCityStats } from "@/lib/city-stats";
 import { recalculateAllZoneStats } from "@/lib/zone-stats";
@@ -48,63 +48,70 @@ export async function GET(request: Request) {
         .orderBy(asc(orders.escalationPriority))
         .limit(50);
 
-      let escalatedCount = 0;
+      // ── Batch escalation: update all at once with optimistic lock ──
+      const overdueIds = overdueOrders.map((o) => o.id);
+      const escalatedRows = overdueIds.length > 0
+        ? await db
+            .update(orders)
+            .set({ pipelineStatus: "escalated", escalatedAt: now })
+            .where(and(inArray(orders.id, overdueIds), eq(orders.pipelineStatus, "needs_review")))
+            .returning({ id: orders.id })
+        : [];
 
-      for (const order of overdueOrders) {
-        // Update order to escalated (optimistic lock for idempotency)
-        const result = await db
-          .update(orders)
-          .set({
-            pipelineStatus: "escalated",
-            escalatedAt: now,
+      const escalatedIdSet = new Set(escalatedRows.map((r) => r.id));
+      const escalatedOrders = overdueOrders.filter((o) => escalatedIdSet.has(o.id));
+      const escalatedCount = escalatedOrders.length;
+
+      // ── Batch notifications + audit logs ──
+      if (escalatedOrders.length > 0) {
+        // Check notification preferences per merchant (few unique merchants)
+        const merchantIds = [...new Set(escalatedOrders.map((o) => o.merchantId))];
+        const notifyMap = new Map<number, boolean>();
+        await Promise.all(
+          merchantIds.map(async (mid) => {
+            notifyMap.set(mid, await shouldNotify(mid, "escalation"));
           })
-          .where(
-            and(
-              eq(orders.id, order.id),
-              eq(orders.pipelineStatus, "needs_review")
-            )
-          )
-          .returning({ id: orders.id });
+        );
 
-        // Skip if another process already escalated this order
-        if (result.length === 0) continue;
-
-        const ref = order.externalRef ?? `#${order.id}`;
-
-        // Dynamic severity from escalation context
-        const escalationCtx = getEscalationContext(order.decision, order.total);
-
-        // Insert escalation notification with dynamic severity (check preferences)
-        if (await shouldNotify(order.merchantId, "escalation")) {
-          await db.insert(notifications).values({
-            merchantId: order.merchantId,
-            orderId: order.id,
-            type: "escalation",
-            title: `Escalade — Commande ${ref} non traitée`,
-            message: `La commande (score ${order.fraudScore}/100) n'a pas été traitée dans le délai imparti. Action immédiate requise.`,
-            severity: escalationCtx.severity,
-            actionUrl: `/dashboard/orders?selected=${order.id}`,
+        const notifValues = escalatedOrders
+          .filter((o) => notifyMap.get(o.merchantId))
+          .map((order) => {
+            const ref = order.externalRef ?? `#${order.id}`;
+            const ctx = getEscalationContext(order.decision, order.total);
+            return {
+              merchantId: order.merchantId,
+              orderId: order.id,
+              type: "escalation" as const,
+              title: `Escalade — Commande ${ref} non traitée`,
+              message: `La commande (score ${order.fraudScore}/100) n'a pas été traitée dans le délai imparti. Action immédiate requise.`,
+              severity: ctx.severity,
+              actionUrl: `/dashboard/orders?selected=${order.id}`,
+            };
           });
-        }
 
-        // Audit log
-        await db.insert(auditLogs).values({
-          merchantId: order.merchantId,
-          actor: "system",
-          action: "escalation",
-          targetType: "order",
-          targetId: String(order.id),
-          details: JSON.stringify({
-            previousStatus: "needs_review",
-            newStatus: "escalated",
-            priority: order.escalationPriority,
-            severity: escalationCtx.severity,
-            reviewDeadline: order.reviewDeadline?.toISOString(),
-            escalatedAt: now.toISOString(),
-          }),
+        const auditValues = escalatedOrders.map((order) => {
+          const ctx = getEscalationContext(order.decision, order.total);
+          return {
+            merchantId: order.merchantId,
+            actor: "system" as const,
+            action: "escalation",
+            targetType: "order",
+            targetId: String(order.id),
+            details: JSON.stringify({
+              previousStatus: "needs_review",
+              newStatus: "escalated",
+              priority: order.escalationPriority,
+              severity: ctx.severity,
+              reviewDeadline: order.reviewDeadline?.toISOString(),
+              escalatedAt: now.toISOString(),
+            }),
+          };
         });
 
-        escalatedCount++;
+        await Promise.all([
+          notifValues.length > 0 ? db.insert(notifications).values(notifValues) : Promise.resolve(),
+          auditValues.length > 0 ? db.insert(auditLogs).values(auditValues) : Promise.resolve(),
+        ]);
       }
 
       // ── Stats recalculation (daily consistency check) ──
@@ -131,79 +138,69 @@ export async function GET(request: Request) {
         console.error("[Cron Escalate] Stats recalculation error:", err);
       }
 
-      // ── Webhook silence detection ──
+      // ── Webhook silence detection (batched) ──
       let webhookAlerts = 0;
 
       try {
-        // Get merchants with a connected store or API key
         const connectedMerchants = await db
           .select({ id: merchants.id, name: merchants.name })
           .from(merchants)
-          .where(
-            or(
-              isNotNull(merchants.youcanStoreId),
-              isNotNull(merchants.apiKey)
-            )
-          );
+          .where(or(isNotNull(merchants.youcanStoreId), isNotNull(merchants.apiKey)));
 
-        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+        if (connectedMerchants.length > 0) {
+          const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+          const merchantIds = connectedMerchants.map((m) => m.id);
 
-        for (const m of connectedMerchants) {
-          try {
-            // Find last real order for this merchant
-            const [lastOrder] = await db
-              .select({ createdAt: orders.createdAt })
+          // Pre-fetch: latest order per merchant + recent alerts — 2 queries instead of N*2
+          const [lastOrders, recentAlerts] = await Promise.all([
+            db
+              .select({
+                merchantId: orders.merchantId,
+                lastCreated: sql<Date>`max(${orders.createdAt})`.as("last_created"),
+              })
               .from(orders)
-              .where(
-                and(
-                  eq(orders.merchantId, m.id),
-                  eq(orders.isTest, false)
-                )
-              )
-              .orderBy(desc(orders.createdAt))
-              .limit(1);
-
-            // Skip if merchant has recent webhooks
-            if (lastOrder && new Date(lastOrder.createdAt) > twentyFourHoursAgo) continue;
-
-            // Check if we already sent a webhook alert in the last 24h
-            const [recentAlert] = await db
-              .select({ id: notifications.id })
+              .where(and(inArray(orders.merchantId, merchantIds), eq(orders.isTest, false)))
+              .groupBy(orders.merchantId),
+            db
+              .select({ merchantId: notifications.merchantId })
               .from(notifications)
               .where(
                 and(
-                  eq(notifications.merchantId, m.id),
-                  or(
-                    eq(notifications.type, "webhook_silent"),
-                    eq(notifications.type, "webhook_dead")
-                  ),
+                  inArray(notifications.merchantId, merchantIds),
+                  or(eq(notifications.type, "webhook_silent"), eq(notifications.type, "webhook_dead")),
                   gte(notifications.createdAt, twentyFourHoursAgo)
                 )
-              )
-              .limit(1);
+              ),
+          ]);
 
-            if (recentAlert) continue;
+          const lastOrderMap = new Map(lastOrders.map((r) => [r.merchantId, new Date(r.lastCreated)]));
+          const alertedSet = new Set(recentAlerts.map((r) => r.merchantId));
 
-            // Determine severity
-            const isDead = !lastOrder || new Date(lastOrder.createdAt) < seventyTwoHoursAgo;
-
-            await db.insert(notifications).values({
-              merchantId: m.id,
-              type: isDead ? "webhook_dead" : "webhook_silent",
-              title: isDead
-                ? "Webhook inactif depuis +72h"
-                : "Aucun webhook reçu depuis 24h",
-              message: isDead
-                ? "Aucune commande reçue depuis plus de 72 heures. Vérifiez votre connexion webhook dans les paramètres."
-                : "Aucune commande reçue depuis 24 heures. Vérifiez que votre webhook est actif.",
-              severity: isDead ? "critical" : "warning",
-              actionUrl: "/dashboard/settings?tab=store",
+          const newAlerts = connectedMerchants
+            .filter((m) => {
+              if (alertedSet.has(m.id)) return false;
+              const last = lastOrderMap.get(m.id);
+              return !last || last <= twentyFourHoursAgo;
+            })
+            .map((m) => {
+              const last = lastOrderMap.get(m.id);
+              const isDead = !last || last < seventyTwoHoursAgo;
+              return {
+                merchantId: m.id,
+                type: isDead ? ("webhook_dead" as const) : ("webhook_silent" as const),
+                title: isDead ? "Webhook inactif depuis +72h" : "Aucun webhook reçu depuis 24h",
+                message: isDead
+                  ? "Aucune commande reçue depuis plus de 72 heures. Vérifiez votre connexion webhook dans les paramètres."
+                  : "Aucune commande reçue depuis 24 heures. Vérifiez que votre webhook est actif.",
+                severity: isDead ? ("critical" as const) : ("warning" as const),
+                actionUrl: "/dashboard/settings?tab=store",
+              };
             });
 
-            webhookAlerts++;
-          } catch (err) {
-            console.error(`[Cron Escalate] Webhook check failed for merchant ${m.id}:`, err);
+          if (newAlerts.length > 0) {
+            await db.insert(notifications).values(newAlerts);
+            webhookAlerts = newAlerts.length;
           }
         }
       } catch (err) {
