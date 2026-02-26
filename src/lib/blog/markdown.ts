@@ -8,15 +8,21 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import readingTimeFn from "reading-time";
 
 export async function renderMarkdown(content: string): Promise<string> {
-  const result = await unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeSlug)
-    .use(rehypeAutolinkHeadings)
-    .use(rehypeStringify, { allowDangerousHtml: true })
-    .process(content);
-  return String(result);
+  try {
+    const result = await unified()
+      .use(remarkParse)
+      .use(remarkGfm)
+      .use(remarkRehype, { allowDangerousHtml: true })
+      .use(rehypeSlug)
+      .use(rehypeAutolinkHeadings)
+      .use(rehypeStringify, { allowDangerousHtml: true })
+      .process(content);
+    return String(result);
+  } catch (err) {
+    console.error("[renderMarkdown] Failed to render markdown:", err);
+    // Fallback: return content wrapped in a <p> so the page still renders
+    return `<div class="prose"><p>${content.slice(0, 500)}…</p><p><em>Erreur de rendu du contenu.</em></p></div>`;
+  }
 }
 
 export function getReadingTime(content: string): number {

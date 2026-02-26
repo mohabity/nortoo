@@ -2,8 +2,16 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  // Vercel handles this, but explicit for safety
-  serverExternalPackages: ["@neondatabase/serverless"],
+  serverExternalPackages: [
+    "@neondatabase/serverless",
+    "unified",
+    "remark-parse",
+    "remark-gfm",
+    "remark-rehype",
+    "rehype-slug",
+    "rehype-autolink-headings",
+    "rehype-stringify",
+  ],
 
   async headers() {
     return [
