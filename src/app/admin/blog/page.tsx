@@ -111,19 +111,37 @@ export default function AdminBlogPage() {
   async function handleAction(action: string, extra?: Record<string, unknown>) {
     setActionLoading(action);
     setFeedback(null);
+
+    // Client-side timeout: abort after 115s (server maxDuration = 120s)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 115_000);
+
     try {
       const res = await fetch("/api/admin/blog/actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, ...extra }),
+        signal: controller.signal,
       });
 
-      const data = await res.json();
+      clearTimeout(timeoutId);
+
+      // Handle non-JSON responses (e.g. Vercel 504 HTML page)
+      let data: Record<string, unknown>;
+      try {
+        data = await res.json();
+      } catch {
+        setFeedback({
+          type: "error",
+          message: `Erreur serveur (${res.status}). Actualisez la page pour voir le resultat.`,
+        });
+        return;
+      }
 
       if (!res.ok) {
         setFeedback({
           type: "error",
-          message: data.error || `Erreur ${res.status}`,
+          message: (data.error as string) || `Erreur ${res.status}`,
         });
         return;
       }
@@ -169,10 +187,18 @@ export default function AdminBlogPage() {
 
       await fetchData();
     } catch (err) {
-      setFeedback({
-        type: "error",
-        message: `Erreur reseau : ${err instanceof Error ? err.message : "connexion echouee"}`,
-      });
+      clearTimeout(timeoutId);
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setFeedback({
+          type: "error",
+          message: "Timeout — l'operation prend trop de temps. Actualisez la page pour voir si l'action a reussi.",
+        });
+      } else {
+        setFeedback({
+          type: "error",
+          message: `Erreur reseau : ${err instanceof Error ? err.message : "connexion echouee"}`,
+        });
+      }
     } finally {
       setActionLoading(null);
     }
@@ -194,15 +220,18 @@ export default function AdminBlogPage() {
       customWordCount: parseInt(customWordCount, 10) || 1500,
     });
 
-    // Reset form on success
-    if (!feedback || feedback.type === "success") {
-      setCustomTopic("");
-      setCustomDescription("");
-      setCustomCategory("guide");
-      setCustomKeywords("");
-      setCustomWordCount("1500");
-      setShowCustomForm(false);
-    }
+    // Reset form on success — use a callback to read latest feedback state
+    setFeedback((prev) => {
+      if (!prev || prev.type === "success") {
+        setCustomTopic("");
+        setCustomDescription("");
+        setCustomCategory("guide");
+        setCustomKeywords("");
+        setCustomWordCount("1500");
+        setShowCustomForm(false);
+      }
+      return prev;
+    });
   }
 
   const STATUS_STYLES: Record<string, string> = {
