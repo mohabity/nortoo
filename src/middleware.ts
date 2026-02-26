@@ -36,6 +36,8 @@ const PUBLIC_PATHS = [
   "/api/webhook/",
   "/api/cron/",
   "/api/admin/",
+  "/api/blog/",
+  "/api/og/",
   "/api/data-rights/submit",
   "/api/team/accept-invite",
   "/api/coupons/validate",
@@ -61,7 +63,14 @@ export async function middleware(request: NextRequest) {
 
   // nortoo.ma (marketing) → only serve public pages, redirect app routes to app.nortoo.ma
   if (host === MARKETING_HOST || host === `www.${MARKETING_HOST}`) {
-    if (!isMarketingPath(pathname) && !pathname.startsWith("/_next") && pathname !== "/favicon.ico" && !pathname.startsWith("/api/data-rights/submit")) {
+    if (
+      !isMarketingPath(pathname) &&
+      !pathname.startsWith("/_next") &&
+      pathname !== "/favicon.ico" &&
+      !pathname.startsWith("/api/data-rights/submit") &&
+      !pathname.startsWith("/api/blog/") &&
+      !pathname.startsWith("/api/og/")
+    ) {
       return NextResponse.redirect(new URL(pathname, `https://${APP_HOST}`));
     }
     return NextResponse.next();

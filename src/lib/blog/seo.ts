@@ -21,7 +21,9 @@ export function generateArticleJsonLd(article: BlogArticleSEO): string {
     "@type": "Article",
     headline: article.seoTitle,
     description: article.seoDescription,
-    image: article.coverImageUrl ?? `${BASE_URL}/nortoo-logo-hd.png`,
+    image: article.coverImageUrl
+      ? (article.coverImageUrl.startsWith("/") ? `${BASE_URL}${article.coverImageUrl}` : article.coverImageUrl)
+      : `${BASE_URL}/api/og/blog?title=${encodeURIComponent(article.title)}&cat=${encodeURIComponent(article.category)}`,
     author: {
       "@type": "Organization",
       name: "nortoo",

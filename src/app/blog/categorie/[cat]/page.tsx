@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { ArticleCard } from "@/components/blog/article-card";
 import Link from "next/link";
 import { getCategoryLabel } from "@/lib/blog/seo";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
@@ -96,27 +96,27 @@ export default async function BlogCategoryPage({
   const label = getCategoryLabel(cat, locale);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6">
       {/* Header */}
-      <div className="mb-10">
+      <div className="py-12 md:py-16">
         <Link
           href="/blog"
-          className="flex items-center gap-1 text-sm text-gray-400 hover:text-mint transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-[#94A3B8] hover:text-[#00C78A] transition-colors mb-6"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           {locale === "en" ? "All articles" : "Tous les articles"}
         </Link>
-        <h1 className="text-3xl font-display font-bold text-midnight">
+        <h1 className="text-3xl md:text-4xl font-display font-bold text-[#0B0F1A] mb-2">
           {label}
         </h1>
-        <p className="text-gray-500 mt-2">
-          {total} {locale === "en" ? "articles" : "articles"}
+        <p className="text-[#64748B]">
+          {total} {total === 1 ? "article" : "articles"}
         </p>
       </div>
 
       {/* Articles grid */}
       {articles.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {articles.map((article) => (
             <ArticleCard
               key={article.slug}
@@ -132,31 +132,43 @@ export default async function BlogCategoryPage({
           ))}
         </div>
       ) : (
-        <p className="text-center py-20 text-gray-400">
-          {locale === "en" ? "No articles in this category yet." : "Aucun article dans cette catégorie."}
-        </p>
+        <div className="text-center py-20">
+          <div className="w-16 h-16 rounded-2xl bg-[#F1F5F9] flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="w-7 h-7 text-[#CBD5E1]" />
+          </div>
+          <p className="text-[#64748B] font-medium mb-1">
+            {locale === "en"
+              ? "No articles in this category yet"
+              : "Aucun article dans cette catégorie"}
+          </p>
+          <p className="text-sm text-[#94A3B8]">
+            {locale === "en"
+              ? "Check back soon — new content is published weekly."
+              : "Revenez bientôt — du nouveau contenu est publié chaque semaine."}
+          </p>
+        </div>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-12">
+        <div className="flex items-center justify-center gap-2 mt-14 mb-8">
           {page > 1 && (
             <Link
               href={`/blog/categorie/${cat}?page=${page - 1}`}
-              className="text-sm px-4 py-2 border border-gray-200 rounded-sm text-gray-500 hover:text-midnight transition-colors"
+              className="text-sm px-4 py-2 rounded-lg border border-[#E2E8F0] text-[#64748B] hover:text-[#0B0F1A] hover:border-[#CBD5E1] transition-colors"
             >
-              ←
+              ← {locale === "en" ? "Previous" : "Précédent"}
             </Link>
           )}
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-[#94A3B8] px-3">
             {page} / {totalPages}
           </span>
           {page < totalPages && (
             <Link
               href={`/blog/categorie/${cat}?page=${page + 1}`}
-              className="text-sm px-4 py-2 border border-gray-200 rounded-sm text-gray-500 hover:text-midnight transition-colors"
+              className="text-sm px-4 py-2 rounded-lg border border-[#E2E8F0] text-[#64748B] hover:text-[#0B0F1A] hover:border-[#CBD5E1] transition-colors"
             >
-              →
+              {locale === "en" ? "Next" : "Suivant"} →
             </Link>
           )}
         </div>

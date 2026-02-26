@@ -6,6 +6,7 @@ import { verifyCronSecret } from "@/lib/cron-auth";
 import { withCronMonitoring } from "@/lib/cron-monitor";
 import { generateArticle } from "@/lib/blog/generator";
 import { validateArticle } from "@/lib/blog/quality-check";
+import { generateCoverImage } from "@/lib/blog/image-generator";
 import { revalidatePath } from "next/cache";
 
 export const maxDuration = 120;
@@ -113,7 +114,24 @@ export async function GET(request: Request) {
           );
         }
 
-        // 7. Insert article as published
+        // 7. Generate cover image via DALL-E 3 (non-blocking fallback to OG)
+        let coverImageUrl = `/api/og/blog?title=${encodeURIComponent(article.title)}&cat=${topic.category}`;
+        try {
+          if (process.env.OPENAI_API_KEY) {
+            console.log("[blog-generate] Generating DALL-E 3 cover image...");
+            coverImageUrl = await generateCoverImage(
+              article.title,
+              topic.category,
+              article.slug
+            );
+            console.log("[blog-generate] Cover image uploaded:", coverImageUrl);
+          }
+        } catch (imgErr) {
+          console.warn("[blog-generate] Cover image generation failed, using OG fallback:", imgErr);
+          // Keep the OG fallback URL — article still publishes
+        }
+
+        // 8. Insert article as published
         const pubDate = new Date();
         const [newArticle] = await db
           .insert(blogArticles)
@@ -128,7 +146,7 @@ export async function GET(request: Request) {
             seoTitle: article.seoTitle,
             seoDescription: article.seoDescription,
             canonicalUrl: `https://nortoo.ma/blog/${article.slug}`,
-            coverImageUrl: `/api/og/blog?title=${encodeURIComponent(article.title)}&cat=${topic.category}`,
+            coverImageUrl,
             coverImageAlt: article.title,
             readingTime: article.readingTime,
             wordCount: article.wordCount,
@@ -141,7 +159,7 @@ export async function GET(request: Request) {
           })
           .returning({ id: blogArticles.id });
 
-        // 8. Update topic
+        // 9. Update topic
         await db
           .update(blogTopics)
           .set({
@@ -151,7 +169,7 @@ export async function GET(request: Request) {
           })
           .where(eq(blogTopics.id, topic.id));
 
-        // 9. Revalidate ISR
+        // 10. Revalidate ISR
         revalidatePath("/blog");
         revalidatePath(`/blog/${article.slug}`);
 

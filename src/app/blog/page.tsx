@@ -1,10 +1,11 @@
 import { db } from "@/db/index";
 import { blogArticles } from "@/db/schema";
-import { and, eq, desc, count, sql } from "drizzle-orm";
+import { and, eq, desc, count } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { ArticleCard } from "@/components/blog/article-card";
 import Link from "next/link";
 import { getCategoryLabel } from "@/lib/blog/seo";
+import { BookOpen, Rss } from "lucide-react";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
@@ -101,29 +102,53 @@ export default async function BlogPage({
   // Total across all categories (for the "All" filter badge)
   const globalTotal = categoryCounts.reduce((sum, c) => sum + c.cnt, 0);
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-display font-bold text-midnight">
-          {locale === "en" ? "Blog" : "Blog"}
-        </h1>
-        <p className="text-gray-500 mt-3 max-w-lg mx-auto">
-          {locale === "en"
-            ? "Tips, guides and insights for COD e-commerce merchants in Morocco."
-            : "Conseils, guides et analyses pour les marchands e-commerce COD au Maroc."}
-        </p>
+  // Split: first article is featured, rest in grid
+  const featuredArticle = !catFilter && page === 1 ? articles[0] : null;
+  const gridArticles = featuredArticle ? articles.slice(1) : articles;
 
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      {/* Hero header */}
+      <div className="py-12 md:py-16">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-[#00E5A0]/10 flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-[#00C78A]" />
+              </div>
+              <span className="text-xs font-semibold text-[#00C78A] uppercase tracking-wider">
+                Blog
+              </span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-[#0B0F1A] mb-2">
+              {locale === "en"
+                ? "Insights for COD merchants"
+                : "Ressources pour marchands COD"}
+            </h1>
+            <p className="text-[#64748B] max-w-lg">
+              {locale === "en"
+                ? "Guides, case studies and tips to reduce your COD returns and grow your e-commerce in Morocco."
+                : "Guides, études de cas et conseils pour réduire vos retours COD et développer votre e-commerce au Maroc."}
+            </p>
+          </div>
+          <a
+            href="/blog/rss.xml"
+            className="flex items-center gap-1.5 text-xs text-[#94A3B8] hover:text-[#00C78A] transition-colors shrink-0"
+          >
+            <Rss className="w-3.5 h-3.5" />
+            RSS
+          </a>
+        </div>
       </div>
 
       {/* Category filters */}
-      <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-8 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
         <Link
           href="/blog"
-          className={`text-xs px-4 py-2 rounded-full border transition-colors ${
+          className={`shrink-0 text-xs px-4 py-2 rounded-full border transition-all ${
             !catFilter
-              ? "bg-mint/10 border-mint/30 text-mint-dark font-semibold"
-              : "border-gray-200 text-gray-500 hover:border-gray-400"
+              ? "bg-[#0B0F1A] border-[#0B0F1A] text-white font-semibold"
+              : "border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1] hover:text-[#0B0F1A]"
           }`}
         >
           {locale === "en" ? "All" : "Tout"} ({globalTotal})
@@ -132,10 +157,10 @@ export default async function BlogPage({
           <Link
             key={cat}
             href={`/blog?cat=${cat}`}
-            className={`text-xs px-4 py-2 rounded-full border transition-colors ${
+            className={`shrink-0 text-xs px-4 py-2 rounded-full border transition-all ${
               catFilter === cat
-                ? "bg-mint/10 border-mint/30 text-mint-dark font-semibold"
-                : "border-gray-200 text-gray-500 hover:border-gray-400"
+                ? "bg-[#0B0F1A] border-[#0B0F1A] text-white font-semibold"
+                : "border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1] hover:text-[#0B0F1A]"
             }`}
           >
             {getCategoryLabel(cat, locale)} ({catCountMap[cat] ?? 0})
@@ -143,10 +168,27 @@ export default async function BlogPage({
         ))}
       </div>
 
+      {/* Featured article */}
+      {featuredArticle && (
+        <div className="mb-8">
+          <ArticleCard
+            slug={featuredArticle.slug}
+            title={featuredArticle.title}
+            excerpt={featuredArticle.excerpt}
+            category={featuredArticle.category}
+            readingTime={featuredArticle.readingTime}
+            publishedAt={featuredArticle.publishedAt}
+            locale={featuredArticle.locale}
+            coverImageUrl={featuredArticle.coverImageUrl}
+            featured
+          />
+        </div>
+      )}
+
       {/* Articles grid */}
-      {articles.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map((article) => (
+      {gridArticles.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {gridArticles.map((article) => (
             <ArticleCard
               key={article.slug}
               slug={article.slug}
@@ -160,34 +202,42 @@ export default async function BlogPage({
             />
           ))}
         </div>
-      ) : (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-lg">
+      ) : !featuredArticle ? (
+        <div className="text-center py-20">
+          <div className="w-16 h-16 rounded-2xl bg-[#F1F5F9] flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="w-7 h-7 text-[#CBD5E1]" />
+          </div>
+          <p className="text-[#64748B] font-medium mb-1">
             {locale === "en"
-              ? "No articles yet. Check back soon!"
-              : "Aucun article pour le moment. Revenez bientôt !"}
+              ? "No articles yet"
+              : "Aucun article pour le moment"}
+          </p>
+          <p className="text-sm text-[#94A3B8]">
+            {locale === "en"
+              ? "Check back soon — new content is published weekly."
+              : "Revenez bientôt — du nouveau contenu est publié chaque semaine."}
           </p>
         </div>
-      )}
+      ) : null}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-12">
+        <div className="flex items-center justify-center gap-2 mt-14 mb-8">
           {page > 1 && (
             <Link
               href={`/blog?${catFilter ? `cat=${catFilter}&` : ""}page=${page - 1}`}
-              className="text-sm px-4 py-2 border border-gray-200 rounded-sm text-gray-500 hover:text-midnight hover:border-gray-400 transition-colors"
+              className="text-sm px-4 py-2 rounded-lg border border-[#E2E8F0] text-[#64748B] hover:text-[#0B0F1A] hover:border-[#CBD5E1] transition-colors"
             >
               ← {locale === "en" ? "Previous" : "Précédent"}
             </Link>
           )}
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-[#94A3B8] px-3">
             {page} / {totalPages}
           </span>
           {page < totalPages && (
             <Link
               href={`/blog?${catFilter ? `cat=${catFilter}&` : ""}page=${page + 1}`}
-              className="text-sm px-4 py-2 border border-gray-200 rounded-sm text-gray-500 hover:text-midnight hover:border-gray-400 transition-colors"
+              className="text-sm px-4 py-2 rounded-lg border border-[#E2E8F0] text-[#64748B] hover:text-[#0B0F1A] hover:border-[#CBD5E1] transition-colors"
             >
               {locale === "en" ? "Next" : "Suivant"} →
             </Link>

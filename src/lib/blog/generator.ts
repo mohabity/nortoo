@@ -44,6 +44,10 @@ RÈGLES SEO :
 - Ne jamais inventer de statistiques — utiliser des fourchettes réalistes basées sur le marché marocain
 - Chaque article doit apporter de la valeur standalone, même sans nortoo
 
+CONTEXTE TEMPOREL :
+- Nous sommes en 2026. Toute référence à une année doit utiliser 2026 (pas 2024 ni 2025).
+- Si l'article mentionne des tendances, chiffres ou prévisions, les situer en 2026.
+
 LONGUEUR : Viser le nombre de mots demandé ±10%.`;
 
 export interface GenerateArticleInput {

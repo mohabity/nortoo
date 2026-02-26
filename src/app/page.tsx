@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Shield,
   TrendingUp,
@@ -24,6 +25,7 @@ const APP_URL = "https://app.nortoo.ma";
  */
 export default function Home() {
   const { t, locale } = useTranslation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-white text-[#1E293B]">
@@ -49,13 +51,80 @@ export default function Home() {
           </div>
           <div className="md:hidden flex items-center gap-3">
             <LanguageSwitcher />
-            <a href={`${APP_URL}/login?lang=${locale}`} className="text-sm text-[#64748B] hover:text-[#0B0F1A]">{t("landing.nav.signIn")}</a>
             <a
               href={`${APP_URL}/register?lang=${locale}`}
               className="bg-[#00E5A0] text-[#0B0F1A] px-3 py-1.5 rounded-lg font-semibold text-xs"
             >
               {t("landing.nav.getStarted")}
             </a>
+            {/* Hamburger button */}
+            <button
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border border-[#E2E8F0] hover:bg-[#F8FAFC] transition"
+              aria-label="Menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              <svg
+                className="w-5 h-5 text-[#475569]"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile slide-down menu */}
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+            mobileMenuOpen ? "max-h-80 border-t border-[#E2E8F0]" : "max-h-0"
+          }`}
+        >
+          <div className="px-6 py-4 space-y-1">
+            <a
+              href="#features"
+              className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {t("landing.nav.features")}
+            </a>
+            <a
+              href="#pricing"
+              className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {t("landing.nav.pricing")}
+            </a>
+            <a
+              href="/blog"
+              className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {t("landing.nav.blog")}
+            </a>
+            <a
+              href="#faq"
+              className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {t("landing.nav.faq")}
+            </a>
+            <div className="pt-2 border-t border-[#E2E8F0]">
+              <a
+                href={`${APP_URL}/login?lang=${locale}`}
+                className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t("landing.nav.signIn")}
+              </a>
+            </div>
           </div>
         </div>
       </nav>

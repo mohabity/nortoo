@@ -15,6 +15,10 @@ import {
   RefreshCw,
   Settings,
   ExternalLink,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -47,6 +51,11 @@ interface Article {
   createdAt: string;
 }
 
+interface ActionFeedback {
+  type: "success" | "error";
+  message: string;
+}
+
 export default function AdminBlogPage() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -54,6 +63,13 @@ export default function AdminBlogPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<ActionFeedback | null>(null);
+  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [customTopic, setCustomTopic] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
+  const [customCategory, setCustomCategory] = useState("guide");
+  const [customKeywords, setCustomKeywords] = useState("");
+  const [customWordCount, setCustomWordCount] = useState("1500");
 
   const fetchData = useCallback(async () => {
     try {
@@ -84,19 +100,108 @@ export default function AdminBlogPage() {
     fetchData();
   }, [fetchData]);
 
-  async function handleAction(action: string) {
+  // Auto-dismiss feedback after 8 seconds
+  useEffect(() => {
+    if (feedback) {
+      const timer = setTimeout(() => setFeedback(null), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedback]);
+
+  async function handleAction(action: string, extra?: Record<string, unknown>) {
     setActionLoading(action);
+    setFeedback(null);
     try {
-      await fetch("/api/admin/blog/actions", {
+      const res = await fetch("/api/admin/blog/actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, ...extra }),
       });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setFeedback({
+          type: "error",
+          message: data.error || `Erreur ${res.status}`,
+        });
+        return;
+      }
+
+      // Build success message from response
+      const messages: Record<string, (d: Record<string, unknown>) => string> = {
+        "generate-now": (d) => {
+          const result = d.result as Record<string, unknown> | undefined;
+          const inner = result?.data as Record<string, unknown> | undefined;
+          if (inner?.status === "published") {
+            return `Article publie : "${inner.title}" (score: ${inner.qualityScore})`;
+          }
+          if (inner?.status === "queue_empty") return "Queue vide — aucun sujet a generer";
+          if (inner?.status === "quota_reached") return "Quota hebdomadaire atteint";
+          if (inner?.status === "paused") return "Pipeline en pause";
+          return `Resultat : ${JSON.stringify(inner?.status ?? "unknown")}`;
+        },
+        "generate-custom": (d) => {
+          const art = d.article as Record<string, unknown> | undefined;
+          if (art) {
+            return `Article genere : "${art.title}" (score: ${art.qualityScore}, ${art.wordCount} mots)`;
+          }
+          return "Article genere avec succes";
+        },
+        "replenish-topics": (d) => {
+          const result = d.result as Record<string, unknown> | undefined;
+          const inner = result?.data as Record<string, unknown> | undefined;
+          if (inner?.status === "replenished") return `${inner.added} sujets ajoutes a la queue`;
+          if (inner?.status === "sufficient") return "Queue deja suffisamment remplie";
+          return `Resultat : ${JSON.stringify(inner?.status ?? "ok")}`;
+        },
+        pause: () => "Pipeline mis en pause",
+        resume: () => "Pipeline repris",
+        "retry-failed": () => "Sujets en echec remis en queue",
+        "regenerate-covers": (d) => `${d.total ?? 0} image(s) regeneree(s)`,
+      };
+
+      const msgFn = messages[action];
+      setFeedback({
+        type: "success",
+        message: msgFn ? msgFn(data) : "Action executee avec succes",
+      });
+
       await fetchData();
-    } catch {
-      // silent
+    } catch (err) {
+      setFeedback({
+        type: "error",
+        message: `Erreur reseau : ${err instanceof Error ? err.message : "connexion echouee"}`,
+      });
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  async function handleCustomGenerate() {
+    if (!customTopic.trim()) return;
+
+    const keywords = customKeywords
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+
+    await handleAction("generate-custom", {
+      customTopic: customTopic.trim(),
+      customDescription: customDescription.trim() || undefined,
+      customCategory: customCategory,
+      customKeywords: keywords.length > 0 ? keywords : undefined,
+      customWordCount: parseInt(customWordCount, 10) || 1500,
+    });
+
+    // Reset form on success
+    if (!feedback || feedback.type === "success") {
+      setCustomTopic("");
+      setCustomDescription("");
+      setCustomCategory("guide");
+      setCustomKeywords("");
+      setCustomWordCount("1500");
+      setShowCustomForm(false);
     }
   }
 
@@ -156,6 +261,30 @@ export default function AdminBlogPage() {
           </a>
         </div>
       </div>
+
+      {/* Feedback banner */}
+      {feedback && (
+        <div
+          className={`flex items-start gap-3 p-4 rounded-sm border text-sm ${
+            feedback.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+              : "bg-rose-50 border-rose-200 text-rose-700"
+          }`}
+        >
+          {feedback.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          )}
+          <span className="flex-1">{feedback.message}</span>
+          <button
+            onClick={() => setFeedback(null)}
+            className="text-xs opacity-50 hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* KPIs */}
       {stats && (
@@ -248,7 +377,14 @@ export default function AdminBlogPage() {
           className="flex items-center gap-2 px-4 py-2 text-sm bg-mint/10 text-mint-dark border border-mint/30 rounded-sm hover:bg-mint/20 transition-colors disabled:opacity-50"
         >
           <Zap className="w-3.5 h-3.5" />
-          {actionLoading === "generate-now" ? "Génération..." : "Générer maintenant"}
+          {actionLoading === "generate-now" ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Génération en cours...
+            </>
+          ) : (
+            "Générer maintenant"
+          )}
         </button>
         <button
           onClick={() => handleAction("replenish-topics")}
@@ -256,9 +392,142 @@ export default function AdminBlogPage() {
           className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          {actionLoading === "replenish-topics" ? "..." : "Recharger sujets"}
+          {actionLoading === "replenish-topics" ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Chargement...
+            </>
+          ) : (
+            "Recharger sujets"
+          )}
+        </button>
+        <button
+          onClick={() => setShowCustomForm(!showCustomForm)}
+          disabled={!!actionLoading}
+          className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-50 text-violet-600 border border-violet-200 rounded-sm hover:bg-violet-100 transition-colors disabled:opacity-50"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          {showCustomForm ? "Fermer" : "Generer (custom)"}
         </button>
       </div>
+
+      {/* Custom generation form */}
+      {showCustomForm && (
+        <div className="bg-white border border-violet-200 shadow-sm rounded-sm p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-midnight flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-violet-500" />
+              Generation custom
+            </h2>
+            <button
+              onClick={() => setShowCustomForm(false)}
+              className="text-gray-400 hover:text-midnight"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Topic */}
+            <div className="md:col-span-2">
+              <label className="text-xs text-gray-500 mb-1 block">
+                Sujet *
+              </label>
+              <input
+                type="text"
+                value={customTopic}
+                onChange={(e) => setCustomTopic(e.target.value)}
+                placeholder="Ex: Guide complet du retargeting pour le COD au Maroc"
+                className="w-full text-sm px-3 py-2 border border-gray-200 rounded-sm text-midnight placeholder:text-gray-300"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="md:col-span-2">
+              <label className="text-xs text-gray-500 mb-1 block">
+                Brief / Description (optionnel)
+              </label>
+              <textarea
+                value={customDescription}
+                onChange={(e) => setCustomDescription(e.target.value)}
+                rows={2}
+                placeholder="Instructions supplementaires pour orienter la generation..."
+                className="w-full text-sm px-3 py-2 border border-gray-200 rounded-sm text-midnight resize-none placeholder:text-gray-300"
+              />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">
+                Categorie
+              </label>
+              <select
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                className="w-full text-sm px-3 py-2 border border-gray-200 rounded-sm text-midnight"
+              >
+                <option value="guide">Guide</option>
+                <option value="case-study">Case Study</option>
+                <option value="industry">Industry</option>
+                <option value="product">Product</option>
+                <option value="news">News</option>
+              </select>
+            </div>
+
+            {/* Word count */}
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">
+                Nombre de mots cible
+              </label>
+              <input
+                type="number"
+                value={customWordCount}
+                onChange={(e) => setCustomWordCount(e.target.value)}
+                min={500}
+                max={5000}
+                className="w-full text-sm px-3 py-2 border border-gray-200 rounded-sm text-midnight"
+              />
+            </div>
+
+            {/* Keywords */}
+            <div className="md:col-span-2">
+              <label className="text-xs text-gray-500 mb-1 block">
+                Mots-cles (virgule-separes, optionnel)
+              </label>
+              <input
+                type="text"
+                value={customKeywords}
+                onChange={(e) => setCustomKeywords(e.target.value)}
+                placeholder="retargeting, COD, Maroc, e-commerce"
+                className="w-full text-sm px-3 py-2 border border-gray-200 rounded-sm text-midnight placeholder:text-gray-300"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={handleCustomGenerate}
+              disabled={!customTopic.trim() || !!actionLoading}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-500 text-white rounded-sm hover:bg-violet-600 transition-colors disabled:opacity-50"
+            >
+              {actionLoading === "generate-custom" ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Generation en cours...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Lancer la generation
+                </>
+              )}
+            </button>
+            <p className="text-xs text-gray-400">
+              ~60s — Claude genere l&apos;article + DALL-E cree la cover
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Recent articles table */}
       <div className="rounded-sm border border-gray-200 overflow-x-auto bg-white shadow-sm">

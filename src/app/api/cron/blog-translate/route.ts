@@ -77,7 +77,11 @@ export async function GET(request: Request) {
       const now = new Date();
       const enSlug = `${untranslated.slug}-en`;
 
-      // 5. Insert EN article
+      // 5. Insert EN article (reuse FR cover image — same visual for both languages)
+      const coverImageUrl =
+        untranslated.coverImageUrl ||
+        `/api/og/blog?title=${encodeURIComponent(translated.title)}&cat=${untranslated.category}`;
+
       const [enArticle] = await db
         .insert(blogArticles)
         .values({
@@ -92,7 +96,7 @@ export async function GET(request: Request) {
           seoTitle: translated.seoTitle,
           seoDescription: translated.seoDescription,
           canonicalUrl: `https://nortoo.ma/blog/${enSlug}`,
-          coverImageUrl: `/api/og/blog?title=${encodeURIComponent(translated.title)}&cat=${untranslated.category}`,
+          coverImageUrl,
           coverImageAlt: translated.title,
           readingTime: translated.readingTime,
           wordCount: translated.wordCount,
