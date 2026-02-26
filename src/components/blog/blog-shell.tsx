@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "@/i18n/provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -7,6 +9,17 @@ const APP_URL = "https://app.nortoo.ma";
 
 export function BlogShell({ children }: { children: React.ReactNode }) {
   const { t, locale } = useTranslation();
+  const router = useRouter();
+  const prevLocale = useRef(locale);
+
+  // When locale changes (user clicks FR/EN), refresh server components
+  // so they re-read the updated nortoo_lang cookie
+  useEffect(() => {
+    if (prevLocale.current !== locale) {
+      prevLocale.current = locale;
+      router.refresh();
+    }
+  }, [locale, router]);
 
   return (
     <div className="min-h-screen bg-white text-[#1E293B]">
