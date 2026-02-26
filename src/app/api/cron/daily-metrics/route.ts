@@ -168,20 +168,37 @@ export async function GET(request: Request) {
           },
         });
 
-      // ── 4. Blog stats from Umami (optional) ──
+      // ── 4. Blog stats from Umami (optional, auto-login for self-hosted) ──
       let blogStats = null;
-      if (process.env.UMAMI_API_URL && process.env.UMAMI_API_TOKEN && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID) {
+      if (process.env.UMAMI_API_URL && process.env.UMAMI_API_PASSWORD && process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID) {
         try {
           const umamiBase = process.env.UMAMI_API_URL.replace(/\/$/, "");
           const websiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
           const startAt = dayStart.getTime();
           const endAt = dayEnd.getTime();
 
+          // Auto-login to get a fresh JWT (self-hosted Umami tokens expire)
+          const loginRes = await fetch(`${umamiBase}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: process.env.UMAMI_API_USER ?? "admin",
+              password: process.env.UMAMI_API_PASSWORD,
+            }),
+          });
+
+          if (!loginRes.ok) {
+            console.error("[daily-metrics] Umami login failed:", loginRes.status);
+            throw new Error("Umami login failed");
+          }
+
+          const { token } = await loginRes.json();
+
           const statsRes = await fetch(
             `${umamiBase}/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}`,
             {
               headers: {
-                Authorization: `Bearer ${process.env.UMAMI_API_TOKEN}`,
+                Authorization: `Bearer ${token}`,
                 Accept: "application/json",
               },
             }
