@@ -98,6 +98,9 @@ export default async function BlogPage({
     categoryCounts.map((c) => [c.category, c.cnt])
   );
 
+  // Total across all categories (for the "All" filter badge)
+  const globalTotal = categoryCounts.reduce((sum, c) => sum + c.cnt, 0);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
       {/* Header */}
@@ -123,7 +126,7 @@ export default async function BlogPage({
               : "border-gray-200 text-gray-500 hover:border-gray-400"
           }`}
         >
-          {locale === "en" ? "All" : "Tout"} ({total})
+          {locale === "en" ? "All" : "Tout"} ({globalTotal})
         </Link>
         {ALL_CATEGORIES.map((cat) => (
           <Link
