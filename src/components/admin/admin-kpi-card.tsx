@@ -15,15 +15,15 @@ export function AdminKpiCard({
   icon: Icon,
 }: AdminKpiCardProps) {
   return (
-    <div className="rounded-sm bg-slate/30 border border-slate p-5">
+    <div className="rounded-sm bg-white border border-gray-200 shadow-sm p-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-mist">{title}</p>
-        <Icon className={cn("h-5 w-5 text-[#C8FF00]")} />
+        <p className="text-sm font-medium text-gray-500">{title}</p>
+        <Icon className={cn("h-5 w-5 text-mint")} />
       </div>
       <div className="mt-3">
-        <p className="text-2xl font-display font-bold text-white">{value}</p>
+        <p className="text-2xl font-display font-bold text-midnight">{value}</p>
         {subtitle && (
-          <p className="mt-1 text-xs font-medium text-fog">{subtitle}</p>
+          <p className="mt-1 text-xs font-medium text-gray-400">{subtitle}</p>
         )}
       </div>
     </div>

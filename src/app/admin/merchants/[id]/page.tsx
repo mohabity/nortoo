@@ -15,6 +15,11 @@ import {
   Globe,
   Mail,
   Settings2,
+  FileText,
+  Download,
+  CheckCircle,
+  XCircle,
+  ArrowUpCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -27,7 +32,37 @@ import {
 } from "recharts";
 import { AdminKpiCard } from "@/components/admin/admin-kpi-card";
 import { PlanBadge, StatusBadge } from "@/components/admin/admin-badges";
-import { formatDH } from "@/lib/utils";
+import { formatDH, cn } from "@/lib/utils";
+
+interface MerchantInvoice {
+  id: number;
+  invoiceNumber: string;
+  period: string;
+  planAtInvoice: string;
+  amountTTC: number;
+  status: string;
+  dueDate: string;
+  createdAt: string;
+}
+
+const INV_STATUS_STYLES: Record<string, string> = {
+  pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  paid: "bg-green-50 text-green-700 border-green-200",
+  overdue: "bg-red-50 text-red-700 border-red-200",
+  cancelled: "bg-gray-50 text-gray-500 border-gray-200",
+};
+
+const INV_STATUS_LABELS: Record<string, string> = {
+  pending: "En attente",
+  paid: "Payée",
+  overdue: "En retard",
+  cancelled: "Annulée",
+};
+
+function formatInvDH(centimes: number): string {
+  const dh = centimes / 100;
+  return dh.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " DH";
+}
 
 interface MerchantDetail {
   id: number;
@@ -74,9 +109,9 @@ interface MerchantData {
 }
 
 const DECISION_COLORS: Record<string, string> = {
-  ship: "text-emerald-400",
+  ship: "text-emerald-600",
   verify: "text-amber",
-  flag: "text-orange-400",
+  flag: "text-orange-500",
   block: "text-rose",
 };
 
@@ -88,11 +123,16 @@ export default function AdminMerchantDetailPage() {
   const [data, setData] = useState<MerchantData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [merchantInvoices, setMerchantInvoices] = useState<MerchantInvoice[]>([]);
+  const [invoiceActionLoading, setInvoiceActionLoading] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/merchants/${merchantId}`);
+      const [res, invRes] = await Promise.all([
+        fetch(`/api/admin/merchants/${merchantId}`),
+        fetch(`/api/admin/invoices?merchantId=${merchantId}`),
+      ]);
       if (!res.ok) {
         if (res.status === 401) {
           router.push("/admin/login");
@@ -102,6 +142,11 @@ export default function AdminMerchantDetailPage() {
       }
       const json = await res.json();
       setData(json.data);
+
+      if (invRes.ok) {
+        const invJson = await invRes.json();
+        setMerchantInvoices(invJson.data ?? []);
+      }
     } catch {
       // Handle silently
     } finally {
@@ -134,10 +179,28 @@ export default function AdminMerchantDetailPage() {
     }
   }
 
+  async function handleInvoiceAction(invoiceId: number, status: string) {
+    setInvoiceActionLoading(invoiceId);
+    try {
+      const res = await fetch(`/api/admin/invoices/${invoiceId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        await fetchData();
+      }
+    } catch {
+      // Handle silently
+    } finally {
+      setInvoiceActionLoading(null);
+    }
+  }
+
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 text-[#C8FF00] animate-spin" />
+        <Loader2 className="w-6 h-6 text-mint animate-spin" />
       </div>
     );
   }
@@ -145,10 +208,10 @@ export default function AdminMerchantDetailPage() {
   if (!data) {
     return (
       <div className="text-center py-16">
-        <p className="text-fog text-sm">Marchand introuvable</p>
+        <p className="text-gray-400 text-sm">Marchand introuvable</p>
         <button
           onClick={() => router.push("/admin/merchants")}
-          className="mt-3 text-sm text-[#C8FF00] hover:underline"
+          className="mt-3 text-sm text-mint hover:underline"
         >
           Retour à la liste
         </button>
@@ -190,19 +253,19 @@ export default function AdminMerchantDetailPage() {
         <div className="flex items-start gap-3">
           <button
             onClick={() => router.push("/admin/merchants")}
-            className="mt-1 p-1.5 rounded-sm border border-slate text-mist hover:text-white hover:bg-slate/40 transition-colors"
+            className="mt-1 p-1.5 rounded-sm border border-gray-200 text-gray-500 hover:text-midnight hover:bg-gray-100 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-display font-bold text-white">
+              <h1 className="text-xl font-display font-bold text-midnight">
                 {merchant.name}
               </h1>
               <PlanBadge plan={merchant.plan} />
               <StatusBadge status={merchant.billingStatus} />
             </div>
-            <div className="flex items-center gap-4 mt-1 text-sm text-fog">
+            <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
               <span className="flex items-center gap-1">
                 <Mail className="w-3.5 h-3.5" />
                 {merchant.email}
@@ -219,7 +282,7 @@ export default function AdminMerchantDetailPage() {
       </div>
 
       {/* Actions bar */}
-      <div className="flex flex-wrap items-center gap-2 p-3 rounded-sm bg-slate/30 border border-slate">
+      <div className="flex flex-wrap items-center gap-2 p-3 rounded-sm bg-white border border-gray-200 shadow-sm">
         {/* Change plan */}
         <select
           defaultValue=""
@@ -230,7 +293,7 @@ export default function AdminMerchantDetailPage() {
             }
           }}
           disabled={actionLoading}
-          className="bg-midnight border border-slate text-mist text-xs rounded-sm px-2 py-1.5"
+          className="bg-white border border-gray-200 text-gray-600 text-xs rounded-sm px-2 py-1.5"
         >
           <option value="">Changer plan...</option>
           {["trial", "starter", "pro", "scale"]
@@ -281,7 +344,7 @@ export default function AdminMerchantDetailPage() {
         ) : null}
 
         {actionLoading && (
-          <Loader2 className="w-4 h-4 text-[#C8FF00] animate-spin" />
+          <Loader2 className="w-4 h-4 text-mint animate-spin" />
         )}
       </div>
 
@@ -323,8 +386,8 @@ export default function AdminMerchantDetailPage() {
 
       {/* Usage chart */}
       {chartData.length > 0 && (
-        <div className="rounded-sm bg-slate/30 border border-slate p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">
+        <div className="rounded-sm bg-white border border-gray-200 shadow-sm p-5">
+          <h3 className="text-sm font-semibold text-midnight mb-4">
             Volume des 6 derniers mois
           </h3>
           <div className="h-64">
@@ -332,23 +395,23 @@ export default function AdminMerchantDetailPage() {
               <BarChart data={chartData}>
                 <XAxis
                   dataKey="month"
-                  tick={{ fill: "#94A3B8", fontSize: 12 }}
-                  axisLine={{ stroke: "#334155" }}
+                  tick={{ fill: "#6B7280", fontSize: 12 }}
+                  axisLine={{ stroke: "#E5E7EB" }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: "#94A3B8", fontSize: 12 }}
-                  axisLine={{ stroke: "#334155" }}
+                  tick={{ fill: "#6B7280", fontSize: 12 }}
+                  axisLine={{ stroke: "#E5E7EB" }}
                   tickLine={false}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#0B0F1A",
-                    border: "1px solid #334155",
+                    backgroundColor: "#FFFFFF",
+                    border: "1px solid #E5E7EB",
                     borderRadius: "6px",
                     fontSize: 12,
                   }}
-                  labelStyle={{ color: "#E2E8F0" }}
+                  labelStyle={{ color: "#0B0F1A" }}
                 />
                 <Legend
                   wrapperStyle={{ fontSize: 12 }}
@@ -356,7 +419,7 @@ export default function AdminMerchantDetailPage() {
                 <Bar
                   dataKey="scored"
                   name="Scorées"
-                  fill="#C8FF00"
+                  fill="#00E5A0"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
@@ -373,29 +436,29 @@ export default function AdminMerchantDetailPage() {
 
       {/* Recent orders */}
       <div>
-        <h3 className="text-sm font-semibold text-white mb-3">
+        <h3 className="text-sm font-semibold text-midnight mb-3">
           Commandes récentes
         </h3>
-        <div className="rounded-sm border border-slate overflow-x-auto">
+        <div className="rounded-sm border border-gray-200 overflow-x-auto bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate bg-slate/30">
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ref
                 </th>
-                <th className="text-right px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Montant
                 </th>
-                <th className="text-center px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Score
                 </th>
-                <th className="text-center px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Décision
                 </th>
-                <th className="text-center px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Livraison
                 </th>
-                <th className="text-right px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
               </tr>
@@ -404,39 +467,39 @@ export default function AdminMerchantDetailPage() {
               {recentOrders.map((o) => (
                 <tr
                   key={o.id}
-                  className="border-b border-slate/50 hover:bg-slate/20 transition-colors"
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-4 py-3 text-white font-mono text-xs">
+                  <td className="px-4 py-3 text-midnight font-mono text-xs">
                     {o.externalRef ?? `#${o.id}`}
                   </td>
-                  <td className="px-4 py-3 text-right text-mist">
+                  <td className="px-4 py-3 text-right text-gray-500">
                     {formatDH(o.total)}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className="font-mono font-medium text-white">
+                    <span className="font-mono font-medium text-midnight">
                       {o.fraudScore}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span
                       className={`text-xs font-medium uppercase ${
-                        DECISION_COLORS[o.decision] ?? "text-fog"
+                        DECISION_COLORS[o.decision] ?? "text-gray-400"
                       }`}
                     >
                       {o.decision}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center text-fog text-xs">
+                  <td className="px-4 py-3 text-center text-gray-400 text-xs">
                     {o.deliveryStatus ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-right text-fog text-xs">
+                  <td className="px-4 py-3 text-right text-gray-400 text-xs">
                     {new Date(o.createdAt).toLocaleDateString("fr-FR")}
                   </td>
                 </tr>
               ))}
               {recentOrders.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-fog">
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                     Aucune commande
                   </td>
                 </tr>
@@ -449,28 +512,28 @@ export default function AdminMerchantDetailPage() {
       {/* Config section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Scoring thresholds */}
-        <div className="rounded-sm bg-slate/30 border border-slate p-5">
+        <div className="rounded-sm bg-white border border-gray-200 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Settings2 className="w-4 h-4 text-[#C8FF00]" />
-            <h3 className="text-sm font-semibold text-white">
+            <Settings2 className="w-4 h-4 text-mint" />
+            <h3 className="text-sm font-semibold text-midnight">
               Seuils de scoring
             </h3>
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-fog">Verify</span>
+              <span className="text-sm text-gray-400">Verify</span>
               <span className="text-sm font-mono text-amber">
                 ≥ {merchant.verifyThreshold}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-fog">Flag</span>
-              <span className="text-sm font-mono text-orange-400">
+              <span className="text-sm text-gray-400">Flag</span>
+              <span className="text-sm font-mono text-orange-500">
                 ≥ {merchant.flagThreshold}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-fog">Block</span>
+              <span className="text-sm text-gray-400">Block</span>
               <span className="text-sm font-mono text-rose">
                 ≥ {merchant.blockThreshold}
               </span>
@@ -479,44 +542,211 @@ export default function AdminMerchantDetailPage() {
         </div>
 
         {/* Billing info */}
-        <div className="rounded-sm bg-slate/30 border border-slate p-5">
+        <div className="rounded-sm bg-white border border-gray-200 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-4 h-4 text-[#C8FF00]" />
-            <h3 className="text-sm font-semibold text-white">Billing</h3>
+            <Calendar className="w-4 h-4 text-mint" />
+            <h3 className="text-sm font-semibold text-midnight">Billing</h3>
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-fog">Plan</span>
+              <span className="text-sm text-gray-400">Plan</span>
               <PlanBadge plan={merchant.plan} />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-fog">Status</span>
+              <span className="text-sm text-gray-400">Status</span>
               <StatusBadge status={merchant.billingStatus} />
             </div>
             {merchant.trialEndsAt && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-fog">Fin trial</span>
-                <span className="text-sm text-mist">
+                <span className="text-sm text-gray-400">Fin trial</span>
+                <span className="text-sm text-gray-500">
                   {new Date(merchant.trialEndsAt).toLocaleDateString("fr-FR")}
                 </span>
               </div>
             )}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-fog">Inscrit le</span>
-              <span className="text-sm text-mist">
+              <span className="text-sm text-gray-400">Inscrit le</span>
+              <span className="text-sm text-gray-500">
                 {new Date(merchant.createdAt).toLocaleDateString("fr-FR")}
               </span>
             </div>
             {merchant.youcanStoreName && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-fog">Boutique YouCan</span>
-                <span className="text-sm text-mist">
+                <span className="text-sm text-gray-400">Boutique YouCan</span>
+                <span className="text-sm text-gray-500">
                   {merchant.youcanStoreName}
                 </span>
               </div>
             )}
           </div>
         </div>
+      </div>
+
+      {/* Billing / Invoices section */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-mint" />
+            <h3 className="text-sm font-semibold text-midnight">
+              Facturation
+            </h3>
+            {merchantInvoices.length > 0 && (
+              <span className="text-xs text-gray-400">
+                ({merchantInvoices.length} facture{merchantInvoices.length > 1 ? "s" : ""})
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Pending upgrade banner */}
+        {(() => {
+          const pendingUpgrade = merchantInvoices.find(
+            (inv) =>
+              inv.status === "pending" &&
+              inv.planAtInvoice &&
+              inv.planAtInvoice !== merchant.plan
+          );
+          if (!pendingUpgrade) return null;
+          return (
+            <div className="mb-4 rounded-sm border border-purple-200 bg-purple-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <ArrowUpCircle className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-purple-700">
+                      Demande d&apos;upgrade en attente
+                    </p>
+                    <p className="text-xs text-purple-500 mt-0.5">
+                      {merchant.plan} → {pendingUpgrade.planAtInvoice} · {formatInvDH(pendingUpgrade.amountTTC)} TTC
+                    </p>
+                    <p className="text-xs text-purple-400 mt-0.5">
+                      Facture {pendingUpgrade.invoiceNumber} · {new Date(pendingUpgrade.createdAt).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleInvoiceAction(pendingUpgrade.id, "paid")}
+                  disabled={invoiceActionLoading === pendingUpgrade.id}
+                  className="inline-flex items-center gap-1.5 rounded-sm bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors disabled:opacity-50 shrink-0"
+                >
+                  {invoiceActionLoading === pendingUpgrade.id ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-3 h-3" />
+                  )}
+                  Confirmer paiement
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Invoices table */}
+        {merchantInvoices.length > 0 ? (
+          <div className="rounded-sm border border-gray-200 overflow-x-auto bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    N° Facture
+                  </th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Période
+                  </th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Plan
+                  </th>
+                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Montant TTC
+                  </th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Statut
+                  </th>
+                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {merchantInvoices.map((inv) => {
+                  const isUpgrade = inv.planAtInvoice && inv.planAtInvoice !== merchant.plan;
+                  return (
+                    <tr key={inv.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-midnight">
+                        {inv.invoiceNumber}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 text-xs">{inv.period}</td>
+                      <td className="px-4 py-3">
+                        {isUpgrade ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                            <ArrowUpCircle className="w-2.5 h-2.5" />
+                            {inv.planAtInvoice}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500">{inv.planAtInvoice}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-midnight text-sm">
+                        {formatInvDH(inv.amountTTC)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={cn("inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold", INV_STATUS_STYLES[inv.status])}>
+                          {INV_STATUS_LABELS[inv.status] || inv.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-400 text-xs">
+                        {new Date(inv.createdAt).toLocaleDateString("fr-FR")}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {(inv.status === "pending" || inv.status === "overdue") && (
+                            <button
+                              onClick={() => handleInvoiceAction(inv.id, "paid")}
+                              disabled={invoiceActionLoading === inv.id}
+                              className="inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs text-green-700 bg-green-50 hover:bg-green-100 transition-colors disabled:opacity-50"
+                            >
+                              {invoiceActionLoading === inv.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-3 w-3" />
+                              )}
+                              Payée
+                            </button>
+                          )}
+                          <a
+                            href={`/api/admin/invoices/${inv.id}`}
+                            className="inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Download className="h-3 w-3" />
+                            PDF
+                          </a>
+                          {inv.status !== "cancelled" && inv.status !== "paid" && (
+                            <button
+                              onClick={() => handleInvoiceAction(inv.id, "cancelled")}
+                              disabled={invoiceActionLoading === inv.id}
+                              className="inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs text-red-700 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50"
+                            >
+                              <XCircle className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-sm border border-gray-200 bg-white p-8 text-center">
+            <p className="text-gray-400 text-sm">Aucune facture pour ce marchand</p>
+          </div>
+        )}
       </div>
     </div>
   );

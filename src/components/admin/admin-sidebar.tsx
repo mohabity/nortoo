@@ -26,16 +26,16 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-56 bg-midnight border-r border-slate hidden lg:flex flex-col z-40">
+    <aside className="fixed left-0 top-0 bottom-0 w-56 bg-white border-r border-gray-200 hidden lg:flex flex-col z-40">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate">
+      <div className="px-5 py-5 border-b border-gray-200">
         <Link href="/admin" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#C8FF00]/10 flex items-center justify-center">
-            <Shield className="w-4 h-4 text-[#C8FF00]" />
+          <div className="w-8 h-8 rounded-lg bg-mint/10 flex items-center justify-center">
+            <Shield className="w-4 h-4 text-mint" />
           </div>
           <div>
-            <span className="text-sm font-display font-bold text-white">
-              nortoo <span className="text-[#C8FF00]">admin</span>
+            <span className="text-sm font-display font-bold text-midnight">
+              nortoo <span className="text-mint">admin</span>
             </span>
           </div>
         </Link>
@@ -55,8 +55,8 @@ export function AdminSidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-[#C8FF00]/10 text-[#C8FF00]"
-                  : "text-mist hover:text-white hover:bg-slate/40"
+                  ? "bg-mint/10 text-mint"
+                  : "text-gray-600 hover:text-midnight hover:bg-gray-100"
               )}
             >
               <Icon className="w-4 h-4" />
@@ -67,10 +67,10 @@ export function AdminSidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="px-3 py-4 border-t border-slate">
+      <div className="px-3 py-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium text-fog hover:text-rose transition-colors w-full"
+          className="flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium text-gray-400 hover:text-rose transition-colors w-full"
         >
           <LogOut className="w-4 h-4" />
           Déconnexion

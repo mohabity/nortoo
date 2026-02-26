@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { invoices, merchants } from "@/db/schema";
-import { and, eq, desc, count, sql } from "drizzle-orm";
+import { and, eq, desc, count, sql, ne, isNotNull } from "drizzle-orm";
 import { isAdmin } from "@/lib/admin-auth";
 import { z } from "zod";
 import {
@@ -27,6 +27,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const statusFilter = url.searchParams.get("status");
   const merchantIdFilter = url.searchParams.get("merchantId");
+  const typeFilter = url.searchParams.get("type"); // "upgrade" → only upgrade invoices
 
   const conditions = [];
   if (statusFilter && ["pending", "paid", "overdue", "cancelled"].includes(statusFilter)) {
@@ -38,6 +39,11 @@ export async function GET(request: Request) {
       conditions.push(eq(invoices.merchantId, mId));
     }
   }
+  // Filter upgrade invoices: planAtInvoice differs from merchant's current plan
+  if (typeFilter === "upgrade") {
+    conditions.push(isNotNull(invoices.planAtInvoice));
+    conditions.push(ne(invoices.planAtInvoice, merchants.plan));
+  }
 
   const rows = await db
     .select({
@@ -45,6 +51,7 @@ export async function GET(request: Request) {
       merchantId: invoices.merchantId,
       merchantName: merchants.name,
       merchantEmail: merchants.email,
+      merchantPlan: merchants.plan,
       invoiceNumber: invoices.invoiceNumber,
       period: invoices.period,
       planAtInvoice: invoices.planAtInvoice,
@@ -74,6 +81,15 @@ export async function GET(request: Request) {
     })
     .from(invoices);
 
+  // Count pending upgrade requests (pending invoices where planAtInvoice != current plan)
+  const [upgradeStats] = await db
+    .select({
+      countPendingUpgrades: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} = 'pending' AND ${invoices.planAtInvoice} IS NOT NULL AND ${invoices.planAtInvoice} != ${merchants.plan} THEN 1 ELSE 0 END), 0)`,
+      totalPendingUpgradeAmount: sql<number>`COALESCE(SUM(CASE WHEN ${invoices.status} = 'pending' AND ${invoices.planAtInvoice} IS NOT NULL AND ${invoices.planAtInvoice} != ${merchants.plan} THEN ${invoices.amountTTC} ELSE 0 END), 0)`,
+    })
+    .from(invoices)
+    .innerJoin(merchants, eq(invoices.merchantId, merchants.id));
+
   return NextResponse.json({
     data: rows,
     stats: {
@@ -81,6 +97,8 @@ export async function GET(request: Request) {
       totalPaid: Number(stats.totalPaid),
       countOverdue: Number(stats.countOverdue),
       totalCount: Number(stats.totalCount),
+      countPendingUpgrades: Number(upgradeStats.countPendingUpgrades),
+      totalPendingUpgradeAmount: Number(upgradeStats.totalPendingUpgradeAmount),
     },
   });
 }

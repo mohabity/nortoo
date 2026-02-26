@@ -39,7 +39,7 @@ export default function AdminMerchantsPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-6 h-6 text-[#C8FF00] animate-spin" />
+          <Loader2 className="w-6 h-6 text-mint animate-spin" />
         </div>
       }
     >
@@ -178,13 +178,13 @@ function MerchantsContent() {
     <div className="space-y-4">
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fog" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
           value={searchInput}
           onChange={(e) => handleSearchInput(e.target.value)}
           placeholder="Rechercher par nom ou email..."
-          className="w-full h-10 bg-midnight border border-slate text-white text-sm rounded-sm pl-10 pr-4 placeholder:text-fog/40 focus:outline-none focus:ring-1 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="w-full h-10 bg-white border border-gray-200 text-midnight text-sm rounded-sm pl-10 pr-4 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-mint/40 focus:border-mint/60"
         />
       </div>
 
@@ -193,7 +193,7 @@ function MerchantsContent() {
         <select
           value={planFilter}
           onChange={(e) => { setPlanFilter(e.target.value); setPage(1); }}
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-3 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-3 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         >
           <option value="">All Plans</option>
           <option value="trial">Trial</option>
@@ -205,7 +205,7 @@ function MerchantsContent() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-3 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-3 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         >
           <option value="">All Statuses</option>
           <option value="trial">Trial</option>
@@ -217,7 +217,7 @@ function MerchantsContent() {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-3 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-3 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         >
           <option value="created_desc">Newest First</option>
           <option value="created_asc">Oldest First</option>
@@ -232,21 +232,21 @@ function MerchantsContent() {
           value={createdAfter}
           onChange={(e) => { setCreatedAfter(e.target.value); setPage(1); }}
           title="Créé après"
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-2 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-2 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         />
         <input
           type="date"
           value={createdBefore}
           onChange={(e) => { setCreatedBefore(e.target.value); setPage(1); }}
           title="Créé avant"
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-2 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-2 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         />
 
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={handleExport}
             title="Exporter CSV"
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-mist hover:text-white border border-slate rounded-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 hover:text-midnight border border-gray-200 rounded-sm transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             CSV
@@ -254,7 +254,7 @@ function MerchantsContent() {
           <button
             onClick={fetchMerchants}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-mist hover:text-white border border-slate rounded-sm transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 hover:text-midnight border border-gray-200 rounded-sm transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           </button>
@@ -264,35 +264,35 @@ function MerchantsContent() {
       {/* Table */}
       {loading && merchants.length === 0 ? (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-6 h-6 text-[#C8FF00] animate-spin" />
+          <Loader2 className="w-6 h-6 text-mint animate-spin" />
         </div>
       ) : (
-        <div className="rounded-sm border border-slate overflow-x-auto">
+        <div className="rounded-sm border border-gray-200 overflow-x-auto bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate bg-slate/30">
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Name
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider hidden md:table-cell">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                   Email
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Plan
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="text-right px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Orders
                 </th>
-                <th className="text-right px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider hidden lg:table-cell">
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                   Quota
                 </th>
-                <th className="text-right px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider hidden lg:table-cell">
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                   Created
                 </th>
-                <th className="text-right px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -302,23 +302,23 @@ function MerchantsContent() {
                 <tr
                   key={m.id}
                   onClick={() => router.push(`/admin/merchants/${m.id}`)}
-                  className="border-b border-slate/50 hover:bg-slate/20 cursor-pointer transition-colors"
+                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <td className="px-4 py-3 text-white font-medium">{m.name}</td>
-                  <td className="px-4 py-3 text-fog hidden md:table-cell">{m.email}</td>
+                  <td className="px-4 py-3 text-midnight font-medium">{m.name}</td>
+                  <td className="px-4 py-3 text-gray-400 hidden md:table-cell">{m.email}</td>
                   <td className="px-4 py-3">
                     <PlanBadge plan={m.plan} />
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={m.billingStatus} />
                   </td>
-                  <td className="px-4 py-3 text-right text-mist font-mono">
+                  <td className="px-4 py-3 text-right text-gray-500 font-mono">
                     {m.currentMonthOrders.toLocaleString("fr-FR")}
                   </td>
-                  <td className="px-4 py-3 text-right text-fog font-mono hidden lg:table-cell">
+                  <td className="px-4 py-3 text-right text-gray-400 font-mono hidden lg:table-cell">
                     {quotaPercent(m)}
                   </td>
-                  <td className="px-4 py-3 text-right text-fog hidden lg:table-cell">
+                  <td className="px-4 py-3 text-right text-gray-400 hidden lg:table-cell">
                     {new Date(m.createdAt).toLocaleDateString("fr-FR")}
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -333,7 +333,7 @@ function MerchantsContent() {
                           }
                         }}
                         disabled={actionLoading === m.id}
-                        className="bg-midnight border border-slate text-mist text-xs rounded-xs px-1.5 py-1 w-20"
+                        className="bg-white border border-gray-200 text-gray-600 text-xs rounded-xs px-1.5 py-1 w-20"
                       >
                         <option value="">Plan...</option>
                         {["trial", "starter", "pro", "scale"]
@@ -380,7 +380,7 @@ function MerchantsContent() {
 
                       {/* Loading indicator */}
                       {actionLoading === m.id && (
-                        <Loader2 className="w-3.5 h-3.5 text-[#C8FF00] animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 text-mint animate-spin" />
                       )}
                     </div>
                   </td>
@@ -388,7 +388,7 @@ function MerchantsContent() {
               ))}
               {merchants.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-fog">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     Aucun marchand trouvé
                   </td>
                 </tr>
@@ -401,21 +401,21 @@ function MerchantsContent() {
       {/* Pagination */}
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-fog">
+          <p className="text-xs text-gray-400">
             Page {meta.page} / {meta.totalPages} ({meta.total} marchands)
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page <= 1}
-              className="p-1.5 text-mist hover:text-white border border-slate rounded-sm disabled:opacity-30 transition-colors"
+              className="p-1.5 text-gray-500 hover:text-midnight border border-gray-200 rounded-sm disabled:opacity-30 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setPage(Math.min(meta.totalPages, page + 1))}
               disabled={page >= meta.totalPages}
-              className="p-1.5 text-mist hover:text-white border border-slate rounded-sm disabled:opacity-30 transition-colors"
+              className="p-1.5 text-gray-500 hover:text-midnight border border-gray-200 rounded-sm disabled:opacity-30 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

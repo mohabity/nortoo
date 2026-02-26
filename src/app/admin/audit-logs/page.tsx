@@ -36,10 +36,10 @@ interface Meta {
 }
 
 const ACTOR_COLORS: Record<string, string> = {
-  admin: "bg-purple-500/10 text-purple-400 border-purple-500/30",
-  system: "bg-blue-500/10 text-blue-400 border-blue-500/30",
-  merchant: "bg-green-500/10 text-green-400 border-green-500/30",
-  consumer: "bg-orange-500/10 text-orange-400 border-orange-500/30",
+  admin: "bg-purple-50 text-purple-600 border-purple-200",
+  system: "bg-blue-50 text-blue-600 border-blue-200",
+  merchant: "bg-green-50 text-green-600 border-green-200",
+  consumer: "bg-orange-50 text-orange-600 border-orange-200",
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -133,12 +133,12 @@ export default function AdminAuditLogsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ScrollText className="w-5 h-5 text-[#C8FF00]" />
+          <ScrollText className="w-5 h-5 text-mint" />
           <div>
-            <h1 className="text-xl font-display font-bold text-white">
+            <h1 className="text-xl font-display font-bold text-midnight">
               Journal d&apos;audit
             </h1>
-            <p className="text-sm text-fog mt-0.5">
+            <p className="text-sm text-gray-400 mt-0.5">
               Historique de toutes les actions (Art. 23 Loi 09-08)
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function AdminAuditLogsPage() {
         <button
           onClick={fetchLogs}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-mist hover:text-white border border-slate rounded-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 hover:text-midnight border border-gray-200 rounded-sm transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -155,13 +155,13 @@ export default function AdminAuditLogsPage() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fog" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
           value={searchInput}
           onChange={(e) => handleSearchInput(e.target.value)}
           placeholder="Rechercher dans les détails..."
-          className="w-full h-10 bg-midnight border border-slate text-white text-sm rounded-sm pl-10 pr-4 placeholder:text-fog/40 focus:outline-none focus:ring-1 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="w-full h-10 bg-white border border-gray-200 text-midnight text-sm rounded-sm pl-10 pr-4 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-mint/40 focus:border-mint/60"
         />
       </div>
 
@@ -170,7 +170,7 @@ export default function AdminAuditLogsPage() {
         <select
           value={actorFilter}
           onChange={(e) => { setActorFilter(e.target.value); setPage(1); }}
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-3 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-3 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         >
           <option value="">Tous les acteurs</option>
           <option value="admin">Admin</option>
@@ -182,7 +182,7 @@ export default function AdminAuditLogsPage() {
         <select
           value={actionFilter}
           onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-3 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-3 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         >
           <option value="">Toutes les actions</option>
           <option value="score">Scoring</option>
@@ -204,18 +204,18 @@ export default function AdminAuditLogsPage() {
           value={after}
           onChange={(e) => { setAfter(e.target.value); setPage(1); }}
           title="Après"
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-2 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-2 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         />
         <input
           type="date"
           value={before}
           onChange={(e) => { setBefore(e.target.value); setPage(1); }}
           title="Avant"
-          className="bg-midnight border border-slate text-mist text-sm rounded-sm px-2 py-1.5 focus:ring-[#C8FF00]/40 focus:border-[#C8FF00]/60"
+          className="bg-white border border-gray-200 text-gray-600 text-sm rounded-sm px-2 py-1.5 focus:ring-mint/40 focus:border-mint/60"
         />
 
         {meta && (
-          <span className="text-xs text-fog ml-auto">
+          <span className="text-xs text-gray-400 ml-auto">
             {meta.total} entrées
           </span>
         )}
@@ -224,27 +224,27 @@ export default function AdminAuditLogsPage() {
       {/* Table */}
       {loading && logs.length === 0 ? (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-6 h-6 text-[#C8FF00] animate-spin" />
+          <Loader2 className="w-6 h-6 text-mint animate-spin" />
         </div>
       ) : (
-        <div className="rounded-sm border border-slate overflow-x-auto">
+        <div className="rounded-sm border border-gray-200 overflow-x-auto bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate bg-slate/30">
+              <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="w-8 px-2 py-2.5" />
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acteur
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Action
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider hidden md:table-cell">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                   Cible
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider hidden lg:table-cell">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                   Marchand
                 </th>
               </tr>
@@ -258,9 +258,9 @@ export default function AdminAuditLogsPage() {
                   <React.Fragment key={log.id}>
                     <tr
                       onClick={() => setExpandedId(isExpanded ? null : log.id)}
-                      className="border-b border-slate/50 hover:bg-slate/20 cursor-pointer transition-colors"
+                      className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                     >
-                      <td className="px-2 py-3 text-fog">
+                      <td className="px-2 py-3 text-gray-400">
                         {details ? (
                           isExpanded ? (
                             <ChevronDown className="w-3.5 h-3.5" />
@@ -269,7 +269,7 @@ export default function AdminAuditLogsPage() {
                           )
                         ) : null}
                       </td>
-                      <td className="px-4 py-3 text-fog text-xs whitespace-nowrap">
+                      <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
                         {new Date(log.createdAt).toLocaleString("fr-FR", {
                           day: "2-digit",
                           month: "2-digit",
@@ -281,21 +281,21 @@ export default function AdminAuditLogsPage() {
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                            ACTOR_COLORS[log.actor] ?? "bg-gray-500/10 text-gray-400 border-gray-500/30"
+                            ACTOR_COLORS[log.actor] ?? "bg-gray-50 text-gray-500 border-gray-200"
                           }`}
                         >
                           {log.actor}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-white text-xs font-medium">
+                      <td className="px-4 py-3 text-midnight text-xs font-medium">
                         {ACTION_LABELS[log.action] ?? log.action}
                       </td>
-                      <td className="px-4 py-3 text-fog text-xs hidden md:table-cell">
+                      <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
                         {log.targetType ? (
                           <span>
                             {log.targetType}
                             {log.targetId && (
-                              <span className="text-mist font-mono"> #{log.targetId}</span>
+                              <span className="text-gray-500 font-mono"> #{log.targetId}</span>
                             )}
                           </span>
                         ) : (
@@ -309,23 +309,23 @@ export default function AdminAuditLogsPage() {
                               e.stopPropagation();
                               router.push(`/admin/merchants/${log.merchantId}`);
                             }}
-                            className="text-xs text-mist hover:text-[#C8FF00] transition-colors"
+                            className="text-xs text-gray-500 hover:text-mint transition-colors"
                           >
                             {log.merchantName}
                           </button>
                         ) : (
-                          <span className="text-fog text-xs">—</span>
+                          <span className="text-gray-400 text-xs">—</span>
                         )}
                       </td>
                     </tr>
                     {isExpanded && details && (
-                      <tr className="border-b border-slate/50">
-                        <td colSpan={6} className="px-6 py-3 bg-slate/10">
-                          <pre className="text-xs text-mist font-mono whitespace-pre-wrap break-words max-w-full overflow-x-auto">
+                      <tr className="border-b border-gray-100">
+                        <td colSpan={6} className="px-6 py-3 bg-gray-50">
+                          <pre className="text-xs text-gray-500 font-mono whitespace-pre-wrap break-words max-w-full overflow-x-auto">
                             {JSON.stringify(details, null, 2)}
                           </pre>
                           {log.userName && (
-                            <p className="text-xs text-fog mt-2">
+                            <p className="text-xs text-gray-400 mt-2">
                               Utilisateur: {log.userName}
                             </p>
                           )}
@@ -337,7 +337,7 @@ export default function AdminAuditLogsPage() {
               })}
               {logs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-fog">
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                     Aucun log trouvé
                   </td>
                 </tr>
@@ -350,21 +350,21 @@ export default function AdminAuditLogsPage() {
       {/* Pagination */}
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-fog">
+          <p className="text-xs text-gray-400">
             Page {meta.page} / {meta.totalPages} ({meta.total} entrées)
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page <= 1}
-              className="p-1.5 text-mist hover:text-white border border-slate rounded-sm disabled:opacity-30 transition-colors"
+              className="p-1.5 text-gray-500 hover:text-midnight border border-gray-200 rounded-sm disabled:opacity-30 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setPage(Math.min(meta.totalPages, page + 1))}
               disabled={page >= meta.totalPages}
-              className="p-1.5 text-mist hover:text-white border border-slate rounded-sm disabled:opacity-30 transition-colors"
+              className="p-1.5 text-gray-500 hover:text-midnight border border-gray-200 rounded-sm disabled:opacity-30 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

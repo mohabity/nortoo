@@ -12,6 +12,8 @@ import {
   AlertTriangle,
   CalendarPlus,
   Activity,
+  ArrowUpCircle,
+  FileText,
 } from "lucide-react";
 import {
   LineChart,
@@ -104,21 +106,45 @@ export default function AdminOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [extendingTrialId, setExtendingTrialId] = useState<number | null>(null);
+  const [pendingUpgrades, setPendingUpgrades] = useState<{
+    count: number;
+    amount: number;
+    invoices: Array<{
+      id: number;
+      merchantName: string;
+      merchantPlan: string;
+      planAtInvoice: string;
+      amountTTC: number;
+      createdAt: string;
+    }>;
+  }>({ count: 0, amount: 0, invoices: [] });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/overview");
-      if (!res.ok) {
-        if (res.status === 401) {
+      const [overviewRes, upgradesRes] = await Promise.all([
+        fetch("/api/admin/overview"),
+        fetch("/api/admin/invoices?type=upgrade&status=pending"),
+      ]);
+      if (!overviewRes.ok) {
+        if (overviewRes.status === 401) {
           router.push("/admin/login");
           return;
         }
         throw new Error("Failed to fetch");
       }
-      const json = await res.json();
+      const json = await overviewRes.json();
       setData(json.data);
+
+      if (upgradesRes.ok) {
+        const upgradeJson = await upgradesRes.json();
+        setPendingUpgrades({
+          count: upgradeJson.stats?.countPendingUpgrades ?? upgradeJson.data?.length ?? 0,
+          amount: upgradeJson.stats?.totalPendingUpgradeAmount ?? 0,
+          invoices: (upgradeJson.data ?? []).slice(0, 5),
+        });
+      }
     } catch {
       setError("Erreur de chargement");
     } finally {
@@ -149,7 +175,7 @@ export default function AdminOverviewPage() {
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 text-[#C8FF00] animate-spin" />
+        <Loader2 className="w-6 h-6 text-mint animate-spin" />
       </div>
     );
   }
@@ -160,7 +186,7 @@ export default function AdminOverviewPage() {
         <p className="text-rose text-sm">{error}</p>
         <button
           onClick={fetchData}
-          className="mt-3 text-sm text-[#C8FF00] hover:underline"
+          className="mt-3 text-sm text-mint hover:underline"
         >
           Réessayer
         </button>
@@ -189,17 +215,17 @@ export default function AdminOverviewPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-display font-bold text-white">
+          <h2 className="text-lg font-display font-bold text-midnight">
             Platform Overview
           </h2>
-          <p className="text-sm text-fog mt-0.5">
+          <p className="text-sm text-gray-400 mt-0.5">
             {data.totalMerchants} marchands · {data.payingMerchants} payants
           </p>
         </div>
         <button
           onClick={fetchData}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-mist hover:text-white border border-slate rounded-sm transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 hover:text-midnight border border-gray-200 rounded-sm transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -237,8 +263,8 @@ export default function AdminOverviewPage() {
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* MRR History */}
-        <div className="rounded-sm bg-slate/30 border border-slate p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">
+        <div className="rounded-sm bg-white border border-gray-200 shadow-sm p-5">
+          <h3 className="text-sm font-semibold text-midnight mb-4">
             Revenus mensuels (TTC)
           </h3>
           {data.mrrHistory.length > 0 ? (
@@ -247,47 +273,47 @@ export default function AdminOverviewPage() {
                 <LineChart data={data.mrrHistory}>
                   <XAxis
                     dataKey="month"
-                    tick={{ fill: "#94A3B8", fontSize: 11 }}
-                    axisLine={{ stroke: "#334155" }}
+                    tick={{ fill: "#6B7280", fontSize: 11 }}
+                    axisLine={{ stroke: "#E5E7EB" }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: "#94A3B8", fontSize: 11 }}
-                    axisLine={{ stroke: "#334155" }}
+                    tick={{ fill: "#6B7280", fontSize: 11 }}
+                    axisLine={{ stroke: "#E5E7EB" }}
                     tickLine={false}
                     tickFormatter={(v) => `${v} DH`}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#0B0F1A",
-                      border: "1px solid #334155",
+                      backgroundColor: "#FFFFFF",
+                      border: "1px solid #E5E7EB",
                       borderRadius: "6px",
                       fontSize: 12,
                     }}
-                    labelStyle={{ color: "#E2E8F0" }}
+                    labelStyle={{ color: "#0B0F1A" }}
                     formatter={(value: number) => [`${formatDH(value)}`, "Revenus"]}
                   />
                   <Line
                     type="monotone"
                     dataKey="total"
-                    stroke="#C8FF00"
+                    stroke="#00E5A0"
                     strokeWidth={2}
-                    dot={{ fill: "#C8FF00", r: 4 }}
+                    dot={{ fill: "#00E5A0", r: 4 }}
                     activeDot={{ r: 6 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-fog text-sm text-center py-8">
+            <p className="text-gray-400 text-sm text-center py-8">
               Aucune donnée de revenus
             </p>
           )}
         </div>
 
         {/* Plan distribution */}
-        <div className="rounded-sm bg-slate/30 border border-slate p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">
+        <div className="rounded-sm bg-white border border-gray-200 shadow-sm p-5">
+          <h3 className="text-sm font-semibold text-midnight mb-4">
             Distribution des plans
           </h3>
           {pieData.length > 0 ? (
@@ -310,8 +336,8 @@ export default function AdminOverviewPage() {
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#0B0F1A",
-                        border: "1px solid #334155",
+                        backgroundColor: "#FFFFFF",
+                        border: "1px solid #E5E7EB",
                         borderRadius: "6px",
                         fontSize: 12,
                       }}
@@ -326,8 +352,8 @@ export default function AdminOverviewPage() {
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: entry.fill }}
                     />
-                    <span className="text-sm text-mist">{entry.name}</span>
-                    <span className="text-sm font-mono text-white ml-auto">
+                    <span className="text-sm text-gray-500">{entry.name}</span>
+                    <span className="text-sm font-mono text-midnight ml-auto">
                       {entry.value}
                     </span>
                   </div>
@@ -335,20 +361,63 @@ export default function AdminOverviewPage() {
               </div>
             </div>
           ) : (
-            <p className="text-fog text-sm text-center py-8">
+            <p className="text-gray-400 text-sm text-center py-8">
               Aucun marchand
             </p>
           )}
         </div>
       </div>
 
+      {/* Pending Upgrade Requests */}
+      {pendingUpgrades.count > 0 && (
+        <div className="rounded-sm bg-white border border-purple-200 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ArrowUpCircle className="w-4 h-4 text-purple-500" />
+              <h3 className="text-sm font-semibold text-midnight">
+                Demandes d&apos;upgrade en attente
+              </h3>
+              <span className="bg-purple-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {pendingUpgrades.count}
+              </span>
+            </div>
+            <button
+              onClick={() => router.push("/admin/invoices")}
+              className="text-xs text-purple-500 hover:text-purple-700 transition-colors flex items-center gap-1"
+            >
+              <FileText className="w-3 h-3" />
+              Voir tout
+            </button>
+          </div>
+          <div className="space-y-2">
+            {pendingUpgrades.invoices.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+              >
+                <div>
+                  <p className="text-sm text-midnight font-medium">{inv.merchantName}</p>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded mt-0.5">
+                    {inv.merchantPlan} → {inv.planAtInvoice}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-midnight">{formatDH(inv.amountTTC)}</p>
+                  <p className="text-xs text-gray-400">{timeAgo(inv.createdAt)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Activity + Alerts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent activity */}
-        <div className="rounded-sm bg-slate/30 border border-slate p-5">
+        <div className="rounded-sm bg-white border border-gray-200 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-4 h-4 text-[#C8FF00]" />
-            <h3 className="text-sm font-semibold text-white">
+            <Activity className="w-4 h-4 text-mint" />
+            <h3 className="text-sm font-semibold text-midnight">
               Activité récente
             </h3>
           </div>
@@ -359,20 +428,20 @@ export default function AdminOverviewPage() {
                   key={a.id}
                   className="flex items-start gap-3 text-sm"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#C8FF00] mt-1.5 shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-mint mt-1.5 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-mist">
-                      <span className="text-white font-medium">
+                    <span className="text-gray-500">
+                      <span className="text-midnight font-medium">
                         {ACTION_LABELS[a.action] ?? a.action}
                       </span>
                       {a.targetType && (
-                        <span className="text-fog">
+                        <span className="text-gray-400">
                           {" "}
                           sur {a.targetType} #{a.targetId}
                         </span>
                       )}
                     </span>
-                    <p className="text-xs text-fog mt-0.5">
+                    <p className="text-xs text-gray-400 mt-0.5">
                       {a.actor} · {timeAgo(a.createdAt)}
                     </p>
                   </div>
@@ -380,17 +449,17 @@ export default function AdminOverviewPage() {
               ))}
             </div>
           ) : (
-            <p className="text-fog text-sm text-center py-4">
+            <p className="text-gray-400 text-sm text-center py-4">
               Aucune activité récente
             </p>
           )}
         </div>
 
         {/* Expiring trials */}
-        <div className="rounded-sm bg-slate/30 border border-slate p-5">
+        <div className="rounded-sm bg-white border border-gray-200 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="w-4 h-4 text-amber" />
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-sm font-semibold text-midnight">
               Trials expirant bientôt
             </h3>
           </div>
@@ -412,11 +481,11 @@ export default function AdminOverviewPage() {
                     <div className="min-w-0">
                       <button
                         onClick={() => router.push(`/admin/merchants/${m.id}`)}
-                        className="text-sm text-white font-medium hover:text-[#C8FF00] transition-colors truncate block"
+                        className="text-sm text-midnight font-medium hover:text-mint transition-colors truncate block"
                       >
                         {m.name}
                       </button>
-                      <p className="text-xs text-fog truncate">{m.email}</p>
+                      <p className="text-xs text-gray-400 truncate">{m.email}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <span
@@ -444,7 +513,7 @@ export default function AdminOverviewPage() {
               })}
             </div>
           ) : (
-            <p className="text-fog text-sm text-center py-4">
+            <p className="text-gray-400 text-sm text-center py-4">
               Aucun trial en expiration
             </p>
           )}
@@ -453,23 +522,23 @@ export default function AdminOverviewPage() {
 
       {/* Top Merchants */}
       <div>
-        <h3 className="text-sm font-semibold text-white mb-3">
+        <h3 className="text-sm font-semibold text-midnight mb-3">
           Top Merchants — Ce mois
         </h3>
-        <div className="rounded-sm border border-slate overflow-hidden">
+        <div className="rounded-sm border border-gray-200 overflow-hidden bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate bg-slate/30">
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Merchant
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Plan
                 </th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="text-right px-4 py-2.5 text-xs font-medium text-mist uppercase tracking-wider">
+                <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Orders/Month
                 </th>
               </tr>
@@ -479,23 +548,23 @@ export default function AdminOverviewPage() {
                 <tr
                   key={m.id}
                   onClick={() => router.push(`/admin/merchants/${m.id}`)}
-                  className="border-b border-slate/50 hover:bg-slate/20 cursor-pointer transition-colors"
+                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <td className="px-4 py-3 text-white font-medium">{m.name}</td>
+                  <td className="px-4 py-3 text-midnight font-medium">{m.name}</td>
                   <td className="px-4 py-3">
                     <PlanBadge plan={m.plan} />
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={m.billingStatus} />
                   </td>
-                  <td className="px-4 py-3 text-right text-mist font-mono">
+                  <td className="px-4 py-3 text-right text-gray-500 font-mono">
                     {m.currentMonthOrders.toLocaleString("fr-FR")}
                   </td>
                 </tr>
               ))}
               {data.topMerchants.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-fog">
+                  <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
                     Aucun marchand actif
                   </td>
                 </tr>

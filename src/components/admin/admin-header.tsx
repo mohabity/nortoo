@@ -28,23 +28,23 @@ export function AdminHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-midnight/80 backdrop-blur-md border-b border-slate">
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div className="flex items-center justify-between px-6 h-14">
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden text-mist hover:text-white"
+            className="lg:hidden text-gray-500 hover:text-midnight"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          <h1 className="text-sm font-display font-semibold text-white">
+          <h1 className="text-sm font-display font-semibold text-midnight">
             {title}
           </h1>
 
           <button
             onClick={handleLogout}
-            className="text-fog hover:text-rose transition-colors lg:hidden"
+            className="text-gray-400 hover:text-rose transition-colors lg:hidden"
             title="Déconnexion"
           >
             <LogOut className="w-4 h-4" />
@@ -55,14 +55,14 @@ export function AdminHeader() {
       {/* Mobile nav overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileMenuOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-midnight border-r border-slate p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 p-4">
             <div className="flex items-center gap-2.5 mb-6">
-              <div className="w-8 h-8 rounded-lg bg-[#C8FF00]/10 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-[#C8FF00]" />
+              <div className="w-8 h-8 rounded-lg bg-mint/10 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-mint" />
               </div>
-              <span className="text-sm font-display font-bold text-white">
-                nortoo <span className="text-[#C8FF00]">admin</span>
+              <span className="text-sm font-display font-bold text-midnight">
+                nortoo <span className="text-mint">admin</span>
               </span>
             </div>
             <nav className="space-y-1">
@@ -77,8 +77,8 @@ export function AdminHeader() {
                   className={cn(
                     "block px-3 py-2 rounded-sm text-sm font-medium transition-colors",
                     pathname === href
-                      ? "bg-[#C8FF00]/10 text-[#C8FF00]"
-                      : "text-mist hover:text-white"
+                      ? "bg-mint/10 text-mint"
+                      : "text-gray-600 hover:text-midnight"
                   )}
                 >
                   {label}
@@ -87,7 +87,7 @@ export function AdminHeader() {
             </nav>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2 mt-6 text-sm text-fog hover:text-rose"
+              className="flex items-center gap-3 px-3 py-2 mt-6 text-sm text-gray-400 hover:text-rose"
             >
               <LogOut className="w-4 h-4" />
               Déconnexion
