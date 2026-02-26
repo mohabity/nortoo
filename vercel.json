@@ -36,6 +36,18 @@
     {
       "path": "/api/cron/mark-overdue",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/blog-generate",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/blog-translate",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/blog-topics",
+      "schedule": "0 6 * * 1"
     }
   ]
 }
