@@ -20,6 +20,7 @@ import {
   CheckCircle,
   XCircle,
   ArrowUpCircle,
+  ArrowDownCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -79,6 +80,7 @@ interface MerchantDetail {
   verifyThreshold: number;
   flagThreshold: number;
   blockThreshold: number;
+  pendingPlanDowngrade: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -552,6 +554,15 @@ export default function AdminMerchantDetailPage() {
               <span className="text-sm text-gray-400">Plan</span>
               <PlanBadge plan={merchant.plan} />
             </div>
+            {merchant.pendingPlanDowngrade && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Rétrogradation</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                  <ArrowDownCircle className="w-2.5 h-2.5" />
+                  {merchant.plan} → {merchant.pendingPlanDowngrade}
+                </span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-400">Status</span>
               <StatusBadge status={merchant.billingStatus} />
@@ -597,6 +608,26 @@ export default function AdminMerchantDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Pending downgrade banner */}
+        {merchant.pendingPlanDowngrade && (
+          <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <ArrowDownCircle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-amber-700">
+                  Rétrogradation planifiée
+                </p>
+                <p className="text-xs text-amber-600 mt-0.5">
+                  {merchant.plan} → {merchant.pendingPlanDowngrade}
+                </p>
+                <p className="text-xs text-amber-400 mt-0.5">
+                  Effectif au prochain cycle de facturation (le 2 du mois).
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pending upgrade banner */}
         {(() => {

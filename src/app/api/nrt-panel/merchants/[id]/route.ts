@@ -40,6 +40,7 @@ export async function GET(
         verifyThreshold: merchants.verifyThreshold,
         flagThreshold: merchants.flagThreshold,
         blockThreshold: merchants.blockThreshold,
+        pendingPlanDowngrade: merchants.pendingPlanDowngrade,
         createdAt: merchants.createdAt,
         updatedAt: merchants.updatedAt,
       })
