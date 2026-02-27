@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { merchants, orders, invoices, auditLogs } from "@/db/schema";
-import { count, eq, sql, gte, lte, and, desc } from "drizzle-orm";
+import { count, eq, sql, gte, lte, and, desc, isNotNull } from "drizzle-orm";
 import { isAdmin } from "@/lib/admin-auth";
 import { PLAN_CONFIGS, type PlanId } from "@/lib/plans";
 
@@ -32,6 +32,7 @@ export async function GET(request: Request) {
       mrrHistory,
       recentActivity,
       expiringTrials,
+      pendingDowngrades,
     ] = await Promise.all([
       // 1. Total merchants
       db.select({ total: count() }).from(merchants),
@@ -134,6 +135,18 @@ export async function GET(request: Request) {
           )
         )
         .orderBy(merchants.trialEndsAt),
+
+      // 10. Pending plan downgrades
+      db
+        .select({
+          id: merchants.id,
+          name: merchants.name,
+          email: merchants.email,
+          plan: merchants.plan,
+          pendingPlanDowngrade: merchants.pendingPlanDowngrade,
+        })
+        .from(merchants)
+        .where(isNotNull(merchants.pendingPlanDowngrade)),
     ]);
 
     // Aggregate plan counts into a record
@@ -181,6 +194,7 @@ export async function GET(request: Request) {
         })),
         recentActivity,
         expiringTrials,
+        pendingDowngrades,
       },
     });
   } catch (err) {

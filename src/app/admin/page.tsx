@@ -13,6 +13,7 @@ import {
   CalendarPlus,
   Activity,
   ArrowUpCircle,
+  ArrowDownCircle,
   FileText,
 } from "lucide-react";
 import {
@@ -68,6 +69,13 @@ interface OverviewData {
   mrrHistory: { month: string; total: number }[];
   recentActivity: ActivityItem[];
   expiringTrials: ExpiringTrial[];
+  pendingDowngrades: {
+    id: number;
+    name: string;
+    email: string;
+    plan: string;
+    pendingPlanDowngrade: string;
+  }[];
 }
 
 const PLAN_COLORS: Record<string, string> = {
@@ -408,6 +416,50 @@ export default function AdminOverviewPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Pending Downgrades */}
+      {data.pendingDowngrades.length > 0 && (
+        <div className="rounded-sm bg-white border border-amber-200 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ArrowDownCircle className="w-4 h-4 text-amber-500" />
+              <h3 className="text-sm font-semibold text-midnight">
+                Rétrogradations planifiées
+              </h3>
+              <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {data.pendingDowngrades.length}
+              </span>
+            </div>
+            <button
+              onClick={() => router.push("/admin/merchants")}
+              className="text-xs text-amber-500 hover:text-amber-700 transition-colors flex items-center gap-1"
+            >
+              <Users className="w-3 h-3" />
+              Voir les marchands
+            </button>
+          </div>
+          <div className="space-y-2">
+            {data.pendingDowngrades.map((m) => (
+              <div
+                key={m.id}
+                onClick={() => router.push(`/admin/merchants/${m.id}`)}
+                className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 rounded-sm px-2 -mx-2 transition-colors"
+              >
+                <div>
+                  <p className="text-sm text-midnight font-medium">{m.name}</p>
+                  <p className="text-xs text-gray-400">{m.email}</p>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                  {m.plan} → {m.pendingPlanDowngrade}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-3">
+            Effectif au prochain cycle de facturation (le 2 du mois).
+          </p>
         </div>
       )}
 

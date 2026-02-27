@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -58,11 +58,9 @@ export function AdminHeader() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileMenuOpen(false)} />
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 p-4">
             <div className="flex items-center gap-2.5 mb-6">
-              <div className="w-8 h-8 rounded-lg bg-mint/10 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-mint" />
-              </div>
-              <span className="text-sm font-display font-bold text-midnight">
-                nortoo <span className="text-mint">admin</span>
+              <img src="/nortoo-logo.png" alt="nortoo" className="h-6 w-auto" />
+              <span className="text-xs font-medium text-mint bg-mint/10 px-1.5 py-0.5 rounded">
+                admin
               </span>
             </div>
             <nav className="space-y-1">

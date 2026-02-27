@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, LayoutDashboard, Users, FileText, Ticket, ScrollText, LogOut, PenTool } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Ticket, ScrollText, LogOut, PenTool } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -31,14 +31,10 @@ export function AdminSidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-200">
         <Link href="/admin" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-mint/10 flex items-center justify-center">
-            <Shield className="w-4 h-4 text-mint" />
-          </div>
-          <div>
-            <span className="text-sm font-display font-bold text-midnight">
-              nortoo <span className="text-mint">admin</span>
-            </span>
-          </div>
+          <img src="/nortoo-logo.png" alt="nortoo" className="h-7 w-auto" />
+          <span className="text-xs font-medium text-mint bg-mint/10 px-1.5 py-0.5 rounded">
+            admin
+          </span>
         </Link>
       </div>
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -43,13 +43,15 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-midnight/5 mb-4">
-            <Shield className="w-7 h-7 text-midnight" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src="/nortoo-logo.png" alt="nortoo" className="h-10 w-auto" />
           </div>
-          <h1 className="text-xl font-display font-bold text-midnight">
-            nortoo <span className="text-mint-deep">admin</span>
-          </h1>
-          <p className="text-sm text-fog mt-1">Panel d&apos;administration interne</p>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xs font-medium text-mint bg-mint/10 px-2 py-0.5 rounded">
+              admin
+            </span>
+          </div>
+          <p className="text-sm text-fog mt-2">Panel d&apos;administration interne</p>
         </div>
 
         {/* Form */}
