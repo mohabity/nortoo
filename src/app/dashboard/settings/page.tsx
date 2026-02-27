@@ -87,7 +87,7 @@ function useInitialTab(): TabId {
   const searchParams = useSearchParams();
   const urlTab = searchParams.get("tab") as TabId | null;
   if (urlTab && TAB_IDS.includes(urlTab)) return urlTab;
-  return "scoring";
+  return "profile";
 }
 
 // ── Inner page (needs Suspense for useSearchParams) ──
