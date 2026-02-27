@@ -121,7 +121,13 @@ export async function POST(request: Request) {
       `[Admin Setup] First admin created — email: ${email}, IP: ${ip}`
     );
 
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return NextResponse.json(
+      {
+        ok: true,
+        message: `Compte admin créé pour ${String(email).trim().toLowerCase()}. Connectez-vous maintenant.`,
+      },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("[Admin Setup] Error:", err);
     return NextResponse.json(

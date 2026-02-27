@@ -27,6 +27,7 @@ export default function AdminLoginPage() {
 
   // UI
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   // ── Check if setup is needed on mount ──
@@ -66,6 +67,8 @@ export default function AdminLoginPage() {
       // Setup done — switch to login with pre-filled email
       setEmail(setupEmail);
       setPassword("");
+      setError("");
+      setSuccess(data.message || "Compte admin créé avec succès. Connectez-vous.");
       setStep("credentials");
       setLoading(false);
     } catch {
@@ -78,6 +81,7 @@ export default function AdminLoginPage() {
   async function handleCredentials(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
@@ -265,6 +269,12 @@ export default function AdminLoginPage() {
         {/* ═══ CREDENTIALS FORM ═══ */}
         {step === "credentials" && (
           <form onSubmit={handleCredentials} className="space-y-4">
+            {success && (
+              <div className="px-3 py-2 bg-mint/10 border border-mint/30 rounded-sm">
+                <p className="text-sm text-midnight">{success}</p>
+              </div>
+            )}
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate mb-1.5">
                 <Mail className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />

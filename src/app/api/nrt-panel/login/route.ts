@@ -115,17 +115,25 @@ export async function POST(request: Request) {
       expiresAt,
     });
 
-    // Send MFA code by email (fire-and-forget)
-    buildAdminLoginCodeEmail(code, admin.name, "fr")
-      .then((built) =>
-        sendEmail({
-          to: admin.email,
-          subject: built.subject,
-          html: built.html,
-          text: built.text,
-        })
-      )
-      .catch((err) => console.error("[Admin MFA] Email send error:", err));
+    // Send MFA code by email (must await — serverless kills fire-and-forget)
+    try {
+      const built = await buildAdminLoginCodeEmail(code, admin.name, "fr");
+      const sent = await sendEmail({
+        to: admin.email,
+        subject: built.subject,
+        html: built.html,
+        text: built.text,
+      });
+      if (!sent) {
+        console.error(`[Admin MFA] Email send returned false — email: ${admin.email}`);
+      }
+    } catch (emailErr) {
+      console.error("[Admin MFA] Email send error:", emailErr);
+      return NextResponse.json(
+        { error: "Impossible d'envoyer le code de vérification. Réessayez." },
+        { status: 500 }
+      );
+    }
 
     console.info(
       `[Admin Login] MFA code sent — email: ${admin.email}, IP: ${ip}`
