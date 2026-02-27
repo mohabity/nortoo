@@ -102,11 +102,12 @@ export const users = pgTable(
     inviteExpiresAt: timestamp("invite_expires_at"),
     lastLoginAt: timestamp("last_login_at"),
 
-    // 2FA — TOTP
+    // 2FA — TOTP or Email
     twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
-    twoFactorSecret: text("two_factor_secret"),        // encrypted TOTP secret
+    twoFactorMethod: text("two_factor_method"),        // "totp" | "email" — null if not enabled
+    twoFactorSecret: text("two_factor_secret"),        // encrypted TOTP secret (TOTP only)
     twoFactorVerifiedAt: timestamp("two_factor_verified_at"),
-    twoFactorBackupCodes: text("two_factor_backup_codes"), // JSON array of hashed codes
+    twoFactorBackupCodes: text("two_factor_backup_codes"), // JSON array of hashed codes (TOTP only)
 
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -738,6 +739,27 @@ export const adminUsers = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
+// USER MFA CODES — Email-based 2FA for merchant login
+// Code stored in DB is SHA-256(6-digit code). Same pattern as admin MFA codes.
+// ═══════════════════════════════════════════════════════════
+export const userMfaCodes = pgTable(
+  "user_mfa_codes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(), // SHA-256 of the 6-digit code
+    expiresAt: timestamp("expires_at").notNull(), // 10 minutes after creation
+    usedAt: timestamp("used_at"), // null until verified
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("user_mfa_codes_user_idx").on(table.userId),
+  ]
+);
+
+// ═══════════════════════════════════════════════════════════
 // ADMIN MFA CODES — Email-based 2FA for admin login
 // Code stored in DB is SHA-256(6-digit code). Same pattern as password reset tokens.
 // ═══════════════════════════════════════════════════════════
@@ -907,10 +929,18 @@ export const couponRedemptionsRelations = relations(couponRedemptions, ({ one })
   }),
 }));
 
-export const usersRelations = relations(users, ({ one }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   merchant: one(merchants, {
     fields: [users.merchantId],
     references: [merchants.id],
+  }),
+  mfaCodes: many(userMfaCodes),
+}));
+
+export const userMfaCodesRelations = relations(userMfaCodes, ({ one }) => ({
+  user: one(users, {
+    fields: [userMfaCodes.userId],
+    references: [users.id],
   }),
 }));
 

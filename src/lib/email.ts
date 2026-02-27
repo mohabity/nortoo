@@ -19,6 +19,7 @@ import { PlanChange } from "@/emails/PlanChange";
 import { AdminLoginCode } from "@/emails/AdminLoginCode";
 import { AdminApprovalRequest } from "@/emails/AdminApprovalRequest";
 import { AdminInvite } from "@/emails/AdminInvite";
+import { LoginCode } from "@/emails/LoginCode";
 
 interface EmailPayload {
   to: string;
@@ -321,4 +322,19 @@ export async function buildAdminInviteEmail(
   const html = await render(element);
   const text = await render(element, { plainText: true });
   return { subject: t(locale, "adminInvite.subject"), html, text };
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOGIN CODE — Merchant email-based 2FA verification code
+// ═══════════════════════════════════════════════════════════
+
+export async function buildLoginCodeEmail(
+  code: string,
+  userName: string,
+  locale: Locale = "fr",
+) {
+  const element = React.createElement(LoginCode, { code, name: userName, locale });
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  return { subject: t(locale, "loginCode.subject"), html, text };
 }

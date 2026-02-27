@@ -17,6 +17,7 @@ export async function GET() {
   const [user] = await db
     .select({
       twoFactorEnabled: users.twoFactorEnabled,
+      twoFactorMethod: users.twoFactorMethod,
       twoFactorVerifiedAt: users.twoFactorVerifiedAt,
       role: users.role,
     })
@@ -27,6 +28,7 @@ export async function GET() {
   return NextResponse.json({
     data: {
       enabled: user?.twoFactorEnabled ?? false,
+      method: user?.twoFactorMethod ?? null, // "totp" | "email" | null
       verifiedAt: user?.twoFactorVerifiedAt?.toISOString() ?? null,
       role: user?.role ?? "operator",
       canEnable: user?.role === "admin" || user?.role === "manager",

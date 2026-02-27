@@ -71,11 +71,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Enable 2FA
+  // Enable 2FA (TOTP method)
   await db
     .update(users)
     .set({
       twoFactorEnabled: true,
+      twoFactorMethod: "totp",
       twoFactorVerifiedAt: new Date(),
       updatedAt: new Date(),
     })

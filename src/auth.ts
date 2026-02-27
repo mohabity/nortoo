@@ -30,6 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             userRole: users.role,
             userStatus: users.status,
             userTwoFactorEnabled: users.twoFactorEnabled,
+            userTwoFactorMethod: users.twoFactorMethod,
             userTwoFactorSecret: users.twoFactorSecret,
             merchantId: merchants.id,
             merchantPlan: merchants.plan,
@@ -54,15 +55,51 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await compare(password, row.userPasswordHash);
         if (!valid) return null;
 
-        // 2FA check: if enabled, require TOTP code
-        if (row.userTwoFactorEnabled && row.userTwoFactorSecret) {
-          if (!totpCode) {
-            // Signal that 2FA is required
-            throw new Error("2FA_REQUIRED");
-          }
-          const { verifyTOTPCode } = await import("@/lib/totp");
-          if (!verifyTOTPCode(row.userTwoFactorSecret, totpCode)) {
-            throw new Error("2FA_INVALID");
+        // 2FA check
+        if (row.userTwoFactorEnabled) {
+          if (row.userTwoFactorMethod === "email") {
+            // Email 2FA: client must call /api/auth/2fa/send-code + verify-code first,
+            // then pass the verified code as totpCode to complete signIn.
+            if (!totpCode) {
+              throw new Error("2FA_EMAIL_REQUIRED");
+            }
+            // The code was already verified via /api/auth/2fa/verify-code,
+            // so we accept it as proof of email verification.
+            // Re-verify against DB to ensure the code is valid and unused.
+            const { createHash } = await import("crypto");
+            const { userMfaCodes } = await import("@/db/schema");
+            const { and, eq: eqOp, isNull, gte, desc } = await import("drizzle-orm");
+            const codeHash = createHash("sha256").update(totpCode).digest("hex");
+            const [validCode] = await db
+              .select({ id: userMfaCodes.id })
+              .from(userMfaCodes)
+              .where(
+                and(
+                  eqOp(userMfaCodes.userId, row.userId),
+                  eqOp(userMfaCodes.codeHash, codeHash),
+                  isNull(userMfaCodes.usedAt),
+                  gte(userMfaCodes.expiresAt, new Date())
+                )
+              )
+              .orderBy(desc(userMfaCodes.createdAt))
+              .limit(1);
+            if (!validCode) {
+              throw new Error("2FA_INVALID");
+            }
+            // Mark code as used
+            await db
+              .update(userMfaCodes)
+              .set({ usedAt: new Date() })
+              .where(eqOp(userMfaCodes.id, validCode.id));
+          } else if (row.userTwoFactorSecret) {
+            // TOTP 2FA
+            if (!totpCode) {
+              throw new Error("2FA_REQUIRED");
+            }
+            const { verifyTOTPCode } = await import("@/lib/totp");
+            if (!verifyTOTPCode(row.userTwoFactorSecret, totpCode)) {
+              throw new Error("2FA_INVALID");
+            }
           }
         }
 

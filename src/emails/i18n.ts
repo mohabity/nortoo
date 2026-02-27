@@ -502,6 +502,31 @@ const emailDict = {
     fr: "Ce lien expire dans 7 jours. Si vous n'attendiez pas cette invitation, ignorez cet email.",
     en: "This link expires in 7 days. If you weren't expecting this invitation, ignore this email.",
   },
+  // ── Login Code (Merchant email 2FA) ──
+  "loginCode.preview": {
+    fr: "Code de connexion nortoo",
+    en: "nortoo login code",
+  },
+  "loginCode.subject": {
+    fr: "Code de connexion — nortoo",
+    en: "Login code — nortoo",
+  },
+  "loginCode.heading": {
+    fr: "Code de connexion",
+    en: "Login code",
+  },
+  "loginCode.greeting": {
+    fr: "Bonjour {name},",
+    en: "Hello {name},",
+  },
+  "loginCode.body": {
+    fr: "Voici votre code de connexion à votre compte nortoo :",
+    en: "Here is your login code for your nortoo account:",
+  },
+  "loginCode.expiry": {
+    fr: "Ce code expire dans 10 minutes. Si vous n'avez pas demandé ce code, ignorez cet email.",
+    en: "This code expires in 10 minutes. If you didn't request this code, ignore this email.",
+  },
 } as const satisfies Record<string, { fr: string; en: string }>;
 
 // ─────────────────────────────────────────────────────────────

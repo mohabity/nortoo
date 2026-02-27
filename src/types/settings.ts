@@ -11,7 +11,6 @@ export type TabId =
   | "api"
   | "notifications"
   | "privacy"
-  | "billing"
   | "phone_lists";
 
 // ── Tab metadata (for sidebar rendering) ──

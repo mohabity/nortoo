@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Suspense } from "react";
 import Link from "next/link";
-import { Loader2, Mail, Lock, Plug, Shield, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Lock, Plug, Shield, ArrowLeft, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/i18n/provider";
@@ -35,9 +35,36 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
+  const [emailCode, setEmailCode] = useState("");
   const [needs2FA, setNeeds2FA] = useState(false);
+  const [needsEmail2FA, setNeedsEmail2FA] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(oauthError);
+
+  /** Send the email 2FA code */
+  async function sendEmailCode() {
+    setSendingCode(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/2fa/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setError(json.error || t("auth.login.errors.emailCodeSendFailed"));
+        return;
+      }
+      setCodeSent(true);
+    } catch {
+      setError(t("auth.login.errors.emailCodeSendFailed"));
+    } finally {
+      setSendingCode(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,17 +85,43 @@ function LoginForm() {
       return;
     }
 
+    if (needsEmail2FA && !emailCode) {
+      setError(t("auth.login.errors.emptyEmailCode"));
+      return;
+    }
+
     setLoading(true);
 
     try {
       const result = await signIn("credentials", {
         email,
         password,
-        totpCode: needs2FA ? totpCode : "",
+        totpCode: needs2FA ? totpCode : needsEmail2FA ? emailCode : "",
         redirect: false,
       });
 
       if (result?.error) {
+        if (result.error.includes("2FA_EMAIL_REQUIRED")) {
+          setNeedsEmail2FA(true);
+          setError("");
+          // Automatically send the code
+          setSendingCode(true);
+          try {
+            const res = await fetch("/api/auth/2fa/send-code", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password }),
+            });
+            if (res.ok) {
+              setCodeSent(true);
+            }
+          } catch {
+            // Silently fail, user can resend
+          } finally {
+            setSendingCode(false);
+          }
+          return;
+        }
         if (result.error.includes("2FA_REQUIRED")) {
           setNeeds2FA(true);
           setError("");
@@ -77,6 +130,7 @@ function LoginForm() {
         if (result.error.includes("2FA_INVALID")) {
           setError(t("auth.login.errors.invalid2fa"));
           setTotpCode("");
+          setEmailCode("");
           return;
         }
         setError(t("auth.login.errors.invalidCredentials"));
@@ -178,7 +232,7 @@ function LoginForm() {
                 </div>
               </div>
 
-              {/* 2FA Code */}
+              {/* 2FA Code (TOTP) */}
               {needs2FA && (
                 <div>
                   <label
@@ -205,6 +259,57 @@ function LoginForm() {
                   <p className="mt-1 text-xs text-fog">
                     {t("auth.login.twoFactorHint")}
                   </p>
+                </div>
+              )}
+
+              {/* 2FA Code (Email) */}
+              {needsEmail2FA && (
+                <div>
+                  {codeSent && (
+                    <div className="flex items-center gap-2 rounded-sm border border-mint bg-mint-bg/20 px-3 py-2 mb-3">
+                      <Mail className="h-4 w-4 text-mint-deep shrink-0" />
+                      <span className="text-xs text-mint-deep">
+                        {t("auth.login.emailCodeSent")}
+                      </span>
+                    </div>
+                  )}
+                  <label
+                    htmlFor="emailCode"
+                    className="block text-sm font-medium text-slate mb-1.5"
+                  >
+                    {t("auth.login.emailCodeLabel")}
+                  </label>
+                  <div className="relative">
+                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mist" />
+                    <input
+                      id="emailCode"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder={t("auth.login.emailCodePlaceholder")}
+                      value={emailCode}
+                      onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, ""))}
+                      autoFocus
+                      autoComplete="one-time-code"
+                      className="w-full min-h-[44px] rounded-sm border border-silk bg-white pl-10 pr-3 py-2.5 text-sm font-mono text-center tracking-widest placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <p className="text-xs text-fog">
+                      {t("auth.login.emailCodeHint")}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={sendEmailCode}
+                      disabled={sendingCode}
+                      className="inline-flex items-center gap-1 text-xs text-ocean hover:text-ocean/80 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${sendingCode ? "animate-spin" : ""}`} />
+                      {sendingCode
+                        ? t("auth.login.emailCodeSending")
+                        : t("auth.login.emailCodeResend")}
+                    </button>
+                  </div>
                 </div>
               )}
 

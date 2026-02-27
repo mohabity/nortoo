@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Shield, ShieldCheck, ShieldOff, Loader2, Copy, CheckCircle2 } from "lucide-react";
+import { Shield, ShieldCheck, ShieldOff, Loader2, Copy, CheckCircle2, Mail, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,12 +15,13 @@ import { useTranslation } from "@/i18n/provider";
 
 interface TwoFactorStatus {
   enabled: boolean;
+  method: "totp" | "email" | null;
   verifiedAt: string | null;
   role: string;
   canEnable: boolean;
 }
 
-type SetupPhase = "idle" | "loading" | "qr" | "verify" | "done";
+type SetupPhase = "idle" | "method-choice" | "loading" | "qr" | "verify" | "done";
 
 export function TwoFactorSection({
   onToast,
@@ -40,6 +41,7 @@ export function TwoFactorSection({
   const [disabling, setDisabling] = useState(false);
   const [showDisable, setShowDisable] = useState(false);
   const [copiedCodes, setCopiedCodes] = useState(false);
+  const [enablingEmail, setEnablingEmail] = useState(false);
 
   useEffect(() => {
     fetchStatus();
@@ -57,7 +59,7 @@ export function TwoFactorSection({
     }
   }
 
-  async function handleSetup() {
+  async function handleSetupTotp() {
     setPhase("loading");
     setError(null);
     try {
@@ -65,7 +67,7 @@ export function TwoFactorSection({
       const json = await res.json();
       if (!res.ok) {
         setError(json.error);
-        setPhase("idle");
+        setPhase("method-choice");
         return;
       }
       setQrDataUrl(json.data.qrDataUrl);
@@ -73,7 +75,28 @@ export function TwoFactorSection({
       setPhase("qr");
     } catch {
       setError("Erreur réseau");
-      setPhase("idle");
+      setPhase("method-choice");
+    }
+  }
+
+  async function handleEnableEmail() {
+    setEnablingEmail(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/2fa/enable-email", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error);
+        setEnablingEmail(false);
+        return;
+      }
+      setPhase("done");
+      onToast("success", t("settings.twoFactor.enabledSuccess"));
+      await fetchStatus();
+    } catch {
+      setError("Erreur réseau");
+    } finally {
+      setEnablingEmail(false);
     }
   }
 
@@ -104,14 +127,16 @@ export function TwoFactorSection({
   }
 
   async function handleDisable() {
-    if (disableCode.length !== 6) return;
+    // For email method, no code needed — just confirm
+    if (status?.method === "totp" && disableCode.length !== 6) return;
+
     setDisabling(true);
     setError(null);
     try {
       const res = await fetch("/api/auth/2fa/disable", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: disableCode }),
+        body: JSON.stringify(status?.method === "totp" ? { code: disableCode } : {}),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -121,6 +146,7 @@ export function TwoFactorSection({
       }
       setShowDisable(false);
       setDisableCode("");
+      setPhase("idle");
       onToast("success", t("settings.twoFactor.disabledSuccess"));
       await fetchStatus();
     } catch {
@@ -178,9 +204,21 @@ export function TwoFactorSection({
           <div className="space-y-3">
             <div className="flex items-center gap-2 rounded-sm border border-mint bg-mint-bg/20 px-4 py-3">
               <ShieldCheck className="h-5 w-5 text-mint-deep" />
-              <span className="text-sm font-medium text-mint-deep">
-                {t("settings.twoFactor.enabled")}
-              </span>
+              <div className="flex-1">
+                <span className="text-sm font-medium text-mint-deep">
+                  {t("settings.twoFactor.enabled")}
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-xs text-mint-deep/70">
+                    {t("settings.twoFactor.currentMethod")} :
+                  </span>
+                  <span className="text-xs font-medium text-mint-deep">
+                    {status.method === "email"
+                      ? t("settings.twoFactor.methodLabelEmail")
+                      : t("settings.twoFactor.methodLabelTotp")}
+                  </span>
+                </div>
+              </div>
             </div>
             <Button
               variant="outline"
@@ -197,8 +235,8 @@ export function TwoFactorSection({
           </div>
         )}
 
-        {/* ── Disable Flow ── */}
-        {status.enabled && showDisable && (
+        {/* ── Disable Flow (TOTP — requires code) ── */}
+        {status.enabled && showDisable && status.method === "totp" && (
           <div className="space-y-3">
             <p className="text-sm text-fog">
               {t("settings.twoFactor.disablePrompt")}
@@ -238,16 +276,97 @@ export function TwoFactorSection({
           </div>
         )}
 
-        {/* ── Setup Flow: Idle ── */}
+        {/* ── Disable Flow (Email — no code, just confirm) ── */}
+        {status.enabled && showDisable && status.method === "email" && (
+          <div className="space-y-3">
+            <p className="text-sm text-fog">
+              {t("settings.twoFactor.disableEmailConfirm")}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleDisable}
+                disabled={disabling}
+                variant="destructive"
+                size="sm"
+              >
+                {disabling && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                {t("settings.twoFactor.confirmDisable")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowDisable(false);
+                  setError(null);
+                }}
+              >
+                {t("common.cancel")}
+              </Button>
+            </div>
+            {error && <p className="text-sm text-rose">{error}</p>}
+          </div>
+        )}
+
+        {/* ── Setup Flow: Idle → show method choice button ── */}
         {!status.enabled && phase === "idle" && (
           <div className="space-y-3">
             <p className="text-sm text-fog">
               {t("settings.twoFactor.description")}
             </p>
-            <Button onClick={handleSetup} className="bg-mint hover:bg-mint-deep text-midnight">
+            <Button
+              onClick={() => {
+                setPhase("method-choice");
+                setError(null);
+              }}
+              className="bg-mint hover:bg-mint-deep text-midnight"
+            >
               <Shield className="mr-1.5 h-4 w-4" />
               {t("settings.twoFactor.enable")}
             </Button>
+            {error && <p className="text-sm text-rose">{error}</p>}
+          </div>
+        )}
+
+        {/* ── Setup Flow: Method Choice ── */}
+        {!status.enabled && phase === "method-choice" && (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-midnight">
+              {t("settings.twoFactor.methodChoice")}
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* TOTP option */}
+              <button
+                onClick={handleSetupTotp}
+                className="flex flex-col items-start gap-2 rounded-sm border border-silk bg-white p-4 text-left transition-colors hover:border-mint hover:bg-mint-bg/10"
+              >
+                <Smartphone className="h-5 w-5 text-violet" />
+                <span className="text-sm font-medium text-midnight">
+                  {t("settings.twoFactor.methodTotp")}
+                </span>
+                <span className="text-xs text-fog leading-relaxed">
+                  {t("settings.twoFactor.methodTotpDesc")}
+                </span>
+              </button>
+
+              {/* Email option */}
+              <button
+                onClick={handleEnableEmail}
+                disabled={enablingEmail}
+                className="flex flex-col items-start gap-2 rounded-sm border border-silk bg-white p-4 text-left transition-colors hover:border-mint hover:bg-mint-bg/10 disabled:opacity-50"
+              >
+                {enablingEmail ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-ocean" />
+                ) : (
+                  <Mail className="h-5 w-5 text-ocean" />
+                )}
+                <span className="text-sm font-medium text-midnight">
+                  {t("settings.twoFactor.methodEmail")}
+                </span>
+                <span className="text-xs text-fog leading-relaxed">
+                  {t("settings.twoFactor.methodEmailDesc")}
+                </span>
+              </button>
+            </div>
             {error && <p className="text-sm text-rose">{error}</p>}
           </div>
         )}
