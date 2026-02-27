@@ -283,9 +283,18 @@ export async function PUT(request: Request) {
     weekly_report: z.boolean(),
     webhook_failed: z.boolean(),
   });
+  const whatsappPrefsSchema = z.object({
+    verification: z.boolean(),
+    deliveryConfirmation: z.boolean(),
+    codReminder: z.boolean(),
+  }).optional();
+
   const notifPrefsSchema = z.object({
     _type: z.literal("notifications"),
-    notificationPreferences: z.object({ email: notifEmailSchema }),
+    notificationPreferences: z.object({
+      email: notifEmailSchema,
+      whatsapp: whatsappPrefsSchema,
+    }),
   });
   const notifPrefsParsed = notifPrefsSchema.safeParse(body);
   if (notifPrefsParsed.success) {

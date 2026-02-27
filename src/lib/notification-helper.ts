@@ -21,6 +21,9 @@ const PREFERENCE_MAP: Record<string, string> = {
   webhook_failed: "webhook_failed",
 };
 
+// WhatsApp preference keys
+type WhatsAppNotifType = "verification" | "deliveryConfirmation" | "codReminder";
+
 // Types that are ALWAYS sent regardless of preferences
 const ALWAYS_SEND = new Set([
   "webhook_silent",
@@ -76,5 +79,48 @@ export async function shouldNotify(
   } catch {
     // If we can't read prefs, default to sending (fail-open)
     return true;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// WhatsApp — Opt-in preference check (fail-closed)
+// ═══════════════════════════════════════════════════════════
+
+interface WhatsAppPrefs {
+  verification?: boolean;
+  deliveryConfirmation?: boolean;
+  codReminder?: boolean;
+}
+
+/**
+ * Check if WhatsApp notifications are enabled for a specific type.
+ * Unlike email (fail-open, default enabled), WhatsApp is FAIL-CLOSED:
+ * the merchant must explicitly enable each WhatsApp notification type (opt-in).
+ */
+export async function shouldNotifyWhatsApp(
+  merchantId: number,
+  type: WhatsAppNotifType,
+): Promise<boolean> {
+  try {
+    const [merchant] = await db
+      .select({ notificationPreferences: merchants.notificationPreferences })
+      .from(merchants)
+      .where(eq(merchants.id, merchantId))
+      .limit(1);
+
+    if (!merchant?.notificationPreferences) return false; // No prefs = disabled
+
+    const parsed =
+      typeof merchant.notificationPreferences === "string"
+        ? JSON.parse(merchant.notificationPreferences)
+        : merchant.notificationPreferences;
+
+    const waPrefs: WhatsAppPrefs = parsed?.whatsapp ?? {};
+
+    // Explicit opt-in required
+    return waPrefs[type] === true;
+  } catch {
+    // Fail-closed: if we can't read prefs, don't send WhatsApp
+    return false;
   }
 }

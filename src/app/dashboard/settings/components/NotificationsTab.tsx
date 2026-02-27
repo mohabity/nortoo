@@ -10,7 +10,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/provider";
 import type { BaseTabProps } from "../types";
@@ -26,6 +25,12 @@ interface EmailPrefs {
   webhook_failed: boolean;
 }
 
+interface WhatsAppPrefs {
+  verification: boolean;
+  deliveryConfirmation: boolean;
+  codReminder: boolean;
+}
+
 const DEFAULT_PREFS: EmailPrefs = {
   order_auto_blocked: true,
   order_needs_review: true,
@@ -34,6 +39,12 @@ const DEFAULT_PREFS: EmailPrefs = {
   daily_summary: false,
   weekly_report: true,
   webhook_failed: true,
+};
+
+const DEFAULT_WA_PREFS: WhatsAppPrefs = {
+  verification: false,
+  deliveryConfirmation: false,
+  codReminder: false,
 };
 
 // ── Toggle switch ──
@@ -106,44 +117,51 @@ const NOTIF_TYPES: { key: keyof EmailPrefs; labelKey: string; descKey: string }[
   { key: "webhook_failed", labelKey: "settings.notifications.email.webhookFailed", descKey: "settings.notifications.email.webhookFailedDesc" },
 ];
 
+// WhatsApp notification type definitions for the UI
+const WA_NOTIF_TYPES: { key: keyof WhatsAppPrefs; labelKey: string; descKey: string }[] = [
+  { key: "verification", labelKey: "settings.notifications.whatsapp.verification", descKey: "settings.notifications.whatsapp.verificationDesc" },
+  { key: "deliveryConfirmation", labelKey: "settings.notifications.whatsapp.deliveryConfirmation", descKey: "settings.notifications.whatsapp.deliveryConfirmationDesc" },
+  { key: "codReminder", labelKey: "settings.notifications.whatsapp.codReminder", descKey: "settings.notifications.whatsapp.codReminderDesc" },
+];
+
+function parsePrefs(raw: unknown): { email: EmailPrefs; whatsapp: WhatsAppPrefs } {
+  try {
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return {
+      email: { ...DEFAULT_PREFS, ...parsed?.email },
+      whatsapp: { ...DEFAULT_WA_PREFS, ...parsed?.whatsapp },
+    };
+  } catch {
+    return { email: DEFAULT_PREFS, whatsapp: DEFAULT_WA_PREFS };
+  }
+}
+
 export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
+  const [savingWa, setSavingWa] = useState(false);
 
-  // Parse saved preferences or use defaults
-  const savedPrefs: EmailPrefs = (() => {
-    try {
-      if (settings.notificationPreferences) {
-        const parsed = typeof settings.notificationPreferences === "string"
-          ? JSON.parse(settings.notificationPreferences)
-          : settings.notificationPreferences;
-        return { ...DEFAULT_PREFS, ...parsed.email };
-      }
-    } catch { /* ignore parse errors */ }
-    return DEFAULT_PREFS;
-  })();
+  // Parse saved preferences
+  const { email: savedEmailPrefs, whatsapp: savedWaPrefs } = parsePrefs(
+    settings.notificationPreferences,
+  );
 
-  const [prefs, setPrefs] = useState<EmailPrefs>(savedPrefs);
+  const [prefs, setPrefs] = useState<EmailPrefs>(savedEmailPrefs);
+  const [waPrefs, setWaPrefs] = useState<WhatsAppPrefs>(savedWaPrefs);
 
   // Sync if settings change externally
   useEffect(() => {
-    try {
-      if (settings.notificationPreferences) {
-        const parsed = typeof settings.notificationPreferences === "string"
-          ? JSON.parse(settings.notificationPreferences)
-          : settings.notificationPreferences;
-        setPrefs({ ...DEFAULT_PREFS, ...parsed.email });
-      }
-    } catch { /* ignore */ }
+    const { email, whatsapp } = parsePrefs(settings.notificationPreferences);
+    setPrefs(email);
+    setWaPrefs(whatsapp);
   }, [settings.notificationPreferences]);
-
-  // WhatsApp toggles (disabled / coming soon)
-  const [waVerify] = useState(false);
-  const [waConfirm] = useState(false);
-  const [waReminder] = useState(false);
 
   function updatePref(key: keyof EmailPrefs, value: boolean) {
     setPrefs((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateWaPref(key: keyof WhatsAppPrefs, value: boolean) {
+    setWaPrefs((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleSave() {
@@ -154,7 +172,7 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           _type: "notifications",
-          notificationPreferences: { email: prefs },
+          notificationPreferences: { email: prefs, whatsapp: waPrefs },
         }),
       });
       if (res.ok) {
@@ -170,6 +188,33 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
       onToast("error", t("common.error"));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSaveWa() {
+    setSavingWa(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          _type: "notifications",
+          notificationPreferences: { email: prefs, whatsapp: waPrefs },
+        }),
+      });
+      if (res.ok) {
+        await onRefresh();
+        onToast("success", t("settings.notifications.email.saved"));
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
+      } else {
+        onToast("error", t("common.error"));
+      }
+    } catch {
+      onToast("error", t("common.error"));
+    } finally {
+      setSavingWa(false);
     }
   }
 
@@ -221,45 +266,43 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
       {/* ═══ WhatsApp ═══ */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-mist" />
-              <div>
-                <CardTitle className="text-base">
-                  {t("settings.notifications.whatsapp.title")}
-                </CardTitle>
-                <CardDescription>
-                  {t("settings.notifications.whatsapp.subtitle")}
-                </CardDescription>
-              </div>
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-mint" />
+            <div>
+              <CardTitle className="text-base">
+                {t("settings.notifications.whatsapp.title")}
+              </CardTitle>
+              <CardDescription>
+                {t("settings.notifications.whatsapp.subtitle")}
+              </CardDescription>
             </div>
-            <Badge>{t("common.soon")}</Badge>
           </div>
         </CardHeader>
-        <CardContent className="opacity-50 pointer-events-none">
+        <CardContent>
           <div className="divide-y divide-silk">
-            <ToggleRow
-              label={t("settings.notifications.whatsapp.verification")}
-              description={t("settings.notifications.whatsapp.verificationDesc")}
-              enabled={waVerify}
-              onChange={() => {}}
-              disabled
-            />
-            <ToggleRow
-              label={t("settings.notifications.whatsapp.deliveryConfirmation")}
-              description={t("settings.notifications.whatsapp.deliveryConfirmationDesc")}
-              enabled={waConfirm}
-              onChange={() => {}}
-              disabled
-            />
-            <ToggleRow
-              label={t("settings.notifications.whatsapp.codReminder")}
-              description={t("settings.notifications.whatsapp.codReminderDesc")}
-              enabled={waReminder}
-              onChange={() => {}}
-              disabled
-            />
+            {WA_NOTIF_TYPES.map(({ key, labelKey, descKey }) => (
+              <ToggleRow
+                key={key}
+                label={t(labelKey)}
+                description={t(descKey)}
+                enabled={waPrefs[key]}
+                onChange={(v) => updateWaPref(key, v)}
+              />
+            ))}
           </div>
+
+          <Button
+            onClick={handleSaveWa}
+            disabled={savingWa}
+            className="mt-4"
+          >
+            {savingWa ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            {t("settings.notifications.email.save")}
+          </Button>
         </CardContent>
       </Card>
     </div>

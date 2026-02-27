@@ -62,6 +62,19 @@ export async function GET(request: Request) {
       const escalatedOrders = overdueOrders.filter((o) => escalatedIdSet.has(o.id));
       const escalatedCount = escalatedOrders.length;
 
+      // ── Mark WhatsApp verifications as expired for escalated orders ──
+      if (escalatedIdSet.size > 0) {
+        await db
+          .update(orders)
+          .set({ whatsappVerificationStatus: "expired" })
+          .where(
+            and(
+              inArray(orders.id, [...escalatedIdSet]),
+              eq(orders.whatsappVerificationStatus, "sent")
+            )
+          );
+      }
+
       // ── Batch notifications + audit logs ──
       if (escalatedOrders.length > 0) {
         // Check notification preferences per merchant (few unique merchants)
