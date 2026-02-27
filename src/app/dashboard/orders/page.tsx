@@ -781,12 +781,13 @@ function OrdersContent() {
           })}
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        {/* Pipeline + actions row — compact on mobile */}
+        <div className="flex items-center gap-2">
           {/* Pipeline filter */}
           <select
             value={currentPipeline}
             onChange={(e) => setFilter("pipeline", e.target.value)}
-            className="h-10 lg:h-9 rounded-lg border border-silk bg-white px-3 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30"
+            className="h-9 min-w-0 flex-1 lg:flex-none rounded-lg border border-silk bg-white px-3 text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30"
           >
             <option value="all">{t("orders.filters.pipelineAll")}</option>
             <option value="auto_shipped">{t("orders.filters.autoShipped")}</option>
@@ -887,59 +888,62 @@ function OrdersContent() {
             )}
           </div>
 
-          {/* Refresh + Sync button */}
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing || syncing}
-            className="h-10 lg:h-9 inline-flex items-center gap-1.5 justify-center rounded-full border border-silk bg-white px-3 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
-            aria-label={t("orders.refresh")}
-            title={t("orders.refresh")}
-          >
-            <RefreshCw className={cn("h-4 w-4", (refreshing || syncing) && "animate-spin")} />
-            {(refreshing || syncing) && (
-              <span className="hidden sm:inline text-xs text-mist">
-                {t("orders.sync.syncing")}
-              </span>
-            )}
-          </button>
-
-          {/* Import delivery CSV */}
-          <button
-            onClick={() => csvInputRef.current?.click()}
-            disabled={csvLoading}
-            className="h-10 lg:h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
-            title="Importer livraisons (CSV)"
-          >
-            {csvLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">{t("orders.delivery.import")}</span>
-          </button>
-          <input
-            ref={csvInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleCsvImport}
-            className="hidden"
-          />
-
-          {/* Export CSV — Starter+ */}
-          <FeatureGate feature="csv_export" mode="lock">
+          {/* Action buttons — icon-only on mobile, inline */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Refresh + Sync */}
             <button
-              onClick={handleExport}
-              disabled={exportLoading}
-              className="h-10 lg:h-9 inline-flex items-center gap-2 rounded-full border border-silk bg-white px-4 text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50 shrink-0"
+              onClick={handleRefresh}
+              disabled={refreshing || syncing}
+              className="h-9 w-9 lg:w-auto lg:px-3 inline-flex items-center justify-center gap-1.5 rounded-full border border-silk bg-white text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50"
+              aria-label={t("orders.refresh")}
+              title={t("orders.refresh")}
             >
-              {exportLoading ? (
+              <RefreshCw className={cn("h-4 w-4 shrink-0", (refreshing || syncing) && "animate-spin")} />
+              {(refreshing || syncing) && (
+                <span className="hidden lg:inline text-xs text-mist">
+                  {t("orders.sync.syncing")}
+                </span>
+              )}
+            </button>
+
+            {/* Import delivery CSV */}
+            <button
+              onClick={() => csvInputRef.current?.click()}
+              disabled={csvLoading}
+              className="h-9 w-9 lg:w-auto lg:px-3 inline-flex items-center justify-center gap-2 rounded-full border border-silk bg-white text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50"
+              title="Importer livraisons (CSV)"
+            >
+              {csvLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Download className="h-4 w-4" />
+                <Upload className="h-4 w-4 shrink-0" />
               )}
-              <span className="hidden sm:inline">{t("orders.export.csv")}</span>
+              <span className="hidden lg:inline">{t("orders.delivery.import")}</span>
             </button>
-          </FeatureGate>
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleCsvImport}
+              className="hidden"
+            />
+
+            {/* Export CSV — Starter+ */}
+            <FeatureGate feature="csv_export" mode="lock">
+              <button
+                onClick={handleExport}
+                disabled={exportLoading}
+                className="h-9 w-9 lg:w-auto lg:px-3 inline-flex items-center justify-center gap-2 rounded-full border border-silk bg-white text-sm font-medium text-slate hover:bg-snow transition-colors disabled:opacity-50"
+              >
+                {exportLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 shrink-0" />
+                )}
+                <span className="hidden lg:inline">{t("orders.export.csv")}</span>
+              </button>
+            </FeatureGate>
+          </div>
         </div>
       </div>
 
