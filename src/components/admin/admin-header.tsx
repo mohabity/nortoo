@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const ROUTE_TITLES: Record<string, string> = {
   "/nrt-panel": "Overview",
   "/nrt-panel/merchants": "Merchants",
+  "/nrt-panel/admins": "Administrateurs",
 };
 
 export function AdminHeader() {
@@ -17,7 +18,7 @@ export function AdminHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Don't render on login page
-  if (pathname === "/nrt-panel/login") return null;
+  if (pathname === "/nrt-panel/login" || pathname.startsWith("/nrt-panel/accept-invite")) return null;
 
   const title = ROUTE_TITLES[pathname] ?? "Admin";
 
@@ -67,6 +68,11 @@ export function AdminHeader() {
               {[
                 { href: "/nrt-panel", label: "Overview" },
                 { href: "/nrt-panel/merchants", label: "Merchants" },
+                { href: "/nrt-panel/invoices", label: "Factures" },
+                { href: "/nrt-panel/coupons", label: "Coupons" },
+                { href: "/nrt-panel/audit-logs", label: "Audit Logs" },
+                { href: "/nrt-panel/blog", label: "Blog" },
+                { href: "/nrt-panel/admins", label: "Admins" },
               ].map(({ href, label }) => (
                 <Link
                   key={href}

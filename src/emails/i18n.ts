@@ -473,6 +473,35 @@ const emailDict = {
     fr: "Accéder au panel admin",
     en: "Go to admin panel",
   },
+  // ── Admin Invite ──
+  "adminInvite.preview": {
+    fr: "Vous êtes invité(e) à rejoindre le panel admin nortoo",
+    en: "You've been invited to join the nortoo admin panel",
+  },
+  "adminInvite.subject": {
+    fr: "Invitation au panel admin — nortoo",
+    en: "Admin panel invitation — nortoo",
+  },
+  "adminInvite.heading": {
+    fr: "Invitation au panel admin",
+    en: "Admin panel invitation",
+  },
+  "adminInvite.body1": {
+    fr: "{inviterName} vous a invité(e) à rejoindre le panel d'administration nortoo.",
+    en: "{inviterName} has invited you to join the nortoo admin panel.",
+  },
+  "adminInvite.body2": {
+    fr: "Cliquez sur le bouton ci-dessous pour créer votre mot de passe et activer votre compte administrateur.",
+    en: "Click the button below to create your password and activate your admin account.",
+  },
+  "adminInvite.cta": {
+    fr: "Accepter l'invitation",
+    en: "Accept invitation",
+  },
+  "adminInvite.expiry": {
+    fr: "Ce lien expire dans 7 jours. Si vous n'attendiez pas cette invitation, ignorez cet email.",
+    en: "This link expires in 7 days. If you weren't expecting this invitation, ignore this email.",
+  },
 } as const satisfies Record<string, { fr: string; en: string }>;
 
 // ─────────────────────────────────────────────────────────────

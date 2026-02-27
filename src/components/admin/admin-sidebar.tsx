@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, FileText, Ticket, ScrollText, LogOut, PenTool } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Ticket, ScrollText, LogOut, PenTool, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/nrt-panel/coupons", label: "Coupons", icon: Ticket },
   { href: "/nrt-panel/audit-logs", label: "Audit Logs", icon: ScrollText },
   { href: "/nrt-panel/blog", label: "Blog", icon: PenTool },
+  { href: "/nrt-panel/admins", label: "Admins", icon: ShieldCheck },
 ];
 
 export function AdminSidebar() {
@@ -19,7 +20,7 @@ export function AdminSidebar() {
   const router = useRouter();
 
   // Don't render on login page
-  if (pathname === "/nrt-panel/login") return null;
+  if (pathname === "/nrt-panel/login" || pathname.startsWith("/nrt-panel/accept-invite")) return null;
 
   function handleLogout() {
     document.cookie = "nortoo_admin=; path=/; max-age=0";

@@ -87,7 +87,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Admin panel: check nortoo_admin HMAC cookie (separate from Auth.js)
-  if (pathname.startsWith("/nrt-panel") && !pathname.startsWith("/nrt-panel/login")) {
+  if (
+    pathname.startsWith("/nrt-panel") &&
+    !pathname.startsWith("/nrt-panel/login") &&
+    !pathname.startsWith("/nrt-panel/accept-invite")
+  ) {
     const adminCookie = request.cookies.get("nortoo_admin");
     const adminSecret = process.env.ADMIN_SECRET;
     if (!adminCookie?.value || !adminSecret) {

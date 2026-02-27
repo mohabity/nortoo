@@ -18,6 +18,7 @@ import { DataRightsNotification } from "@/emails/DataRightsNotification";
 import { PlanChange } from "@/emails/PlanChange";
 import { AdminLoginCode } from "@/emails/AdminLoginCode";
 import { AdminApprovalRequest } from "@/emails/AdminApprovalRequest";
+import { AdminInvite } from "@/emails/AdminInvite";
 
 interface EmailPayload {
   to: string;
@@ -305,4 +306,19 @@ export async function buildAdminApprovalEmail(
   const html = await render(element);
   const text = await render(element, { plainText: true });
   return { subject: t(locale, "adminApproval.subject"), html, text };
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN INVITE — invitation to join admin panel
+// ═══════════════════════════════════════════════════════════
+
+export async function buildAdminInviteEmail(
+  inviteUrl: string,
+  inviterName: string,
+  locale: Locale = "fr",
+) {
+  const element = React.createElement(AdminInvite, { inviteUrl, inviterName, locale });
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  return { subject: t(locale, "adminInvite.subject"), html, text };
 }

@@ -91,7 +91,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify bcrypt password
+    // Verify bcrypt password (passwordHash is nullable for pending invites)
+    if (!admin.passwordHash) {
+      return NextResponse.json(
+        { error: "Identifiants incorrects." },
+        { status: 401 }
+      );
+    }
     const isValid = await compare(password, admin.passwordHash);
     if (!isValid) {
       console.warn(

@@ -722,14 +722,18 @@ export const adminUsers = pgTable(
     id: serial("id").primaryKey(),
     email: text("email").notNull().unique(),
     name: text("name").notNull(),
-    passwordHash: text("password_hash").notNull(), // bcrypt (12 rounds)
-    isActive: boolean("is_active").notNull().default(true),
+    passwordHash: text("password_hash"), // bcrypt (12 rounds) — nullable for pending invites
+    isActive: boolean("is_active").notNull().default(false),
+    inviteToken: text("invite_token").unique(), // SHA-256 hash of raw token
+    inviteExpiresAt: timestamp("invite_expires_at"),
+    invitedBy: integer("invited_by"), // admin ID who sent the invite
     lastLoginAt: timestamp("last_login_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("admin_users_email_idx").on(table.email),
+    index("admin_users_invite_token_idx").on(table.inviteToken),
   ]
 );
 
