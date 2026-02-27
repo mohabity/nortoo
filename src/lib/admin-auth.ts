@@ -112,6 +112,30 @@ export async function getAdminId(): Promise<number | null> {
   return null;
 }
 
+const SUPER_ADMIN_EMAIL = "admin@nortoo.ma";
+
+/**
+ * Check if the current admin is the super-admin (admin@nortoo.ma).
+ * Only the super-admin can invite, deactivate, or manage other admins.
+ */
+export async function isSuperAdmin(): Promise<boolean> {
+  const adminId = await getAdminId();
+  if (!adminId) return false;
+
+  // Dynamic import to avoid circular deps
+  const { db } = await import("@/db/index");
+  const { adminUsers } = await import("@/db/schema");
+  const { eq } = await import("drizzle-orm");
+
+  const [admin] = await db
+    .select({ email: adminUsers.email })
+    .from(adminUsers)
+    .where(eq(adminUsers.id, adminId))
+    .limit(1);
+
+  return admin?.email === SUPER_ADMIN_EMAIL;
+}
+
 /**
  * Timing-safe string comparison to prevent timing attacks.
  */

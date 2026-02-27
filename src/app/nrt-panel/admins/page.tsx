@@ -29,6 +29,7 @@ export default function AdminsPage() {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [superAdmin, setSuperAdmin] = useState(false);
 
   // Invite modal
   const [showModal, setShowModal] = useState(false);
@@ -46,6 +47,7 @@ export default function AdminsPage() {
       const json = await res.json();
       if (res.ok) {
         setAdmins(json.data);
+        setSuperAdmin(!!json.isSuperAdmin);
       } else {
         setError(json.error || "Erreur de chargement");
       }
@@ -183,13 +185,15 @@ export default function AdminsPage() {
             {admins.length} compte{admins.length > 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-midnight text-white text-sm font-medium rounded-sm hover:bg-midnight/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Inviter un admin
-        </button>
+        {superAdmin && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-midnight text-white text-sm font-medium rounded-sm hover:bg-midnight/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Inviter un admin
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -215,7 +219,9 @@ export default function AdminsPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Statut</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Invité par</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Dernière connexion</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-500">Actions</th>
+                {superAdmin && (
+                  <th className="text-right px-4 py-3 font-medium text-gray-500">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -245,37 +251,39 @@ export default function AdminsPage() {
                         })
                       : <span className="text-mist">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {actionLoading === admin.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-mist" />
-                      ) : admin.status === "pending" ? (
-                        <button
-                          onClick={() => handleCancelInvite(admin)}
-                          className="p-1.5 text-gray-400 hover:text-rose transition-colors"
-                          title="Annuler l'invitation"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      ) : admin.status === "active" ? (
-                        <button
-                          onClick={() => handleToggleActive(admin)}
-                          className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"
-                          title="Désactiver"
-                        >
-                          <ShieldOff className="w-4 h-4" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleToggleActive(admin)}
-                          className="p-1.5 text-gray-400 hover:text-emerald-600 transition-colors"
-                          title="Réactiver"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+                  {superAdmin && (
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {actionLoading === admin.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-mist" />
+                        ) : admin.status === "pending" ? (
+                          <button
+                            onClick={() => handleCancelInvite(admin)}
+                            className="p-1.5 text-gray-400 hover:text-rose transition-colors"
+                            title="Annuler l'invitation"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : admin.status === "active" ? (
+                          <button
+                            onClick={() => handleToggleActive(admin)}
+                            className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"
+                            title="Désactiver"
+                          >
+                            <ShieldOff className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleActive(admin)}
+                            className="p-1.5 text-gray-400 hover:text-emerald-600 transition-colors"
+                            title="Réactiver"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -283,8 +291,8 @@ export default function AdminsPage() {
         </div>
       </div>
 
-      {/* Invite Modal */}
-      {showModal && (
+      {/* Invite Modal (super-admin only) */}
+      {superAdmin && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md bg-white rounded-sm border border-gray-200 shadow-xl p-6 mx-4">
             <div className="flex items-center justify-between mb-4">

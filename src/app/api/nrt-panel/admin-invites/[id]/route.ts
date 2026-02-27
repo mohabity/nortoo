@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { db } from "@/db/index";
 import { adminUsers, auditLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { isAdmin, getAdminId } from "@/lib/admin-auth";
+import { isAdmin, getAdminId, isSuperAdmin } from "@/lib/admin-auth";
 import { getClientIp } from "@/lib/rate-limit";
 
 /**
@@ -17,6 +17,14 @@ export async function PATCH(
 ) {
   if (!(await isAdmin(request))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  // Only the super-admin can activate/deactivate admins
+  if (!(await isSuperAdmin())) {
+    return NextResponse.json(
+      { error: "Seul le super-admin peut gérer les administrateurs." },
+      { status: 403 }
+    );
   }
 
   const callingAdminId = await getAdminId();
@@ -98,6 +106,14 @@ export async function DELETE(
 ) {
   if (!(await isAdmin(request))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  // Only the super-admin can cancel invitations
+  if (!(await isSuperAdmin())) {
+    return NextResponse.json(
+      { error: "Seul le super-admin peut gérer les administrateurs." },
+      { status: 403 }
+    );
   }
 
   const callingAdminId = await getAdminId();

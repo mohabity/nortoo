@@ -3,7 +3,7 @@ import { randomBytes, createHash } from "crypto";
 import { db } from "@/db/index";
 import { adminUsers, auditLogs } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { isAdmin, getAdminId } from "@/lib/admin-auth";
+import { isAdmin, getAdminId, isSuperAdmin } from "@/lib/admin-auth";
 import { getClientIp } from "@/lib/rate-limit";
 import {
   buildAdminInviteEmail,
@@ -66,7 +66,9 @@ export async function GET(request: Request) {
     createdAt: a.createdAt,
   }));
 
-  return NextResponse.json({ data });
+  const superAdmin = await isSuperAdmin();
+
+  return NextResponse.json({ data, isSuperAdmin: superAdmin });
 }
 
 /**
@@ -77,6 +79,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   if (!(await isAdmin(request))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  // Only the super-admin can invite new admins
+  if (!(await isSuperAdmin())) {
+    return NextResponse.json(
+      { error: "Seul le super-admin peut inviter de nouveaux administrateurs." },
+      { status: 403 }
+    );
   }
 
   const adminId = await getAdminId();
