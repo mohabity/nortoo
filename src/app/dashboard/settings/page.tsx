@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import {
   User,
   Users,
@@ -31,6 +30,7 @@ import { PrivacyTab } from "./components/PrivacyTab";
 import { RtoCostsTab } from "./components/RtoCostsTab";
 import { TeamTab } from "./components/TeamTab";
 import { PhoneListTab } from "./components/PhoneListTab";
+import { BillingTab } from "./components/BillingTab";
 
 // ── Tab definitions ──
 const TABS: TabMeta[] = [
@@ -44,6 +44,7 @@ const TABS: TabMeta[] = [
   { id: "notifications", labelKey: "settings.tabs.notifications", icon: Bell },
   { id: "phone_lists", labelKey: "settings.tabs.phone_lists", icon: ListFilter },
   { id: "privacy", labelKey: "settings.tabs.privacy", icon: ShieldCheck },
+  { id: "billing", labelKey: "settings.tabs.billing", icon: CreditCard },
 ];
 
 // ── Toast item ──
@@ -200,14 +201,6 @@ function SettingsPageInner() {
               </button>
             );
           })}
-          {/* Link to full billing page */}
-          <Link
-            href="/dashboard/billing"
-            className="flex items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 min-h-[44px] text-sm font-medium text-start transition-colors snap-start text-fog hover:bg-snow hover:text-slate lg:border-s-[3px] lg:border-s-transparent"
-          >
-            <CreditCard className="h-4 w-4 shrink-0" />
-            {t("settings.tabs.billing")}
-          </Link>
         </nav>
 
         {/* Content */}
@@ -222,6 +215,7 @@ function SettingsPageInner() {
           {activeTab === "notifications" && <NotificationsTab {...baseProps} />}
           {activeTab === "phone_lists" && <PhoneListTab {...baseProps} />}
           {activeTab === "privacy" && <PrivacyTab {...baseProps} />}
+          {activeTab === "billing" && <BillingTab {...baseProps} />}
         </div>
       </div>
 
