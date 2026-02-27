@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
 import { invoices, merchants } from "@/db/schema";
-import { and, eq, desc, count, sql, ne, isNotNull } from "drizzle-orm";
+import { and, eq, desc, count, sql, ne, isNotNull, isNull } from "drizzle-orm";
 import { isAdmin } from "@/lib/admin-auth";
 import { z } from "zod";
 import {
@@ -90,6 +90,18 @@ export async function GET(request: Request) {
     .from(invoices)
     .innerJoin(merchants, eq(invoices.merchantId, merchants.id));
 
+  // Pending plan downgrades
+  const pendingDowngrades = await db
+    .select({
+      id: merchants.id,
+      name: merchants.name,
+      email: merchants.email,
+      plan: merchants.plan,
+      pendingPlanDowngrade: merchants.pendingPlanDowngrade,
+    })
+    .from(merchants)
+    .where(isNotNull(merchants.pendingPlanDowngrade));
+
   return NextResponse.json({
     data: rows,
     stats: {
@@ -100,6 +112,7 @@ export async function GET(request: Request) {
       countPendingUpgrades: Number(upgradeStats.countPendingUpgrades),
       totalPendingUpgradeAmount: Number(upgradeStats.totalPendingUpgradeAmount),
     },
+    pendingDowngrades,
   });
 }
 

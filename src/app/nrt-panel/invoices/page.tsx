@@ -11,7 +11,9 @@ import {
   Plus,
   Search,
   ArrowUpCircle,
+  ArrowDownCircle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface Invoice {
@@ -43,6 +45,14 @@ interface Stats {
   totalPendingUpgradeAmount: number;
 }
 
+interface PendingDowngrade {
+  id: number;
+  name: string;
+  email: string;
+  plan: string;
+  pendingPlanDowngrade: string;
+}
+
 function isUpgradeInvoice(inv: Invoice): boolean {
   return !!inv.planAtInvoice && inv.planAtInvoice !== inv.merchantPlan;
 }
@@ -67,8 +77,10 @@ function formatDH(centimes: number): string {
 }
 
 export default function AdminInvoicesPage() {
+  const router = useRouter();
   const [invoicesList, setInvoicesList] = useState<Invoice[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [pendingDowngrades, setPendingDowngrades] = useState<PendingDowngrade[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
@@ -92,6 +104,7 @@ export default function AdminInvoicesPage() {
       const json = await res.json();
       if (json.data) setInvoicesList(json.data);
       if (json.stats) setStats(json.stats);
+      if (json.pendingDowngrades) setPendingDowngrades(json.pendingDowngrades);
     } catch {
       // ignore
     } finally {
@@ -206,6 +219,49 @@ export default function AdminInvoicesPage() {
               <p className="text-xs text-purple-400 mt-0.5">{formatDH(stats.totalPendingUpgradeAmount)}</p>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Pending downgrades */}
+      {pendingDowngrades.length > 0 && (
+        <div className="rounded-sm bg-white border border-amber-200 shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ArrowDownCircle className="w-4 h-4 text-amber-500" />
+              <h3 className="text-sm font-semibold text-midnight">
+                Rétrogradations planifiées
+              </h3>
+              <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {pendingDowngrades.length}
+              </span>
+            </div>
+            <button
+              onClick={() => router.push("/nrt-panel/merchants")}
+              className="text-xs text-amber-500 hover:text-amber-700 transition-colors flex items-center gap-1"
+            >
+              Voir les marchands
+            </button>
+          </div>
+          <div className="space-y-2">
+            {pendingDowngrades.map((m) => (
+              <div
+                key={m.id}
+                onClick={() => router.push(`/nrt-panel/merchants/${m.id}`)}
+                className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 rounded-sm px-2 -mx-2 transition-colors"
+              >
+                <div>
+                  <p className="text-sm text-midnight font-medium">{m.name}</p>
+                  <p className="text-xs text-gray-400">{m.email}</p>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                  {m.plan} → {m.pendingPlanDowngrade}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-3">
+            Effectif au prochain cycle de facturation (le 2 du mois).
+          </p>
         </div>
       )}
 
