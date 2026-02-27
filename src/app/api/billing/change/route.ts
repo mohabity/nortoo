@@ -12,6 +12,7 @@ import {
   PAYMENT_TERMS_DAYS,
   BANK_INFO,
 } from "@/lib/billing-config";
+import { buildPlanChangeEmail, sendEmail } from "@/lib/email";
 
 const changePlanSchema = z.object({
   plan: z.enum(["starter", "pro", "scale"]),
@@ -52,6 +53,9 @@ export async function POST(request: Request) {
     // Fetch current merchant info
     const [merchant] = await db
       .select({
+        name: merchants.name,
+        email: merchants.email,
+        locale: merchants.locale,
         plan: merchants.plan,
         billingStatus: merchants.billingStatus,
         pendingPlanDowngrade: merchants.pendingPlanDowngrade,
@@ -81,11 +85,11 @@ export async function POST(request: Request) {
 
     // ── Downgrade → schedule for next month ──
     if (newIdx < currentIdx && currentPlan !== "trial") {
-      return handleDowngrade(merchantId, currentPlan, newPlan, merchant.pendingPlanDowngrade);
+      return handleDowngrade(merchantId, currentPlan, newPlan, merchant.pendingPlanDowngrade, merchant);
     }
 
     // ── Upgrade → prorated invoice ──
-    return handleUpgrade(merchantId, currentPlan, newPlan);
+    return handleUpgrade(merchantId, currentPlan, newPlan, merchant);
   } catch (err) {
     console.error("[Billing] Plan change error:", err);
     return NextResponse.json(
@@ -104,6 +108,7 @@ async function handleDowngrade(
   currentPlan: PlanId,
   newPlan: PlanId,
   existingPending: string | null,
+  merchant: { name: string; email: string; locale: string | null },
 ): Promise<NextResponse> {
   // Already a pending downgrade to this plan
   if (existingPending === newPlan) {
@@ -137,6 +142,25 @@ async function handleDowngrade(
   });
 
   const newConfig = getPlanConfig(newPlan);
+  const currentConfig = getPlanConfig(currentPlan);
+
+  // Fire-and-forget email notification
+  const locale = (merchant.locale ?? "fr") as "fr" | "en";
+  buildPlanChangeEmail(
+    {
+      merchantName: merchant.name,
+      type: "downgrade",
+      previousPlan: currentConfig.name,
+      newPlan: newConfig.name,
+      effectiveDate: locale === "en" ? "end of current billing cycle" : "fin du cycle de facturation en cours",
+    },
+    locale,
+  )
+    .then((email) =>
+      sendEmail({ to: merchant.email, subject: email.subject, html: email.html, text: email.text }),
+    )
+    .catch((err) => console.error("[PlanChange] Downgrade email error:", err));
+
   return NextResponse.json({
     data: {
       type: "downgrade_scheduled",
@@ -155,6 +179,7 @@ async function handleUpgrade(
   merchantId: number,
   currentPlan: PlanId,
   newPlan: PlanId,
+  merchant: { name: string; email: string; locale: string | null },
 ): Promise<NextResponse> {
   // Check for existing pending invoice (prevent duplicates)
   const [existingPending] = await db
@@ -255,6 +280,24 @@ async function handleUpgrade(
       fullCurrentPriceTTC: currentPriceTTC,
     }),
   });
+
+  // Fire-and-forget email notification
+  const locale = (merchant.locale ?? "fr") as "fr" | "en";
+  const amountDisplay = `${(amounts.amountTTC / 100).toFixed(2).replace(".", ",")} DH`;
+  buildPlanChangeEmail(
+    {
+      merchantName: merchant.name,
+      type: "upgrade",
+      previousPlan: currentConfig.name,
+      newPlan: newConfig.name,
+      invoiceAmount: amountDisplay,
+    },
+    locale,
+  )
+    .then((email) =>
+      sendEmail({ to: merchant.email, subject: email.subject, html: email.html, text: email.text }),
+    )
+    .catch((err) => console.error("[PlanChange] Upgrade email error:", err));
 
   return NextResponse.json({
     data: {

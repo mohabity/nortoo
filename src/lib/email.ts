@@ -15,6 +15,8 @@ import { Invoice } from "@/emails/Invoice";
 import { Overdue } from "@/emails/Overdue";
 import { DataRightsConfirmation } from "@/emails/DataRightsConfirmation";
 import { DataRightsNotification } from "@/emails/DataRightsNotification";
+import { PlanChange } from "@/emails/PlanChange";
+import { AdminLoginCode } from "@/emails/AdminLoginCode";
 
 interface EmailPayload {
   to: string;
@@ -236,4 +238,42 @@ export async function buildDataRightsNotificationEmail(data: DataRightsNotificat
     html,
     text,
   };
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLAN CHANGE (Upgrade / Downgrade)
+// ═══════════════════════════════════════════════════════════
+
+export interface PlanChangeEmailData {
+  merchantName: string;
+  type: "upgrade" | "downgrade";
+  previousPlan: string;
+  newPlan: string;
+  effectiveDate?: string;
+  invoiceAmount?: string;
+}
+
+export async function buildPlanChangeEmail(data: PlanChangeEmailData, locale: Locale = "fr") {
+  const element = React.createElement(PlanChange, { ...data, locale });
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  const subjectKey = data.type === "upgrade"
+    ? "planChange.upgrade.subject" as const
+    : "planChange.downgrade.subject" as const;
+  return { subject: t(locale, subjectKey), html, text };
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN MFA — Login verification code
+// ═══════════════════════════════════════════════════════════
+
+export async function buildAdminLoginCodeEmail(
+  code: string,
+  adminName: string,
+  locale: Locale = "fr",
+) {
+  const element = React.createElement(AdminLoginCode, { code, name: adminName, locale });
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  return { subject: t(locale, "adminMfa.subject"), html, text };
 }

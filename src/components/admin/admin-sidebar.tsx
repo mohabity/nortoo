@@ -6,12 +6,12 @@ import { LayoutDashboard, Users, FileText, Ticket, ScrollText, LogOut, PenTool }
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/merchants", label: "Merchants", icon: Users },
-  { href: "/admin/invoices", label: "Factures", icon: FileText },
-  { href: "/admin/coupons", label: "Coupons", icon: Ticket },
-  { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
-  { href: "/admin/blog", label: "Blog", icon: PenTool },
+  { href: "/nrt-panel", label: "Overview", icon: LayoutDashboard },
+  { href: "/nrt-panel/merchants", label: "Merchants", icon: Users },
+  { href: "/nrt-panel/invoices", label: "Factures", icon: FileText },
+  { href: "/nrt-panel/coupons", label: "Coupons", icon: Ticket },
+  { href: "/nrt-panel/audit-logs", label: "Audit Logs", icon: ScrollText },
+  { href: "/nrt-panel/blog", label: "Blog", icon: PenTool },
 ];
 
 export function AdminSidebar() {
@@ -19,18 +19,18 @@ export function AdminSidebar() {
   const router = useRouter();
 
   // Don't render on login page
-  if (pathname === "/admin/login") return null;
+  if (pathname === "/nrt-panel/login") return null;
 
   function handleLogout() {
     document.cookie = "nortoo_admin=; path=/; max-age=0";
-    router.push("/admin/login");
+    router.push("/nrt-panel/login");
   }
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-56 bg-white border-r border-gray-200 hidden lg:flex flex-col z-40">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-200">
-        <Link href="/admin" className="flex items-center gap-2.5">
+        <Link href="/nrt-panel" className="flex items-center gap-2.5">
           <img src="/nortoo-logo.png" alt="nortoo" className="h-7 w-auto" />
           <span className="text-xs font-medium text-mint bg-mint/10 px-1.5 py-0.5 rounded">
             admin
@@ -41,8 +41,8 @@ export function AdminSidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive = href === "/admin"
-            ? pathname === "/admin"
+          const isActive = href === "/nrt-panel"
+            ? pathname === "/nrt-panel"
             : pathname.startsWith(href);
 
           return (

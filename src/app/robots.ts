@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/", "/blog/"],
-        disallow: ["/dashboard/", "/admin/", "/api/"],
+        disallow: ["/dashboard/", "/nrt-panel/", "/api/"],
       },
     ],
     sitemap: "https://nortoo.ma/blog/sitemap.xml",

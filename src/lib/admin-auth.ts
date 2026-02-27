@@ -2,45 +2,65 @@ import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual } from "crypto";
 
 // ═══════════════════════════════════════════════════════════
-// Admin Authentication — Separate from Auth.js (merchant auth)
-// Uses ADMIN_SECRET env var + HMAC session cookie
+// Admin Authentication — Individual accounts + email MFA
+// ADMIN_SECRET = cookie signing key + initial setup key
+// Cookie format: "adminId:nonce:hmac" (new) or "nonce:hmac" (legacy)
 // ═══════════════════════════════════════════════════════════
 
 export const ADMIN_COOKIE_NAME = "nortoo_admin";
 
 /**
- * Create an HMAC session token from a nonce.
- * Cookie value = "nonce:hmac" — never stores the secret itself.
+ * Create an HMAC session token for a specific admin user.
+ * Cookie value = "adminId:nonce:hmac" — encodes who is logged in.
  */
-export function createAdminToken(secret: string): string {
+export function createAdminToken(adminId: number, secret: string): string {
   const nonce = Date.now().toString(36) + Math.random().toString(36).slice(2);
-  const hmac = createHmac("sha256", secret).update(nonce).digest("hex");
-  return `${nonce}:${hmac}`;
+  const payload = `${adminId}:${nonce}`;
+  const hmac = createHmac("sha256", secret).update(payload).digest("hex");
+  return `${adminId}:${nonce}:${hmac}`;
 }
 
 /**
- * Verify an HMAC session token against the secret.
+ * Verify an HMAC session token and extract the admin user ID.
+ * Returns the adminId on success, or null on failure.
+ *
+ * Supports three formats:
+ * - New:    "adminId:nonce:hmac" → verifies HMAC, returns adminId
+ * - Legacy: "nonce:hmac"        → verifies HMAC, returns 0 (transition)
+ * - Raw:    raw secret cookie   → direct compare, returns 0 (transition)
  */
-export function verifyAdminToken(token: string, secret: string): boolean {
-  const idx = token.indexOf(":");
-  if (idx === -1) {
-    // Legacy: raw secret cookie — still accept during transition
-    return safeCompare(token, secret);
+export function verifyAdminToken(token: string, secret: string): number | null {
+  const parts = token.split(":");
+
+  if (parts.length === 3) {
+    // New format: adminId:nonce:hmac
+    const [adminIdStr, nonce, providedHmac] = parts;
+    const adminId = parseInt(adminIdStr, 10);
+    if (isNaN(adminId) || !nonce || !providedHmac) return null;
+    const payload = `${adminId}:${nonce}`;
+    const expectedHmac = createHmac("sha256", secret).update(payload).digest("hex");
+    return safeCompare(providedHmac, expectedHmac) ? adminId : null;
   }
-  const nonce = token.slice(0, idx);
-  const providedHmac = token.slice(idx + 1);
-  const expectedHmac = createHmac("sha256", secret).update(nonce).digest("hex");
-  return safeCompare(providedHmac, expectedHmac);
+
+  if (parts.length === 2) {
+    // Legacy format: nonce:hmac (from shared ADMIN_SECRET era)
+    const [nonce, providedHmac] = parts;
+    if (!nonce || !providedHmac) return null;
+    const expectedHmac = createHmac("sha256", secret).update(nonce).digest("hex");
+    return safeCompare(providedHmac, expectedHmac) ? 0 : null;
+  }
+
+  // Raw secret cookie (very old legacy)
+  return safeCompare(token, secret) ? 0 : null;
 }
 
 /**
  * Check if the current request is from an authenticated admin.
+ * Returns true/false — backward compatible with all existing route guards.
  *
  * Checks two sources:
  * 1. `nortoo_admin` httpOnly cookie (HMAC token set at login)
  * 2. `Authorization: Bearer <secret>` header (for API calls)
- *
- * Uses timingSafeEqual to prevent timing attacks.
  */
 export async function isAdmin(request?: Request): Promise<boolean> {
   const secret = process.env.ADMIN_SECRET;
@@ -50,7 +70,7 @@ export async function isAdmin(request?: Request): Promise<boolean> {
   try {
     const cookieStore = await cookies();
     const adminCookie = cookieStore.get(ADMIN_COOKIE_NAME);
-    if (adminCookie?.value && verifyAdminToken(adminCookie.value, secret)) {
+    if (adminCookie?.value && verifyAdminToken(adminCookie.value, secret) !== null) {
       return true;
     }
   } catch {
@@ -69,6 +89,27 @@ export async function isAdmin(request?: Request): Promise<boolean> {
   }
 
   return false;
+}
+
+/**
+ * Get the authenticated admin's user ID from the session cookie.
+ * Returns the adminId (>0 for new accounts, 0 for legacy sessions), or null if not authenticated.
+ */
+export async function getAdminId(): Promise<number | null> {
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) return null;
+
+  try {
+    const cookieStore = await cookies();
+    const adminCookie = cookieStore.get(ADMIN_COOKIE_NAME);
+    if (adminCookie?.value) {
+      return verifyAdminToken(adminCookie.value, secret);
+    }
+  } catch {
+    // cookies() may fail in certain contexts
+  }
+
+  return null;
 }
 
 /**

@@ -350,6 +350,92 @@ const emailDict = {
     fr: "🏙️ {city} reste la ville la plus risquée ({blockRate}% blocage).",
     en: "🏙️ {city} remains the highest-risk city ({blockRate}% block rate).",
   },
+  // ── Plan Change ──
+  "planChange.greeting": {
+    fr: "Bonjour {name},",
+    en: "Hello {name},",
+  },
+  "planChange.previousPlan": {
+    fr: "Plan actuel",
+    en: "Current plan",
+  },
+  "planChange.newPlan": {
+    fr: "Nouveau plan",
+    en: "New plan",
+  },
+  "planChange.effectiveDate": {
+    fr: "Date d'effet",
+    en: "Effective date",
+  },
+  "planChange.amount": {
+    fr: "Montant prorata TTC",
+    en: "Prorated amount incl. tax",
+  },
+  "planChange.upgrade.preview": {
+    fr: "Passage au plan {newPlan}",
+    en: "Upgrade to {newPlan} plan",
+  },
+  "planChange.upgrade.subject": {
+    fr: "Votre plan a été mis à niveau — nortoo",
+    en: "Your plan has been upgraded — nortoo",
+  },
+  "planChange.upgrade.heading": {
+    fr: "Passage au plan {newPlan}",
+    en: "Upgrade to {newPlan}",
+  },
+  "planChange.upgrade.body": {
+    fr: "Votre plan nortoo est passé de {previousPlan} à {newPlan}. Une facture prorata de {amount} a été générée.",
+    en: "Your nortoo plan has been changed from {previousPlan} to {newPlan}. A prorated invoice of {amount} has been generated.",
+  },
+  "planChange.upgrade.cta": {
+    fr: "Voir ma facturation",
+    en: "View my billing",
+  },
+  "planChange.downgrade.preview": {
+    fr: "Rétrogradation vers {newPlan} planifiée",
+    en: "Downgrade to {newPlan} scheduled",
+  },
+  "planChange.downgrade.subject": {
+    fr: "Rétrogradation de plan planifiée — nortoo",
+    en: "Plan downgrade scheduled — nortoo",
+  },
+  "planChange.downgrade.heading": {
+    fr: "Passage au plan {newPlan} planifié",
+    en: "Downgrade to {newPlan} scheduled",
+  },
+  "planChange.downgrade.body": {
+    fr: "Votre plan passera de {previousPlan} à {newPlan} à la fin de votre cycle de facturation actuel ({effectiveDate}).",
+    en: "Your plan will change from {previousPlan} to {newPlan} at the end of your current billing cycle ({effectiveDate}).",
+  },
+  "planChange.downgrade.cta": {
+    fr: "Gérer mon abonnement",
+    en: "Manage my subscription",
+  },
+  // ── Admin MFA ──
+  "adminMfa.preview": {
+    fr: "Code de connexion admin nortoo",
+    en: "nortoo admin login code",
+  },
+  "adminMfa.subject": {
+    fr: "Code de connexion admin — nortoo",
+    en: "Admin login code — nortoo",
+  },
+  "adminMfa.heading": {
+    fr: "Code de connexion admin",
+    en: "Admin login code",
+  },
+  "adminMfa.greeting": {
+    fr: "Bonjour {name},",
+    en: "Hello {name},",
+  },
+  "adminMfa.body": {
+    fr: "Voici votre code de connexion au panel d'administration nortoo :",
+    en: "Here is your login code for the nortoo admin panel:",
+  },
+  "adminMfa.expiry": {
+    fr: "Ce code expire dans 10 minutes. Si vous n'avez pas demandé ce code, ignorez cet email.",
+    en: "This code expires in 10 minutes. If you didn't request this code, ignore this email.",
+  },
 } as const satisfies Record<string, { fr: string; en: string }>;
 
 // ─────────────────────────────────────────────────────────────

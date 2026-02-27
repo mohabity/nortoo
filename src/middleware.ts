@@ -35,14 +35,14 @@ const PUBLIC_PATHS = [
   "/api/auth/",
   "/api/webhook/",
   "/api/cron/",
-  "/api/admin/",
+  "/api/nrt-panel/",
   "/api/blog/",
   "/api/og/",
   "/api/data-rights/submit",
   "/api/team/accept-invite",
   "/api/coupons/validate",
   "/redeem",
-  "/admin/login",
+  "/nrt-panel/login",
   "/_next/",
   "/favicon.ico",
 ];
@@ -87,15 +87,15 @@ export async function middleware(request: NextRequest) {
   }
 
   // Admin panel: check nortoo_admin HMAC cookie (separate from Auth.js)
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
+  if (pathname.startsWith("/nrt-panel") && !pathname.startsWith("/nrt-panel/login")) {
     const adminCookie = request.cookies.get("nortoo_admin");
     const adminSecret = process.env.ADMIN_SECRET;
     if (!adminCookie?.value || !adminSecret) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      return NextResponse.redirect(new URL("/nrt-panel/login", request.url));
     }
     const valid = await verifyAdminCookie(adminCookie.value, adminSecret);
     if (!valid) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      return NextResponse.redirect(new URL("/nrt-panel/login", request.url));
     }
     return NextResponse.next();
   }
@@ -144,17 +144,36 @@ export async function middleware(request: NextRequest) {
 
 /**
  * Verify admin HMAC cookie using Web Crypto API (Edge-compatible).
- * Cookie format: "nonce:hmac" where hmac = HMAC-SHA256(secret, nonce).
- * Also accepts legacy raw secret cookies during transition.
+ *
+ * Supports three formats:
+ * - New:    "adminId:nonce:hmac" → HMAC-SHA256(secret, "adminId:nonce")
+ * - Legacy: "nonce:hmac"        → HMAC-SHA256(secret, nonce)
+ * - Raw:    raw secret cookie   → direct comparison
  */
 async function verifyAdminCookie(cookieValue: string, secret: string): Promise<boolean> {
-  const idx = cookieValue.indexOf(":");
-  if (idx === -1) {
-    // Legacy: raw secret cookie — direct comparison
-    return cookieValue === secret;
+  const parts = cookieValue.split(":");
+
+  if (parts.length === 3) {
+    // New format: adminId:nonce:hmac
+    const [adminId, nonce, providedHmac] = parts;
+    if (!adminId || isNaN(Number(adminId)) || !nonce || !providedHmac) return false;
+    const payload = `${adminId}:${nonce}`;
+    return hmacVerify(secret, payload, providedHmac);
   }
-  const nonce = cookieValue.slice(0, idx);
-  const providedHmac = cookieValue.slice(idx + 1);
+
+  if (parts.length === 2) {
+    // Legacy format: nonce:hmac
+    const [nonce, providedHmac] = parts;
+    if (!nonce || !providedHmac) return false;
+    return hmacVerify(secret, nonce, providedHmac);
+  }
+
+  // Raw secret cookie (very old legacy) — direct comparison
+  return cookieValue === secret;
+}
+
+/** HMAC-SHA256 verify using Web Crypto API (Edge-compatible). */
+async function hmacVerify(secret: string, data: string, providedHmac: string): Promise<boolean> {
   try {
     const key = await crypto.subtle.importKey(
       "raw",
@@ -163,7 +182,7 @@ async function verifyAdminCookie(cookieValue: string, secret: string): Promise<b
       false,
       ["sign"]
     );
-    const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(nonce));
+    const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data));
     const expectedHmac = Array.from(new Uint8Array(sig))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");

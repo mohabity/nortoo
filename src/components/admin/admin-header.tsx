@@ -7,8 +7,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const ROUTE_TITLES: Record<string, string> = {
-  "/admin": "Overview",
-  "/admin/merchants": "Merchants",
+  "/nrt-panel": "Overview",
+  "/nrt-panel/merchants": "Merchants",
 };
 
 export function AdminHeader() {
@@ -17,13 +17,13 @@ export function AdminHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Don't render on login page
-  if (pathname === "/admin/login") return null;
+  if (pathname === "/nrt-panel/login") return null;
 
   const title = ROUTE_TITLES[pathname] ?? "Admin";
 
   function handleLogout() {
     document.cookie = "nortoo_admin=; path=/; max-age=0";
-    router.push("/admin/login");
+    router.push("/nrt-panel/login");
   }
 
   return (
@@ -65,8 +65,8 @@ export function AdminHeader() {
             </div>
             <nav className="space-y-1">
               {[
-                { href: "/admin", label: "Overview" },
-                { href: "/admin/merchants", label: "Merchants" },
+                { href: "/nrt-panel", label: "Overview" },
+                { href: "/nrt-panel/merchants", label: "Merchants" },
               ].map(({ href, label }) => (
                 <Link
                   key={href}

@@ -38,6 +38,13 @@ export const adminLoginLimiter = new Ratelimit({
   prefix: "rl:admin-login",
 });
 
+/** Admin MFA verification: 5 attempts per 10 minutes per IP (strict) */
+export const adminMfaLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10m"),
+  prefix: "rl:admin-mfa",
+});
+
 /**
  * Extract client IP from request headers (Vercel/Cloudflare compatible).
  */
