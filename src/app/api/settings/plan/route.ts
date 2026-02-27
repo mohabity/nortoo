@@ -22,6 +22,7 @@ export async function GET() {
     .select({
       plan: merchants.plan,
       billingStatus: merchants.billingStatus,
+      pendingPlanDowngrade: merchants.pendingPlanDowngrade,
       trialEndsAt: merchants.trialEndsAt,
       currentMonthOrders: merchants.currentMonthOrders,
       currentMonthStart: merchants.currentMonthStart,
@@ -77,6 +78,7 @@ export async function GET() {
         },
       },
       billingStatus: merchant.billingStatus,
+      pendingPlanDowngrade: merchant.pendingPlanDowngrade ?? null,
       trial,
       currentMonthStart: merchant.currentMonthStart?.toISOString() ?? null,
     },

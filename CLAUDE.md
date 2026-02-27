@@ -73,7 +73,7 @@ Base 25 → Client fiable -20/-10 → Recidiviste +30/+15 → Nouveau +10 → Mo
 - billing@nortoo.ma — facturation
 - admin@nortoo.ma — administration
 
-## Plans : Trial (0 DH) · Starter (299 DH) · Pro (699 DH) · Scale (1 499 DH)
+## Plans : Trial (0 DH) · Starter (299 DH TTC) · Pro (699 DH TTC) · Scale (1 499 DH TTC)
 
 ## Compliance
 

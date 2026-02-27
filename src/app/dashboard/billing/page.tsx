@@ -17,6 +17,7 @@ import {
   CreditCard,
   X,
   CheckCircle,
+  ArrowDownCircle,
 } from "lucide-react";
 import { PlanBadge } from "@/components/plan-badge";
 import {
@@ -46,6 +47,7 @@ interface PlanApiData {
     orders: { current: number; limit: number; percent: number };
     users: { current: number; limit: number };
   };
+  pendingPlanDowngrade: string | null;
   trial: { daysRemaining: number; expiresAt: string } | null;
   currentMonthStart: string | null;
 }
@@ -145,6 +147,7 @@ export default function BillingPage() {
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [pendingUpgrade, setPendingUpgrade] = useState<PendingUpgrade | null>(null);
   const [upgradeModal, setUpgradeModal] = useState<UpgradeConfirmation | null>(null);
+  const [cancellingDowngrade, setCancellingDowngrade] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -213,19 +216,24 @@ export default function BillingPage() {
       });
       const json = await res.json();
       if (res.ok && json.data) {
-        // Show confirmation modal with invoice details and bank info
-        setUpgradeModal({
-          invoiceNumber: json.data.invoiceNumber,
-          plan: json.data.plan,
-          planName: json.data.planName,
-          amountHT: json.data.amountHT,
-          amountTVA: json.data.amountTVA,
-          amountTTC: json.data.amountTTC,
-          dueDate: json.data.dueDate,
-          bankInfo: json.data.bankInfo,
-        });
-        // Refresh data in background
-        fetchAll();
+        if (json.data.type === "downgrade_scheduled") {
+          // Downgrade scheduled — show toast + refresh data
+          setToast({ type: "success", message: json.data.message });
+          fetchAll();
+        } else {
+          // Upgrade — show confirmation modal with invoice details
+          setUpgradeModal({
+            invoiceNumber: json.data.invoiceNumber,
+            plan: json.data.plan,
+            planName: json.data.planName,
+            amountHT: json.data.amountHT,
+            amountTVA: json.data.amountTVA,
+            amountTTC: json.data.amountTTC,
+            dueDate: json.data.dueDate,
+            bankInfo: json.data.bankInfo,
+          });
+          fetchAll();
+        }
       } else {
         setToast({ type: "error", message: json.error || t("billing.toast.planChangeError") });
       }
@@ -233,6 +241,25 @@ export default function BillingPage() {
       setToast({ type: "error", message: t("billing.toast.networkError") });
     } finally {
       setChanging(null);
+    }
+  };
+
+  const handleCancelDowngrade = async () => {
+    if (cancellingDowngrade) return;
+    setCancellingDowngrade(true);
+    try {
+      const res = await fetch("/api/billing/cancel-downgrade", { method: "POST" });
+      const json = await res.json();
+      if (res.ok && json.data) {
+        setToast({ type: "success", message: json.data.message });
+        fetchAll();
+      } else {
+        setToast({ type: "error", message: json.error || "Erreur" });
+      }
+    } catch {
+      setToast({ type: "error", message: t("billing.toast.networkError") });
+    } finally {
+      setCancellingDowngrade(false);
     }
   };
 
@@ -437,6 +464,32 @@ export default function BillingPage() {
         </div>
       )}
 
+      {/* Section 1c — Pending Downgrade Banner */}
+      {planData.pendingPlanDowngrade && (
+        <div className="rounded-sm border-2 border-sun/30 bg-sun/5 p-6">
+          <div className="flex items-start gap-3">
+            <ArrowDownCircle className="h-5 w-5 text-sun-deep shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h2 className="font-display text-base font-semibold text-midnight">
+                Rétrogradation planifiée — Plan {PLAN_CONFIGS[planData.pendingPlanDowngrade as PlanId]?.name ?? planData.pendingPlanDowngrade}
+              </h2>
+              <p className="text-sm text-fog mt-1">
+                Votre plan sera rétrogradé vers <span className="font-semibold text-midnight">{PLAN_CONFIGS[planData.pendingPlanDowngrade as PlanId]?.name ?? planData.pendingPlanDowngrade}</span> au prochain mois de facturation.
+                Vous conservez toutes les fonctionnalités de votre plan actuel jusqu&apos;à la fin du mois.
+              </p>
+              <button
+                onClick={handleCancelDowngrade}
+                disabled={cancellingDowngrade}
+                className="mt-3 inline-flex items-center gap-2 rounded-sm border border-sun/40 bg-white px-4 py-2 text-sm font-medium text-sun-deep hover:bg-sun/5 transition-colors disabled:opacity-50"
+              >
+                {cancellingDowngrade ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                Annuler la rétrogradation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Section 2 — Informations de facturation */}
       <div className="rounded-sm border border-silk bg-white p-6">
         <h2 className="font-display text-base font-semibold text-midnight mb-4">
@@ -574,6 +627,7 @@ export default function BillingPage() {
             const isUpgrade = PLAN_ORDER.indexOf(planId) > PLAN_ORDER.indexOf(currentPlan);
             const isDowngrade = PLAN_ORDER.indexOf(planId) < PLAN_ORDER.indexOf(currentPlan);
             const isChanging = changing === planId;
+            const isDowngradeTarget = planData.pendingPlanDowngrade === planId;
 
             return (
               <div
@@ -595,8 +649,8 @@ export default function BillingPage() {
                   {config.price > 0 ? (
                     <>
                       <span className="font-display text-2xl font-bold text-midnight">{formatCurrency(config.price, locale)}</span>
-                      <span className="text-sm text-fog">{t("currency.perMonth")}</span>
-                      <p className="text-xs text-mist mt-0.5">HT · {formatCurrency(Math.round(config.price * 1.2), locale)} TTC</p>
+                      <span className="text-sm text-fog"> TTC{t("currency.perMonth")}</span>
+                      <p className="text-xs text-mist mt-0.5">HT : {formatCurrency(Math.round(config.price / 1.2), locale)} · TVA : {formatCurrency(config.price - Math.round(config.price / 1.2), locale)}</p>
                     </>
                   ) : (
                     <span className="font-display text-lg font-bold text-fog">{t("billing.free")}</span>
@@ -628,10 +682,11 @@ export default function BillingPage() {
                   )}
                 </ul>
                 <button
-                  disabled={isCurrent || isChanging || planId === "trial" || (pendingUpgrade?.pending && isUpgrade)}
+                  disabled={isCurrent || isChanging || planId === "trial" || (pendingUpgrade?.pending && isUpgrade) || isDowngradeTarget}
                   className={cn(
                     "mt-5 w-full rounded-sm px-4 py-2.5 text-sm font-medium transition-all",
                     isCurrent ? "border-2 border-mint bg-mint/5 text-mint cursor-not-allowed"
+                      : isDowngradeTarget ? "border-2 border-sun/40 bg-sun/5 text-sun-deep cursor-not-allowed"
                       : planId === "trial" ? "bg-snow text-mist cursor-not-allowed"
                       : (pendingUpgrade?.pending && isUpgrade) ? "bg-snow text-mist cursor-not-allowed"
                       : isNext ? cn("bg-gradient-to-r from-mint to-mint-deep text-midnight shadow-sm hover:shadow-lg hover:-translate-y-0.5", isChanging && "opacity-70")
@@ -639,10 +694,11 @@ export default function BillingPage() {
                       : isDowngrade ? cn("border border-silk text-fog hover:border-rose/40 hover:text-rose", isChanging && "opacity-70")
                       : "bg-snow text-mist cursor-not-allowed"
                   )}
-                  onClick={() => { if (!isCurrent && planId !== "trial") handleChangePlan(planId); }}
+                  onClick={() => { if (!isCurrent && planId !== "trial" && !isDowngradeTarget) handleChangePlan(planId); }}
                 >
                   {isChanging ? <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                     : isCurrent ? t("billing.comparison.currentPlan")
+                    : isDowngradeTarget ? "Rétrogradation planifiée"
                     : planId === "trial" ? "—"
                     : (pendingUpgrade?.pending && isUpgrade) ? "Upgrade en cours..."
                     : isNext ? t("billing.comparison.upgradeTo", { plan: t(`plans.${planId}.name`) })

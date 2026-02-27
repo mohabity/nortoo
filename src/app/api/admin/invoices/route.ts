@@ -172,10 +172,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // Calculate amounts
+  // Calculate amounts (prix TTC — TVA incluse)
   const planConfig = getPlanConfig(merchant.plan);
-  const priceHT = inputAmount ?? planConfig.price * 100; // convert DH to centimes
-  const amounts = calculateAmounts(priceHT);
+  const priceTTC = inputAmount ?? planConfig.price * 100; // DH TTC to centimes
+  const amounts = calculateAmounts(priceTTC);
 
   // Generate invoice number
   const [countResult] = await db

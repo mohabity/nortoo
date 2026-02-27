@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db/index";
-import { merchants, invoices } from "@/db/schema";
-import { and, eq, ne, count } from "drizzle-orm";
+import { merchants, invoices, auditLogs } from "@/db/schema";
+import { and, eq, ne, isNotNull, count } from "drizzle-orm";
 import { verifyCronSecret } from "@/lib/cron-auth";
 import { getPlanConfig } from "@/lib/plans";
 import {
@@ -18,7 +18,8 @@ import type { Locale } from "@/i18n/types";
 /**
  * GET /api/cron/generate-invoices
  * Runs on the 2nd of every month (0 0 2 * *).
- * Generates invoices for all paying merchants.
+ * 1. Apply pending plan downgrades
+ * 2. Generate invoices for all paying merchants
  */
 export async function GET(request: Request) {
   if (!verifyCronSecret(request)) {
@@ -28,10 +29,12 @@ export async function GET(request: Request) {
   try {
     const result = await withCronMonitoring("generate-invoices", async () => {
       const now = new Date();
-      // Invoice period = current month (e.g. on Feb 2nd → "2026-02")
       const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-      // Get all paying merchants (plan != "trial", billingStatus != "cancelled")
+      // ── Step 1: Apply pending downgrades ──
+      const downgraded = await applyPendingDowngrades();
+
+      // ── Step 2: Generate invoices ──
       const payingMerchants = await db
         .select({
           id: merchants.id,
@@ -75,8 +78,8 @@ export async function GET(request: Request) {
           continue;
         }
 
-        const priceHT = planConfig.price * 100; // DH to centimes
-        const amounts = calculateAmounts(priceHT);
+        const priceTTC = planConfig.price * 100; // DH TTC to centimes
+        const amounts = calculateAmounts(priceTTC);
 
         // Generate sequential invoice number
         const [countResult] = await db
@@ -135,10 +138,10 @@ export async function GET(request: Request) {
       }
 
       console.log(
-        `[generate-invoices] Period ${period}: ${generated} generated, ${skipped} skipped`
+        `[generate-invoices] Period ${period}: ${generated} generated, ${skipped} skipped, ${downgraded} downgraded`
       );
 
-      return { period, generated, skipped };
+      return { period, generated, skipped, downgraded };
     });
 
     return NextResponse.json({ data: result });
@@ -146,4 +149,52 @@ export async function GET(request: Request) {
     console.error("[generate-invoices] Error:", err);
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });
   }
+}
+
+/**
+ * Apply all pending plan downgrades.
+ * Called at the start of each billing cycle (before generating invoices).
+ * Sets merchant.plan = pendingPlanDowngrade, then clears the field.
+ */
+async function applyPendingDowngrades(): Promise<number> {
+  const pendingMerchants = await db
+    .select({
+      id: merchants.id,
+      plan: merchants.plan,
+      pendingPlanDowngrade: merchants.pendingPlanDowngrade,
+    })
+    .from(merchants)
+    .where(isNotNull(merchants.pendingPlanDowngrade));
+
+  let applied = 0;
+
+  for (const merchant of pendingMerchants) {
+    const newPlan = merchant.pendingPlanDowngrade!;
+    const oldPlan = merchant.plan;
+
+    await db
+      .update(merchants)
+      .set({
+        plan: newPlan,
+        pendingPlanDowngrade: null,
+      })
+      .where(eq(merchants.id, merchant.id));
+
+    await db.insert(auditLogs).values({
+      merchantId: merchant.id,
+      actor: "system",
+      action: "apply_downgrade",
+      targetType: "merchant",
+      targetId: String(merchant.id),
+      details: JSON.stringify({
+        fromPlan: oldPlan,
+        toPlan: newPlan,
+      }),
+    });
+
+    applied++;
+    console.log(`[generate-invoices] Downgrade applied: merchant #${merchant.id} ${oldPlan} → ${newPlan}`);
+  }
+
+  return applied;
 }

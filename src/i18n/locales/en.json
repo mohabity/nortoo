@@ -97,18 +97,18 @@
     },
     "starter": {
       "name": "Starter",
-      "label": "299 MAD/mo",
-      "description": "299 MAD/mo"
+      "label": "299 MAD/mo (incl. tax)",
+      "description": "299 MAD/mo (incl. tax)"
     },
     "pro": {
       "name": "Pro",
-      "label": "699 MAD/mo",
-      "description": "699 MAD/mo"
+      "label": "699 MAD/mo (incl. tax)",
+      "description": "699 MAD/mo (incl. tax)"
     },
     "scale": {
       "name": "Scale",
-      "label": "1,499 MAD/mo",
-      "description": "1,499 MAD/mo"
+      "label": "1,499 MAD/mo (incl. tax)",
+      "description": "1,499 MAD/mo (incl. tax)"
     }
   },
   "features": {
@@ -1212,7 +1212,7 @@
       "scaleOrders": "Unlimited",
       "scaleUsers": "10 users",
       "scaleCta": "Choose Scale",
-      "currency": "MAD/mo",
+      "currency": "MAD/mo (incl. tax)",
       "allProPlus": "Everything in Pro +",
       "prioritySupport": "Priority support"
     },

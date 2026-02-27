@@ -1,0 +1,1 @@
+ALTER TABLE "merchants" ADD COLUMN "pending_plan_downgrade" text;

@@ -36,6 +36,7 @@ export const merchants = pgTable("merchants", {
 
   // Billing
   plan: text("plan").notNull().default("trial"), // trial | starter | pro | scale
+  pendingPlanDowngrade: text("pending_plan_downgrade"), // null | starter | pro — effectif au prochain mois
   billingStatus: text("billing_status").notNull().default("trial"), // trial | active | past_due | cancelled
   inviteCode: text("invite_code"),               // invite code used at signup
   stripeCustomerId: text("stripe_customer_id"),

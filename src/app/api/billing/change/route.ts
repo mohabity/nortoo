@@ -7,6 +7,7 @@ import { getMerchantId } from "@/lib/merchant";
 import { getPlanConfig, PLAN_ORDER, type PlanId } from "@/lib/plans";
 import {
   calculateAmounts,
+  calculateProratedUpgrade,
   generateInvoiceNumber,
   PAYMENT_TERMS_DAYS,
   BANK_INFO,
@@ -19,11 +20,10 @@ const changePlanSchema = z.object({
 /**
  * POST /api/billing/change
  *
- * Self-service plan upgrade via bank transfer (virement bancaire).
- * Creates a pending proforma invoice for the chosen plan.
- * The merchant then transfers the amount; admin confirms payment → auto-upgrade.
+ * Self-service plan change (upgrade or downgrade).
  *
- * Downgrades are not supported self-service — contact support.
+ * Upgrade : facture proforma proratisée → paiement par virement → activation immédiate.
+ * Downgrade : planifié pour le prochain mois de facturation (pas de remboursement).
  */
 export async function POST(request: Request) {
   try {
@@ -54,6 +54,7 @@ export async function POST(request: Request) {
       .select({
         plan: merchants.plan,
         billingStatus: merchants.billingStatus,
+        pendingPlanDowngrade: merchants.pendingPlanDowngrade,
       })
       .from(merchants)
       .where(eq(merchants.id, merchantId))
@@ -70,18 +71,7 @@ export async function POST(request: Request) {
     const currentIdx = PLAN_ORDER.indexOf(currentPlan);
     const newIdx = PLAN_ORDER.indexOf(newPlan);
 
-    // Block downgrades
-    if (newIdx <= currentIdx && currentPlan !== "trial") {
-      return NextResponse.json(
-        {
-          error: "Pour passer à un plan inférieur, contactez support@nortoo.ma.",
-          code: "DOWNGRADE_NOT_SUPPORTED",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Same plan (already on this plan and active)
+    // Same plan
     if (newPlan === currentPlan && merchant.billingStatus === "active") {
       return NextResponse.json(
         { error: "Vous êtes déjà sur ce plan." },
@@ -89,100 +79,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for existing pending invoice for an upgrade (prevent duplicates)
-    const [existingPending] = await db
-      .select({
-        id: invoices.id,
-        invoiceNumber: invoices.invoiceNumber,
-        planAtInvoice: invoices.planAtInvoice,
-        amountTTC: invoices.amountTTC,
-      })
-      .from(invoices)
-      .where(
-        and(
-          eq(invoices.merchantId, merchantId),
-          eq(invoices.status, "pending"),
-          eq(invoices.planAtInvoice, newPlan)
-        )
-      )
-      .limit(1);
-
-    if (existingPending) {
-      return NextResponse.json(
-        {
-          error: "Une demande d'upgrade vers ce plan est déjà en cours.",
-          code: "UPGRADE_PENDING",
-          existingInvoice: {
-            invoiceNumber: existingPending.invoiceNumber,
-            amountTTC: existingPending.amountTTC,
-          },
-        },
-        { status: 409 }
-      );
+    // ── Downgrade → schedule for next month ──
+    if (newIdx < currentIdx && currentPlan !== "trial") {
+      return handleDowngrade(merchantId, currentPlan, newPlan, merchant.pendingPlanDowngrade);
     }
 
-    // Calculate amounts
-    const planConfig = getPlanConfig(newPlan);
-    const priceHT = planConfig.price * 100; // DH to centimes
-    const amounts = calculateAmounts(priceHT);
-
-    // Generate invoice number
-    const [countResult] = await db.select({ cnt: count() }).from(invoices);
-    const sequence = Number(countResult.cnt) + 1;
-    const invoiceNumber = generateInvoiceNumber(sequence);
-
-    // Due date
-    const now = new Date();
-    const dueDate = new Date(
-      now.getTime() + PAYMENT_TERMS_DAYS * 24 * 60 * 60 * 1000
-    );
-    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-
-    // Create pending invoice (proforma)
-    const [newInvoice] = await db
-      .insert(invoices)
-      .values({
-        merchantId,
-        invoiceNumber,
-        period,
-        planAtInvoice: newPlan,
-        amountHT: amounts.amountHT,
-        tvaRate: 20,
-        amountTVA: amounts.amountTVA,
-        amountTTC: amounts.amountTTC,
-        status: "pending",
-        dueDate,
-      })
-      .returning({ id: invoices.id });
-
-    // Audit log (Art. 23 Loi 09-08)
-    await db.insert(auditLogs).values({
-      merchantId,
-      actor: "merchant",
-      action: "change_plan",
-      targetType: "invoice",
-      targetId: String(newInvoice.id),
-      details: JSON.stringify({
-        fromPlan: currentPlan,
-        toPlan: newPlan,
-        invoiceNumber,
-        amountTTC: amounts.amountTTC,
-      }),
-    });
-
-    return NextResponse.json({
-      data: {
-        invoiceId: newInvoice.id,
-        invoiceNumber,
-        plan: newPlan,
-        planName: planConfig.name,
-        amountHT: amounts.amountHT,
-        amountTVA: amounts.amountTVA,
-        amountTTC: amounts.amountTTC,
-        dueDate: dueDate.toISOString(),
-        bankInfo: BANK_INFO,
-      },
-    });
+    // ── Upgrade → prorated invoice ──
+    return handleUpgrade(merchantId, currentPlan, newPlan);
   } catch (err) {
     console.error("[Billing] Plan change error:", err);
     return NextResponse.json(
@@ -190,4 +93,188 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Downgrade — effectif au prochain mois de facturation
+// ═══════════════════════════════════════════════════════════
+
+async function handleDowngrade(
+  merchantId: number,
+  currentPlan: PlanId,
+  newPlan: PlanId,
+  existingPending: string | null,
+): Promise<NextResponse> {
+  // Already a pending downgrade to this plan
+  if (existingPending === newPlan) {
+    return NextResponse.json(
+      {
+        error: `Rétrogradation vers ${getPlanConfig(newPlan).name} déjà planifiée pour le prochain mois.`,
+        code: "DOWNGRADE_ALREADY_SCHEDULED",
+      },
+      { status: 409 }
+    );
+  }
+
+  // Schedule the downgrade
+  await db
+    .update(merchants)
+    .set({ pendingPlanDowngrade: newPlan })
+    .where(eq(merchants.id, merchantId));
+
+  // Audit log (Art. 23)
+  await db.insert(auditLogs).values({
+    merchantId,
+    actor: "merchant",
+    action: "schedule_downgrade",
+    targetType: "merchant",
+    targetId: String(merchantId),
+    details: JSON.stringify({
+      fromPlan: currentPlan,
+      toPlan: newPlan,
+      effectiveAt: "next_billing_cycle",
+    }),
+  });
+
+  const newConfig = getPlanConfig(newPlan);
+  return NextResponse.json({
+    data: {
+      type: "downgrade_scheduled",
+      plan: newPlan,
+      planName: newConfig.name,
+      message: `Votre plan sera rétrogradé vers ${newConfig.name} (${newConfig.label}) au prochain mois de facturation. Vous conservez votre plan actuel jusqu'à la fin du mois en cours.`,
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// Upgrade — facture proforma proratisée immédiate
+// ═══════════════════════════════════════════════════════════
+
+async function handleUpgrade(
+  merchantId: number,
+  currentPlan: PlanId,
+  newPlan: PlanId,
+): Promise<NextResponse> {
+  // Check for existing pending invoice (prevent duplicates)
+  const [existingPending] = await db
+    .select({
+      id: invoices.id,
+      invoiceNumber: invoices.invoiceNumber,
+      planAtInvoice: invoices.planAtInvoice,
+      amountTTC: invoices.amountTTC,
+    })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.merchantId, merchantId),
+        eq(invoices.status, "pending"),
+        eq(invoices.planAtInvoice, newPlan)
+      )
+    )
+    .limit(1);
+
+  if (existingPending) {
+    return NextResponse.json(
+      {
+        error: "Une demande d'upgrade vers ce plan est déjà en cours.",
+        code: "UPGRADE_PENDING",
+        existingInvoice: {
+          invoiceNumber: existingPending.invoiceNumber,
+          amountTTC: existingPending.amountTTC,
+        },
+      },
+      { status: 409 }
+    );
+  }
+
+  // Calculate prorated upgrade amount (TTC — TVA incluse)
+  const now = new Date();
+  const currentConfig = getPlanConfig(currentPlan);
+  const newConfig = getPlanConfig(newPlan);
+  const currentPriceTTC = currentConfig.price * 100;
+  const newPriceTTC = newConfig.price * 100;
+
+  const { proratedTTC, daysRemaining, daysInMonth } =
+    calculateProratedUpgrade(currentPriceTTC, newPriceTTC, now);
+
+  // Minimum 1 DH to avoid zero-amount invoices
+  const finalTTC = Math.max(proratedTTC, 100);
+  const amounts = calculateAmounts(finalTTC);
+
+  // Generate invoice number
+  const [countResult] = await db.select({ cnt: count() }).from(invoices);
+  const sequence = Number(countResult.cnt) + 1;
+  const invoiceNumber = generateInvoiceNumber(sequence);
+
+  // Due date
+  const dueDate = new Date(
+    now.getTime() + PAYMENT_TERMS_DAYS * 24 * 60 * 60 * 1000
+  );
+  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  // Create pending invoice (proforma)
+  const [newInvoice] = await db
+    .insert(invoices)
+    .values({
+      merchantId,
+      invoiceNumber,
+      period,
+      planAtInvoice: newPlan,
+      amountHT: amounts.amountHT,
+      tvaRate: 20,
+      amountTVA: amounts.amountTVA,
+      amountTTC: amounts.amountTTC,
+      status: "pending",
+      dueDate,
+    })
+    .returning({ id: invoices.id });
+
+  // Clear any pending downgrade (upgrading cancels a scheduled downgrade)
+  await db
+    .update(merchants)
+    .set({ pendingPlanDowngrade: null })
+    .where(eq(merchants.id, merchantId));
+
+  // Audit log (Art. 23)
+  await db.insert(auditLogs).values({
+    merchantId,
+    actor: "merchant",
+    action: "change_plan",
+    targetType: "invoice",
+    targetId: String(newInvoice.id),
+    details: JSON.stringify({
+      fromPlan: currentPlan,
+      toPlan: newPlan,
+      invoiceNumber,
+      amountTTC: amounts.amountTTC,
+      prorated: true,
+      daysRemaining,
+      daysInMonth,
+      fullNewPriceTTC: newPriceTTC,
+      fullCurrentPriceTTC: currentPriceTTC,
+    }),
+  });
+
+  return NextResponse.json({
+    data: {
+      type: "upgrade",
+      invoiceId: newInvoice.id,
+      invoiceNumber,
+      plan: newPlan,
+      planName: newConfig.name,
+      amountHT: amounts.amountHT,
+      amountTVA: amounts.amountTVA,
+      amountTTC: amounts.amountTTC,
+      dueDate: dueDate.toISOString(),
+      bankInfo: BANK_INFO,
+      proration: {
+        fromPlan: currentPlan,
+        toPlan: newPlan,
+        daysRemaining,
+        daysInMonth,
+        fullMonthTTC: newPriceTTC,
+      },
+    },
+  });
 }

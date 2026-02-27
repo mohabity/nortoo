@@ -20,8 +20,8 @@ export type FeatureId =
 export interface PlanConfig {
   id: PlanId;
   name: string;
-  price: number;            // DH/mois (0 = gratuit)
-  label: string;            // "299 DH/mois"
+  price: number;            // DH TTC/mois (TVA 20% incluse, 0 = gratuit)
+  label: string;            // "299 DH TTC/mois"
   ordersPerMonth: number;   // 0 = illimité
   maxUsers: number;
   bulkBatchLimit: number;   // 0 = illimité
@@ -45,7 +45,7 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
     id: "starter",
     name: "Starter",
     price: 299,
-    label: "299 DH/mois",
+    label: "299 DH TTC/mois",
     ordersPerMonth: 500,
     maxUsers: 1,
     bulkBatchLimit: 20,
@@ -55,7 +55,7 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
     id: "pro",
     name: "Pro",
     price: 699,
-    label: "699 DH/mois",
+    label: "699 DH TTC/mois",
     ordersPerMonth: 2000,
     maxUsers: 3,
     bulkBatchLimit: 50,
@@ -69,7 +69,7 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
     id: "scale",
     name: "Scale",
     price: 1499,
-    label: "1 499 DH/mois",
+    label: "1 499 DH TTC/mois",
     ordersPerMonth: 0, // illimité
     maxUsers: 10,
     bulkBatchLimit: 0, // illimité
@@ -180,7 +180,7 @@ export const PLAN_LABELS: Record<PlanId, string> = {
 
 export const PLAN_DESCRIPTIONS: Record<PlanId, string> = {
   trial: "14 jours gratuits",
-  starter: "299 DH/mois",
-  pro: "699 DH/mois",
-  scale: "1 499 DH/mois",
+  starter: "299 DH TTC/mois",
+  pro: "699 DH TTC/mois",
+  scale: "1 499 DH TTC/mois",
 };

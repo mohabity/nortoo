@@ -97,18 +97,18 @@
     },
     "starter": {
       "name": "Starter",
-      "label": "299 DH/mois",
-      "description": "299 DH/mois"
+      "label": "299 DH TTC/mois",
+      "description": "299 DH TTC/mois"
     },
     "pro": {
       "name": "Pro",
-      "label": "699 DH/mois",
-      "description": "699 DH/mois"
+      "label": "699 DH TTC/mois",
+      "description": "699 DH TTC/mois"
     },
     "scale": {
       "name": "Scale",
-      "label": "1 499 DH/mois",
-      "description": "1 499 DH/mois"
+      "label": "1 499 DH TTC/mois",
+      "description": "1 499 DH TTC/mois"
     }
   },
   "features": {
@@ -1212,7 +1212,7 @@
       "scaleOrders": "Illimité",
       "scaleUsers": "10 utilisateurs",
       "scaleCta": "Choisir Scale",
-      "currency": "DH/mois",
+      "currency": "DH TTC/mois",
       "allProPlus": "Tout Pro +",
       "prioritySupport": "Support prioritaire"
     },
