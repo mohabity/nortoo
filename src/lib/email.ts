@@ -20,6 +20,7 @@ import { AdminLoginCode } from "@/emails/AdminLoginCode";
 import { AdminApprovalRequest } from "@/emails/AdminApprovalRequest";
 import { AdminInvite } from "@/emails/AdminInvite";
 import { LoginCode } from "@/emails/LoginCode";
+import { TrialReminder } from "@/emails/TrialReminder";
 
 interface EmailPayload {
   to: string;
@@ -337,4 +338,20 @@ export async function buildLoginCodeEmail(
   const html = await render(element);
   const text = await render(element, { plainText: true });
   return { subject: t(locale, "loginCode.subject"), html, text };
+}
+
+// ═══════════════════════════════════════════════════════════
+// TRIAL REMINDER — sent at J-7, J-3, J-1 before trial expiration
+// ═══════════════════════════════════════════════════════════
+
+export async function buildTrialReminderEmail(
+  name: string,
+  daysRemaining: number,
+  billingUrl: string,
+  locale: Locale = "fr",
+) {
+  const element = React.createElement(TrialReminder, { name, daysRemaining, billingUrl, locale });
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  return { subject: t(locale, "trialReminder.subject", { daysRemaining }), html, text };
 }

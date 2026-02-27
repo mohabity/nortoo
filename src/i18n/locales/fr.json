@@ -92,8 +92,8 @@
   "plans": {
     "trial": {
       "name": "Essai",
-      "label": "14 jours gratuits",
-      "description": "14 jours restants"
+      "label": "30 jours gratuits",
+      "description": "30 jours restants"
     },
     "starter": {
       "name": "Starter",
@@ -1210,7 +1210,7 @@
       "subtitle": "Commencez gratuitement. Payez uniquement quand vous grandissez.",
       "popular": "Populaire",
       "trial": "Essai",
-      "trialLabel": "14 jours gratuits",
+      "trialLabel": "30 jours gratuits",
       "trialOrders": "50 commandes/mois",
       "trialUsers": "1 utilisateur",
       "trialCta": "Essayer gratuitement",
@@ -1238,11 +1238,11 @@
       "q4": "Puis-je personnaliser les seuils ?",
       "a4": "Oui. Depuis le dashboard, vous pouvez ajuster les seuils SHIP/VERIFY/FLAG/BLOCK, activer des presets par secteur, et même personnaliser le poids de chaque règle (plan Pro+).",
       "q5": "Comment est facturé le service ?",
-      "a5": "Par virement bancaire mensuel. Une facture est générée automatiquement avec TVA 20%. L'essai de 14 jours est totalement gratuit, sans carte bancaire."
+      "a5": "Par virement bancaire mensuel. Une facture est générée automatiquement avec TVA 20%. L'essai de 30 jours est totalement gratuit, sans carte bancaire."
     },
     "cta": {
       "title": "Prêt à réduire votre RTO ?",
-      "subtitle": "Commencez avec 14 jours d'essai gratuit. Aucune carte bancaire requise.",
+      "subtitle": "Commencez avec 30 jours d'essai gratuit. Aucune carte bancaire requise.",
       "button": "Commencer gratuitement"
     },
     "footer": {
@@ -1278,7 +1278,7 @@
     },
     "cta": {
       "title": "Prêt à réduire vos retours COD ?",
-      "subtitle": "Essayez nortoo gratuitement pendant 14 jours.",
+      "subtitle": "Essayez nortoo gratuitement pendant 30 jours.",
       "button": "Commencer gratuitement"
     },
     "categories": {

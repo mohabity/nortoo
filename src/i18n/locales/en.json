@@ -92,8 +92,8 @@
   "plans": {
     "trial": {
       "name": "Trial",
-      "label": "14 days free",
-      "description": "14 days remaining"
+      "label": "30 days free",
+      "description": "30 days remaining"
     },
     "starter": {
       "name": "Starter",
@@ -1210,7 +1210,7 @@
       "subtitle": "Start for free. Only pay as you grow.",
       "popular": "Popular",
       "trial": "Trial",
-      "trialLabel": "14-day free trial",
+      "trialLabel": "30-day free trial",
       "trialOrders": "50 orders/mo",
       "trialUsers": "1 user",
       "trialCta": "Try for free",
@@ -1238,11 +1238,11 @@
       "q4": "Can I customize the thresholds?",
       "a4": "Yes. From the dashboard, you can adjust SHIP/VERIFY/FLAG/BLOCK thresholds, activate sector presets, and even customize each rule's weight (Pro+ plan).",
       "q5": "How is the service billed?",
-      "a5": "By monthly bank transfer. An invoice is automatically generated with 20% VAT. The 14-day trial is completely free, no credit card required."
+      "a5": "By monthly bank transfer. An invoice is automatically generated with 20% VAT. The 30-day trial is completely free, no credit card required."
     },
     "cta": {
       "title": "Ready to reduce your RTO?",
-      "subtitle": "Start with a 14-day free trial. No credit card required.",
+      "subtitle": "Start with a 30-day free trial. No credit card required.",
       "button": "Get started for free"
     },
     "footer": {
@@ -1278,7 +1278,7 @@
     },
     "cta": {
       "title": "Ready to reduce your COD returns?",
-      "subtitle": "Try nortoo free for 14 days.",
+      "subtitle": "Try nortoo free for 30 days.",
       "button": "Get started for free"
     },
     "categories": {

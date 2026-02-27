@@ -437,7 +437,7 @@ export default async function BlogArticlePage({
               href="https://app.nortoo.ma/register"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#00E5A0] text-[#0B0F1A] font-semibold text-sm rounded-xl hover:bg-[#00C78A] transition-colors shrink-0"
             >
-              {article.locale === "en" ? "Try free for 14 days" : "Essai gratuit 14 jours"}
+              {article.locale === "en" ? "Try free for 30 days" : "Essai gratuit 30 jours"}
               <ChevronRight className="w-4 h-4" />
             </a>
           </div>

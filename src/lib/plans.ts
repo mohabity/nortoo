@@ -35,7 +35,7 @@ export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
     id: "trial",
     name: "Essai",
     price: 0,
-    label: "14 jours gratuits",
+    label: "30 jours gratuits",
     ordersPerMonth: 50,
     maxUsers: 1,
     bulkBatchLimit: 0,
@@ -179,7 +179,7 @@ export const PLAN_LABELS: Record<PlanId, string> = {
 };
 
 export const PLAN_DESCRIPTIONS: Record<PlanId, string> = {
-  trial: "14 jours gratuits",
+  trial: "30 jours gratuits",
   starter: "299 DH TTC/mois",
   pro: "699 DH TTC/mois",
   scale: "1 499 DH TTC/mois",

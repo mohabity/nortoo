@@ -420,7 +420,7 @@ async function autoCreateMerchant(opts: {
       apiKeyHash,
       plan: "trial",
       billingStatus: "trial",
-      trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+      trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       currentMonthStart: new Date(),
       inviteCode: opts.inviteCode || null,
       emailVerified: new Date(), // YouCan has already verified the email

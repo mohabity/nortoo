@@ -79,20 +79,20 @@ const emailDict = {
 
   // ── Welcome ──
   "welcome.preview": {
-    fr: "Bienvenue sur nortoo — votre essai de 14 jours commence",
-    en: "Welcome to nortoo — your 14-day trial starts now",
+    fr: "Bienvenue sur nortoo — votre essai de 30 jours commence",
+    en: "Welcome to nortoo — your 30-day trial starts now",
   },
   "welcome.subject": {
-    fr: "Bienvenue sur nortoo — votre essai de 14 jours commence !",
-    en: "Welcome to nortoo — your 14-day trial starts now!",
+    fr: "Bienvenue sur nortoo — votre essai de 30 jours commence !",
+    en: "Welcome to nortoo — your 30-day trial starts now!",
   },
   "welcome.heading": {
     fr: "Bienvenue sur nortoo, {name} !",
     en: "Welcome to nortoo, {name}!",
   },
   "welcome.body": {
-    fr: "Votre compte est créé et votre essai gratuit de 14 jours commence dès maintenant. nortoo analyse chaque commande COD et vous aide à bloquer les retours avant qu'ils ne coûtent cher.",
-    en: "Your account is created and your free 14-day trial starts now. nortoo analyses every COD order and helps you block returns before they cost you.",
+    fr: "Votre compte est créé et votre essai gratuit de 30 jours commence dès maintenant. nortoo analyse chaque commande COD et vous aide à bloquer les retours avant qu'ils ne coûtent cher.",
+    en: "Your account is created and your free 30-day trial starts now. nortoo analyses every COD order and helps you block returns before they cost you.",
   },
   "welcome.steps_heading": {
     fr: "3 étapes pour démarrer :",
@@ -526,6 +526,55 @@ const emailDict = {
   "loginCode.expiry": {
     fr: "Ce code expire dans 10 minutes. Si vous n'avez pas demandé ce code, ignorez cet email.",
     en: "This code expires in 10 minutes. If you didn't request this code, ignore this email.",
+  },
+  // ── Trial Reminder ──
+  "trialReminder.preview": {
+    fr: "Votre essai nortoo expire dans {daysRemaining} jour(s)",
+    en: "Your nortoo trial expires in {daysRemaining} day(s)",
+  },
+  "trialReminder.subject": {
+    fr: "⏳ Plus que {daysRemaining} jour(s) d'essai — nortoo",
+    en: "⏳ {daysRemaining} day(s) left in your trial — nortoo",
+  },
+  "trialReminder.badge": {
+    fr: "J-{daysRemaining}",
+    en: "{daysRemaining} day(s) left",
+  },
+  "trialReminder.greeting": {
+    fr: "Bonjour {name},",
+    en: "Hello {name},",
+  },
+  "trialReminder.body_7": {
+    fr: "Il vous reste une semaine d'essai gratuit sur nortoo. C'est le bon moment pour explorer toutes les fonctionnalités et voir l'impact du scoring sur vos retours COD.",
+    en: "You have one week left in your free nortoo trial. Now is a great time to explore all features and see the impact of scoring on your COD returns.",
+  },
+  "trialReminder.body_3": {
+    fr: "Plus que {daysRemaining} jours avant la fin de votre essai. Si vous êtes satisfait du scoring anti-fraude, choisissez un plan pour continuer sans interruption.",
+    en: "Only {daysRemaining} days left in your trial. If you're satisfied with the anti-fraud scoring, choose a plan to continue without interruption.",
+  },
+  "trialReminder.body_1": {
+    fr: "Votre essai gratuit expire demain. Après expiration, le scoring de vos commandes sera interrompu. Passez à un plan payant maintenant pour éviter toute interruption.",
+    en: "Your free trial expires tomorrow. After expiration, order scoring will be paused. Upgrade to a paid plan now to avoid any interruption.",
+  },
+  "trialReminder.features_heading": {
+    fr: "Ce que vous conservez avec un plan payant :",
+    en: "What you keep with a paid plan:",
+  },
+  "trialReminder.feature_1": {
+    fr: "Scoring anti-fraude en temps réel sur chaque commande COD",
+    en: "Real-time anti-fraud scoring on every COD order",
+  },
+  "trialReminder.feature_2": {
+    fr: "Dashboard avec analytics, tendances et rapports hebdomadaires",
+    en: "Dashboard with analytics, trends and weekly reports",
+  },
+  "trialReminder.feature_3": {
+    fr: "Blocage automatique des commandes à haut risque",
+    en: "Automatic blocking of high-risk orders",
+  },
+  "trialReminder.cta": {
+    fr: "Choisir un plan →",
+    en: "Choose a plan →",
   },
 } as const satisfies Record<string, { fr: string; en: string }>;
 
