@@ -1,7 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, MessageSquare, Save, Loader2 } from "lucide-react";
+import {
+  Bell,
+  MessageSquare,
+  Save,
+  Loader2,
+  Link2,
+  Unlink,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -64,7 +74,7 @@ function Toggle({
       className={cn(
         "relative h-7 w-12 shrink-0 rounded-full transition-colors",
         enabled ? "bg-mint" : "bg-mist",
-        disabled && "cursor-not-allowed"
+        disabled && "cursor-not-allowed opacity-50"
       )}
     >
       <span
@@ -140,6 +150,14 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [savingWa, setSavingWa] = useState(false);
+
+  // ── WhatsApp connection state ──
+  const isWaConnected = !!settings.whatsappPhoneNumberId;
+  const [connectingWa, setConnectingWa] = useState(false);
+  const [disconnectingWa, setDisconnectingWa] = useState(false);
+  const [waPhoneNumberId, setWaPhoneNumberId] = useState("");
+  const [waAccessToken, setWaAccessToken] = useState("");
+  const [showToken, setShowToken] = useState(false);
 
   // Parse saved preferences
   const { email: savedEmailPrefs, whatsapp: savedWaPrefs } = parsePrefs(
@@ -218,6 +236,66 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
     }
   }
 
+  // ── WhatsApp connect / disconnect ──
+  async function handleConnectWa() {
+    if (!waPhoneNumberId.trim() || !waAccessToken.trim()) return;
+    setConnectingWa(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          _type: "whatsapp",
+          phoneNumberId: waPhoneNumberId.trim(),
+          accessToken: waAccessToken.trim(),
+        }),
+      });
+      if (res.ok) {
+        setWaPhoneNumberId("");
+        setWaAccessToken("");
+        setShowToken(false);
+        await onRefresh();
+        onToast("success", t("settings.notifications.whatsapp.connectSuccess"));
+      } else if (res.status === 429) {
+        const retryAfter = res.headers.get("Retry-After") ?? "60";
+        onToast("error", t("common.rateLimited", { seconds: retryAfter }));
+      } else {
+        onToast("error", t("common.error"));
+      }
+    } catch {
+      onToast("error", t("common.error"));
+    } finally {
+      setConnectingWa(false);
+    }
+  }
+
+  async function handleDisconnectWa() {
+    setDisconnectingWa(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _type: "whatsapp_disconnect" }),
+      });
+      if (res.ok) {
+        await onRefresh();
+        onToast("success", t("settings.notifications.whatsapp.disconnectSuccess"));
+      } else {
+        onToast("error", t("common.error"));
+      }
+    } catch {
+      onToast("error", t("common.error"));
+    } finally {
+      setDisconnectingWa(false);
+    }
+  }
+
+  // Mask phone number ID: show first 4 and last 4 chars
+  function maskId(id: string) {
+    if (id.length <= 8) return id;
+    return `${id.slice(0, 4)}${"*".repeat(id.length - 8)}${id.slice(-4)}`;
+  }
+
   return (
     <div className="space-y-6">
       {/* ═══ Notifications email ═══ */}
@@ -263,8 +341,118 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
         </CardContent>
       </Card>
 
-      {/* ═══ WhatsApp ═══ */}
+      {/* ═══ WhatsApp Configuration ═══ */}
       <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Link2 className="h-5 w-5 text-mint" />
+            <div>
+              <CardTitle className="text-base">
+                {t("settings.notifications.whatsapp.setup")}
+              </CardTitle>
+              <CardDescription>
+                {t("settings.notifications.whatsapp.setupDesc")}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isWaConnected ? (
+            /* ── Connected state ── */
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 rounded-lg border border-mint/30 bg-mint/5 px-4 py-3">
+                <CheckCircle2 className="h-5 w-5 text-mint shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate">
+                    {t("settings.notifications.whatsapp.connected")}
+                  </p>
+                  <p className="text-xs text-fog font-mono truncate">
+                    {t("settings.notifications.whatsapp.phoneNumberId")}:{" "}
+                    {maskId(settings.whatsappPhoneNumberId!)}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDisconnectWa}
+                  disabled={disconnectingWa}
+                  className="shrink-0 text-red-500 border-red-200 hover:bg-red-50"
+                >
+                  {disconnectingWa ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Unlink className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {t("settings.notifications.whatsapp.disconnect")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* ── Setup form ── */
+            <div className="space-y-4">
+              <p className="text-sm text-fog">
+                {t("settings.notifications.whatsapp.notConfigured")}
+              </p>
+
+              {/* Phone Number ID */}
+              <div>
+                <label className="text-sm font-medium text-slate mb-1 block">
+                  {t("settings.notifications.whatsapp.phoneNumberId")}
+                </label>
+                <input
+                  type="text"
+                  value={waPhoneNumberId}
+                  onChange={(e) => setWaPhoneNumberId(e.target.value)}
+                  placeholder={t("settings.notifications.whatsapp.phoneNumberIdPlaceholder")}
+                  className="w-full rounded-md border border-silk bg-white px-3 py-2 text-sm text-slate placeholder:text-mist focus:border-mint focus:outline-none focus:ring-1 focus:ring-mint"
+                />
+              </div>
+
+              {/* Access Token */}
+              <div>
+                <label className="text-sm font-medium text-slate mb-1 block">
+                  {t("settings.notifications.whatsapp.accessToken")}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showToken ? "text" : "password"}
+                    value={waAccessToken}
+                    onChange={(e) => setWaAccessToken(e.target.value)}
+                    placeholder={t("settings.notifications.whatsapp.accessTokenPlaceholder")}
+                    className="w-full rounded-md border border-silk bg-white px-3 py-2 pr-10 text-sm text-slate placeholder:text-mist focus:border-mint focus:outline-none focus:ring-1 focus:ring-mint font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowToken(!showToken)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fog hover:text-slate"
+                  >
+                    {showToken ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleConnectWa}
+                disabled={connectingWa || !waPhoneNumberId.trim() || !waAccessToken.trim()}
+              >
+                {connectingWa ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Link2 className="mr-2 h-4 w-4" />
+                )}
+                {t("settings.notifications.whatsapp.connect")}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ═══ WhatsApp notification toggles ═══ */}
+      <Card className={cn(!isWaConnected && "opacity-50 pointer-events-none")}>
         <CardHeader>
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-mint" />
@@ -273,7 +461,9 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
                 {t("settings.notifications.whatsapp.title")}
               </CardTitle>
               <CardDescription>
-                {t("settings.notifications.whatsapp.subtitle")}
+                {isWaConnected
+                  ? t("settings.notifications.whatsapp.subtitle")
+                  : t("settings.notifications.whatsapp.connectFirst")}
               </CardDescription>
             </div>
           </div>
@@ -287,13 +477,14 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
                 description={t(descKey)}
                 enabled={waPrefs[key]}
                 onChange={(v) => updateWaPref(key, v)}
+                disabled={!isWaConnected}
               />
             ))}
           </div>
 
           <Button
             onClick={handleSaveWa}
-            disabled={savingWa}
+            disabled={savingWa || !isWaConnected}
             className="mt-4"
           >
             {savingWa ? (

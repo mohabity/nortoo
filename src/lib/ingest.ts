@@ -20,7 +20,7 @@ import { scoreOrder, type ScoringResult, type VelocityData } from "@/lib/scoring
 import { executePipeline } from "@/lib/pipeline";
 import { checkQuota, recordUsage, QuotaExceededError } from "@/lib/quota";
 import { shouldNotify, shouldNotifyWhatsApp } from "@/lib/notification-helper";
-import { isWhatsAppConfigured, isValidMoroccanMobile, sendVerificationMessage } from "@/lib/whatsapp";
+import { getMerchantWhatsAppCredentials, isValidMoroccanMobile, sendVerificationMessage } from "@/lib/whatsapp";
 import { normalizeProductId, updateProductStats, getProductRtoRate } from "@/lib/product-stats";
 import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } from "@/lib/city-stats";
 import { parseAddress } from "@/lib/address-parser";
@@ -178,26 +178,29 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
   if (
     !params.isTest &&
     finalDecision === "verify" &&
-    isWhatsAppConfigured() &&
     isValidMoroccanMobile(phone)
   ) {
     try {
-      const whatsappEnabled = await shouldNotifyWhatsApp(merchantId, "verification");
-      if (whatsappEnabled) {
-        const messageId = await sendVerificationMessage(
-          phone, // raw phone — used and discarded, NEVER stored
-          customerName ?? "Client",
-          ref,
-          total,
-        );
-        if (messageId) {
-          await db
-            .update(orders)
-            .set({
-              whatsappVerificationStatus: "sent",
-              whatsappMessageId: messageId,
-            })
-            .where(eq(orders.id, orderId));
+      const waCredentials = await getMerchantWhatsAppCredentials(merchantId);
+      if (waCredentials) {
+        const whatsappEnabled = await shouldNotifyWhatsApp(merchantId, "verification");
+        if (whatsappEnabled) {
+          const messageId = await sendVerificationMessage(
+            waCredentials,
+            phone, // raw phone — used and discarded, NEVER stored
+            customerName ?? "Client",
+            ref,
+            total,
+          );
+          if (messageId) {
+            await db
+              .update(orders)
+              .set({
+                whatsappVerificationStatus: "sent",
+                whatsappMessageId: messageId,
+              })
+              .where(eq(orders.id, orderId));
+          }
         }
       }
     } catch (err) {

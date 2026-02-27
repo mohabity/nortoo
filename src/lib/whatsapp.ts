@@ -1,33 +1,61 @@
 /**
- * WhatsApp Cloud API — Service wrapper.
+ * WhatsApp Cloud API — Service wrapper (per-merchant credentials).
  *
- * Sends template messages via Meta's Graph API for order verification.
+ * Each merchant configures their own WhatsApp Business phone number.
+ * Credentials (phoneNumberId + accessToken) are stored encrypted in the
+ * merchants table using AES-256-GCM (same pattern as YouCan tokens).
  *
  * PRIVACY (Loi 09-08, Art. 23):
- * Raw phone numbers are NEVER stored or logged.
+ * Raw customer phone numbers are NEVER stored or logged.
  * They are used only for the API call and immediately discarded.
  *
- * Env vars:
- *   WHATSAPP_ACCESS_TOKEN       — Meta Business permanent access token
- *   WHATSAPP_PHONE_NUMBER_ID    — WhatsApp Business phone number ID
+ * Global env vars (Meta App level, not per-merchant):
  *   WHATSAPP_WEBHOOK_VERIFY_TOKEN — Random string for webhook hub.challenge
- *   WHATSAPP_APP_SECRET         — Meta App Secret for webhook signature
+ *   WHATSAPP_APP_SECRET           — Meta App Secret for webhook signature
  */
 
 import { normalizePhone } from "@/lib/hash";
+import { decryptSafe } from "@/lib/encryption";
+import { db } from "@/db/index";
+import { merchants } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 const WHATSAPP_API_VERSION = "v21.0";
 
 // ═══════════════════════════════════════════════════════════
-// Configuration
+// Per-merchant credentials
 // ═══════════════════════════════════════════════════════════
 
-/** Check if WhatsApp Cloud API env vars are configured. */
-export function isWhatsAppConfigured(): boolean {
-  return !!(
-    process.env.WHATSAPP_ACCESS_TOKEN &&
-    process.env.WHATSAPP_PHONE_NUMBER_ID
-  );
+export interface WhatsAppCredentials {
+  phoneNumberId: string;
+  accessToken: string;
+}
+
+/**
+ * Load and decrypt WhatsApp credentials for a specific merchant.
+ * Returns null if the merchant has not configured WhatsApp.
+ */
+export async function getMerchantWhatsAppCredentials(
+  merchantId: number,
+): Promise<WhatsAppCredentials | null> {
+  const [m] = await db
+    .select({
+      phoneNumberId: merchants.whatsappPhoneNumberId,
+      accessToken: merchants.whatsappAccessToken,
+    })
+    .from(merchants)
+    .where(eq(merchants.id, merchantId))
+    .limit(1);
+
+  if (!m?.phoneNumberId || !m?.accessToken) return null;
+
+  const decryptedToken = decryptSafe(m.accessToken);
+  if (!decryptedToken) return null;
+
+  return {
+    phoneNumberId: m.phoneNumberId,
+    accessToken: decryptedToken,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -64,27 +92,20 @@ interface SendTemplateResult {
 }
 
 /**
- * Send a pre-approved WhatsApp template message.
- * Used for business-initiated conversations (verification, confirmation, reminder).
+ * Send a pre-approved WhatsApp template message using merchant-specific credentials.
  *
  * PRIVACY: the `phone` param is used for the API call only and NEVER logged or stored.
  */
 export async function sendTemplateMessage(
+  credentials: WhatsAppCredentials,
   phone: string,
   templateName: string,
   languageCode: string,
   parameters: string[],
 ): Promise<SendTemplateResult> {
-  if (!isWhatsAppConfigured()) {
-    console.log(`[WhatsApp] Not configured — would send template "${templateName}" (skipped)`);
-    return { success: false, error: "WhatsApp not configured" };
-  }
-
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN!;
   const to = formatPhoneForWhatsApp(phone);
 
-  const url = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${phoneNumberId}/messages`;
+  const url = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${credentials.phoneNumberId}/messages`;
 
   const body: Record<string, unknown> = {
     messaging_product: "whatsapp",
@@ -110,7 +131,7 @@ export async function sendTemplateMessage(
     const res = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${credentials.accessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
@@ -150,6 +171,7 @@ export async function sendTemplateMessage(
  * PRIVACY: `rawPhone` is used for the API call only and NEVER stored.
  */
 export async function sendVerificationMessage(
+  credentials: WhatsAppCredentials,
   rawPhone: string,
   customerName: string,
   orderRef: string,
@@ -167,6 +189,7 @@ export async function sendVerificationMessage(
   const params = [customerName || "Client", orderRef, String(amount)];
 
   const result = await sendTemplateMessage(
+    credentials,
     rawPhone,
     templateName,
     languageCode,
@@ -180,21 +203,17 @@ export async function sendVerificationMessage(
 // ═══════════════════════════════════════════════════════════
 
 /**
- * Send a free-form text message.
+ * Send a free-form text message using merchant-specific credentials.
  * Only works within 24h of the last customer message (Meta policy).
- * Used for clarification replies when customer sends unrecognized text.
  */
 export async function sendTextMessage(
+  credentials: WhatsAppCredentials,
   phone: string,
   text: string,
 ): Promise<boolean> {
-  if (!isWhatsAppConfigured()) return false;
-
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN!;
   const to = formatPhoneForWhatsApp(phone);
 
-  const url = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${phoneNumberId}/messages`;
+  const url = `https://graph.facebook.com/${WHATSAPP_API_VERSION}/${credentials.phoneNumberId}/messages`;
   const body = {
     messaging_product: "whatsapp",
     to,
@@ -206,7 +225,7 @@ export async function sendTextMessage(
     const res = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${credentials.accessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),

@@ -34,6 +34,10 @@ export const merchants = pgTable("merchants", {
   youcanStoreName: text("youcan_store_name"),
   shopifyStoreId: text("shopify_store_id"),
 
+  // WhatsApp Business API (per-merchant)
+  whatsappPhoneNumberId: text("whatsapp_phone_number_id"), // Meta phone number ID
+  whatsappAccessToken: text("whatsapp_access_token"),       // Encrypted (AES-256-GCM)
+
   // Billing
   plan: text("plan").notNull().default("trial"), // trial | starter | pro | scale
   pendingPlanDowngrade: text("pending_plan_downgrade"), // null | starter | pro — effectif au prochain mois

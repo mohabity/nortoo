@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { db } from "@/db/index";
-import { orders, notifications, auditLogs } from "@/db/schema";
+import { orders, notifications, auditLogs, merchants } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { shouldNotify } from "@/lib/notification-helper";
 
@@ -79,7 +79,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true });
     }
 
-    // ── 4. Process each incoming message ──
+    // ── 4. Identify merchant by phone_number_id (tenant routing) ──
+    const phoneNumberId = value?.metadata?.phone_number_id;
+    if (!phoneNumberId) {
+      return NextResponse.json({ received: true });
+    }
+
+    const [merchant] = await db
+      .select({ id: merchants.id })
+      .from(merchants)
+      .where(eq(merchants.whatsappPhoneNumberId, phoneNumberId))
+      .limit(1);
+
+    if (!merchant) {
+      console.warn("[WhatsApp Webhook] Unknown phone_number_id:", phoneNumberId);
+      return NextResponse.json({ received: true });
+    }
+
+    // ── 5. Process each incoming message ──
     for (const message of messages) {
       // We only handle text replies for verification
       if (message.type !== "text") continue;
@@ -89,7 +106,7 @@ export async function POST(request: Request) {
 
       if (!text || !contextMessageId) continue;
 
-      await processVerificationReply(contextMessageId, text);
+      await processVerificationReply(merchant.id, contextMessageId, text);
     }
 
     return NextResponse.json({ received: true });
@@ -106,13 +123,14 @@ export async function POST(request: Request) {
 
 /**
  * Process a customer reply to a verification WhatsApp message.
- * Matches by whatsappMessageId → updates order decision + override fields.
+ * Matches by whatsappMessageId + merchantId (tenant isolation) → updates order.
  */
 async function processVerificationReply(
+  merchantId: number,
   originalMessageId: string,
   replyText: string,
 ): Promise<void> {
-  // Find the order that was sent this WhatsApp message
+  // Find the order by WhatsApp message ID + tenant isolation
   const [order] = await db
     .select({
       id: orders.id,
@@ -122,7 +140,12 @@ async function processVerificationReply(
       whatsappVerificationStatus: orders.whatsappVerificationStatus,
     })
     .from(orders)
-    .where(eq(orders.whatsappMessageId, originalMessageId))
+    .where(
+      and(
+        eq(orders.whatsappMessageId, originalMessageId),
+        eq(orders.merchantId, merchantId),
+      ),
+    )
     .limit(1);
 
   if (!order) {
