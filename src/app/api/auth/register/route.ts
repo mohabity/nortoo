@@ -8,6 +8,7 @@ import { generateApiKey } from "@/lib/api-key";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { buildWelcomeEmail, sendEmail } from "@/lib/email";
 import { authLimiter, getClientIp, isRateLimitConfigured } from "@/lib/rate-limit";
+import { getAppUrl } from "@/lib/env";
 import type { Locale } from "@/i18n/types";
 
 const registerSchema = z.object({
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
   sendVerificationEmail(newMerchant.id, email, locale).catch(() => {});
 
   // Send welcome email (non-blocking)
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.nortoo.ma";
+  const APP_URL = getAppUrl();
   buildWelcomeEmail(name, `${APP_URL}/dashboard`, locale)
     .then((built) =>
       sendEmail({

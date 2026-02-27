@@ -8,6 +8,7 @@ import { generateArticle } from "@/lib/blog/generator";
 import { validateArticle } from "@/lib/blog/quality-check";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getAppUrl } from "@/lib/env";
 
 export const maxDuration = 120;
 
@@ -25,25 +26,6 @@ const actionSchema = z.object({
   customKeywords: z.array(z.string()).optional(),
   customWordCount: z.number().min(500).max(5000).optional(),
 });
-
-/** Derive the base URL from the incoming request origin */
-function getBaseUrl(request: Request): string {
-  // 1. Use the explicit app URL if set
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL;
-  }
-  // 2. Derive from the incoming request
-  try {
-    const url = new URL(request.url);
-    return url.origin;
-  } catch {
-    // 3. Fallback to VERCEL_URL
-    if (process.env.VERCEL_URL) {
-      return `https://${process.env.VERCEL_URL}`;
-    }
-    return "http://localhost:3000";
-  }
-}
 
 export async function POST(request: Request) {
   if (!(await isAdmin(request))) {
@@ -95,7 +77,7 @@ export async function POST(request: Request) {
       }
       lastGenerationAt = now;
 
-      const baseUrl = getBaseUrl(request);
+      const baseUrl = getAppUrl();
       const secret = process.env.CRON_SECRET;
 
       try {
@@ -122,7 +104,7 @@ export async function POST(request: Request) {
     }
 
     case "replenish-topics": {
-      const baseUrl = getBaseUrl(request);
+      const baseUrl = getAppUrl();
       const secret = process.env.CRON_SECRET;
 
       try {

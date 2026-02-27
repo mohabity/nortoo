@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "crypto";
 import { db } from "@/db/index";
 import { users, merchants, auditLogs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { getAppUrl } from "@/lib/env";
 import {
   requireActiveMerchant,
   handlePermissionError,
@@ -81,7 +82,7 @@ export async function POST(
       .limit(1);
 
     // Send invite email
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const baseUrl = getAppUrl();
     const inviteUrl = `${baseUrl}/invite?token=${rawToken}`;
     const roleLabel = ROLE_LABELS[targetUser.role as Role] ?? targetUser.role;
     const locale = (merchant?.locale ?? "fr") as Locale;

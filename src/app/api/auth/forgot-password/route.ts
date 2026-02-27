@@ -5,6 +5,7 @@ import { users, merchants, passwordResetTokens, auditLogs } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 import type { Locale } from "@/i18n/types";
+import { getAppUrl } from "@/lib/env";
 
 // ── In-memory rate limit: 3 requests per email per hour ──
 const rateLimitMap = new Map<string, { count: number; firstAt: number }>();
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
   });
 
   // Build reset URL
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getAppUrl();
   const resetUrl = `${baseUrl}/reset-password?token=${rawToken}`;
 
   // Send email

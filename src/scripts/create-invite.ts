@@ -43,7 +43,8 @@ async function main() {
     })
     .returning();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { getAppUrl } = await import("@/lib/env");
+  const appUrl = getAppUrl();
 
   console.log("\nInvite created!");
   console.log(`  Code:     ${invite.code}`);

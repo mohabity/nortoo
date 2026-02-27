@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { merchants, auditLogs } from "@/db/schema";
 import { isNotNull } from "drizzle-orm";
 import { decryptSafe } from "@/lib/encryption";
+import { getAppUrl } from "@/lib/env";
 
 /**
  * POST /api/admin/youcan/fix-webhooks
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.nortoo.ma";
+  const appUrl = getAppUrl();
   const results: Array<{
     merchantId: number;
     storeName: string | null;

@@ -7,6 +7,7 @@ import { encode } from "next-auth/jwt";
 import { hash } from "bcryptjs";
 import { randomBytes, timingSafeEqual } from "crypto";
 import { encrypt } from "@/lib/encryption";
+import { getAppUrl } from "@/lib/env";
 
 /** Constant-time string comparison to prevent timing attacks on CSRF tokens. */
 function safeCompare(a: string, b: string): boolean {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get("state");
   const error = searchParams.get("error");
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
   const errorRedirect = (msg: string) =>
     NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent(msg)}`);
 

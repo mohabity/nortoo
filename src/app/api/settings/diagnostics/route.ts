@@ -3,6 +3,7 @@ import { db } from "@/db/index";
 import { orders, merchants, webhookQueue } from "@/db/schema";
 import { eq, and, desc, count, gte } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
+import { getAppUrl } from "@/lib/env";
 
 /**
  * GET /api/settings/diagnostics
@@ -98,7 +99,7 @@ export async function GET() {
   if (m?.youcanAccessToken) tokenStatus = "present";
   else if (m?.youcanStoreId && !m?.youcanAccessToken) tokenStatus = "absent";
 
-  const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}/api/webhook/ingest`;
+  const webhookUrl = `${getAppUrl()}/api/webhook/ingest`;
 
   return NextResponse.json({
     data: {

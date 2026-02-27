@@ -12,7 +12,7 @@ import { requirePermission, handlePermissionError } from "@/lib/permissions";
 import { requireVerifiedEmail } from "@/lib/email-verification";
 import { requireFeature, handleFeatureGateError } from "@/lib/require-feature";
 import { generateMonthlyReport, type ReportData } from "@/lib/report-generator";
-import { PLANS } from "@/lib/constants";
+import { getPlanConfig } from "@/lib/plans";
 
 // ── Rate limiting (in-memory) ──
 const exportCounts = new Map<number, { count: number; resetAt: number }>();
@@ -285,8 +285,7 @@ export async function GET(request: NextRequest) {
   const prevSavings = Math.round(prevReturned > 0 ? prevReturned * costPerBlockedOrder * 0.8 : 0);
 
   // ROI
-  const planKey = (merchant.plan ?? "trial") as keyof typeof PLANS;
-  const planPrice = PLANS[planKey]?.price ?? 0;
+  const planPrice = getPlanConfig(merchant.plan ?? "trial").price;
   const roi = planPrice > 0 ? savings / planPrice : 0;
 
   // ── Weekly data ──

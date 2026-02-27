@@ -4,6 +4,7 @@ import { inviteLinks } from "@/db/schema";
 import { auth } from "@/auth";
 import { desc } from "drizzle-orm";
 import { randomBytes } from "crypto";
+import { getAppUrl } from "@/lib/env";
 
 /**
  * Admin-only invite management.
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     })
     .returning();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   return NextResponse.json({
     data: invite,

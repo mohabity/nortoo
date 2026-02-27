@@ -5,6 +5,7 @@ import { isAdmin } from "@/lib/admin-auth";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { randomBytes } from "crypto";
+import { getAppUrl } from "@/lib/env";
 
 const createSchema = z.object({
   code: z.string().min(1).max(50).optional(),
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   return NextResponse.json(
     {

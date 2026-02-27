@@ -4,7 +4,7 @@ import { orders, merchants } from "@/db/schema";
 import { eq, and, gte, lte, or } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
 import { rtoCost, savingsProbability } from "@/lib/savings";
-import { PLANS } from "@/lib/constants";
+import { getPlanConfig } from "@/lib/plans";
 
 /**
  * GET /api/dashboard/savings?period=7d|30d|90d|all
@@ -190,8 +190,7 @@ export async function GET(request: NextRequest) {
         : 0;
 
     // ROI calculation
-    const planKey = plan as keyof typeof PLANS;
-    const planPrice = PLANS[planKey]?.price ?? 0;
+    const planPrice = getPlanConfig(plan).price;
     const roiMultiple =
       planPrice > 0
         ? Math.round((projectedMonthlySaved / planPrice) * 10) / 10

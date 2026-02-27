@@ -4,6 +4,7 @@ import { emailVerificationTokens, merchants, auditLogs } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { sendEmail, buildEmailVerificationEmail } from "@/lib/email";
 import type { Locale } from "@/i18n/types";
+import { getAppUrl } from "@/lib/env";
 
 /**
  * Generate a verification token, store SHA-256 in DB, send email.
@@ -39,7 +40,7 @@ export async function sendVerificationEmail(
   });
 
   // Build verification URL
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = getAppUrl();
   const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${rawToken}`;
 
   // Send email
