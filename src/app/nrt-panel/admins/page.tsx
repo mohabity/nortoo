@@ -116,8 +116,13 @@ export default function AdminsPage() {
     }
   }
 
-  async function handleCancelInvite(admin: AdminUser) {
-    if (!confirm(`Annuler l'invitation de ${admin.email} ?`)) return;
+  async function handleDelete(admin: AdminUser) {
+    const message =
+      admin.status === "pending"
+        ? `Annuler l'invitation de ${admin.email} ?`
+        : `Supprimer définitivement le compte admin de ${admin.email} ? Cette action est irréversible.`;
+
+    if (!confirm(message)) return;
 
     setActionLoading(admin.id);
     setError("");
@@ -258,28 +263,39 @@ export default function AdminsPage() {
                           <Loader2 className="w-4 h-4 animate-spin text-mist" />
                         ) : admin.status === "pending" ? (
                           <button
-                            onClick={() => handleCancelInvite(admin)}
+                            onClick={() => handleDelete(admin)}
                             className="p-1.5 text-gray-400 hover:text-rose transition-colors"
                             title="Annuler l'invitation"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        ) : admin.status === "active" ? (
-                          <button
-                            onClick={() => handleToggleActive(admin)}
-                            className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"
-                            title="Désactiver"
-                          >
-                            <ShieldOff className="w-4 h-4" />
-                          </button>
                         ) : (
-                          <button
-                            onClick={() => handleToggleActive(admin)}
-                            className="p-1.5 text-gray-400 hover:text-emerald-600 transition-colors"
-                            title="Réactiver"
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                          </button>
+                          <>
+                            {admin.status === "active" ? (
+                              <button
+                                onClick={() => handleToggleActive(admin)}
+                                className="p-1.5 text-gray-400 hover:text-amber-600 transition-colors"
+                                title="Désactiver"
+                              >
+                                <ShieldOff className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleToggleActive(admin)}
+                                className="p-1.5 text-gray-400 hover:text-emerald-600 transition-colors"
+                                title="Réactiver"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDelete(admin)}
+                              className="p-1.5 text-gray-400 hover:text-rose transition-colors"
+                              title="Supprimer le compte"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>

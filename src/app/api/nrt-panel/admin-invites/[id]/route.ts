@@ -95,10 +95,12 @@ export async function PATCH(
   return NextResponse.json({ ok: true });
 }
 
+const SUPER_ADMIN_EMAIL = "admin@nortoo.ma";
+
 /**
  * DELETE /api/nrt-panel/admin-invites/[id]
- * Cancel a pending admin invitation (delete the row).
- * Only works for pending admins (isActive = false, no password).
+ * Delete an admin account (pending invitation or existing account).
+ * Cannot delete yourself or the super-admin.
  */
 export async function DELETE(
   request: Request,
@@ -108,7 +110,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  // Only the super-admin can cancel invitations
+  // Only the super-admin can delete admins
   if (!(await isSuperAdmin())) {
     return NextResponse.json(
       { error: "Seul le super-admin peut gérer les administrateurs." },
@@ -125,7 +127,15 @@ export async function DELETE(
     return NextResponse.json({ error: "ID invalide" }, { status: 400 });
   }
 
-  // Check target exists and is pending
+  // Prevent self-deletion
+  if (callingAdminId && targetId === callingAdminId) {
+    return NextResponse.json(
+      { error: "Vous ne pouvez pas supprimer votre propre compte." },
+      { status: 400 }
+    );
+  }
+
+  // Check target exists
   const [target] = await db
     .select({
       id: adminUsers.id,
@@ -141,20 +151,22 @@ export async function DELETE(
     return NextResponse.json({ error: "Admin introuvable." }, { status: 404 });
   }
 
-  // Only allow deleting pending invitations (no password, not active)
-  if (target.isActive || target.passwordHash) {
+  // Prevent deleting the super-admin
+  if (target.email === SUPER_ADMIN_EMAIL) {
     return NextResponse.json(
-      { error: "Seules les invitations en attente peuvent être annulées." },
+      { error: "Le compte super-admin ne peut pas être supprimé." },
       { status: 400 }
     );
   }
+
+  const isPending = !target.isActive && !target.passwordHash;
 
   await db.delete(adminUsers).where(eq(adminUsers.id, targetId));
 
   // Audit log
   await db.insert(auditLogs).values({
     actor: "admin",
-    action: "admin_invite_cancelled",
+    action: isPending ? "admin_invite_cancelled" : "admin_deleted",
     targetType: "admin_user",
     targetId: String(targetId),
     details: JSON.stringify({
@@ -165,7 +177,7 @@ export async function DELETE(
   });
 
   console.info(
-    `[Admin] Invite cancelled — email: ${target.email}, by: ${callingAdminId}, IP: ${ip}`
+    `[Admin] ${isPending ? "Invite cancelled" : "Account deleted"} — email: ${target.email}, by: ${callingAdminId}, IP: ${ip}`
   );
 
   return NextResponse.json({ ok: true });
