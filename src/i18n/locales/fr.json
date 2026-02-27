@@ -443,8 +443,8 @@
       "error": "Erreur lors de la sauvegarde"
     },
     "bankInfo": {
-      "title": "Coordonnées bancaires nortoo",
-      "description": "Effectuez vos virements à l'aide des coordonnées ci-dessous. Indiquez le numéro de facture en référence."
+      "title": "Coordonnées bancaires",
+      "emailNotice": "Vos factures et coordonnées bancaires vous sont envoyées par email lors de chaque changement de plan."
     },
     "invoices": {
       "title": "Historique des factures",

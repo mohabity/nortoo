@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   Info,
   Download,
-  Copy,
   Save,
   FileText,
   CreditCard,
@@ -29,7 +28,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/provider";
 import { formatCurrency, formatNumber, formatDate } from "@/lib/i18n-utils";
-import { BANK_INFO } from "@/lib/billing-config";
 
 // ── Types ──
 
@@ -87,7 +85,6 @@ interface PendingUpgrade {
     dueDate: string | null;
     createdAt: string;
   };
-  bankInfo?: typeof BANK_INFO;
 }
 
 interface UpgradeConfirmation {
@@ -98,7 +95,6 @@ interface UpgradeConfirmation {
   amountTVA: number;
   amountTTC: number;
   dueDate: string;
-  bankInfo: typeof BANK_INFO;
 }
 
 // ── Colors ──
@@ -143,7 +139,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changing, setChanging] = useState<PlanId | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [pendingUpgrade, setPendingUpgrade] = useState<PendingUpgrade | null>(null);
   const [upgradeModal, setUpgradeModal] = useState<UpgradeConfirmation | null>(null);
@@ -230,7 +226,6 @@ export default function BillingPage() {
             amountTVA: json.data.amountTVA,
             amountTTC: json.data.amountTTC,
             dueDate: json.data.dueDate,
-            bankInfo: json.data.bankInfo,
           });
           fetchAll();
         }
@@ -263,11 +258,7 @@ export default function BillingPage() {
     }
   };
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
-  };
+
 
   if (loading || !planData) {
     return (
@@ -397,12 +388,12 @@ export default function BillingPage() {
                 Upgrade en attente — Plan {pendingUpgrade.invoice.planName}
               </h2>
               <p className="text-sm text-fog mt-1">
-                Effectuez le virement ci-dessous pour activer votre plan. Une fois le paiement confirmé, votre plan sera mis à jour automatiquement.
+                Effectuez le virement pour activer votre plan. Les coordonnées bancaires vous ont été envoyées par email avec la facture.
               </p>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="mt-4">
                 {/* Invoice details */}
-                <div className="rounded-sm bg-white border border-silk p-4 space-y-2">
+                <div className="rounded-sm bg-white border border-silk p-4 space-y-2 max-w-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-fog">Facture</span>
                     <span className="text-sm font-mono text-midnight">{pendingUpgrade.invoice.invoiceNumber}</span>
@@ -426,31 +417,6 @@ export default function BillingPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Bank details */}
-                {pendingUpgrade.bankInfo && (
-                  <div className="rounded-sm bg-white border border-silk p-4 space-y-2">
-                    {[
-                      { label: "Banque", value: pendingUpgrade.bankInfo.bankName, key: "pend-bank" },
-                      { label: "Titulaire", value: pendingUpgrade.bankInfo.accountHolder, key: "pend-holder" },
-                      { label: "RIB", value: pendingUpgrade.bankInfo.rib, key: "pend-rib" },
-                    ].map(({ label, value, key }) => (
-                      <div key={key} className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs text-fog">{label}</span>
-                          <p className="text-sm font-mono text-midnight">{value}</p>
-                        </div>
-                        <button
-                          onClick={() => copyToClipboard(value, key)}
-                          className="shrink-0 rounded-sm p-1 text-fog hover:text-midnight transition-colors"
-                          title="Copier"
-                        >
-                          {copied === key ? <Check className="h-3 w-3 text-mint" /> : <Copy className="h-3 w-3" />}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <div className="mt-3 flex items-center gap-2 rounded-sm bg-sun/5 border border-sun/20 px-3 py-2">
@@ -537,33 +503,12 @@ export default function BillingPage() {
         </button>
       </div>
 
-      {/* Section 3 — Coordonnées bancaires */}
+      {/* Section 3 — Info facturation par email */}
       <div className="rounded-sm border border-silk bg-white p-6">
-        <h2 className="font-display text-base font-semibold text-midnight mb-4">{t("billing.bankInfo.title")}</h2>
-        <p className="text-sm text-fog mb-4">{t("billing.bankInfo.description")}</p>
-        <div className="space-y-3 rounded-sm bg-snow p-4">
-          {[
-            { label: "Banque", value: BANK_INFO.bankName, key: "bank" },
-            { label: "Titulaire", value: BANK_INFO.accountHolder, key: "holder" },
-            { label: "RIB", value: BANK_INFO.rib, key: "rib" },
-            { label: "IBAN", value: BANK_INFO.iban, key: "iban" },
-            { label: "SWIFT", value: BANK_INFO.swift, key: "swift" },
-          ].map(({ label, value, key }) => (
-            <div key={key} className="flex items-center justify-between">
-              <div>
-                <span className="text-xs text-fog">{label}</span>
-                <p className="text-sm font-mono text-midnight">{value}</p>
-              </div>
-              <button
-                onClick={() => copyToClipboard(value, key)}
-                className="shrink-0 rounded-sm p-1.5 text-fog hover:text-midnight hover:bg-silk/50 transition-colors"
-                title="Copier"
-              >
-                {copied === key ? <Check className="h-3.5 w-3.5 text-mint" /> : <Copy className="h-3.5 w-3.5" />}
-              </button>
-            </div>
-          ))}
-        </div>
+        <h2 className="font-display text-base font-semibold text-midnight mb-2">{t("billing.bankInfo.title")}</h2>
+        <p className="text-sm text-fog">
+          {t("billing.bankInfo.emailNotice")}
+        </p>
       </div>
 
       {/* Section 4 — Historique des factures */}
@@ -802,7 +747,7 @@ export default function BillingPage() {
             <div className="px-6 py-5 space-y-5">
               <p className="text-sm text-slate">
                 Votre demande de passage au plan <span className="font-bold text-midnight">{upgradeModal.planName}</span> a été enregistrée.
-                Effectuez le virement ci-dessous pour activer votre plan.
+                Les coordonnées bancaires vous seront envoyées par email avec la facture.
               </p>
 
               {/* Invoice summary */}
@@ -827,32 +772,6 @@ export default function BillingPage() {
                   <span className="text-xs text-fog">Échéance</span>
                   <span className="text-xs text-mist">{formatDate(upgradeModal.dueDate, locale)}</span>
                 </div>
-              </div>
-
-              {/* Bank details */}
-              <div className="rounded-sm bg-snow border border-silk p-4 space-y-2">
-                <p className="text-xs font-medium text-fog mb-2">Coordonnées bancaires</p>
-                {[
-                  { label: "Banque", value: upgradeModal.bankInfo.bankName, key: "modal-bank" },
-                  { label: "Titulaire", value: upgradeModal.bankInfo.accountHolder, key: "modal-holder" },
-                  { label: "RIB", value: upgradeModal.bankInfo.rib, key: "modal-rib" },
-                  { label: "IBAN", value: upgradeModal.bankInfo.iban, key: "modal-iban" },
-                  { label: "SWIFT", value: upgradeModal.bankInfo.swift, key: "modal-swift" },
-                ].map(({ label, value, key }) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs text-fog">{label}</span>
-                      <p className="text-sm font-mono text-midnight">{value}</p>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(value, key)}
-                      className="shrink-0 rounded-sm p-1.5 text-fog hover:text-midnight hover:bg-silk/50 transition-colors"
-                      title="Copier"
-                    >
-                      {copied === key ? <Check className="h-3.5 w-3.5 text-mint" /> : <Copy className="h-3.5 w-3.5" />}
-                    </button>
-                  </div>
-                ))}
               </div>
 
               {/* Reference reminder */}

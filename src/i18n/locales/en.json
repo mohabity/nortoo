@@ -443,8 +443,8 @@
       "error": "Error saving information"
     },
     "bankInfo": {
-      "title": "nortoo bank details",
-      "description": "Make your transfers using the details below. Include the invoice number as reference."
+      "title": "Bank details",
+      "emailNotice": "Your invoices and bank details are sent to you by email with each plan change."
     },
     "invoices": {
       "title": "Invoice history",
