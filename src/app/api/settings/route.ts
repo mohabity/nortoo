@@ -8,7 +8,6 @@ import { sendVerificationEmail } from "@/lib/email-verification";
 import { auth } from "@/auth";
 import { requireActiveBilling } from "@/lib/billing-guard";
 import type { Locale } from "@/i18n/types";
-import { logProductEvent, EVENTS } from "@/lib/analytics-server";
 
 // ── Shared select columns ──
 const merchantSelect = {
@@ -481,12 +480,6 @@ export async function PUT(request: Request) {
     targetId: String(merchantId),
     details: JSON.stringify({ previous: current, new: data }),
   });
-
-  // Analytics — fire-and-forget
-  logProductEvent(merchantId, EVENTS.SCORING_CONFIG_CHANGED, {
-    previous: current,
-    new: data,
-  }, userId);
 
   const [updated] = await db
     .select(merchantSelect)

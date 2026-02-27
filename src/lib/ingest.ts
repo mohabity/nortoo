@@ -26,7 +26,6 @@ import { parseAddress } from "@/lib/address-parser";
 import { updateZoneStats, getZoneStats, getGlobalZoneStats } from "@/lib/zone-stats";
 import { generateExplanation } from "@/lib/score-explanation";
 import { buildSearchIndex } from "@/lib/search";
-import { logProductEvent, EVENTS } from "@/lib/analytics-server";
 
 export interface IngestParams {
   merchantId: number;
@@ -530,14 +529,6 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       version: scoringResult.version,
       confidence: scoringResult.confidence,
     }),
-  });
-
-  // Analytics — fire-and-forget
-  logProductEvent(merchantId, EVENTS.ORDER_SCORED, {
-    orderId: insertedOrder.id,
-    score: scoringResult.score,
-    decision,
-    riskLevel: scoringResult.riskLevel,
   });
 
   // ── 6b. Execute pipeline (with dynamic escalation deadlines) ──

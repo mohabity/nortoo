@@ -546,45 +546,17 @@ export default function AnalyticsPage() {
   const [savingsData, setSavingsData] = useState<SavingsApiData | null>(null);
   const [savingsLoading, setSavingsLoading] = useState(true);
 
-  // ── Daily metrics state (real data from DB) ──
-  interface DailyMetricsRow {
-    date: string;
-    ordersReceived: number;
-    ordersScored: number;
-    ordersConfirmed: number;
-    ordersRejected: number;
-    ordersShipped: number;
-    ordersDelivered: number;
-    ordersReturned: number;
-    avgScore: number;
-    scoreLow: number;
-    scoreMedium: number;
-    scoreHigh: number;
-  }
-  const [metricsData, setMetricsData] = useState<DailyMetricsRow[]>([]);
-  const [metricsLoaded, setMetricsLoaded] = useState(false);
-
-  // ── Fetch savings + daily metrics (period-aware) ──
+  // ── Fetch savings data (period-aware) ──
   useEffect(() => {
     setSavingsLoading(true);
     const days = period === "7j" ? 7 : period === "30j" ? 30 : 90;
-    const range = period === "7j" ? "7d" : period === "30j" ? "30d" : "90d";
-
-    Promise.all([
-      fetch(`/api/dashboard/savings?period=${days}d`)
-        .then((res) => res.json())
-        .then((json) => { if (json.data) setSavingsData(json.data); })
-        .catch(() => {}),
-      fetch(`/api/dashboard/daily-metrics?range=${range}`)
-        .then((res) => res.json())
-        .then((json) => {
-          if (json.data && json.data.length > 0) {
-            setMetricsData(json.data);
-            setMetricsLoaded(true);
-          }
-        })
-        .catch(() => {}),
-    ]).finally(() => setSavingsLoading(false));
+    fetch(`/api/dashboard/savings?period=${days}d`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data) setSavingsData(json.data);
+      })
+      .catch(() => {})
+      .finally(() => setSavingsLoading(false));
   }, [period]);
 
   // ── Fetch city data ──
@@ -649,50 +621,21 @@ export default function AnalyticsPage() {
       });
   }, [zoneCityFilter]);
 
-  // Filter daily data by period — use real metrics when available, fallback to mock
+  // Filter daily data by period and format dates with locale
   const dailyData = useMemo(() => {
-    if (metricsLoaded && metricsData.length > 0) {
-      return metricsData.map((d) => {
-        const returns = d.ordersReturned;
-        const orders = d.ordersReceived || 1;
-        return {
-          rawDate: d.date,
-          date: formatDate(d.date, locale, { day: "2-digit", month: "short" }),
-          fullDate: formatDate(d.date, locale, { day: "2-digit", month: "long", year: "numeric" }),
-          orders: d.ordersReceived,
-          delivered: d.ordersDelivered,
-          returns,
-          rtoRate: Math.round((returns / orders) * 100),
-        };
-      });
-    }
     const days = period === "7j" ? 7 : period === "30j" ? 30 : 90;
     return DAILY_DATA_90.slice(-days).map((d) => ({
       ...d,
       date: formatDate(d.rawDate, locale, { day: "2-digit", month: "short" }),
       fullDate: formatDate(d.rawDate, locale, { day: "2-digit", month: "long", year: "numeric" }),
     }));
-  }, [period, locale, metricsLoaded, metricsData]);
+  }, [period, locale]);
 
-  // Resolve translated labels for score distribution — use real data when available
-  const scoreDistribution = useMemo(() => {
-    if (metricsLoaded && metricsData.length > 0) {
-      const totals = metricsData.reduce(
-        (acc, d) => ({
-          low: acc.low + d.scoreLow,
-          medium: acc.medium + d.scoreMedium,
-          high: acc.high + d.scoreHigh,
-        }),
-        { low: 0, medium: 0, high: 0 }
-      );
-      return [
-        { range: "0-30", label: t("analytics.scoreDistribution.low"), count: totals.low, color: "#00E5A0" },
-        { range: "31-65", label: t("analytics.scoreDistribution.medium"), count: totals.medium, color: "#F59E0B" },
-        { range: "66-100", label: t("analytics.scoreDistribution.high"), count: totals.high, color: "#F43F5E" },
-      ];
-    }
-    return scoreDistributionBase.map((s) => ({ ...s, label: t(s.labelKey) }));
-  }, [t, metricsLoaded, metricsData]);
+  // Resolve translated labels for score distribution
+  const scoreDistribution = useMemo(
+    () => scoreDistributionBase.map((s) => ({ ...s, label: t(s.labelKey) })),
+    [t]
+  );
 
   // Resolve translated labels for decision breakdown
   const decisionData = useMemo(

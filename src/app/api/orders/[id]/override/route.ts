@@ -4,7 +4,6 @@ import { orders, auditLogs, notifications } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { requireActiveMerchant, handlePermissionError } from "@/lib/permissions";
-import { logProductEvent, EVENTS } from "@/lib/analytics-server";
 
 const overrideSchema = z.object({
   decision: z.enum(["ship", "verify", "flag", "block"]),
@@ -95,13 +94,6 @@ export async function POST(
       pipelineStatusChange: "merchant_override",
     }),
   });
-
-  // Analytics — fire-and-forget
-  logProductEvent(merchantId, EVENTS.ORDER_OVERRIDDEN, {
-    orderId,
-    previousDecision: order.decision,
-    newDecision: parsed.data.decision,
-  }, userId);
 
   return NextResponse.json({
     data: {

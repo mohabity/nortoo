@@ -6,7 +6,6 @@ import { eq } from "drizzle-orm";
 import { hashPhone } from "@/lib/hash";
 import { sendEmail, buildDataRightsConfirmationEmail, buildDataRightsNotificationEmail } from "@/lib/email";
 import { authLimiter, getClientIp, isRateLimitConfigured } from "@/lib/rate-limit";
-import { logProductEvent, EVENTS } from "@/lib/analytics-server";
 
 /**
  * POST /api/data-rights/submit
@@ -154,15 +153,6 @@ export async function POST(request: NextRequest) {
         text: notifEmail.text,
       }),
     ]);
-
-    // Analytics — fire-and-forget (use first merchant if available)
-    const firstMerchantId = matchingCustomers[0]?.merchantId;
-    if (firstMerchantId) {
-      logProductEvent(firstMerchantId, EVENTS.DATA_RIGHTS_REQUEST, {
-        type,
-        merchantCount: matchingCustomers.length,
-      });
-    }
 
     return NextResponse.json({
       success: true,
