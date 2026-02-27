@@ -436,6 +436,43 @@ const emailDict = {
     fr: "Ce code expire dans 10 minutes. Si vous n'avez pas demandé ce code, ignorez cet email.",
     en: "This code expires in 10 minutes. If you didn't request this code, ignore this email.",
   },
+  // ── Admin Approval Request ──
+  "adminApproval.preview": {
+    fr: "Nouveau compte admin en attente d'approbation",
+    en: "New admin account pending approval",
+  },
+  "adminApproval.subject": {
+    fr: "Nouveau compte admin en attente d'approbation — nortoo",
+    en: "New admin account pending approval — nortoo",
+  },
+  "adminApproval.heading": {
+    fr: "Nouveau compte admin créé",
+    en: "New admin account created",
+  },
+  "adminApproval.body": {
+    fr: "Un nouveau compte administrateur a été créé sur le panel nortoo et nécessite votre approbation.",
+    en: "A new admin account has been created on the nortoo panel and requires your approval.",
+  },
+  "adminApproval.name_label": {
+    fr: "Nom",
+    en: "Name",
+  },
+  "adminApproval.email_label": {
+    fr: "Email",
+    en: "Email",
+  },
+  "adminApproval.date_label": {
+    fr: "Date de création",
+    en: "Created on",
+  },
+  "adminApproval.action": {
+    fr: "Veuillez vérifier ce compte et confirmer ou révoquer l'accès depuis le panel d'administration.",
+    en: "Please review this account and confirm or revoke access from the admin panel.",
+  },
+  "adminApproval.cta": {
+    fr: "Accéder au panel admin",
+    en: "Go to admin panel",
+  },
 } as const satisfies Record<string, { fr: string; en: string }>;
 
 // ─────────────────────────────────────────────────────────────

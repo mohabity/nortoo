@@ -5,6 +5,7 @@ import {
   Container,
   Section,
   Text,
+  Img,
   Preview,
 } from "@react-email/components";
 import * as React from "react";
@@ -50,17 +51,13 @@ export function NortooLayout({ children, preview, locale = "fr" }: LayoutProps) 
               borderBottom: "1px solid #E2E8F0",
             }}
           >
-            <Text
-              style={{
-                margin: 0,
-                fontWeight: 900,
-                fontSize: "1.3rem",
-                letterSpacing: "-0.04em",
-                color: "#0B0F1A",
-              }}
-            >
-              nortoo
-            </Text>
+            <Img
+              src="https://app.nortoo.ma/nortoo-logo.png"
+              alt="nortoo"
+              width={100}
+              height={28}
+              style={{ display: "block" }}
+            />
           </Section>
 
           {/* Content */}

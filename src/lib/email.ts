@@ -17,6 +17,7 @@ import { DataRightsConfirmation } from "@/emails/DataRightsConfirmation";
 import { DataRightsNotification } from "@/emails/DataRightsNotification";
 import { PlanChange } from "@/emails/PlanChange";
 import { AdminLoginCode } from "@/emails/AdminLoginCode";
+import { AdminApprovalRequest } from "@/emails/AdminApprovalRequest";
 
 interface EmailPayload {
   to: string;
@@ -276,4 +277,32 @@ export async function buildAdminLoginCodeEmail(
   const html = await render(element);
   const text = await render(element, { plainText: true });
   return { subject: t(locale, "adminMfa.subject"), html, text };
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN APPROVAL REQUEST — sent to admin@nortoo.ma
+// ═══════════════════════════════════════════════════════════
+
+export async function buildAdminApprovalEmail(
+  adminName: string,
+  adminEmail: string,
+  locale: Locale = "fr",
+) {
+  const now = new Date();
+  const createdAt = now.toLocaleDateString(locale === "fr" ? "fr-FR" : "en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const element = React.createElement(AdminApprovalRequest, {
+    adminName,
+    adminEmail,
+    createdAt,
+    locale,
+  });
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  return { subject: t(locale, "adminApproval.subject"), html, text };
 }

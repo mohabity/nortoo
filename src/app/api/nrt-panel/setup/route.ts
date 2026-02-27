@@ -9,6 +9,7 @@ import {
   getClientIp,
   safeLimit,
 } from "@/lib/rate-limit";
+import { buildAdminApprovalEmail, sendEmail } from "@/lib/email";
 
 /**
  * GET /api/nrt-panel/setup
@@ -120,6 +121,24 @@ export async function POST(request: Request) {
     console.info(
       `[Admin Setup] First admin created — email: ${email}, IP: ${ip}`
     );
+
+    // Send approval request email to admin@nortoo.ma
+    try {
+      const approvalEmail = await buildAdminApprovalEmail(
+        String(name).trim(),
+        String(email).trim().toLowerCase(),
+        "fr",
+      );
+      await sendEmail({
+        to: "admin@nortoo.ma",
+        subject: approvalEmail.subject,
+        html: approvalEmail.html,
+        text: approvalEmail.text,
+      });
+    } catch (approvalErr) {
+      // Non-blocking: don't fail setup if approval email fails
+      console.error("[Admin Setup] Approval email error:", approvalErr);
+    }
 
     return NextResponse.json(
       {
