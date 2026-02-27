@@ -9,15 +9,18 @@ import { WebhookHealthDot } from "@/components/dashboard/webhook-health-dot";
 import { PlanBadge } from "@/components/plan-badge";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useTranslation } from "@/i18n/provider";
+import { useBilling } from "@/components/billing-context";
 import type { Role } from "@/lib/permissions.shared";
 import type { PlanId } from "@/lib/plans";
 
 export function Header() {
   const { data: session } = useSession();
   const { t } = useTranslation();
+  const { plan: billingPlan, loading: billingLoading } = useBilling();
 
   const merchantName = session?.user?.name ?? "Ma Boutique";
-  const plan = (session?.user?.plan ?? "trial") as PlanId;
+  // Use real-time plan from BillingProvider, fallback to JWT during loading
+  const plan = (!billingLoading ? billingPlan : (session?.user?.plan ?? "trial")) as PlanId;
   const role = (session?.user?.role ?? "operator") as Role;
   const roleLabel = t(`roles.${role}`);
 
