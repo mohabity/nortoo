@@ -681,7 +681,10 @@
         "deliveryConfirmation": "Delivery confirmation",
         "deliveryConfirmationDesc": "Confirm customer availability before shipping",
         "codReminder": "COD reminder",
-        "codReminderDesc": "Remind the customer to prepare the exact amount"
+        "codReminderDesc": "Remind the customer to prepare the exact amount",
+        "connectWithFacebook": "Connect with Facebook",
+        "manualSetup": "Manual setup (advanced)",
+        "embeddedSignupError": "Connection failed. Please try again or use manual setup."
       }
     },
     "privacy": {

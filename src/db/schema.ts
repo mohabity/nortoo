@@ -37,6 +37,7 @@ export const merchants = pgTable("merchants", {
   // WhatsApp Business API (per-merchant)
   whatsappPhoneNumberId: text("whatsapp_phone_number_id"), // Meta phone number ID
   whatsappAccessToken: text("whatsapp_access_token"),       // Encrypted (AES-256-GCM)
+  whatsappWabaId: text("whatsapp_waba_id"),                 // WhatsApp Business Account ID (Embedded Signup)
 
   // Billing
   plan: text("plan").notNull().default("trial"), // trial | starter | pro | scale

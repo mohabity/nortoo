@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Bell,
   MessageSquare,
@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import {
   Card,
@@ -146,6 +148,10 @@ function parsePrefs(raw: unknown): { email: EmailPrefs; whatsapp: WhatsAppPrefs 
   }
 }
 
+// ── Facebook SDK env vars ──
+const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
+const FACEBOOK_CONFIG_ID = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID;
+
 export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
@@ -155,9 +161,16 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
   const isWaConnected = !!settings.whatsappPhoneNumberId;
   const [connectingWa, setConnectingWa] = useState(false);
   const [disconnectingWa, setDisconnectingWa] = useState(false);
+
+  // ── Manual setup state ──
+  const [showManualSetup, setShowManualSetup] = useState(false);
   const [waPhoneNumberId, setWaPhoneNumberId] = useState("");
   const [waAccessToken, setWaAccessToken] = useState("");
   const [showToken, setShowToken] = useState(false);
+
+  // ── Embedded Signup state ──
+  const [fbSdkReady, setFbSdkReady] = useState(false);
+  const sessionDataRef = useRef<{ phoneNumberId: string; wabaId: string } | null>(null);
 
   // Parse saved preferences
   const { email: savedEmailPrefs, whatsapp: savedWaPrefs } = parsePrefs(
@@ -173,6 +186,55 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
     setPrefs(email);
     setWaPrefs(whatsapp);
   }, [settings.notificationPreferences]);
+
+  // ── Load Facebook SDK ──
+  useEffect(() => {
+    if (!FACEBOOK_APP_ID || typeof window === "undefined") return;
+    if (window.FB) {
+      setFbSdkReady(true);
+      return;
+    }
+
+    window.fbAsyncInit = function () {
+      window.FB.init({
+        appId: FACEBOOK_APP_ID,
+        cookie: true,
+        xfbml: false,
+        version: "v21.0",
+      });
+      setFbSdkReady(true);
+    };
+
+    // Only add script if not already present
+    if (!document.getElementById("facebook-jssdk")) {
+      const script = document.createElement("script");
+      script.id = "facebook-jssdk";
+      script.src = "https://connect.facebook.net/en_US/sdk.js";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  // ── Session Info Listener — listen for Meta messages ──
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (!event.origin?.endsWith("facebook.com")) return;
+      try {
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (data.type === "WA_EMBEDDED_SIGNUP" && data.event === "FINISH") {
+          sessionDataRef.current = {
+            phoneNumberId: data.data.phone_number_id,
+            wabaId: data.data.waba_id,
+          };
+        }
+      } catch {
+        /* ignore non-JSON messages */
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
 
   function updatePref(key: keyof EmailPrefs, value: boolean) {
     setPrefs((prev) => ({ ...prev, [key]: value }));
@@ -236,7 +298,64 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
     }
   }
 
-  // ── WhatsApp connect / disconnect ──
+  // ── Embedded Signup handler ──
+  async function handleEmbeddedSignup() {
+    if (!window.FB || !FACEBOOK_CONFIG_ID) return;
+    setConnectingWa(true);
+    sessionDataRef.current = null;
+
+    window.FB.login(
+      async (response) => {
+        if (response.authResponse?.code) {
+          const code = response.authResponse.code;
+
+          // Wait briefly for sessionInfoListener to capture phone_number_id
+          await new Promise((r) => setTimeout(r, 1000));
+
+          const sessionData = sessionDataRef.current;
+          if (!sessionData?.phoneNumberId) {
+            onToast("error", t("settings.notifications.whatsapp.embeddedSignupError"));
+            setConnectingWa(false);
+            return;
+          }
+
+          try {
+            const res = await fetch("/api/auth/whatsapp-embedded", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                code,
+                phoneNumberId: sessionData.phoneNumberId,
+                wabaId: sessionData.wabaId,
+              }),
+            });
+
+            if (res.ok) {
+              sessionDataRef.current = null;
+              await onRefresh();
+              onToast("success", t("settings.notifications.whatsapp.connectSuccess"));
+            } else {
+              const err = await res.json().catch(() => ({}));
+              onToast("error", err.error || t("common.error"));
+            }
+          } catch {
+            onToast("error", t("common.error"));
+          }
+        }
+        setConnectingWa(false);
+      },
+      {
+        config_id: FACEBOOK_CONFIG_ID,
+        response_type: "code",
+        override_default_response_type: true,
+        extras: {
+          sessionInfoVersion: "3",
+        },
+      },
+    );
+  }
+
+  // ── Manual connect ──
   async function handleConnectWa() {
     if (!waPhoneNumberId.trim() || !waAccessToken.trim()) return;
     setConnectingWa(true);
@@ -254,6 +373,7 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
         setWaPhoneNumberId("");
         setWaAccessToken("");
         setShowToken(false);
+        setShowManualSetup(false);
         await onRefresh();
         onToast("success", t("settings.notifications.whatsapp.connectSuccess"));
       } else if (res.status === 429) {
@@ -296,9 +416,11 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
     return `${id.slice(0, 4)}${"*".repeat(id.length - 8)}${id.slice(-4)}`;
   }
 
+  const embeddedSignupAvailable = !!FACEBOOK_APP_ID && !!FACEBOOK_CONFIG_ID;
+
   return (
     <div className="space-y-6">
-      {/* ═══ Notifications email ═══ */}
+      {/* Email notifications */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -341,7 +463,7 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
         </CardContent>
       </Card>
 
-      {/* ═══ WhatsApp Configuration ═══ */}
+      {/* WhatsApp Configuration */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -388,70 +510,106 @@ export function NotificationsTab({ settings, onToast, onRefresh }: BaseTabProps)
               </div>
             </div>
           ) : (
-            /* ── Setup form ── */
+            /* ── Setup: Embedded Signup + manual fallback ── */
             <div className="space-y-4">
               <p className="text-sm text-fog">
                 {t("settings.notifications.whatsapp.notConfigured")}
               </p>
 
-              {/* Phone Number ID */}
-              <div>
-                <label className="text-sm font-medium text-slate mb-1 block">
-                  {t("settings.notifications.whatsapp.phoneNumberId")}
-                </label>
-                <input
-                  type="text"
-                  value={waPhoneNumberId}
-                  onChange={(e) => setWaPhoneNumberId(e.target.value)}
-                  placeholder={t("settings.notifications.whatsapp.phoneNumberIdPlaceholder")}
-                  className="w-full rounded-md border border-silk bg-white px-3 py-2 text-sm text-slate placeholder:text-mist focus:border-mint focus:outline-none focus:ring-1 focus:ring-mint"
-                />
-              </div>
+              {/* Embedded Signup button (primary) */}
+              {embeddedSignupAvailable && (
+                <Button
+                  onClick={handleEmbeddedSignup}
+                  disabled={connectingWa || !fbSdkReady}
+                  className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white"
+                >
+                  {connectingWa ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                  )}
+                  {t("settings.notifications.whatsapp.connectWithFacebook")}
+                </Button>
+              )}
 
-              {/* Access Token */}
-              <div>
-                <label className="text-sm font-medium text-slate mb-1 block">
-                  {t("settings.notifications.whatsapp.accessToken")}
-                </label>
-                <div className="relative">
-                  <input
-                    type={showToken ? "text" : "password"}
-                    value={waAccessToken}
-                    onChange={(e) => setWaAccessToken(e.target.value)}
-                    placeholder={t("settings.notifications.whatsapp.accessTokenPlaceholder")}
-                    className="w-full rounded-md border border-silk bg-white px-3 py-2 pr-10 text-sm text-slate placeholder:text-mist focus:border-mint focus:outline-none focus:ring-1 focus:ring-mint font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowToken(!showToken)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fog hover:text-slate"
-                  >
-                    {showToken ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <Button
-                onClick={handleConnectWa}
-                disabled={connectingWa || !waPhoneNumberId.trim() || !waAccessToken.trim()}
+              {/* Manual setup toggle */}
+              <button
+                onClick={() => setShowManualSetup(!showManualSetup)}
+                className="flex items-center gap-1.5 text-sm text-fog hover:text-slate transition-colors"
               >
-                {connectingWa ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {showManualSetup ? (
+                  <ChevronDown className="h-4 w-4" />
                 ) : (
-                  <Link2 className="mr-2 h-4 w-4" />
+                  <ChevronRight className="h-4 w-4" />
                 )}
-                {t("settings.notifications.whatsapp.connect")}
-              </Button>
+                {t("settings.notifications.whatsapp.manualSetup")}
+              </button>
+
+              {/* Manual setup form (collapsed by default) */}
+              {showManualSetup && (
+                <div className="space-y-4 rounded-lg border border-silk bg-white/50 p-4">
+                  {/* Phone Number ID */}
+                  <div>
+                    <label className="text-sm font-medium text-slate mb-1 block">
+                      {t("settings.notifications.whatsapp.phoneNumberId")}
+                    </label>
+                    <input
+                      type="text"
+                      value={waPhoneNumberId}
+                      onChange={(e) => setWaPhoneNumberId(e.target.value)}
+                      placeholder={t("settings.notifications.whatsapp.phoneNumberIdPlaceholder")}
+                      className="w-full rounded-md border border-silk bg-white px-3 py-2 text-sm text-slate placeholder:text-mist focus:border-mint focus:outline-none focus:ring-1 focus:ring-mint"
+                    />
+                  </div>
+
+                  {/* Access Token */}
+                  <div>
+                    <label className="text-sm font-medium text-slate mb-1 block">
+                      {t("settings.notifications.whatsapp.accessToken")}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showToken ? "text" : "password"}
+                        value={waAccessToken}
+                        onChange={(e) => setWaAccessToken(e.target.value)}
+                        placeholder={t("settings.notifications.whatsapp.accessTokenPlaceholder")}
+                        className="w-full rounded-md border border-silk bg-white px-3 py-2 pr-10 text-sm text-slate placeholder:text-mist focus:border-mint focus:outline-none focus:ring-1 focus:ring-mint font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowToken(!showToken)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-fog hover:text-slate"
+                      >
+                        {showToken ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleConnectWa}
+                    disabled={connectingWa || !waPhoneNumberId.trim() || !waAccessToken.trim()}
+                  >
+                    {connectingWa ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Link2 className="mr-2 h-4 w-4" />
+                    )}
+                    {t("settings.notifications.whatsapp.connect")}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* ═══ WhatsApp notification toggles ═══ */}
+      {/* WhatsApp notification toggles */}
       <Card className={cn(!isWaConnected && "opacity-50 pointer-events-none")}>
         <CardHeader>
           <div className="flex items-center gap-2">

@@ -35,6 +35,7 @@ const merchantSelect = {
   currentMonthOrders: merchants.currentMonthOrders,
   currentMonthStart: merchants.currentMonthStart,
   whatsappPhoneNumberId: merchants.whatsappPhoneNumberId,
+  whatsappWabaId: merchants.whatsappWabaId,
   createdAt: merchants.createdAt,
   updatedAt: merchants.updatedAt,
 } as const;
@@ -402,6 +403,7 @@ export async function PUT(request: Request) {
       .set({
         whatsappPhoneNumberId: null,
         whatsappAccessToken: null,
+        whatsappWabaId: null,
         updatedAt: new Date(),
       })
       .where(eq(merchants.id, merchantId));

@@ -681,7 +681,10 @@
         "deliveryConfirmation": "Confirmation livraison",
         "deliveryConfirmationDesc": "Confirmer la disponibilité du client avant l'expédition",
         "codReminder": "Rappel COD",
-        "codReminderDesc": "Rappeler au client de préparer le montant exact"
+        "codReminderDesc": "Rappeler au client de préparer le montant exact",
+        "connectWithFacebook": "Connecter avec Facebook",
+        "manualSetup": "Configuration manuelle (avancé)",
+        "embeddedSignupError": "Erreur lors de la connexion. Réessayez ou utilisez la configuration manuelle."
       }
     },
     "privacy": {
