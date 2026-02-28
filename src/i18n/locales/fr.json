@@ -1193,7 +1193,8 @@
     "stats": {
       "rules": "Règles de scoring",
       "rto": "de RTO en moyenne",
-      "score": "Score par commande"
+      "score": "Score par commande",
+      "whatsapp": "Vérification automatique"
     },
     "howItWorks": {
       "title": "Comment ça marche",
@@ -1203,7 +1204,7 @@
       "step2Title": "Chaque commande est scorée",
       "step2Desc": "Plus de 24 règles analysent le client, le montant, la ville, l'adresse et l'historique. Score 0 (sûr) à 100 (frauduleux).",
       "step3Title": "Expédiez en confiance",
-      "step3Desc": "Recevez une décision claire : Expédier, Vérifier, Signaler ou Bloquer. Votre RTO chute."
+      "step3Desc": "Recevez une décision claire : Expédier, Vérifier, Signaler ou Bloquer. Les cas douteux reçoivent un message WhatsApp automatique pour confirmer la commande."
     },
     "features": {
       "title": "Tout ce qu'il faut pour lutter contre la fraude COD",
@@ -1219,7 +1220,11 @@
       "compliance": "Conforme Loi 09-08",
       "complianceDesc": "Téléphones hashés SHA-256, audit log, droits d'accès/suppression, CNDP.",
       "reports": "Rapports & exports",
-      "reportsDesc": "Rapport hebdomadaire par email, export CSV, rapport PDF mensuel."
+      "reportsDesc": "Rapport hebdomadaire par email, export CSV, rapport PDF mensuel.",
+      "whatsapp": "Vérification WhatsApp",
+      "whatsappDesc": "Les commandes suspectes reçoivent un message automatique. Le client confirme ou annule en un mot.",
+      "embeddedSignup": "Connexion en 1 clic",
+      "embeddedSignupDesc": "Connectez votre WhatsApp Business en un clic via Facebook. Aucune configuration technique requise."
     },
     "pricing": {
       "title": "Tarifs simples, sans surprise",
@@ -1254,7 +1259,20 @@
       "q4": "Puis-je personnaliser les seuils ?",
       "a4": "Oui. Depuis le dashboard, vous pouvez ajuster les seuils SHIP/VERIFY/FLAG/BLOCK, activer des presets par secteur, et même personnaliser le poids de chaque règle (plan Pro+).",
       "q5": "Comment est facturé le service ?",
-      "a5": "Par virement bancaire mensuel. Une facture est générée automatiquement avec TVA 20%. L'essai de 30 jours est totalement gratuit, sans carte bancaire."
+      "a5": "Par virement bancaire mensuel. Une facture est générée automatiquement avec TVA 20%. L'essai de 30 jours est totalement gratuit, sans carte bancaire.",
+      "q6": "Comment fonctionne la vérification WhatsApp ?",
+      "a6": "Quand une commande a un score moyen (zone VERIFY), nortoo envoie automatiquement un message WhatsApp au client pour confirmer sa commande. Si le client répond OUI, la commande est expédiée. S'il répond NON, elle est bloquée. Connectez votre WhatsApp Business en un clic depuis les paramètres."
+    },
+    "whatsapp": {
+      "badge": "Nouveau",
+      "title": "Vérification client par WhatsApp",
+      "subtitle": "Les commandes en zone suspecte reçoivent un message automatique. Le client confirme en un mot, la commande est expédiée ou bloquée instantanément.",
+      "feature1": "Confirmation instantanée",
+      "feature2": "Réponse OUI / NON en un mot",
+      "feature3": "Expédition ou blocage automatique",
+      "mockupGreeting": "Bonjour Ahmed,",
+      "mockupBody": "Confirmez votre commande #NRT-4521 de 349 DH en répondant OUI ou NON.",
+      "mockupTime": "14:32"
     },
     "cta": {
       "title": "Prêt à réduire votre RTO ?",

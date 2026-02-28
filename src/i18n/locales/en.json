@@ -1193,7 +1193,8 @@
     "stats": {
       "rules": "Scoring rules",
       "rto": "avg RTO reduction",
-      "score": "Score per order"
+      "score": "Score per order",
+      "whatsapp": "Automatic verification"
     },
     "howItWorks": {
       "title": "How it works",
@@ -1203,7 +1204,7 @@
       "step2Title": "Every order is scored",
       "step2Desc": "24+ rules analyze the customer, amount, city, address and history. Score 0 (safe) to 100 (fraudulent).",
       "step3Title": "Ship with confidence",
-      "step3Desc": "Get a clear decision: Ship, Verify, Flag or Block. Your RTO drops."
+      "step3Desc": "Get a clear decision: Ship, Verify, Flag or Block. Doubtful cases receive an automatic WhatsApp message to confirm the order."
     },
     "features": {
       "title": "Everything you need to fight COD fraud",
@@ -1219,7 +1220,11 @@
       "compliance": "Law 09-08 compliant",
       "complianceDesc": "SHA-256 hashed phones, audit log, access/deletion rights, CNDP.",
       "reports": "Reports & exports",
-      "reportsDesc": "Weekly email report, CSV export, monthly PDF report."
+      "reportsDesc": "Weekly email report, CSV export, monthly PDF report.",
+      "whatsapp": "WhatsApp Verification",
+      "whatsappDesc": "Suspicious orders receive an automatic message. The customer confirms or cancels in one word.",
+      "embeddedSignup": "1-Click Connection",
+      "embeddedSignupDesc": "Connect your WhatsApp Business in one click via Facebook. No technical setup required."
     },
     "pricing": {
       "title": "Simple pricing, no surprises",
@@ -1254,7 +1259,20 @@
       "q4": "Can I customize the thresholds?",
       "a4": "Yes. From the dashboard, you can adjust SHIP/VERIFY/FLAG/BLOCK thresholds, activate sector presets, and even customize each rule's weight (Pro+ plan).",
       "q5": "How is the service billed?",
-      "a5": "By monthly bank transfer. An invoice is automatically generated with 20% VAT. The 30-day trial is completely free, no credit card required."
+      "a5": "By monthly bank transfer. An invoice is automatically generated with 20% VAT. The 30-day trial is completely free, no credit card required.",
+      "q6": "How does WhatsApp verification work?",
+      "a6": "When an order scores in the medium zone (VERIFY), nortoo automatically sends a WhatsApp message to the customer to confirm. If they reply YES, the order is shipped. If they reply NO, it's blocked. Connect your WhatsApp Business in one click from the settings."
+    },
+    "whatsapp": {
+      "badge": "New",
+      "title": "Customer verification via WhatsApp",
+      "subtitle": "Orders in the suspect zone receive an automatic message. The customer confirms in one word — the order is shipped or blocked instantly.",
+      "feature1": "Instant confirmation",
+      "feature2": "YES / NO response in one word",
+      "feature3": "Automatic shipping or blocking",
+      "mockupGreeting": "Hello Ahmed,",
+      "mockupBody": "Confirm your order #NRT-4521 of 349 MAD by replying YES or NO.",
+      "mockupTime": "2:32 PM"
     },
     "cta": {
       "title": "Ready to reduce your RTO?",

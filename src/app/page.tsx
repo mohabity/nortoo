@@ -12,6 +12,8 @@ import {
   ChevronRight,
   Check,
   ArrowRight,
+  MessageCircle,
+  Smartphone,
 } from "lucide-react";
 import { useTranslation } from "@/i18n/provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -164,7 +166,7 @@ export default function Home() {
 
       {/* ═══ Social proof ═══ */}
       <section className="px-6 py-12 border-y border-[#E2E8F0]">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8 text-center">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
             <p className="text-3xl md:text-4xl font-black text-[#0B0F1A]">24+</p>
             <p className="text-sm text-[#94A3B8] mt-1">{t("landing.stats.rules")}</p>
@@ -176,6 +178,10 @@ export default function Home() {
           <div>
             <p className="text-3xl md:text-4xl font-black text-[#0B0F1A]">0-100</p>
             <p className="text-sm text-[#94A3B8] mt-1">{t("landing.stats.score")}</p>
+          </div>
+          <div>
+            <p className="text-3xl md:text-4xl font-black text-[#00C78A]">WhatsApp</p>
+            <p className="text-sm text-[#94A3B8] mt-1">{t("landing.stats.whatsapp")}</p>
           </div>
         </div>
       </section>
@@ -225,8 +231,92 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══ WhatsApp Verification ═══ */}
+      <section className="px-6 py-20 bg-[#F8FAFC]">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Left — text */}
+            <div>
+              <div className="inline-flex items-center gap-1.5 bg-[#25D366]/10 text-[#128C7E] text-xs font-semibold px-3 py-1 rounded-full mb-4 border border-[#25D366]/20">
+                <MessageCircle className="w-3 h-3" />
+                {t("landing.whatsapp.badge")}
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-[#0B0F1A] mb-4">
+                {t("landing.whatsapp.title")}
+              </h2>
+              <p className="text-[#64748B] leading-relaxed mb-6">
+                {t("landing.whatsapp.subtitle")}
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  t("landing.whatsapp.feature1"),
+                  t("landing.whatsapp.feature2"),
+                  t("landing.whatsapp.feature3"),
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-[#1E293B]">
+                    <div className="w-5 h-5 rounded-full bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-[#25D366]" />
+                    </div>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={`${APP_URL}/register?lang=${locale}`}
+                className="inline-flex items-center gap-2 bg-[#00E5A0] text-[#0B0F1A] px-6 py-3 rounded-xl font-semibold hover:bg-[#00C78A] transition text-sm"
+              >
+                {t("landing.cta.button")}
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+
+            {/* Right — WhatsApp mockup */}
+            <div className="flex justify-center">
+              <div className="w-72 rounded-2xl bg-[#ECE5DD] p-4 shadow-lg border border-[#D5CEC6]">
+                {/* WhatsApp header */}
+                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#D5CEC6]">
+                  <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-[#111B21]">nortoo</p>
+                    <p className="text-[10px] text-[#667781]">Business</p>
+                  </div>
+                </div>
+                {/* Message bubble */}
+                <div className="bg-white rounded-lg p-3 shadow-sm max-w-[90%] relative">
+                  <p className="text-xs text-[#111B21] leading-relaxed">
+                    <span className="font-semibold">{t("landing.whatsapp.mockupGreeting")}</span>
+                    <br />
+                    {t("landing.whatsapp.mockupBody")}
+                  </p>
+                  <div className="flex items-center justify-end gap-1 mt-1.5">
+                    <span className="text-[10px] text-[#667781]">{t("landing.whatsapp.mockupTime")}</span>
+                    {/* Double check blue */}
+                    <svg className="w-3.5 h-3.5 text-[#53BDEB]" viewBox="0 0 16 15" fill="currentColor">
+                      <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.88a.32.32 0 0 1-.484.032l-.358-.325a.32.32 0 0 0-.484.032l-.378.48a.418.418 0 0 0 .036.54l1.32 1.267a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.88a.32.32 0 0 1-.484.032L1.892 7.77a.366.366 0 0 0-.516.005l-.423.433a.364.364 0 0 0 .006.514l3.255 3.185a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51z" />
+                    </svg>
+                  </div>
+                </div>
+                {/* Quick reply buttons */}
+                <div className="flex gap-2 mt-2">
+                  <button className="flex-1 bg-white text-[#00A884] text-xs font-semibold py-2 rounded-lg border border-[#D5CEC6] shadow-sm">
+                    OUI
+                  </button>
+                  <button className="flex-1 bg-white text-[#E74C3C] text-xs font-semibold py-2 rounded-lg border border-[#D5CEC6] shadow-sm">
+                    NON
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══ Features ═══ */}
-      <section id="features" className="px-6 py-20 bg-[#F8FAFC]">
+      <section id="features" className="px-6 py-20 bg-white">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-[#0B0F1A] text-center mb-4">
             {t("landing.features.title")}
@@ -234,7 +324,7 @@ export default function Home() {
           <p className="text-[#94A3B8] text-center mb-12 max-w-lg mx-auto">
             {t("landing.features.subtitle")}
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 icon: <Shield className="w-5 h-5" />,
@@ -265,6 +355,16 @@ export default function Home() {
                 icon: <FileText className="w-5 h-5" />,
                 title: t("landing.features.reports"),
                 desc: t("landing.features.reportsDesc"),
+              },
+              {
+                icon: <MessageCircle className="w-5 h-5" />,
+                title: t("landing.features.whatsapp"),
+                desc: t("landing.features.whatsappDesc"),
+              },
+              {
+                icon: <Smartphone className="w-5 h-5" />,
+                title: t("landing.features.embeddedSignup"),
+                desc: t("landing.features.embeddedSignupDesc"),
               },
             ].map((f) => (
               <div key={f.title} className="bg-white rounded-xl p-5 border border-[#E2E8F0] hover:border-[#00E5A0]/40 transition shadow-[0_1px_4px_rgba(0,0,0,.03)]">
@@ -404,6 +504,7 @@ export default function Home() {
               { q: t("landing.faq.q3"), a: t("landing.faq.a3") },
               { q: t("landing.faq.q4"), a: t("landing.faq.a4") },
               { q: t("landing.faq.q5"), a: t("landing.faq.a5") },
+              { q: t("landing.faq.q6"), a: t("landing.faq.a6") },
             ].map((item) => (
               <details
                 key={item.q}
