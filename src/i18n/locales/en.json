@@ -1278,7 +1278,14 @@
       "mockupDarijaYes": "ايه",
       "mockupDarijaNo": "لا",
       "mockupDarijaTime": "14:32",
-      "darijaLabel": "🇲🇦 Darija"
+      "darijaLabel": "🇲🇦 Darija",
+      "mockupReplyYes": "YES",
+      "mockupReplyNo": "NO",
+      "mockupReplyTime": "2:33 PM",
+      "mockupConfirm": "Order #NRT-4521 confirmed ✅ Shipping now!",
+      "mockupCancel": "Order #NRT-4521 cancelled.",
+      "mockupDarijaConfirm": "الطلبية #NRT-4521 تأكدات ✅ غادي نصيفطوها!",
+      "mockupDarijaCancel": "الطلبية #NRT-4521 تلغات."
     },
     "cta": {
       "title": "Ready to reduce your RTO?",

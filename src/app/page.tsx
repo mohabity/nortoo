@@ -28,9 +28,12 @@ const APP_URL = "https://app.nortoo.ma";
 export default function Home() {
   const { t, locale } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mockupReply, setMockupReply] = useState<"yes" | "no" | null>(null);
+  const [darijaReply, setDarijaReply] = useState<"yes" | "no" | null>(null);
 
   return (
     <div className="min-h-screen bg-white text-[#1E293B]">
+      <style>{`@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {/* ═══ Navbar ═══ */}
       <nav className="border-b border-[#E2E8F0] px-6 py-4 sticky top-0 bg-white/95 backdrop-blur-sm z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -299,13 +302,45 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-2">
-                  <button className="flex-1 bg-white text-[#00A884] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm">
+                  <button
+                    onClick={() => setMockupReply("yes")}
+                    className="flex-1 bg-white text-[#00A884] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm cursor-pointer hover:bg-[#F0FFF4] transition"
+                  >
                     {locale === "fr" ? "OUI" : "YES"}
                   </button>
-                  <button className="flex-1 bg-white text-[#E74C3C] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm">
+                  <button
+                    onClick={() => setMockupReply("no")}
+                    className="flex-1 bg-white text-[#E74C3C] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm cursor-pointer hover:bg-[#FFF5F5] transition"
+                  >
                     {locale === "fr" ? "NON" : "NO"}
                   </button>
                 </div>
+                {mockupReply && (
+                  <div className="mt-2 space-y-1.5" style={{ animation: "fadeInUp 0.3s ease-out" }}>
+                    <div className="bg-[#DCF8C6] rounded-lg p-2 shadow-sm max-w-[60%] ml-auto">
+                      <p className="text-[11px] text-[#111B21] font-medium">
+                        {mockupReply === "yes" ? t("landing.whatsapp.mockupReplyYes") : t("landing.whatsapp.mockupReplyNo")}
+                      </p>
+                      <div className="flex items-center justify-end gap-1 mt-0.5">
+                        <span className="text-[10px] text-[#667781]">{t("landing.whatsapp.mockupReplyTime")}</span>
+                        <svg className="w-3.5 h-3.5 text-[#53BDEB]" viewBox="0 0 16 15" fill="currentColor">
+                          <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.88a.32.32 0 0 1-.484.032l-.358-.325a.32.32 0 0 0-.484.032l-.378.48a.418.418 0 0 0 .036.54l1.32 1.267a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.88a.32.32 0 0 1-.484.032L1.892 7.77a.366.366 0 0 0-.516.005l-.423.433a.364.364 0 0 0 .006.514l3.255 3.185a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-2.5 shadow-sm max-w-[90%]">
+                      <p className="text-[11px] text-[#111B21] leading-relaxed">
+                        {mockupReply === "yes" ? t("landing.whatsapp.mockupConfirm") : t("landing.whatsapp.mockupCancel")}
+                      </p>
+                      <div className="flex items-center justify-end gap-1 mt-0.5">
+                        <span className="text-[10px] text-[#667781]">{t("landing.whatsapp.mockupReplyTime")}</span>
+                        <svg className="w-3.5 h-3.5 text-[#53BDEB]" viewBox="0 0 16 15" fill="currentColor">
+                          <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.88a.32.32 0 0 1-.484.032l-.358-.325a.32.32 0 0 0-.484.032l-.378.48a.418.418 0 0 0 .036.54l1.32 1.267a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.88a.32.32 0 0 1-.484.032L1.892 7.77a.366.366 0 0 0-.516.005l-.423.433a.364.364 0 0 0 .006.514l3.255 3.185a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Mockup — Darija */}
@@ -340,13 +375,45 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-2" dir="rtl">
-                  <button className="flex-1 bg-white text-[#00A884] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm">
+                  <button
+                    onClick={() => setDarijaReply("yes")}
+                    className="flex-1 bg-white text-[#00A884] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm cursor-pointer hover:bg-[#F0FFF4] transition"
+                  >
                     {t("landing.whatsapp.mockupDarijaYes")}
                   </button>
-                  <button className="flex-1 bg-white text-[#E74C3C] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm">
+                  <button
+                    onClick={() => setDarijaReply("no")}
+                    className="flex-1 bg-white text-[#E74C3C] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm cursor-pointer hover:bg-[#FFF5F5] transition"
+                  >
                     {t("landing.whatsapp.mockupDarijaNo")}
                   </button>
                 </div>
+                {darijaReply && (
+                  <div className="mt-2 space-y-1.5" style={{ animation: "fadeInUp 0.3s ease-out" }}>
+                    <div className="bg-[#DCF8C6] rounded-lg p-2 shadow-sm max-w-[60%] mr-auto" dir="rtl">
+                      <p className="text-[11px] text-[#111B21] font-medium">
+                        {darijaReply === "yes" ? t("landing.whatsapp.mockupDarijaYes") : t("landing.whatsapp.mockupDarijaNo")}
+                      </p>
+                      <div className="flex items-center justify-start gap-1 mt-0.5" dir="ltr">
+                        <span className="text-[10px] text-[#667781]">{t("landing.whatsapp.mockupDarijaTime")}</span>
+                        <svg className="w-3.5 h-3.5 text-[#53BDEB]" viewBox="0 0 16 15" fill="currentColor">
+                          <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.88a.32.32 0 0 1-.484.032l-.358-.325a.32.32 0 0 0-.484.032l-.378.48a.418.418 0 0 0 .036.54l1.32 1.267a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.88a.32.32 0 0 1-.484.032L1.892 7.77a.366.366 0 0 0-.516.005l-.423.433a.364.364 0 0 0 .006.514l3.255 3.185a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-2.5 shadow-sm max-w-[90%] ml-auto" dir="rtl">
+                      <p className="text-[11px] text-[#111B21] leading-relaxed">
+                        {darijaReply === "yes" ? t("landing.whatsapp.mockupDarijaConfirm") : t("landing.whatsapp.mockupDarijaCancel")}
+                      </p>
+                      <div className="flex items-center justify-start gap-1 mt-0.5" dir="ltr">
+                        <span className="text-[10px] text-[#667781]">{t("landing.whatsapp.mockupDarijaTime")}</span>
+                        <svg className="w-3.5 h-3.5 text-[#53BDEB]" viewBox="0 0 16 15" fill="currentColor">
+                          <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.88a.32.32 0 0 1-.484.032l-.358-.325a.32.32 0 0 0-.484.032l-.378.48a.418.418 0 0 0 .036.54l1.32 1.267a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.88a.32.32 0 0 1-.484.032L1.892 7.77a.366.366 0 0 0-.516.005l-.423.433a.364.364 0 0 0 .006.514l3.255 3.185a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
