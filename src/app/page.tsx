@@ -270,13 +270,13 @@ export default function Home() {
               </a>
             </div>
 
-            {/* Right — WhatsApp mockup */}
-            <div className="flex justify-center">
-              <div className="w-72 rounded-2xl bg-[#ECE5DD] p-4 shadow-lg border border-[#D5CEC6]">
-                {/* WhatsApp header */}
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#D5CEC6]">
-                  <div className="w-8 h-8 rounded-full bg-[#25D366] flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+            {/* Right — WhatsApp mockups (current lang + Darija) */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 justify-center">
+              {/* Mockup — current language */}
+              <div className="w-64 rounded-2xl bg-[#ECE5DD] p-3.5 shadow-lg border border-[#D5CEC6]">
+                <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-[#D5CEC6]">
+                  <div className="w-7 h-7 rounded-full bg-[#25D366] flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
                     </svg>
                   </div>
@@ -285,28 +285,66 @@ export default function Home() {
                     <p className="text-[10px] text-[#667781]">Business</p>
                   </div>
                 </div>
-                {/* Message bubble */}
-                <div className="bg-white rounded-lg p-3 shadow-sm max-w-[90%] relative">
-                  <p className="text-xs text-[#111B21] leading-relaxed">
+                <div className="bg-white rounded-lg p-2.5 shadow-sm max-w-[90%]">
+                  <p className="text-[11px] text-[#111B21] leading-relaxed">
                     <span className="font-semibold">{t("landing.whatsapp.mockupGreeting")}</span>
                     <br />
                     {t("landing.whatsapp.mockupBody")}
                   </p>
-                  <div className="flex items-center justify-end gap-1 mt-1.5">
+                  <div className="flex items-center justify-end gap-1 mt-1">
                     <span className="text-[10px] text-[#667781]">{t("landing.whatsapp.mockupTime")}</span>
-                    {/* Double check blue */}
                     <svg className="w-3.5 h-3.5 text-[#53BDEB]" viewBox="0 0 16 15" fill="currentColor">
                       <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.88a.32.32 0 0 1-.484.032l-.358-.325a.32.32 0 0 0-.484.032l-.378.48a.418.418 0 0 0 .036.54l1.32 1.267a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.88a.32.32 0 0 1-.484.032L1.892 7.77a.366.366 0 0 0-.516.005l-.423.433a.364.364 0 0 0 .006.514l3.255 3.185a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51z" />
                     </svg>
                   </div>
                 </div>
-                {/* Quick reply buttons */}
                 <div className="flex gap-2 mt-2">
-                  <button className="flex-1 bg-white text-[#00A884] text-xs font-semibold py-2 rounded-lg border border-[#D5CEC6] shadow-sm">
-                    OUI
+                  <button className="flex-1 bg-white text-[#00A884] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm">
+                    {locale === "fr" ? "OUI" : "YES"}
                   </button>
-                  <button className="flex-1 bg-white text-[#E74C3C] text-xs font-semibold py-2 rounded-lg border border-[#D5CEC6] shadow-sm">
-                    NON
+                  <button className="flex-1 bg-white text-[#E74C3C] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm">
+                    {locale === "fr" ? "NON" : "NO"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Mockup — Darija */}
+              <div className="w-64 rounded-2xl bg-[#ECE5DD] p-3.5 shadow-lg border border-[#D5CEC6] sm:mt-8">
+                <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-[#D5CEC6]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-[#25D366] flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[#111B21]">nortoo</p>
+                      <p className="text-[10px] text-[#667781]">Business</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-medium text-[#128C7E] bg-[#25D366]/10 px-1.5 py-0.5 rounded">
+                    {t("landing.whatsapp.darijaLabel")}
+                  </span>
+                </div>
+                <div className="bg-white rounded-lg p-2.5 shadow-sm max-w-[90%] ml-auto" dir="rtl">
+                  <p className="text-[11px] text-[#111B21] leading-relaxed">
+                    <span className="font-semibold">{t("landing.whatsapp.mockupDarijaGreeting")}</span>
+                    <br />
+                    {t("landing.whatsapp.mockupDarijaBody")}
+                  </p>
+                  <div className="flex items-center justify-start gap-1 mt-1" dir="ltr">
+                    <span className="text-[10px] text-[#667781]">{t("landing.whatsapp.mockupDarijaTime")}</span>
+                    <svg className="w-3.5 h-3.5 text-[#53BDEB]" viewBox="0 0 16 15" fill="currentColor">
+                      <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.88a.32.32 0 0 1-.484.032l-.358-.325a.32.32 0 0 0-.484.032l-.378.48a.418.418 0 0 0 .036.54l1.32 1.267a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.88a.32.32 0 0 1-.484.032L1.892 7.77a.366.366 0 0 0-.516.005l-.423.433a.364.364 0 0 0 .006.514l3.255 3.185a.32.32 0 0 0 .484-.032l6.15-8.079a.365.365 0 0 0-.063-.51z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-2" dir="rtl">
+                  <button className="flex-1 bg-white text-[#00A884] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm">
+                    {t("landing.whatsapp.mockupDarijaYes")}
+                  </button>
+                  <button className="flex-1 bg-white text-[#E74C3C] text-xs font-semibold py-1.5 rounded-lg border border-[#D5CEC6] shadow-sm">
+                    {t("landing.whatsapp.mockupDarijaNo")}
                   </button>
                 </div>
               </div>

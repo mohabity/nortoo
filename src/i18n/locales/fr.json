@@ -1272,7 +1272,13 @@
       "feature3": "Expédition ou blocage automatique",
       "mockupGreeting": "Bonjour Ahmed,",
       "mockupBody": "Confirmez votre commande #NRT-4521 de 349 DH en répondant OUI ou NON.",
-      "mockupTime": "14:32"
+      "mockupTime": "14:32",
+      "mockupDarijaGreeting": "سلام أحمد،",
+      "mockupDarijaBody": "أكد الطلبية ديالك #NRT-4521 ديال 349 درهم. جاوب بـ ايه ولا لا.",
+      "mockupDarijaYes": "ايه",
+      "mockupDarijaNo": "لا",
+      "mockupDarijaTime": "14:32",
+      "darijaLabel": "🇲🇦 Darija"
     },
     "cta": {
       "title": "Prêt à réduire votre RTO ?",

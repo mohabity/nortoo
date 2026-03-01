@@ -1272,7 +1272,13 @@
       "feature3": "Automatic shipping or blocking",
       "mockupGreeting": "Hello Ahmed,",
       "mockupBody": "Confirm your order #NRT-4521 of 349 MAD by replying YES or NO.",
-      "mockupTime": "2:32 PM"
+      "mockupTime": "2:32 PM",
+      "mockupDarijaGreeting": "سلام أحمد،",
+      "mockupDarijaBody": "أكد الطلبية ديالك #NRT-4521 ديال 349 درهم. جاوب بـ ايه ولا لا.",
+      "mockupDarijaYes": "ايه",
+      "mockupDarijaNo": "لا",
+      "mockupDarijaTime": "14:32",
+      "darijaLabel": "🇲🇦 Darija"
     },
     "cta": {
       "title": "Ready to reduce your RTO?",
