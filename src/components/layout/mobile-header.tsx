@@ -11,6 +11,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/dashboard/analytics": "nav.analytics",
   "/dashboard/settings": "nav.settings",
   "/dashboard/compliance": "nav.compliance",
+  "/dashboard/guide": "nav.guide",
 };
 
 function getPageTitleKey(pathname: string): string {

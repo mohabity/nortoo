@@ -9,6 +9,7 @@ import {
   Settings,
   MoreHorizontal,
   Shield,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -24,6 +25,7 @@ const navItems = [
 
 const moreItems = [
   { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
+  { href: "/dashboard/guide", labelKey: "nav.guide", icon: BookOpen },
 ];
 
 export function BottomNav() {

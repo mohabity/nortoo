@@ -9,6 +9,7 @@ import {
   BarChart3,
   Settings,
   Shield,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -21,6 +22,7 @@ const navItems = [
   { href: "/dashboard/analytics", labelKey: "nav.analytics", icon: BarChart3 },
   { href: "/dashboard/settings", labelKey: "nav.settings", icon: Settings },
   { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
+  { href: "/dashboard/guide", labelKey: "nav.guide", icon: BookOpen },
 ];
 
 export function Sidebar() {
