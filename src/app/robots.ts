@@ -5,10 +5,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/blog/"],
+        allow: ["/"],
         disallow: ["/dashboard/", "/nrt-panel/", "/api/"],
       },
     ],
-    sitemap: "https://nortoo.ma/blog/sitemap.xml",
+    sitemap: "https://nortoo.ma/sitemap.xml",
   };
 }

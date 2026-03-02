@@ -43,7 +43,6 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-6 text-sm text-[#64748B]">
             <a href="#features" className="hover:text-[#0B0F1A] transition">{t("landing.nav.features")}</a>
             <a href="#pricing" className="hover:text-[#0B0F1A] transition">{t("landing.nav.pricing")}</a>
-            <a href="/blog" className="hover:text-[#0B0F1A] transition">{t("landing.nav.blog")}</a>
             <a href="#faq" className="hover:text-[#0B0F1A] transition">{t("landing.nav.faq")}</a>
             <LanguageSwitcher />
             <a href={`${APP_URL}/login?lang=${locale}`} className="hover:text-[#0B0F1A] transition">{t("landing.nav.signIn")}</a>
@@ -106,13 +105,6 @@ export default function Home() {
               onClick={() => setMobileMenuOpen(false)}
             >
               {t("landing.nav.pricing")}
-            </a>
-            <a
-              href="/blog"
-              className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {t("landing.nav.blog")}
             </a>
             <a
               href="#faq"
@@ -669,7 +661,6 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-[#94A3B8]">
                 <li><a href="#features" className="hover:text-[#0B0F1A] transition">{t("landing.nav.features")}</a></li>
                 <li><a href="#pricing" className="hover:text-[#0B0F1A] transition">{t("landing.nav.pricing")}</a></li>
-                <li><a href="/blog" className="hover:text-[#0B0F1A] transition">{t("landing.nav.blog")}</a></li>
                 <li><a href="#faq" className="hover:text-[#0B0F1A] transition">{t("landing.nav.faq")}</a></li>
               </ul>
             </div>

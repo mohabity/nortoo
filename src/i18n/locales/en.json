@@ -1178,7 +1178,6 @@
     "nav": {
       "features": "Features",
       "pricing": "Pricing",
-      "blog": "Blog",
       "faq": "FAQ",
       "signIn": "Sign in",
       "getStarted": "Get started"
@@ -1303,40 +1302,6 @@
       "dataRights": "My data",
       "copyright": "nortoo · COD fraud scoring · Morocco",
       "hosted": "EU-hosted data (Frankfurt) · Law 09-08 compliant"
-    }
-  },
-  "blog": {
-    "title": "nortoo Blog",
-    "subtitle": "Tips, guides and news for COD merchants in Morocco",
-    "readMore": "Read more",
-    "readingTime": "{min} min read",
-    "publishedOn": "Published on {date}",
-    "category": "Category",
-    "allCategories": "All categories",
-    "relatedArticles": "Related articles",
-    "shareArticle": "Share this article",
-    "tableOfContents": "Table of contents",
-    "backToBlog": "Back to blog",
-    "noArticles": "No articles yet",
-    "switchLang": "Lire en français",
-    "pagination": {
-      "previous": "Previous",
-      "next": "Next",
-      "page": "Page {current} of {total}"
-    },
-    "cta": {
-      "title": "Ready to reduce your COD returns?",
-      "subtitle": "Try nortoo free for 30 days.",
-      "button": "Get started for free"
-    },
-    "categories": {
-      "cod-maroc": "COD Morocco",
-      "anti-fraude": "Anti-fraud",
-      "e-commerce": "E-commerce",
-      "logistique": "Logistics",
-      "youcan": "YouCan",
-      "scoring": "Scoring",
-      "guides": "Guides"
     }
   },
   "onboarding": {

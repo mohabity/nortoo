@@ -1178,7 +1178,6 @@
     "nav": {
       "features": "Fonctionnalités",
       "pricing": "Tarifs",
-      "blog": "Blog",
       "faq": "FAQ",
       "signIn": "Connexion",
       "getStarted": "Commencer"
@@ -1303,40 +1302,6 @@
       "dataRights": "Mes données",
       "copyright": "nortoo · Scoring anti-fraude COD · Maroc",
       "hosted": "Données hébergées en UE (Frankfurt) · Conforme Loi 09-08"
-    }
-  },
-  "blog": {
-    "title": "Blog nortoo",
-    "subtitle": "Conseils, guides et actualités pour les marchands COD au Maroc",
-    "readMore": "Lire la suite",
-    "readingTime": "{min} min de lecture",
-    "publishedOn": "Publié le {date}",
-    "category": "Catégorie",
-    "allCategories": "Toutes les catégories",
-    "relatedArticles": "Articles similaires",
-    "shareArticle": "Partager cet article",
-    "tableOfContents": "Sommaire",
-    "backToBlog": "Retour au blog",
-    "noArticles": "Aucun article pour le moment",
-    "switchLang": "Read in English",
-    "pagination": {
-      "previous": "Précédent",
-      "next": "Suivant",
-      "page": "Page {current} sur {total}"
-    },
-    "cta": {
-      "title": "Prêt à réduire vos retours COD ?",
-      "subtitle": "Essayez nortoo gratuitement pendant 30 jours.",
-      "button": "Commencer gratuitement"
-    },
-    "categories": {
-      "cod-maroc": "COD Maroc",
-      "anti-fraude": "Anti-fraude",
-      "e-commerce": "E-commerce",
-      "logistique": "Logistique",
-      "youcan": "YouCan",
-      "scoring": "Scoring",
-      "guides": "Guides"
     }
   },
   "onboarding": {

@@ -71,7 +71,6 @@ export function AdminHeader() {
                 { href: "/nrt-panel/invoices", label: "Factures" },
                 { href: "/nrt-panel/coupons", label: "Coupons" },
                 { href: "/nrt-panel/audit-logs", label: "Audit Logs" },
-                { href: "/nrt-panel/blog", label: "Blog" },
                 { href: "/nrt-panel/admins", label: "Admins" },
               ].map(({ href, label }) => (
                 <Link
