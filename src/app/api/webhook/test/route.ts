@@ -4,6 +4,7 @@ import { merchants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
 import { processIncomingOrder } from "@/lib/ingest";
+import { MS_HOUR } from "@/lib/constants";
 
 // ── Rate limiting (in-memory) ──
 const testCounts = new Map<number, { count: number; resetAt: number }>();
@@ -13,7 +14,7 @@ function checkRateLimit(merchantId: number): boolean {
   const now = Date.now();
   const entry = testCounts.get(merchantId);
   if (!entry || now > entry.resetAt) {
-    testCounts.set(merchantId, { count: 1, resetAt: now + 3_600_000 });
+    testCounts.set(merchantId, { count: 1, resetAt: now + MS_HOUR });
     return true;
   }
   if (entry.count >= MAX_TESTS_PER_HOUR) return false;

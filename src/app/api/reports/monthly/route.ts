@@ -13,6 +13,7 @@ import { requireVerifiedEmail } from "@/lib/email-verification";
 import { requireFeature, handleFeatureGateError } from "@/lib/require-feature";
 import { generateMonthlyReport, type ReportData } from "@/lib/report-generator";
 import { getPlanConfig } from "@/lib/plans";
+import { MS_HOUR } from "@/lib/constants";
 
 // ── Rate limiting (in-memory) ──
 const exportCounts = new Map<number, { count: number; resetAt: number }>();
@@ -22,7 +23,7 @@ function checkRateLimit(merchantId: number): boolean {
   const now = Date.now();
   const entry = exportCounts.get(merchantId);
   if (!entry || now > entry.resetAt) {
-    exportCounts.set(merchantId, { count: 1, resetAt: now + 3_600_000 });
+    exportCounts.set(merchantId, { count: 1, resetAt: now + MS_HOUR });
     return true;
   }
   if (entry.count >= MAX_EXPORTS_PER_HOUR) return false;

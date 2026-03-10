@@ -4,9 +4,7 @@ import { extractApiKey, validateApiKey } from "@/lib/api-key";
 import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
 import { QuotaExceededError } from "@/lib/quota";
-
-/** Max body size: 1 MB */
-const MAX_BODY_SIZE = 1_048_576;
+import { MAX_BODY_SIZE } from "@/lib/constants";
 
 /**
  * Universal ingest payload schema — quick validation before enqueue.

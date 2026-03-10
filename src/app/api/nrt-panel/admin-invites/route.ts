@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes, createHash } from "crypto";
 import { db } from "@/db/index";
 import { adminUsers, auditLogs } from "@/db/schema";
+import { MS_WEEK } from "@/lib/constants";
 import { eq, desc } from "drizzle-orm";
 import { isAdmin, getAdminId, isSuperAdmin } from "@/lib/admin-auth";
 import { getClientIp } from "@/lib/rate-limit";
@@ -133,7 +134,7 @@ export async function POST(request: Request) {
   // Generate invite token (384 bits of entropy)
   const rawToken = randomBytes(48).toString("hex");
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const expiresAt = new Date(Date.now() + MS_WEEK);
 
   // Insert pending admin
   const [newAdmin] = await db

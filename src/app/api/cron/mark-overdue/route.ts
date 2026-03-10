@@ -89,10 +89,10 @@ export async function GET(request: Request) {
         }
 
         marked++;
-        console.log(`[mark-overdue] ${inv.invoiceNumber} → overdue`);
+        console.info(`[mark-overdue] ${inv.invoiceNumber} → overdue`);
       }
 
-      console.log(`[mark-overdue] ${marked} invoices marked as overdue`);
+      console.info(`[mark-overdue] ${marked} invoices marked as overdue`);
 
       return { marked };
     });

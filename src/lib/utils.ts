@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format amount in Moroccan Dirhams (legacy — prefer formatCurrency from i18n-utils) */
+/** Format amount in Moroccan Dirhams */
 export function formatDH(amount: number): string {
   return new Intl.NumberFormat("fr-MA").format(Math.round(amount)) + " DH";
 }

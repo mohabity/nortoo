@@ -157,7 +157,7 @@ export async function GET(request: Request) {
               order.payment?.gateway_type ??
               order.payment?.payload?.gateway;
             if (!isCodGateway(gateway)) {
-              console.log(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): non-COD gateway="${gateway}"`);
+              console.info(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): non-COD gateway="${gateway}"`);
               result.skippedNonCod++;
               const gatewayInfo = `ref=${order.ref} gateway="${gateway}" gateway_type="${order.payment?.gateway_type ?? "N/A"}" payload.gateway="${order.payment?.payload?.gateway ?? "N/A"}"`;
               if (result.skippedGateways.length < 5) result.skippedGateways.push(gatewayInfo);
@@ -170,7 +170,7 @@ export async function GET(request: Request) {
               order.shipping?.address?.[0]?.phone ||
               order.payment?.address?.[0]?.phone;
             if (!phone) {
-              console.log(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): missing phone, customer=${order.customer?.first_name ?? "?"} ${order.customer?.last_name ?? "?"}`);
+              console.info(`[YouCan Poll] Skipped order ${orderId} (ref=${order.ref}): missing phone, customer=${order.customer?.first_name ?? "?"} ${order.customer?.last_name ?? "?"}`);
               result.skippedNoPhone++;
               continue;
             }
