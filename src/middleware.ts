@@ -91,7 +91,7 @@ export async function middleware(request: NextRequest) {
     !pathname.startsWith("/nrt-panel/accept-invite")
   ) {
     const adminCookie = request.cookies.get("nortoo_admin");
-    const adminSecret = process.env.ADMIN_SECRET;
+    const adminSecret = process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_SECRET;
     if (!adminCookie?.value || !adminSecret) {
       return NextResponse.redirect(new URL("/nrt-panel/login", request.url));
     }

@@ -67,21 +67,40 @@ export function isRateLimitConfigured(): boolean {
   );
 }
 
+// ═══ In-memory fallback when Redis is unavailable ═══
+const inMemoryLimits = new Map<string, { count: number; resetAt: number }>();
+const FALLBACK_MAX = 10;
+const FALLBACK_WINDOW_MS = 60_000; // 1 minute
+
+function inMemoryLimit(key: string): { success: boolean; remaining: number; reset: number } {
+  const now = Date.now();
+  const entry = inMemoryLimits.get(key);
+
+  if (!entry || now > entry.resetAt) {
+    inMemoryLimits.set(key, { count: 1, resetAt: now + FALLBACK_WINDOW_MS });
+    return { success: true, remaining: FALLBACK_MAX - 1, reset: now + FALLBACK_WINDOW_MS };
+  }
+
+  entry.count++;
+  const remaining = Math.max(0, FALLBACK_MAX - entry.count);
+  return { success: entry.count <= FALLBACK_MAX, remaining, reset: entry.resetAt };
+}
+
 /**
- * Safe rate limit check — returns { success: true } if Redis is down or unconfigured.
- * Prevents Redis outages from breaking the entire app.
+ * Safe rate limit check — falls back to in-memory limiting if Redis is down or unconfigured.
+ * Never allows unlimited requests.
  */
 export async function safeLimit(
   limiter: Ratelimit,
   key: string
 ): Promise<{ success: boolean; remaining: number; reset: number }> {
   if (!isRateLimitConfigured()) {
-    return { success: true, remaining: -1, reset: 0 };
+    return inMemoryLimit(key);
   }
   try {
     return await limiter.limit(key);
   } catch (err) {
-    console.error("[RateLimit] Redis error, allowing request:", err);
-    return { success: true, remaining: -1, reset: 0 };
+    console.error("[RateLimit] Redis error, falling back to in-memory limit:", err);
+    return inMemoryLimit(key);
   }
 }

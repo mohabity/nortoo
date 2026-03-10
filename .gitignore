@@ -30,6 +30,7 @@ next-env.d.ts
 # Database
 *.db
 *.sqlite
+src/db/seed.ts
 
 # IDE
 .vscode/

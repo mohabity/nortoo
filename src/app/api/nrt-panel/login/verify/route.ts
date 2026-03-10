@@ -139,7 +139,7 @@ export async function POST(request: Request) {
     });
 
     // ── Set session cookie ──
-    const secret = process.env.ADMIN_SECRET;
+    const secret = process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_SECRET;
     if (!secret) {
       return NextResponse.json(
         { error: "Configuration serveur manquante." },

@@ -46,12 +46,14 @@ const youcanPayloadSchema = z.object({
 export async function POST(request: Request) {
   // ── 0. Debug log (only when DEBUG_WEBHOOKS=true) ──
   if (process.env.DEBUG_WEBHOOKS === "true") {
+    const safeUrl = new URL(request.url);
+    safeUrl.searchParams.delete("key");
     const reqHeaders = Object.fromEntries(
-      ["content-type", "x-youcan-signature", "x-nortoo-key", "x-codpilot-key", "user-agent"]
+      ["content-type", "x-youcan-signature", "user-agent"]
         .map((h) => [h, request.headers.get(h)])
         .filter(([, v]) => v)
     );
-    console.log("[Webhook YouCan] ── INCOMING ──", JSON.stringify({ url: request.url, headers: reqHeaders }));
+    console.log("[Webhook YouCan] ── INCOMING ──", JSON.stringify({ url: safeUrl.toString(), headers: reqHeaders }));
   }
 
   try {

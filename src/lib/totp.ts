@@ -50,7 +50,7 @@ export function generateBackupCodes(): { raw: string[]; hashed: string[] } {
   const hashed: string[] = [];
 
   for (let i = 0; i < 8; i++) {
-    const code = crypto.randomBytes(4).toString("hex").toUpperCase(); // e.g. "A1B2C3D4"
+    const code = crypto.randomBytes(6).toString("hex").toUpperCase(); // 48-bit entropy, e.g. "A1B2C3D4E5F6"
     raw.push(code);
     hashed.push(hashBackupCode(code));
   }

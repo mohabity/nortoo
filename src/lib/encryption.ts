@@ -57,6 +57,9 @@ export function decrypt(stored: string): string {
 export function decryptSafe(stored: string | null | undefined): string | null {
   if (!stored) return null;
   // Legacy plaintext tokens (YouCan access tokens) never contain ":"
-  if (!stored.includes(":")) return stored;
+  if (!stored.includes(":")) {
+    console.warn("[Encryption] Plaintext token detected — needs migration to AES-256-GCM. Re-save to encrypt.");
+    return stored;
+  }
   return decrypt(stored);
 }

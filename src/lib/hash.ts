@@ -75,5 +75,6 @@ export function maskPhone(phone: string): string {
  * We don't store raw IPs either.
  */
 export function hashIP(ip: string): string {
-  return createHash("sha256").update(ip).digest("hex").slice(0, 16);
+  const salt = process.env.PHONE_HASH_SALT || "";
+  return createHash("sha256").update(ip + salt).digest("hex").slice(0, 16);
 }
