@@ -8,74 +8,127 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const merchantId = await getMerchantId();
-  const { id } = await params;
-  const orderId = parseInt(id, 10);
-  if (isNaN(orderId)) {
-    return NextResponse.json({ error: "ID invalide" }, { status: 400 });
-  }
-
-  // Fetch order — tenant isolation via merchantId
-  const [order] = await db
-    .select()
-    .from(orders)
-    .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
-
-  if (!order) {
-    return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
-  }
-
-  // Parse scoring factors from JSON string
-  let scoringFactors: { rule: string; points: number; reason: string }[] = [];
-  if (order.scoringFactors) {
-    try {
-      scoringFactors = JSON.parse(order.scoringFactors);
-    } catch {
-      scoringFactors = [];
+  try {
+    const merchantId = await getMerchantId();
+    const { id } = await params;
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      return NextResponse.json({ error: "ID invalide" }, { status: 400 });
     }
-  }
 
-  // Parse score explanation from JSON string
-  let scoreExplanation = null;
-  if (order.scoreExplanation) {
-    try {
-      scoreExplanation = JSON.parse(order.scoreExplanation);
-    } catch { /* ignore */ }
-  }
-
-  // Fetch customer if linked
-  let customer = null;
-  if (order.customerId) {
-    const [cust] = await db
+    // Fetch order — tenant isolation via merchantId
+    // Select specific columns to avoid schema/migration mismatches
+    const [order] = await db
       .select({
-        id: customers.id,
-        name: customers.name,
-        city: customers.city,
-        phoneLast4: customers.phoneLast4,
-        totalOrders: customers.totalOrders,
-        successfulOrders: customers.successfulOrders,
-        failedOrders: customers.failedOrders,
-        firstSeen: customers.firstSeen,
+        id: orders.id,
+        merchantId: orders.merchantId,
+        customerId: orders.customerId,
+        externalId: orders.externalId,
+        externalRef: orders.externalRef,
+        customerName: orders.customerName,
+        customerPhoneLast4: orders.customerPhoneLast4,
+        productName: orders.productName,
+        productId: orders.productId,
+        productCategory: orders.productCategory,
+        productPrice: orders.productPrice,
+        quantity: orders.quantity,
+        total: orders.total,
+        currency: orders.currency,
+        shippingCity: orders.shippingCity,
+        shippingAddress: orders.shippingAddress,
+        parsedCity: orders.parsedCity,
+        parsedZone: orders.parsedZone,
+        parsedPostalCode: orders.parsedPostalCode,
+        addressConfidence: orders.addressConfidence,
+        fraudScore: orders.fraudScore,
+        riskLevel: orders.riskLevel,
+        decision: orders.decision,
+        scoringFactors: orders.scoringFactors,
+        scoreExplanation: orders.scoreExplanation,
+        scoringVersion: orders.scoringVersion,
+        overrideDecision: orders.overrideDecision,
+        overrideBy: orders.overrideBy,
+        overrideReason: orders.overrideReason,
+        overrideAt: orders.overrideAt,
+        deliveryStatus: orders.deliveryStatus,
+        deliveredAt: orders.deliveredAt,
+        pipelineStatus: orders.pipelineStatus,
+        pipelineProcessedAt: orders.pipelineProcessedAt,
+        reviewDeadline: orders.reviewDeadline,
+        escalatedAt: orders.escalatedAt,
+        escalationPriority: orders.escalationPriority,
+        merchantNotifiedAt: orders.merchantNotifiedAt,
+        whatsappVerificationStatus: orders.whatsappVerificationStatus,
+        whatsappMessageId: orders.whatsappMessageId,
+        isTest: orders.isTest,
+        createdAt: orders.createdAt,
+        scoredAt: orders.scoredAt,
       })
-      .from(customers)
-      .where(and(eq(customers.id, order.customerId), eq(customers.merchantId, merchantId)));
-    customer = cust ?? null;
-  }
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
 
-  // Compute confidence from customer stats
-  let confidence = 0.5;
-  if (customer) {
-    if (customer.totalOrders >= 3) confidence = 0.9;
-    else if (customer.totalOrders >= 1) confidence = 0.7;
-  }
+    if (!order) {
+      return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
+    }
 
-  return NextResponse.json({
-    data: {
-      ...order,
-      scoringFactors,
-      scoreExplanation,
-      confidence,
-      customer,
-    },
-  });
+    // Parse scoring factors from JSON string
+    let scoringFactors: { rule: string; points: number; reason: string }[] = [];
+    if (order.scoringFactors) {
+      try {
+        scoringFactors = JSON.parse(order.scoringFactors);
+      } catch {
+        scoringFactors = [];
+      }
+    }
+
+    // Parse score explanation from JSON string
+    let scoreExplanation = null;
+    if (order.scoreExplanation) {
+      try {
+        scoreExplanation = JSON.parse(order.scoreExplanation);
+      } catch { /* ignore */ }
+    }
+
+    // Fetch customer if linked
+    let customer = null;
+    if (order.customerId) {
+      const [cust] = await db
+        .select({
+          id: customers.id,
+          name: customers.name,
+          city: customers.city,
+          phoneLast4: customers.phoneLast4,
+          totalOrders: customers.totalOrders,
+          successfulOrders: customers.successfulOrders,
+          failedOrders: customers.failedOrders,
+          firstSeen: customers.firstSeen,
+        })
+        .from(customers)
+        .where(and(eq(customers.id, order.customerId), eq(customers.merchantId, merchantId)));
+      customer = cust ?? null;
+    }
+
+    // Compute confidence from customer stats
+    let confidence = 0.5;
+    if (customer) {
+      if (customer.totalOrders >= 3) confidence = 0.9;
+      else if (customer.totalOrders >= 1) confidence = 0.7;
+    }
+
+    return NextResponse.json({
+      data: {
+        ...order,
+        scoringFactors,
+        scoreExplanation,
+        confidence,
+        customer,
+      },
+    });
+  } catch (error) {
+    console.error("[Order Detail] Error:", error);
+    return NextResponse.json(
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
+    );
+  }
 }
