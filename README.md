@@ -29,7 +29,7 @@ nortoo integrates with [YouCan](https://youcan.shop) via webhook, scores every C
 | Score | Decision | Action |
 |-------|----------|--------|
 | 0-31 | **Expedier** | Ship with confidence |
-| 31-66 | **Verifier** | Confirm by phone/WhatsApp |
+| 31-66 | **Verifier** | Confirm by phone |
 | 66-86 | **Signaler** | High risk, review manually |
 | 86-100 | **Bloquer** | Auto-block or escalate |
 
