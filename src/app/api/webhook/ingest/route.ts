@@ -5,6 +5,9 @@ import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
 import { QuotaExceededError } from "@/lib/quota";
 
+/** Max body size: 1 MB */
+const MAX_BODY_SIZE = 1_048_576;
+
 /**
  * Universal ingest payload schema — quick validation before enqueue.
  */
@@ -65,11 +68,25 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── 2. Parse & validate payload ──
+    // ── 2. Parse & validate payload (with size limit) ──
+    const contentLength = parseInt(request.headers.get("content-length") || "0", 10);
+    if (contentLength > MAX_BODY_SIZE) {
+      return NextResponse.json(
+        { error: "Payload too large" },
+        { status: 413 }
+      );
+    }
+
     let rawBody: string;
     let body: unknown;
     try {
       rawBody = await request.text();
+      if (rawBody.length > MAX_BODY_SIZE) {
+        return NextResponse.json(
+          { error: "Payload too large" },
+          { status: 413 }
+        );
+      }
       body = JSON.parse(rawBody);
     } catch {
       return NextResponse.json(

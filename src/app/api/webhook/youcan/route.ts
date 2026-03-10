@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { extractApiKey, validateApiKey } from "@/lib/api-key";
+import { extractApiKeyWithSource, validateApiKey } from "@/lib/api-key";
 import { webhookLimiter, safeLimit } from "@/lib/rate-limit";
 import { verifyWebhookSignature } from "@/lib/webhook-verify";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
@@ -65,14 +65,15 @@ export async function POST(request: Request) {
     }
 
     // ── 1. Auth by API key (fast, no heavy DB) ──
-    const apiKey = extractApiKey(request);
-    if (!apiKey) {
+    const apiKeyResult = extractApiKeyWithSource(request);
+    if (!apiKeyResult) {
       console.error("[Webhook YouCan] Missing API key");
       return NextResponse.json(
         { error: "Clé API manquante. Définir x-nortoo-key header ou ?key= param." },
         { status: 401 }
       );
     }
+    const apiKey = apiKeyResult.key;
 
     const merchant = await validateApiKey(apiKey);
     if (!merchant) {
@@ -139,7 +140,17 @@ export async function POST(request: Request) {
     // Fallback to legacy YOUCAN_WEBHOOK_SECRET for backward compat
     const webhookSecret = process.env.YOUCAN_CLIENT_SECRET || process.env.YOUCAN_WEBHOOK_SECRET;
     const signature = request.headers.get("x-youcan-signature");
-    if (webhookSecret && signature) {
+    if (signature) {
+      // Signature present → MUST verify (reject if no secret configured)
+      if (!webhookSecret) {
+        console.error(
+          "[Webhook YouCan] x-youcan-signature present but no signing key configured — rejecting"
+        );
+        return NextResponse.json(
+          { error: "Configuration serveur incomplète: clé de signature manquante" },
+          { status: 500 }
+        );
+      }
       if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
         console.error("[Webhook YouCan] Invalid HMAC signature");
         return NextResponse.json(
@@ -147,10 +158,10 @@ export async function POST(request: Request) {
           { status: 403 }
         );
       }
-    } else if (signature && !webhookSecret) {
-      // Signature present but no secret configured — log for visibility
+    } else if (!signature && webhookSecret) {
+      // No signature but secret configured — warn (YouCan should always sign)
       console.warn(
-        "[Webhook YouCan] x-youcan-signature present but no signing key available — skipping verification"
+        "[Webhook YouCan] No x-youcan-signature header but signing key is configured — request not signed"
       );
     }
 
@@ -260,7 +271,14 @@ export async function POST(request: Request) {
     }
 
     // ── 7. Always return 200 (webhook is safely enqueued) ──
-    return NextResponse.json({ received: true, queueId });
+    const response = NextResponse.json({ received: true, queueId });
+    if (apiKeyResult.source === "query-param") {
+      response.headers.set(
+        "X-Deprecation-Warning",
+        "API key via ?key= query param is deprecated. Use x-nortoo-key header instead."
+      );
+    }
+    return response;
   } catch (error) {
     // Critical failure (even enqueue failed)
     console.error("[Webhook YouCan] Critical failure:", error);

@@ -168,7 +168,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Entrée introuvable" }, { status: 404 });
   }
 
-  await db.delete(phoneList).where(eq(phoneList.id, entryId));
+  await db.delete(phoneList).where(and(eq(phoneList.id, entryId), eq(phoneList.merchantId, merchantId)));
 
   // Audit log
   await db.insert(auditLogs).values({

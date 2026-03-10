@@ -170,8 +170,11 @@ async function verifyAdminCookie(cookieValue: string, secret: string): Promise<b
     return hmacVerify(secret, nonce, providedHmac);
   }
 
-  // Raw secret cookie (very old legacy) — direct comparison
-  return cookieValue === secret;
+  // Raw secret cookie (very old legacy) — timing-safe comparison
+  const a = new TextEncoder().encode(cookieValue);
+  const b = new TextEncoder().encode(secret);
+  if (a.byteLength !== b.byteLength) return false;
+  return timingSafeEqual(a, b);
 }
 
 /** HMAC-SHA256 verify using Web Crypto API (Edge-compatible). */
@@ -188,10 +191,26 @@ async function hmacVerify(secret: string, data: string, providedHmac: string): P
     const expectedHmac = Array.from(new Uint8Array(sig))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-    return providedHmac === expectedHmac;
+    return timingSafeEqual(
+      new TextEncoder().encode(providedHmac),
+      new TextEncoder().encode(expectedHmac)
+    );
   } catch {
     return false;
   }
+}
+
+/**
+ * Constant-time comparison for Edge runtime (no crypto.timingSafeEqual).
+ * Uses XOR accumulator — runs in fixed time regardless of where bytes differ.
+ */
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.byteLength !== b.byteLength) return false;
+  let result = 0;
+  for (let i = 0; i < a.byteLength; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
 }
 
 export const config = {

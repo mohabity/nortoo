@@ -52,17 +52,29 @@ export async function validateApiKey(key: string) {
  * @param allowQueryParam - If false, query param fallback is disabled (default: true).
  *   Set to false for custom integration endpoints where header auth is preferred.
  */
-export function extractApiKey(
+export type ExtractResult = {
+  key: string;
+  source: "header" | "legacy-header" | "query-param";
+} | null;
+
+/**
+ * Extract API key from request headers or query params.
+ * Checks: x-nortoo-key header first, then x-codpilot-key (legacy), then ?key= query param.
+ *
+ * @param allowQueryParam - If false, query param fallback is disabled (default: true).
+ *   Set to false for custom integration endpoints where header auth is preferred.
+ */
+export function extractApiKeyWithSource(
   request: Request,
   { allowQueryParam = true }: { allowQueryParam?: boolean } = {}
-): string | null {
+): ExtractResult {
   // 1. Check header (new)
   const headerKey = request.headers.get("x-nortoo-key");
-  if (headerKey) return headerKey;
+  if (headerKey) return { key: headerKey, source: "header" };
 
   // 2. Check legacy header
   const legacyHeaderKey = request.headers.get("x-codpilot-key");
-  if (legacyHeaderKey) return legacyHeaderKey;
+  if (legacyHeaderKey) return { key: legacyHeaderKey, source: "legacy-header" };
 
   // 3. Check query param (YouCan webhook compat — can't set custom headers)
   if (allowQueryParam) {
@@ -70,11 +82,20 @@ export function extractApiKey(
     const paramKey = url.searchParams.get("key");
     if (paramKey) {
       console.warn(
-        "[api-key] API key passed via ?key= query param — prefer x-nortoo-key header"
+        "[api-key] API key passed via ?key= query param — this is logged in server/CDN access logs. Prefer x-nortoo-key header."
       );
-      return paramKey;
+      return { key: paramKey, source: "query-param" };
     }
   }
 
   return null;
+}
+
+/** Backward-compatible wrapper — returns key string or null. */
+export function extractApiKey(
+  request: Request,
+  opts: { allowQueryParam?: boolean } = {}
+): string | null {
+  const result = extractApiKeyWithSource(request, opts);
+  return result?.key ?? null;
 }
