@@ -9,8 +9,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const merchantId = await getMerchantId();
     const { id } = await params;
+    console.log("[api/orders/[id]] GET called, id:", id);
+    const merchantId = await getMerchantId();
     const orderId = parseInt(id, 10);
     if (isNaN(orderId)) {
       return NextResponse.json({ error: "ID invalide" }, { status: 400 });

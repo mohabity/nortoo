@@ -135,8 +135,9 @@ export function OrderSlideOver({
         return;
       }
       setOrder(json.data);
-    } catch {
-      setError(t("components.orderSlideOver.loadErrorDetail"));
+    } catch (err) {
+      console.error("[OrderSlideOver] fetch failed:", err, "orderId:", orderId);
+      setError(`${t("components.orderSlideOver.loadErrorDetail")} (${err instanceof Error ? err.message : String(err)})`);
     } finally {
       setLoading(false);
     }
