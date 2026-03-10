@@ -119,7 +119,7 @@ export function OrderSlideOver({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/orders/${orderId}`);
+      const res = await fetch(`/api/orders?id=${orderId}`);
       if (!res.ok) {
         let message = t("components.orderSlideOver.loadError");
         try {
