@@ -8,74 +8,83 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const merchantId = await getMerchantId();
-  const { id } = await params;
-  const orderId = parseInt(id, 10);
-  if (isNaN(orderId)) {
-    return NextResponse.json({ error: "ID invalide" }, { status: 400 });
-  }
-
-  // Fetch order — tenant isolation via merchantId
-  const [order] = await db
-    .select()
-    .from(orders)
-    .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
-
-  if (!order) {
-    return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
-  }
-
-  // Parse scoring factors from JSON string
-  let scoringFactors: { rule: string; points: number; reason: string }[] = [];
-  if (order.scoringFactors) {
-    try {
-      scoringFactors = JSON.parse(order.scoringFactors);
-    } catch {
-      scoringFactors = [];
+  try {
+    const { id } = await params;
+    const merchantId = await getMerchantId();
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      return NextResponse.json({ error: "ID invalide" }, { status: 400 });
     }
-  }
 
-  // Parse score explanation from JSON string
-  let scoreExplanation = null;
-  if (order.scoreExplanation) {
-    try {
-      scoreExplanation = JSON.parse(order.scoreExplanation);
-    } catch { /* ignore */ }
-  }
+    // Fetch order — tenant isolation via merchantId
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
 
-  // Fetch customer if linked
-  let customer = null;
-  if (order.customerId) {
-    const [cust] = await db
-      .select({
-        id: customers.id,
-        name: customers.name,
-        city: customers.city,
-        phoneLast4: customers.phoneLast4,
-        totalOrders: customers.totalOrders,
-        successfulOrders: customers.successfulOrders,
-        failedOrders: customers.failedOrders,
-        firstSeen: customers.firstSeen,
-      })
-      .from(customers)
-      .where(and(eq(customers.id, order.customerId), eq(customers.merchantId, merchantId)));
-    customer = cust ?? null;
-  }
+    if (!order) {
+      return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
+    }
 
-  // Compute confidence from customer stats
-  let confidence = 0.5;
-  if (customer) {
-    if (customer.totalOrders >= 3) confidence = 0.9;
-    else if (customer.totalOrders >= 1) confidence = 0.7;
-  }
+    // Parse scoring factors from JSON string
+    let scoringFactors: { rule: string; points: number; reason: string }[] = [];
+    if (order.scoringFactors) {
+      try {
+        scoringFactors = JSON.parse(order.scoringFactors);
+      } catch {
+        scoringFactors = [];
+      }
+    }
 
-  return NextResponse.json({
-    data: {
-      ...order,
-      scoringFactors,
-      scoreExplanation,
-      confidence,
-      customer,
-    },
-  });
+    // Parse score explanation from JSON string
+    let scoreExplanation = null;
+    if (order.scoreExplanation) {
+      try {
+        scoreExplanation = JSON.parse(order.scoreExplanation);
+      } catch { /* ignore */ }
+    }
+
+    // Fetch customer if linked
+    let customer = null;
+    if (order.customerId) {
+      const [cust] = await db
+        .select({
+          id: customers.id,
+          name: customers.name,
+          city: customers.city,
+          phoneLast4: customers.phoneLast4,
+          totalOrders: customers.totalOrders,
+          successfulOrders: customers.successfulOrders,
+          failedOrders: customers.failedOrders,
+          firstSeen: customers.firstSeen,
+        })
+        .from(customers)
+        .where(and(eq(customers.id, order.customerId), eq(customers.merchantId, merchantId)));
+      customer = cust ?? null;
+    }
+
+    // Compute confidence from customer stats
+    let confidence = 0.5;
+    if (customer) {
+      if (customer.totalOrders >= 3) confidence = 0.9;
+      else if (customer.totalOrders >= 1) confidence = 0.7;
+    }
+
+    return NextResponse.json({
+      data: {
+        ...order,
+        scoringFactors,
+        scoreExplanation,
+        confidence,
+        customer,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[api/orders/[id]] Error:", message, err);
+    return NextResponse.json(
+      { error: `Erreur: ${message}` },
+      { status: 500 }
+    );
+  }
 }
