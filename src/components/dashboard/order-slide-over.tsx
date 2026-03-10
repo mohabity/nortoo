@@ -120,13 +120,22 @@ export function OrderSlideOver({
     setError(null);
     try {
       const res = await fetch(`/api/orders/${orderId}`);
-      const json = await res.json();
       if (!res.ok) {
-        setError(json.error ?? t("components.orderSlideOver.loadError"));
+        let message = t("components.orderSlideOver.loadError");
+        try {
+          const json = await res.json();
+          if (json.error) message = json.error;
+        } catch {
+          // Response wasn't JSON (e.g. HTML 500 page)
+          console.error(`[OrderSlideOver] Non-JSON ${res.status} response for order ${orderId}`);
+        }
+        setError(message);
         return;
       }
+      const json = await res.json();
       setOrder(json.data);
-    } catch {
+    } catch (err) {
+      console.error("[OrderSlideOver] Fetch failed for order", orderId, err);
       setError(t("components.orderSlideOver.loadErrorDetail"));
     } finally {
       setLoading(false);
