@@ -7,7 +7,6 @@ import { getMerchantId } from "@/lib/merchant";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { auth } from "@/auth";
 import { requireActiveBilling } from "@/lib/billing-guard";
-import { encrypt } from "@/lib/encryption";
 import type { Locale } from "@/i18n/types";
 
 // ── Shared select columns ──
@@ -34,8 +33,6 @@ const merchantSelect = {
   trialEndsAt: merchants.trialEndsAt,
   currentMonthOrders: merchants.currentMonthOrders,
   currentMonthStart: merchants.currentMonthStart,
-  whatsappPhoneNumberId: merchants.whatsappPhoneNumberId,
-  whatsappWabaId: merchants.whatsappWabaId,
   createdAt: merchants.createdAt,
   updatedAt: merchants.updatedAt,
 } as const;
@@ -286,17 +283,10 @@ export async function PUT(request: Request) {
     weekly_report: z.boolean(),
     webhook_failed: z.boolean(),
   });
-  const whatsappPrefsSchema = z.object({
-    verification: z.boolean(),
-    deliveryConfirmation: z.boolean(),
-    codReminder: z.boolean(),
-  }).optional();
-
   const notifPrefsSchema = z.object({
     _type: z.literal("notifications"),
     notificationPreferences: z.object({
       email: notifEmailSchema,
-      whatsapp: whatsappPrefsSchema,
     }),
   });
   const notifPrefsParsed = notifPrefsSchema.safeParse(body);
@@ -326,99 +316,6 @@ export async function PUT(request: Request) {
         field: "notificationPreferences",
         previous: current?.notificationPreferences,
         new: prefsJson,
-      }),
-    });
-
-    const [updated] = await db
-      .select(merchantSelect)
-      .from(merchants)
-      .where(eq(merchants.id, merchantId))
-      .limit(1);
-
-    return NextResponse.json({ data: updated });
-  }
-
-  // Try WhatsApp credentials schema
-  const whatsappSchema = z.object({
-    _type: z.literal("whatsapp"),
-    phoneNumberId: z.string().min(1).max(100).trim(),
-    accessToken: z.string().min(1).max(500),
-  });
-  const whatsappParsed = whatsappSchema.safeParse(body);
-  if (whatsappParsed.success) {
-    const data = whatsappParsed.data;
-
-    const [current] = await db
-      .select({ whatsappPhoneNumberId: merchants.whatsappPhoneNumberId })
-      .from(merchants)
-      .where(eq(merchants.id, merchantId))
-      .limit(1);
-
-    await db
-      .update(merchants)
-      .set({
-        whatsappPhoneNumberId: data.phoneNumberId,
-        whatsappAccessToken: encrypt(data.accessToken),
-        updatedAt: new Date(),
-      })
-      .where(eq(merchants.id, merchantId));
-
-    await db.insert(auditLogs).values({
-      merchantId,
-      userId,
-      actor: "merchant",
-      action: "settings_change",
-      targetType: "merchant",
-      targetId: String(merchantId),
-      details: JSON.stringify({
-        field: "whatsapp_credentials",
-        previous: current?.whatsappPhoneNumberId ? `***${current.whatsappPhoneNumberId.slice(-4)}` : null,
-        new: `***${data.phoneNumberId.slice(-4)}`,
-      }),
-    });
-
-    const [updated] = await db
-      .select(merchantSelect)
-      .from(merchants)
-      .where(eq(merchants.id, merchantId))
-      .limit(1);
-
-    return NextResponse.json({ data: updated });
-  }
-
-  // Try WhatsApp disconnect
-  const whatsappDisconnectSchema = z.object({
-    _type: z.literal("whatsapp_disconnect"),
-  });
-  const whatsappDisconnectParsed = whatsappDisconnectSchema.safeParse(body);
-  if (whatsappDisconnectParsed.success) {
-    const [current] = await db
-      .select({ whatsappPhoneNumberId: merchants.whatsappPhoneNumberId })
-      .from(merchants)
-      .where(eq(merchants.id, merchantId))
-      .limit(1);
-
-    await db
-      .update(merchants)
-      .set({
-        whatsappPhoneNumberId: null,
-        whatsappAccessToken: null,
-        whatsappWabaId: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(merchants.id, merchantId));
-
-    await db.insert(auditLogs).values({
-      merchantId,
-      userId,
-      actor: "merchant",
-      action: "settings_change",
-      targetType: "merchant",
-      targetId: String(merchantId),
-      details: JSON.stringify({
-        field: "whatsapp_credentials",
-        previous: current?.whatsappPhoneNumberId ? `***${current.whatsappPhoneNumberId.slice(-4)}` : null,
-        new: null,
       }),
     });
 

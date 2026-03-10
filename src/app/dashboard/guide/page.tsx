@@ -49,7 +49,6 @@ const SECTIONS = [
   { id: "analytique", label: "Analytique", icon: BarChart3 },
   { id: "parametres", label: "Paramètres", icon: Settings },
   { id: "api", label: "Intégration API", icon: Code2 },
-  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
   { id: "facturation", label: "Facturation", icon: CreditCard },
   { id: "conformite", label: "Conformité", icon: Shield },
   { id: "faq", label: "FAQ", icon: HelpCircle },
@@ -521,49 +520,6 @@ function SettingsTabsMockup() {
   );
 }
 
-function WhatsAppFlowDiagram() {
-  return (
-    <div className="rounded-xl border border-silk bg-[#f8fafc] p-4">
-      <div className="flex flex-col sm:flex-row items-stretch gap-3">
-        {/* Step 1 */}
-        <div className="flex-1 rounded-lg border border-silk bg-white p-3 text-center">
-          <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-2">
-            <ShieldAlert className="h-4 w-4 text-amber-600" />
-          </div>
-          <p className="text-[9px] font-semibold text-midnight">1. Commande VÉRIFIER</p>
-          <p className="text-[8px] text-fog mt-0.5">Score entre 31 et 65</p>
-        </div>
-        <ArrowRight className="h-4 w-4 text-fog self-center shrink-0 rotate-90 sm:rotate-0" />
-        {/* Step 2 */}
-        <div className="flex-1 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center">
-          <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-2">
-            <MessageCircle className="h-4 w-4 text-emerald-600" />
-          </div>
-          <p className="text-[9px] font-semibold text-midnight">2. Message WhatsApp</p>
-          <p className="text-[8px] text-fog mt-0.5">&ldquo;Confirmez votre commande #2847 de 890 DH ?&rdquo;</p>
-        </div>
-        <ArrowRight className="h-4 w-4 text-fog self-center shrink-0 rotate-90 sm:rotate-0" />
-        {/* Step 3 */}
-        <div className="flex-1 rounded-lg border border-silk bg-white p-3 text-center">
-          <div className="h-8 w-8 rounded-full bg-sky-100 flex items-center justify-center mx-auto mb-2">
-            <Phone className="h-4 w-4 text-sky-600" />
-          </div>
-          <p className="text-[9px] font-semibold text-midnight">3. Réponse client</p>
-          <p className="text-[8px] text-fog mt-0.5">OUI → Expédier · NON → Bloquer</p>
-        </div>
-        <ArrowRight className="h-4 w-4 text-fog self-center shrink-0 rotate-90 sm:rotate-0" />
-        {/* Step 4 */}
-        <div className="flex-1 rounded-lg border border-mint/30 bg-mint/5 p-3 text-center">
-          <div className="h-8 w-8 rounded-full bg-mint/20 flex items-center justify-center mx-auto mb-2">
-            <CheckCircle2 className="h-4 w-4 text-mint" />
-          </div>
-          <p className="text-[9px] font-semibold text-midnight">4. Action auto</p>
-          <p className="text-[8px] text-fog mt-0.5">Décision mise à jour automatiquement</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function OnboardingStepsMockup() {
   return (
@@ -1545,86 +1501,7 @@ Body:
             </Tip>
           </GuideSection>
 
-          {/* ── 9. WhatsApp ─────────────────────────────────── */}
-          <GuideSection id="whatsapp" title="Vérification WhatsApp" icon={MessageCircle}>
-            <p>
-              nortoo peut envoyer un message WhatsApp au client pour confirmer sa commande
-              avant expédition. C&apos;est particulièrement utile pour les commandes en
-              statut <strong>VÉRIFIER</strong> — ça réduit les faux positifs tout en
-              protégeant contre les fraudes.
-            </p>
-
-            <h3 className="font-display text-base font-semibold text-midnight mt-6 mb-3">
-              Flow de vérification
-            </h3>
-            <WhatsAppFlowDiagram />
-
-            <h3 className="font-display text-base font-semibold text-midnight mt-6 mb-2">
-              Comment l&apos;activer
-            </h3>
-            <ol className="list-decimal list-inside space-y-3 ml-1">
-              <li>
-                Allez dans{" "}
-                <Link
-                  href="/dashboard/settings?tab=notifications"
-                  className="text-mint underline"
-                >
-                  Paramètres &gt; Notifications
-                </Link>
-              </li>
-              <li>
-                Dans la section WhatsApp, cliquez sur <strong>&quot;Configurer WhatsApp
-                Business&quot;</strong>
-              </li>
-              <li>
-                Suivez le flux d&apos;inscription intégré (<strong>Facebook Login for Business</strong>)
-                pour connecter votre numéro WhatsApp Business. Ce flux est sécurisé par Meta et
-                ne nécessite aucune configuration technique de votre part.
-              </li>
-              <li>
-                Une fois connecté, un badge vert &quot;WhatsApp actif&quot; apparaît dans
-                vos paramètres. Les messages de vérification seront envoyés automatiquement
-                aux commandes en statut VÉRIFIER.
-              </li>
-            </ol>
-
-            <h3 className="font-display text-base font-semibold text-midnight mt-6 mb-2">
-              Comment ça marche concrètement
-            </h3>
-            <ol className="list-decimal list-inside space-y-2 ml-1">
-              <li>
-                Une commande arrive avec un score entre 31 et 65 → décision <strong>VÉRIFIER</strong>
-              </li>
-              <li>
-                nortoo envoie automatiquement un message WhatsApp au client avec le résumé
-                de la commande (articles, montant total, adresse de livraison)
-              </li>
-              <li>
-                Le client répond par un mot-clé simple :
-                <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
-                  <li><strong>OUI</strong> / <strong>نعم</strong> / <strong>OK</strong> → La commande passe en EXPÉDIER</li>
-                  <li><strong>NON</strong> / <strong>لا</strong> / <strong>ANNULER</strong> → La commande passe en BLOQUER</li>
-                </ul>
-              </li>
-              <li>
-                nortoo met à jour la décision automatiquement et le statut pipeline passe
-                à &quot;Override marchand&quot;
-              </li>
-            </ol>
-
-            <Warning>
-              Si le client ne répond pas dans le délai d&apos;escalade configuré (par défaut 4h),
-              la commande est escaladée et nécessite une action manuelle de votre part.
-            </Warning>
-
-            <InfoBox>
-              Les credentials WhatsApp (Phone Number ID et Access Token) sont chiffrés en
-              AES-256-GCM et stockés de manière isolée par marchand. Seul votre compte y a
-              accès. Les messages sont envoyés via l&apos;API officielle WhatsApp Cloud (Meta).
-            </InfoBox>
-          </GuideSection>
-
-          {/* ── 10. Facturation ─────────────────────────────── */}
+          {/* ── 9. Facturation ──────────────────────────────── */}
           <GuideSection id="facturation" title="Facturation et plans" icon={CreditCard}>
             <p>nortoo propose 4 plans adaptés à votre volume :</p>
 

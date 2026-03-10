@@ -660,32 +660,6 @@
         "webhookFailedDesc": "Alert when a webhook fails after all retry attempts",
         "save": "Save preferences",
         "saved": "Notification preferences saved"
-      },
-      "whatsapp": {
-        "title": "WhatsApp notifications",
-        "subtitle": "Direct alerts to customers via WhatsApp",
-        "setup": "WhatsApp Business Setup",
-        "setupDesc": "Connect your WhatsApp Business number to send messages to customers",
-        "phoneNumberId": "Phone Number ID",
-        "phoneNumberIdPlaceholder": "e.g. 123456789012345",
-        "accessToken": "Access Token",
-        "accessTokenPlaceholder": "Meta Business permanent token",
-        "connect": "Connect",
-        "disconnect": "Disconnect",
-        "connected": "WhatsApp connected",
-        "notConfigured": "Connect your WhatsApp Business account to enable customer notifications.",
-        "connectFirst": "Set up WhatsApp Business above to enable notifications",
-        "connectSuccess": "WhatsApp Business connected successfully",
-        "disconnectSuccess": "WhatsApp Business disconnected",
-        "verification": "Customer verification",
-        "verificationDesc": "Send a verification message for suspicious orders",
-        "deliveryConfirmation": "Delivery confirmation",
-        "deliveryConfirmationDesc": "Confirm customer availability before shipping",
-        "codReminder": "COD reminder",
-        "codReminderDesc": "Remind the customer to prepare the exact amount",
-        "connectWithFacebook": "Connect with Facebook",
-        "manualSetup": "Manual setup (advanced)",
-        "embeddedSignupError": "Connection failed. Please try again or use manual setup."
       }
     },
     "privacy": {
@@ -1194,8 +1168,7 @@
     "stats": {
       "rules": "Scoring rules",
       "rto": "avg RTO reduction",
-      "score": "Score per order",
-      "whatsapp": "Automatic verification"
+      "score": "Score per order"
     },
     "howItWorks": {
       "title": "How it works",
@@ -1205,7 +1178,7 @@
       "step2Title": "Every order is scored",
       "step2Desc": "24+ rules analyze the customer, amount, city, address and history. Score 0 (safe) to 100 (fraudulent).",
       "step3Title": "Ship with confidence",
-      "step3Desc": "Get a clear decision: Ship, Verify, Flag or Block. Doubtful cases receive an automatic WhatsApp message to confirm the order."
+      "step3Desc": "Get a clear decision: Ship, Verify, Flag or Block."
     },
     "features": {
       "title": "Everything you need to fight COD fraud",
@@ -1221,11 +1194,7 @@
       "compliance": "Law 09-08 compliant",
       "complianceDesc": "SHA-256 hashed phones, audit log, access/deletion rights, CNDP.",
       "reports": "Reports & exports",
-      "reportsDesc": "Weekly email report, CSV export, monthly PDF report.",
-      "whatsapp": "WhatsApp Verification",
-      "whatsappDesc": "Suspicious orders receive an automatic message. The customer confirms or cancels in one word.",
-      "embeddedSignup": "1-Click Connection",
-      "embeddedSignupDesc": "Connect your WhatsApp Business in one click via Facebook. No technical setup required."
+      "reportsDesc": "Weekly email report, CSV export, monthly PDF report."
     },
     "pricing": {
       "title": "Simple pricing, no surprises",
@@ -1260,33 +1229,7 @@
       "q4": "Can I customize the thresholds?",
       "a4": "Yes. From the dashboard, you can adjust SHIP/VERIFY/FLAG/BLOCK thresholds, activate sector presets, and even customize each rule's weight (Pro+ plan).",
       "q5": "How is the service billed?",
-      "a5": "By monthly bank transfer. An invoice is automatically generated with 20% VAT. The 30-day trial is completely free, no credit card required.",
-      "q6": "How does WhatsApp verification work?",
-      "a6": "When an order scores in the medium zone (VERIFY), nortoo automatically sends a WhatsApp message to the customer to confirm. If they reply YES, the order is shipped. If they reply NO, it's blocked. Connect your WhatsApp Business in one click from the settings."
-    },
-    "whatsapp": {
-      "badge": "New",
-      "title": "Customer verification via WhatsApp",
-      "subtitle": "Orders in the suspect zone receive an automatic message. The customer confirms in one word — the order is shipped or blocked instantly.",
-      "feature1": "Instant confirmation",
-      "feature2": "YES / NO response in one word",
-      "feature3": "Automatic shipping or blocking",
-      "mockupGreeting": "Hello Ahmed,",
-      "mockupBody": "Confirm your order #NRT-4521 of 349 MAD by replying YES or NO.",
-      "mockupTime": "2:32 PM",
-      "mockupDarijaGreeting": "سلام أحمد،",
-      "mockupDarijaBody": "أكد الطلبية ديالك #NRT-4521 ديال 349 درهم. جاوب بـ ايه ولا لا.",
-      "mockupDarijaYes": "ايه",
-      "mockupDarijaNo": "لا",
-      "mockupDarijaTime": "14:32",
-      "darijaLabel": "🇲🇦 Darija",
-      "mockupReplyYes": "YES",
-      "mockupReplyNo": "NO",
-      "mockupReplyTime": "2:33 PM",
-      "mockupConfirm": "Order #NRT-4521 confirmed ✅ Shipping now!",
-      "mockupCancel": "Order #NRT-4521 cancelled.",
-      "mockupDarijaConfirm": "الطلبية #NRT-4521 تأكدات ✅ غادي نصيفطوها!",
-      "mockupDarijaCancel": "الطلبية #NRT-4521 تلغات."
+      "a5": "By monthly bank transfer. An invoice is automatically generated with 20% VAT. The 30-day trial is completely free, no credit card required."
     },
     "cta": {
       "title": "Ready to reduce your RTO?",

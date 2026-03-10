@@ -19,8 +19,7 @@ import { hashPhone, phoneLast4 } from "@/lib/hash";
 import { scoreOrder, type ScoringResult, type VelocityData } from "@/lib/scoring";
 import { executePipeline } from "@/lib/pipeline";
 import { checkQuota, recordUsage, QuotaExceededError } from "@/lib/quota";
-import { shouldNotify, shouldNotifyWhatsApp } from "@/lib/notification-helper";
-import { getMerchantWhatsAppCredentials, isValidMoroccanMobile, sendVerificationMessage } from "@/lib/whatsapp";
+import { shouldNotify } from "@/lib/notification-helper";
 import { normalizeProductId, updateProductStats, getProductRtoRate } from "@/lib/product-stats";
 import { normalizeCity, updateCityStats, getCityRiskData, getGlobalCityStats } from "@/lib/city-stats";
 import { parseAddress } from "@/lib/address-parser";
@@ -171,38 +170,6 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     total, currency, shippingCity, shippingAddress, geoData,
     scored, phoneListOverride, merchant, isTest: params.isTest ?? false,
   });
-
-  // ── 5b. WhatsApp verification (non-blocking, skip test orders) ──
-  // PRIVACY: `phone` (raw) is used for the API call only and NEVER stored.
-  // It goes out of scope after processIncomingOrder() returns.
-  if (
-    !params.isTest &&
-    finalDecision === "verify" &&
-    isValidMoroccanMobile(phone)
-  ) {
-    try {
-      const waCredentials = await getMerchantWhatsAppCredentials(merchantId);
-      if (waCredentials) {
-        const whatsappEnabled = await shouldNotifyWhatsApp(merchantId, "verification");
-        if (whatsappEnabled) {
-          const messageId = await sendVerificationMessage(
-            waCredentials,
-            phone, // raw phone — used and discarded, NEVER stored
-            customerName ?? "Client",
-            ref,
-            total,
-          );
-          // TODO: re-enable when whatsapp columns are added to DB
-          // if (messageId) {
-          //   await db.update(orders).set({ whatsappVerificationStatus: "sent", whatsappMessageId: messageId }).where(eq(orders.id, orderId));
-          // }
-        }
-      }
-    } catch (err) {
-      // Non-blocking — WhatsApp failure must NEVER break order ingestion
-      console.error("[Ingest] WhatsApp verification send failed (non-blocking):", err);
-    }
-  }
 
   // ── 6. Record metrics (non-blocking, skip test orders) ──
   if (!params.isTest) {
