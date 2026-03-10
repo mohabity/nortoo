@@ -18,7 +18,7 @@ const APP_HOST = "app.nortoo.ma";
 const MARKETING_HOST = "nortoo.ma";
 
 // Pages served on the marketing domain (nortoo.ma)
-const MARKETING_PATHS = ["/", "/terms", "/privacy", "/data-rights", "/blog"];
+const MARKETING_PATHS = ["/", "/terms", "/privacy", "/data-rights"];
 
 // Routes that DON'T need auth (webhooks use API key auth)
 const PUBLIC_PATHS = [
@@ -36,7 +36,6 @@ const PUBLIC_PATHS = [
   "/api/webhook/",
   "/api/cron/",
   "/api/nrt-panel/",
-  "/api/blog/",
   "/api/og/",
   "/api/data-rights/submit",
   "/api/team/accept-invite",
@@ -52,7 +51,7 @@ function isPublicPath(pathname: string): boolean {
 }
 
 function isMarketingPath(pathname: string): boolean {
-  return MARKETING_PATHS.includes(pathname) || pathname.startsWith("/data-rights") || pathname.startsWith("/blog");
+  return MARKETING_PATHS.includes(pathname) || pathname.startsWith("/data-rights");
 }
 
 export async function middleware(request: NextRequest) {
@@ -68,7 +67,6 @@ export async function middleware(request: NextRequest) {
       !pathname.startsWith("/_next") &&
       pathname !== "/favicon.ico" &&
       !pathname.startsWith("/api/data-rights/submit") &&
-      !pathname.startsWith("/api/blog/") &&
       !pathname.startsWith("/api/og/")
     ) {
       return NextResponse.redirect(new URL(pathname, `https://${APP_HOST}`));

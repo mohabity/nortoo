@@ -120,18 +120,29 @@ export function OrderSlideOver({
     setError(null);
     try {
       const res = await fetch(`/api/orders/${orderId}`);
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        setError(
+          res.status === 401
+            ? t("components.orderSlideOver.authError")
+            : t("components.orderSlideOver.loadError")
+        );
+        return;
+      }
       const json = await res.json();
       if (!res.ok) {
         setError(json.error ?? t("components.orderSlideOver.loadError"));
         return;
       }
       setOrder(json.data);
-    } catch {
-      setError(t("components.orderSlideOver.loadErrorDetail"));
+    } catch (err) {
+      console.error("[OrderSlideOver] fetch failed:", err, "orderId:", orderId);
+      setError(`${t("components.orderSlideOver.loadErrorDetail")} (${err instanceof Error ? err.message : String(err)})`);
     } finally {
       setLoading(false);
     }
-  }, [orderId, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
 
   useEffect(() => {
     if (open && orderId) {

@@ -34,6 +34,11 @@ export const merchants = pgTable("merchants", {
   youcanStoreName: text("youcan_store_name"),
   shopifyStoreId: text("shopify_store_id"),
 
+  // WhatsApp Business API (per-merchant)
+  whatsappPhoneNumberId: text("whatsapp_phone_number_id"), // Meta phone number ID
+  whatsappAccessToken: text("whatsapp_access_token"),       // Encrypted (AES-256-GCM)
+  whatsappWabaId: text("whatsapp_waba_id"),                 // WhatsApp Business Account ID (Embedded Signup)
+
   // Billing
   plan: text("plan").notNull().default("trial"), // trial | starter | pro | scale
   pendingPlanDowngrade: text("pending_plan_downgrade"), // null | starter | pro — effectif au prochain mois
@@ -224,6 +229,11 @@ export const orders = pgTable(
     // Test orders (excluded from all stats)
     isTest: boolean("is_test").notNull().default(false),
 
+    // WhatsApp verification (Phase 1)
+    whatsappVerificationStatus: text("whatsapp_verification_status"),
+    // null | "sent" | "confirmed" | "rejected" | "expired"
+    whatsappMessageId: text("whatsapp_message_id"),
+
     // Meta
     createdAt: timestamp("created_at").notNull().defaultNow(),
     scoredAt: timestamp("scored_at").notNull().defaultNow(),
@@ -247,6 +257,7 @@ export const orders = pgTable(
       table.pipelineStatus,
       table.reviewDeadline
     ),
+    index("orders_whatsapp_msg_idx").on(table.whatsappMessageId),
   ]
 );
 
@@ -803,100 +814,6 @@ export const cronRuns = pgTable(
 );
 
 // ═══════════════════════════════════════════════════════════
-// BLOG — Articles, Topics Queue, Config
-// ═══════════════════════════════════════════════════════════
-
-export const blogArticles = pgTable(
-  "blog_articles",
-  {
-    id: serial("id").primaryKey(),
-    slug: text("slug").notNull(),
-    locale: text("locale").notNull().default("fr"), // "fr" | "en"
-    translationOfId: integer("translation_of_id"), // self-ref → FR original
-
-    // Content
-    title: text("title").notNull(),
-    excerpt: text("excerpt").notNull(), // 150-160 chars = meta description
-    content: text("content").notNull(), // Markdown
-    category: text("category").notNull(), // "guide" | "case-study" | "industry" | "product" | "news"
-    tags: text("tags").notNull().default("[]"), // JSON array
-
-    // SEO
-    seoTitle: text("seo_title").notNull(), // ≤ 60 chars
-    seoDescription: text("seo_description").notNull(), // ≤ 160 chars
-    canonicalUrl: text("canonical_url"),
-    coverImageUrl: text("cover_image_url"),
-    coverImageAlt: text("cover_image_alt"),
-
-    // Stats
-    readingTime: integer("reading_time"), // minutes
-    wordCount: integer("word_count"),
-    qualityScore: integer("quality_score"), // 0-100
-
-    // Workflow
-    status: text("status").notNull().default("generating"), // generating | published | failed | archived
-    topicId: integer("topic_id"),
-
-    // Timestamps
-    generatedAt: timestamp("generated_at"),
-    publishedAt: timestamp("published_at"),
-    translatedAt: timestamp("translated_at"),
-    updatedAt: timestamp("updated_at"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-  },
-  (table) => [
-    uniqueIndex("blog_articles_slug_locale_idx").on(table.slug, table.locale),
-    index("blog_articles_status_locale_idx").on(table.status, table.locale),
-    index("blog_articles_category_idx").on(table.category),
-    index("blog_articles_published_at_idx").on(table.publishedAt),
-    index("blog_articles_translation_idx").on(table.translationOfId),
-  ]
-);
-
-export const blogTopics = pgTable(
-  "blog_topics",
-  {
-    id: serial("id").primaryKey(),
-
-    // Topic
-    title: text("title").notNull(),
-    description: text("description"),
-    category: text("category").notNull(),
-    targetKeywords: text("target_keywords").notNull().default("[]"), // JSON array
-    tone: text("tone").default("expert-accessible"),
-    targetWordCount: integer("target_word_count").default(1500),
-
-    // Queue
-    status: text("status").notNull().default("queued"), // queued | generating | published | failed
-    priority: integer("priority").notNull().default(0), // higher = published first
-    scheduledFor: timestamp("scheduled_for"),
-
-    // Result
-    articleId: integer("article_id"), // FR article generated
-    articleEnId: integer("article_en_id"), // EN article generated
-    errorMessage: text("error_message"),
-    attempts: integer("attempts").notNull().default(0),
-
-    // Timestamps
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    processedAt: timestamp("processed_at"),
-  },
-  (table) => [
-    index("blog_topics_status_priority_idx").on(table.status, table.priority),
-  ]
-);
-
-export const blogConfig = pgTable("blog_config", {
-  id: serial("id").primaryKey(), // Always 1 (singleton)
-  articlesPerWeek: integer("articles_per_week").notNull().default(3),
-  minQueueSize: integer("min_queue_size").notNull().default(10),
-  autoTranslate: boolean("auto_translate").notNull().default(true),
-  paused: boolean("paused").notNull().default(false),
-  pausedUntil: timestamp("paused_until"),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-// ═══════════════════════════════════════════════════════════
 // RELATIONS
 // ═══════════════════════════════════════════════════════════
 export const merchantsRelations = relations(merchants, ({ many }) => ({
@@ -1024,25 +941,6 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
   }),
 }));
 
-export const blogArticlesRelations = relations(blogArticles, ({ one }) => ({
-  translationOf: one(blogArticles, {
-    fields: [blogArticles.translationOfId],
-    references: [blogArticles.id],
-    relationName: "translations",
-  }),
-  topic: one(blogTopics, {
-    fields: [blogArticles.topicId],
-    references: [blogTopics.id],
-  }),
-}));
-
-export const blogTopicsRelations = relations(blogTopics, ({ one }) => ({
-  article: one(blogArticles, {
-    fields: [blogTopics.articleId],
-    references: [blogArticles.id],
-    relationName: "frArticle",
-  }),
-}));
 
 export const adminUsersRelations = relations(adminUsers, ({ many }) => ({
   mfaCodes: many(adminMfaCodes),

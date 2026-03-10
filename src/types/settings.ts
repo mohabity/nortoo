@@ -41,6 +41,8 @@ export interface MerchantSettings {
   cndpDeclarationRef: string | null;
   consentRecordedAt: string | null;
   notificationPreferences: string | null;
+  whatsappPhoneNumberId: string | null;
+  whatsappWabaId: string | null;
   trialEndsAt: string | null;
   currentMonthOrders: number;
   currentMonthStart: string | null;

@@ -9,12 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: "https://nortoo.ma/blog",
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 0.9,
-    },
-    {
       url: "https://nortoo.ma/terms",
       lastModified: new Date(),
       changeFrequency: "yearly",

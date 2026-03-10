@@ -1,0 +1,1 @@
+ALTER TABLE "merchants" ADD COLUMN "whatsapp_waba_id" text;
