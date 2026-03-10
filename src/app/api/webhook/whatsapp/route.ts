@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { db } from "@/db/index";
-import { orders, notifications, auditLogs, merchants } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-import { shouldNotify } from "@/lib/notification-helper";
+import { merchants } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 // ═══════════════════════════════════════════════════════════
 // GET /api/webhook/whatsapp
@@ -125,128 +124,15 @@ export async function POST(request: Request) {
  * Process a customer reply to a verification WhatsApp message.
  * Matches by whatsappMessageId + merchantId (tenant isolation) → updates order.
  */
+// TODO: re-enable when whatsapp_verification_status and whatsapp_message_id columns are added to DB
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function processVerificationReply(
   merchantId: number,
   originalMessageId: string,
   replyText: string,
 ): Promise<void> {
-  // Find the order by WhatsApp message ID + tenant isolation
-  const [order] = await db
-    .select({
-      id: orders.id,
-      merchantId: orders.merchantId,
-      externalRef: orders.externalRef,
-      decision: orders.decision,
-      whatsappVerificationStatus: orders.whatsappVerificationStatus,
-    })
-    .from(orders)
-    .where(
-      and(
-        eq(orders.whatsappMessageId, originalMessageId),
-        eq(orders.merchantId, merchantId),
-      ),
-    )
-    .limit(1);
-
-  if (!order) {
-    console.warn(
-      "[WhatsApp Webhook] No order found for messageId:",
-      originalMessageId,
-    );
-    return;
-  }
-
-  // Skip if already processed (idempotent)
-  if (
-    order.whatsappVerificationStatus === "confirmed" ||
-    order.whatsappVerificationStatus === "rejected"
-  ) {
-    return;
-  }
-
-  const isYes = YES_PATTERNS.test(replyText);
-  const isNo = NO_PATTERNS.test(replyText);
-
-  if (!isYes && !isNo) {
-    // Unrecognized reply — log and let escalation cron handle expiry.
-    // We cannot send a clarification message because we don't have
-    // the raw phone number (it was discarded after ingestion).
-    console.log(
-      `[WhatsApp Webhook] Unrecognized reply for order ${order.id}: "${replyText}"`,
-    );
-    return;
-  }
-
-  const now = new Date();
-  const newDecision = isYes ? "ship" : "block";
-  const newStatus = isYes ? "confirmed" : "rejected";
-  const pipelineStatus = isYes ? "auto_shipped" : "auto_blocked";
-
-  // ── Update order (same override pattern as /api/orders/[id]/override) ──
-  await db
-    .update(orders)
-    .set({
-      decision: newDecision,
-      whatsappVerificationStatus: newStatus,
-      overrideDecision: newDecision,
-      overrideBy: "whatsapp_customer",
-      overrideReason: isYes
-        ? `Client confirmé via WhatsApp: "${replyText}"`
-        : `Client refusé via WhatsApp: "${replyText}"`,
-      overrideAt: now,
-      pipelineStatus,
-    })
-    .where(eq(orders.id, order.id));
-
-  // ── Auto-mark related notifications as read ──
-  await db
-    .update(notifications)
-    .set({ read: true })
-    .where(
-      and(
-        eq(notifications.merchantId, order.merchantId),
-        eq(notifications.orderId, order.id),
-        eq(notifications.read, false),
-      ),
-    );
-
-  // ── Audit log (Art. 23 — obligatoire) ──
-  await db.insert(auditLogs).values({
-    merchantId: order.merchantId,
-    actor: "consumer",
-    action: "whatsapp_verification",
-    targetType: "order",
-    targetId: String(order.id),
-    details: JSON.stringify({
-      previousDecision: order.decision,
-      newDecision,
-      whatsappReply: replyText,
-      verificationStatus: newStatus,
-    }),
-  });
-
-  // ── Notify merchant ──
-  const ref = order.externalRef ?? `#${order.id}`;
-  const notifType = isYes ? "order_auto_shipped" : "order_auto_blocked";
-
-  if (await shouldNotify(order.merchantId, notifType)) {
-    await db.insert(notifications).values({
-      merchantId: order.merchantId,
-      orderId: order.id,
-      type: notifType,
-      title: isYes
-        ? `Commande ${ref} confirmée via WhatsApp`
-        : `Commande ${ref} refusée via WhatsApp`,
-      message: isYes
-        ? `Le client a confirmé la commande. Expédition automatique.`
-        : `Le client a refusé la commande. Blocage automatique.`,
-      severity: isYes ? "info" : "warning",
-      actionUrl: `/dashboard/orders?selected=${order.id}`,
-    });
-  }
-
   console.log(
-    `[WhatsApp Webhook] Order ${order.id} → ${newDecision} (customer replied: "${replyText}")`,
+    `[WhatsApp Webhook] Verification reply processing disabled (columns not yet in DB). merchant=${merchantId} msgId=${originalMessageId} reply="${replyText}"`,
   );
 }
 

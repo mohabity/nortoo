@@ -192,15 +192,10 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
             ref,
             total,
           );
-          if (messageId) {
-            await db
-              .update(orders)
-              .set({
-                whatsappVerificationStatus: "sent",
-                whatsappMessageId: messageId,
-              })
-              .where(eq(orders.id, orderId));
-          }
+          // TODO: re-enable when whatsapp columns are added to DB
+          // if (messageId) {
+          //   await db.update(orders).set({ whatsappVerificationStatus: "sent", whatsappMessageId: messageId }).where(eq(orders.id, orderId));
+          // }
         }
       }
     } catch (err) {
