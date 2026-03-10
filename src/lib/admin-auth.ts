@@ -1,11 +1,19 @@
 import { cookies } from "next/headers";
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual, randomBytes } from "crypto";
 
 // ═══════════════════════════════════════════════════════════
 // Admin Authentication — Individual accounts + email MFA
-// ADMIN_SECRET = cookie signing key + initial setup key
+// ADMIN_SESSION_SECRET = cookie signing key (separate from setup key)
 // Cookie format: "adminId:nonce:hmac" (new) or "nonce:hmac" (legacy)
 // ═══════════════════════════════════════════════════════════
+
+/**
+ * Get the session signing secret.
+ * Prefers ADMIN_SESSION_SECRET, falls back to ADMIN_SECRET for backward compat.
+ */
+function getSessionSecret(): string | undefined {
+  return process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_SECRET;
+}
 
 export const ADMIN_COOKIE_NAME = "nortoo_admin";
 
@@ -14,7 +22,7 @@ export const ADMIN_COOKIE_NAME = "nortoo_admin";
  * Cookie value = "adminId:nonce:hmac" — encodes who is logged in.
  */
 export function createAdminToken(adminId: number, secret: string): string {
-  const nonce = Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const nonce = Date.now().toString(36) + randomBytes(12).toString("hex");
   const payload = `${adminId}:${nonce}`;
   const hmac = createHmac("sha256", secret).update(payload).digest("hex");
   return `${adminId}:${nonce}:${hmac}`;
@@ -63,7 +71,7 @@ export function verifyAdminToken(token: string, secret: string): number | null {
  * 2. `Authorization: Bearer <secret>` header (for API calls)
  */
 export async function isAdmin(request?: Request): Promise<boolean> {
-  const secret = process.env.ADMIN_SECRET;
+  const secret = getSessionSecret();
   if (!secret) return false;
 
   // 1. Check cookie (for page/API requests from browser)
@@ -96,7 +104,7 @@ export async function isAdmin(request?: Request): Promise<boolean> {
  * Returns the adminId (>0 for new accounts, 0 for legacy sessions), or null if not authenticated.
  */
 export async function getAdminId(): Promise<number | null> {
-  const secret = process.env.ADMIN_SECRET;
+  const secret = getSessionSecret();
   if (!secret) return null;
 
   try {

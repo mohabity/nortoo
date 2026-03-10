@@ -63,11 +63,11 @@ export async function POST(request: Request) {
       name?: string;
     };
 
-    // Validate setupKey against ADMIN_SECRET
-    const secret = process.env.ADMIN_SECRET;
+    // Validate setupKey against ADMIN_SETUP_KEY (fallback: ADMIN_SECRET)
+    const secret = process.env.ADMIN_SETUP_KEY || process.env.ADMIN_SECRET;
     if (!secret) {
       return NextResponse.json(
-        { error: "ADMIN_SECRET non configuré sur le serveur." },
+        { error: "ADMIN_SETUP_KEY non configuré sur le serveur." },
         { status: 500 }
       );
     }
