@@ -65,7 +65,7 @@ export async function POST(
       overrideAt: now,
       pipelineStatus: "merchant_override",
     })
-    .where(eq(orders.id, orderId));
+    .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
 
   // Auto-mark related notifications as read
   await db

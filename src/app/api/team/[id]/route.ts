@@ -137,7 +137,7 @@ export async function PUT(
     await db
       .update(users)
       .set(updates)
-      .where(eq(users.id, targetId));
+      .where(and(eq(users.id, targetId), eq(users.merchantId, ctx.merchantId)));
 
     // Audit log
     await db.insert(auditLogs).values({
@@ -229,7 +229,7 @@ export async function DELETE(
     }
 
     // Delete user
-    await db.delete(users).where(eq(users.id, targetId));
+    await db.delete(users).where(and(eq(users.id, targetId), eq(users.merchantId, ctx.merchantId)));
 
     // Audit log
     await db.insert(auditLogs).values({

@@ -81,7 +81,7 @@ export async function PUT(
   await db
     .update(orders)
     .set(updateData)
-    .where(eq(orders.id, orderId));
+    .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)));
 
   // ── Feedback into customer history ──
   // Update successfulOrders / failedOrders counters on the linked customer
