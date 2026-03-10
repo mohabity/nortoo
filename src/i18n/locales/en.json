@@ -52,7 +52,8 @@
     "settings": "Settings",
     "compliance": "Compliance",
     "home": "Home",
-    "more": "More"
+    "more": "More",
+    "guide": "Guide"
   },
   "header": {
     "searchPlaceholder": "Search for an order..."
