@@ -950,6 +950,7 @@
       "notFound": "Order not found",
       "loadError": "Error loading",
       "loadErrorDetail": "Unable to load order",
+      "authError": "Session expired. Please log in again.",
       "close": "Close",
       "risk": "Risk {level}",
       "overrideNote": "Decision modified by merchant",

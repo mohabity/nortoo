@@ -950,6 +950,7 @@
       "notFound": "Commande introuvable",
       "loadError": "Erreur lors du chargement",
       "loadErrorDetail": "Impossible de charger la commande",
+      "authError": "Session expirée. Veuillez vous reconnecter.",
       "close": "Fermer",
       "risk": "Risque {level}",
       "overrideNote": "Décision modifiée par le marchand",
