@@ -10,7 +10,6 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    console.log("[api/orders/[id]] GET called, id:", id);
     const merchantId = await getMerchantId();
     const orderId = parseInt(id, 10);
     if (isNaN(orderId)) {
@@ -81,9 +80,10 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error("[api/orders/[id]] Error:", err);
+    const message = err instanceof Error ? err.message : "Erreur inconnue";
+    console.error("[api/orders/[id]] Error:", message, err);
     return NextResponse.json(
-      { error: "Erreur lors du chargement de la commande" },
+      { error: `Erreur: ${message}` },
       { status: 500 }
     );
   }
