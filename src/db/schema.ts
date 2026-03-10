@@ -229,11 +229,6 @@ export const orders = pgTable(
     // Test orders (excluded from all stats)
     isTest: boolean("is_test").notNull().default(false),
 
-    // WhatsApp verification (Phase 1)
-    whatsappVerificationStatus: text("whatsapp_verification_status"),
-    // null | "sent" | "confirmed" | "rejected" | "expired"
-    whatsappMessageId: text("whatsapp_message_id"),
-
     // Meta
     createdAt: timestamp("created_at").notNull().defaultNow(),
     scoredAt: timestamp("scored_at").notNull().defaultNow(),
@@ -257,7 +252,6 @@ export const orders = pgTable(
       table.pipelineStatus,
       table.reviewDeadline
     ),
-    index("orders_whatsapp_msg_idx").on(table.whatsappMessageId),
   ]
 );
 
