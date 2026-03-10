@@ -7,11 +7,7 @@ export function verifyCronSecret(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
 
   if (!secret) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[CRON] CRON_SECRET not set — allowing in development mode");
-      return true;
-    }
-    console.error("[CRON] CRON_SECRET env var is missing!");
+    console.error("[CRON] CRON_SECRET env var is required in all environments");
     return false;
   }
 
