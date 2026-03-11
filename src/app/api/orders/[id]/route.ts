@@ -80,10 +80,9 @@ export async function GET(
       },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Erreur inconnue";
-    console.error("[api/orders/[id]] Error:", message, err);
+    console.error("[api/orders/[id]] Error:", err);
     return NextResponse.json(
-      { error: `Erreur: ${message}` },
+      { error: "Une erreur interne s'est produite." },
       { status: 500 }
     );
   }

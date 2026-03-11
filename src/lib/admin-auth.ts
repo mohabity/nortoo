@@ -1,5 +1,9 @@
 import { cookies } from "next/headers";
 import { createHmac, timingSafeEqual, randomBytes } from "crypto";
+import { apiLimiter, safeLimit, getClientIp } from "@/lib/rate-limit";
+import { MS_DAY } from "@/lib/constants";
+
+const ADMIN_TOKEN_MAX_AGE_MS = MS_DAY; // 24 hours
 
 // ═══════════════════════════════════════════════════════════
 // Admin Authentication — Individual accounts + email MFA
@@ -45,6 +49,12 @@ export function verifyAdminToken(token: string, secret: string): number | null {
     const [adminIdStr, nonce, providedHmac] = parts;
     const adminId = parseInt(adminIdStr, 10);
     if (isNaN(adminId) || !nonce || !providedHmac) return null;
+
+    // TTL check: nonce starts with base-36 timestamp
+    const timestampPart = nonce.slice(0, nonce.length - 24); // 24 hex chars = 12 random bytes
+    const issuedAt = parseInt(timestampPart, 36);
+    if (isNaN(issuedAt) || Date.now() - issuedAt > ADMIN_TOKEN_MAX_AGE_MS) return null;
+
     const payload = `${adminId}:${nonce}`;
     const expectedHmac = createHmac("sha256", secret).update(payload).digest("hex");
     return safeCompare(providedHmac, expectedHmac) ? adminId : null;
@@ -89,6 +99,11 @@ export async function isAdmin(request?: Request): Promise<boolean> {
   if (request) {
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
+      // Rate limit Bearer attempts by IP to prevent brute-force
+      const ip = getClientIp(request);
+      const { success } = await safeLimit(apiLimiter, `admin-bearer:${ip}`);
+      if (!success) return false;
+
       const token = authHeader.slice(7);
       if (safeCompare(token, secret)) {
         return true;

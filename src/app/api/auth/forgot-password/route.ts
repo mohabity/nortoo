@@ -6,28 +6,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 import type { Locale } from "@/i18n/types";
 import { getAppUrl } from "@/lib/env";
-
-// ── In-memory rate limit: 3 requests per email per hour ──
-const rateLimitMap = new Map<string, { count: number; firstAt: number }>();
-const RATE_LIMIT_MAX = 3;
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
-
-function isRateLimited(email: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(email);
-
-  if (!entry || now - entry.firstAt > RATE_LIMIT_WINDOW) {
-    rateLimitMap.set(email, { count: 1, firstAt: now });
-    return false;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return true;
-  }
-
-  entry.count++;
-  return false;
-}
+import { authLimiter, safeLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/auth/forgot-password
@@ -50,8 +29,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Rate limit check
-  if (isRateLimited(email)) {
+  // Rate limit check (Redis-backed, survives cold starts)
+  const { success: rlOk } = await safeLimit(authLimiter, `forgot:${email}`);
+  if (!rlOk) {
     return NextResponse.json(
       { error: "Trop de demandes. Réessayez dans quelques minutes." },
       { status: 429 }

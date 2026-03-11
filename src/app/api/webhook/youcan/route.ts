@@ -15,6 +15,10 @@ import { MAX_BODY_SIZE } from "@/lib/constants";
  * Zod schema — validates the minimal structure expected from YouCan webhooks.
  * `.passthrough()` allows extra fields we don't validate (forward-compatible).
  */
+const addressSchema = z.object({
+  phone: z.string().optional(),
+}).passthrough();
+
 const youcanPayloadSchema = z.object({
   id: z.union([z.string(), z.number()]),
   ref: z.string().optional(),
@@ -23,13 +27,14 @@ const youcanPayloadSchema = z.object({
     payload: z.object({
       gateway: z.string().optional(),
     }).passthrough().optional(),
-    address: z.array(z.any()).optional(),
+    gateway_type: z.string().optional(),
+    address: z.array(addressSchema).optional(),
   }).passthrough().optional(),
   customer: z.object({
     phone: z.string().optional(),
   }).passthrough().optional(),
   shipping: z.object({
-    address: z.array(z.any()).optional(),
+    address: z.array(addressSchema).optional(),
   }).passthrough().optional(),
 }).passthrough();
 
