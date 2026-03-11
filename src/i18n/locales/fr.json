@@ -53,7 +53,8 @@
     "compliance": "Conformité",
     "home": "Accueil",
     "more": "Plus",
-    "guide": "Guide"
+    "guide": "Guide",
+    "crm": "Clients"
   },
   "header": {
     "searchPlaceholder": "Rechercher une commande..."
