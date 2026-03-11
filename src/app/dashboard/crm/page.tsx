@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Search,
@@ -9,18 +9,11 @@ import {
   ShoppingCart,
   TrendingUp,
   BarChart3,
-  Filter,
   X,
   ChevronLeft,
   ChevronRight,
   Loader2,
-  Phone,
-  MapPin,
-  Tag,
-  MoreVertical,
-  MessageSquare,
   Package,
-  Clock,
   User,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,6 +60,20 @@ const STATUS_LABELS: Record<string, Record<string, string>> = {
 };
 
 export default function CrmPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-mist" />
+        </div>
+      }
+    >
+      <CrmContent />
+    </Suspense>
+  );
+}
+
+function CrmContent() {
   const { t, locale } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();

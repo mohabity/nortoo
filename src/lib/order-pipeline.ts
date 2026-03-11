@@ -125,6 +125,7 @@ export function parseYouCanPayload(
     shippingCity,
     shippingAddress,
     orderHour,
+    source: "youcan",
   };
 }
 
@@ -173,5 +174,6 @@ export function parseIngestPayload(
     shippingCity,
     shippingAddress,
     orderHour: new Date().getHours(),
+    source: "api",
   };
 }
