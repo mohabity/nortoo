@@ -1435,5 +1435,29 @@
       },
       "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08"
     }
+  },
+  "manualOrder": {
+    "title": "Nouvelle commande",
+    "subtitle": "Saisie manuelle — WhatsApp / Instagram / Téléphone",
+    "navButton": "Nouvelle commande",
+    "phone": "Téléphone client",
+    "total": "Montant total",
+    "name": "Nom du client",
+    "city": "Ville",
+    "address": "Adresse de livraison",
+    "product": "Produit",
+    "quantity": "Quantité",
+    "customerInfo": "Informations client",
+    "productInfo": "Informations produit",
+    "submit": "Scorer cette commande",
+    "scoring": "Scoring en cours...",
+    "result": "Résultat du scoring",
+    "ref": "Réf",
+    "confidence": "Confiance",
+    "factors": "Facteurs de risque",
+    "addAnother": "Nouvelle commande",
+    "viewOrder": "Voir la commande",
+    "error": "Erreur lors du scoring",
+    "networkError": "Erreur réseau — vérifiez votre connexion"
   }
 }

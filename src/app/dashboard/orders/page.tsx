@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Loader2,
@@ -16,6 +17,7 @@ import {
   User,
   MapPin,
   Package,
+  Plus,
 } from "lucide-react";
 import { OrderTable, type OrderRow } from "@/components/dashboard/order-table";
 import { OrderCard } from "@/components/dashboard/order-card";
@@ -710,14 +712,32 @@ function OrdersContent() {
           </p>
         </div>
 
-        {/* Mobile search trigger */}
-        <button
-          onClick={openMobileSearch}
-          className="lg:hidden h-10 w-10 flex items-center justify-center rounded-full border border-silk bg-white text-slate hover:bg-snow transition-colors"
-          aria-label={t("orders.search.ariaLabel")}
-        >
-          <Search className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* New manual order */}
+          <Link
+            href="/dashboard/orders/new"
+            className="hidden sm:inline-flex items-center gap-2 rounded-sm bg-mint px-3 py-2 text-sm font-medium text-midnight shadow-sm hover:bg-mint-dark transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            {t("manualOrder.navButton")}
+          </Link>
+          <Link
+            href="/dashboard/orders/new"
+            className="sm:hidden h-10 w-10 flex items-center justify-center rounded-full bg-mint text-midnight shadow-sm hover:bg-mint-dark transition-colors"
+            aria-label={t("manualOrder.navButton")}
+          >
+            <Plus className="h-4 w-4" />
+          </Link>
+
+          {/* Mobile search trigger */}
+          <button
+            onClick={openMobileSearch}
+            className="lg:hidden h-10 w-10 flex items-center justify-center rounded-full border border-silk bg-white text-slate hover:bg-snow transition-colors"
+            aria-label={t("orders.search.ariaLabel")}
+          >
+            <Search className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* ── Mobile search bar (expanded) ── */}

@@ -10,6 +10,7 @@ import {
   Settings,
   Shield,
   BookOpen,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -52,6 +53,17 @@ export function Sidebar() {
       <div className="flex h-16 items-center border-b border-silk px-6">
         <Link href="/dashboard" className="flex items-center">
           <img src="/nortoo-logo.png" alt="nortoo" className="h-7 w-auto" />
+        </Link>
+      </div>
+
+      {/* Quick action */}
+      <div className="px-4 pt-4 pb-2">
+        <Link
+          href="/dashboard/orders/new"
+          className="flex items-center justify-center gap-2 rounded-sm bg-mint px-3 py-2 text-sm font-medium text-midnight shadow-sm hover:bg-mint-dark transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          {t("manualOrder.navButton")}
         </Link>
       </div>
 
