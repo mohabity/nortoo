@@ -74,7 +74,7 @@ export async function GET(request: Request) {
           currentMonthStart: now,
         });
 
-      console.log(
+      console.info(
         `[monthly-reset] Saved ${snapshots} usage snapshots for ${monthLabel}, ` +
         `reset all merchants at ${now.toISOString()}`
       );

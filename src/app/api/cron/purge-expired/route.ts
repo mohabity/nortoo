@@ -103,7 +103,7 @@ export async function GET(request: Request) {
         .where(lt(auditLogs.createdAt, retentionCutoff))
         .returning({ id: auditLogs.id });
 
-      console.log(
+      console.info(
         `[purge-expired] Purged: ${purgedCustomers} customers, ${purgedOrders} orders, ${purgedAuditLogs.length} audit logs`
       );
 

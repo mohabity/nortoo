@@ -134,10 +134,10 @@ export async function GET(request: Request) {
         });
 
         generated++;
-        console.log(`[generate-invoices] ${invoiceNumber} → ${merchant.name} (${merchant.plan})`);
+        console.info(`[generate-invoices] ${invoiceNumber} → ${merchant.name} (${merchant.plan})`);
       }
 
-      console.log(
+      console.info(
         `[generate-invoices] Period ${period}: ${generated} generated, ${skipped} skipped, ${downgraded} downgraded`
       );
 
@@ -193,7 +193,7 @@ async function applyPendingDowngrades(): Promise<number> {
     });
 
     applied++;
-    console.log(`[generate-invoices] Downgrade applied: merchant #${merchant.id} ${oldPlan} → ${newPlan}`);
+    console.info(`[generate-invoices] Downgrade applied: merchant #${merchant.id} ${oldPlan} → ${newPlan}`);
   }
 
   return applied;

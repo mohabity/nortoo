@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash, randomBytes } from "crypto";
 import { db } from "@/db/index";
 import { users, merchants, auditLogs } from "@/db/schema";
+import { MS_WEEK } from "@/lib/constants";
 import { eq, and } from "drizzle-orm";
 import { getAppUrl } from "@/lib/env";
 import {
@@ -63,7 +64,7 @@ export async function POST(
     // Regenerate invite token
     const rawToken = randomBytes(48).toString("hex");
     const hashedToken = createHash("sha256").update(rawToken).digest("hex");
-    const inviteExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const inviteExpiresAt = new Date(Date.now() + MS_WEEK);
 
     await db
       .update(users)

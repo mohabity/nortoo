@@ -67,7 +67,7 @@ export async function GET(request: Request) {
         }
       }
 
-      console.log(
+      console.info(
         `[trial-check] Expired ${updated}/${expiredMerchants.length} trials at ${now.toISOString()}`
       );
 

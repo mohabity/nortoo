@@ -154,22 +154,7 @@ export function checkOrderLimit(
   };
 }
 
-// ── Feature Labels (French — for i18n use t("features.{id}") instead) ──
-
-export const FEATURE_LABELS: Record<FeatureId, string> = {
-  scoring: "Scoring anti-fraude",
-  dashboard: "Tableau de bord",
-  search: "Recherche commandes",
-  csv_export: "Export CSV",
-  bulk_actions: "Actions en lot",
-  simulation: "Simulation de scoring",
-  custom_weights: "Pondération personnalisée",
-  pdf_report: "Rapport PDF mensuel",
-  multi_users: "Multi-utilisateurs",
-  roles: "Gestion des rôles",
-};
-
-// ── Plan Labels (French — for i18n use t("plans.{id}.name") and t("plans.{id}.label") instead) ──
+// ── Plan Labels (French — for i18n use t("plans.{id}.name") instead) ──
 
 export const PLAN_LABELS: Record<PlanId, string> = {
   trial: "Essai",
@@ -178,9 +163,3 @@ export const PLAN_LABELS: Record<PlanId, string> = {
   scale: "Scale",
 };
 
-export const PLAN_DESCRIPTIONS: Record<PlanId, string> = {
-  trial: "30 jours gratuits",
-  starter: "299 DH TTC/mois",
-  pro: "699 DH TTC/mois",
-  scale: "1 499 DH TTC/mois",
-};

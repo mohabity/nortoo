@@ -232,8 +232,8 @@ export async function GET(request: NextRequest) {
                 method: "POST",
                 headers: { Authorization: `Bearer ${accessToken}` },
               });
-            } catch {
-              // Non-critical — continue cleanup
+            } catch (e) {
+              console.warn("[YouCan OAuth] Failed to unsubscribe hook:", hook.id, e);
             }
           }
         }
@@ -274,8 +274,8 @@ export async function GET(request: NextRequest) {
             updatedAt: new Date(),
           })
           .where(eq(inviteLinks.code, inviteCode));
-      } catch {
-        // Non-critical — don't fail the flow
+      } catch (e) {
+        console.warn("[YouCan OAuth] Invite tracking failed:", e);
       }
     }
 

@@ -1,9 +1,6 @@
 // ═══ Savings Calculator ═══
 // Pure utility — no DB calls. Reused by savings API + email digest.
 
-// ── Defaults ──
-export const DEFAULT_RTO_COST_FIXED = 65; // DH
-export const DEFAULT_RTO_COST_PERCENT = 0.05; // 5%
 
 /**
  * Calculate the estimated cost of a single RTO (return to origin).

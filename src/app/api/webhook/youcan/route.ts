@@ -9,9 +9,7 @@ import { isCodGateway } from "@/lib/order-pipeline";
 import { db } from "@/db/index";
 import { auditLogs } from "@/db/schema";
 import type { YouCanOrderPayload } from "@/types/youcan";
-
-/** Max body size: 1 MB */
-const MAX_BODY_SIZE = 1_048_576;
+import { MAX_BODY_SIZE } from "@/lib/constants";
 
 /**
  * Zod schema — validates the minimal structure expected from YouCan webhooks.
@@ -53,7 +51,7 @@ export async function POST(request: Request) {
         .map((h) => [h, request.headers.get(h)])
         .filter(([, v]) => v)
     );
-    console.log("[Webhook YouCan] ── INCOMING ──", JSON.stringify({ url: safeUrl.toString(), headers: reqHeaders }));
+    console.info("[Webhook YouCan] ── INCOMING ──", JSON.stringify({ url: safeUrl.toString(), headers: reqHeaders }));
   }
 
   try {
@@ -168,7 +166,7 @@ export async function POST(request: Request) {
     }
 
     if (process.env.DEBUG_WEBHOOKS === "true") {
-      console.log("[Webhook YouCan] Received:", {
+      console.info("[Webhook YouCan] Received:", {
         id: payload.id,
         ref: payload.ref,
         total: payload.total,

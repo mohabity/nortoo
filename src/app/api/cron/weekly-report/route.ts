@@ -182,7 +182,7 @@ export async function GET(request: Request) {
         }
       }
 
-      console.log(
+      console.info(
         `[weekly-report] Sent: ${sent}, Skipped: ${skipped}, Failed: ${failed} at ${now.toISOString()}`
       );
 

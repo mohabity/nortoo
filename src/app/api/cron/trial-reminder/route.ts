@@ -81,7 +81,7 @@ export async function GET(request: Request) {
 
           if (ok) {
             sent++;
-            console.log(
+            console.info(
               `[trial-reminder] Sent J-${daysRemaining} reminder to ${m.email}`
             );
           } else {
@@ -99,7 +99,7 @@ export async function GET(request: Request) {
         }
       }
 
-      console.log(
+      console.info(
         `[trial-reminder] Done: ${sent} sent, ${skipped} skipped, ${failed} failed at ${now.toISOString()}`
       );
 

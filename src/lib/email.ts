@@ -41,11 +41,11 @@ const FROM = "nortoo <noreply@nortoo.ma>";
  */
 export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   if (!resend) {
-    console.log("═══ EMAIL (no provider configured) ═══");
-    console.log(`To: ${payload.to}`);
-    console.log(`Subject: ${payload.subject}`);
-    console.log(`Text:\n${payload.text}`);
-    console.log("═══ END EMAIL ═══");
+    console.warn("═══ EMAIL (no provider configured) ═══");
+    console.warn(`To: ${payload.to}`);
+    console.warn(`Subject: ${payload.subject}`);
+    console.warn(`Text:\n${payload.text}`);
+    console.warn("═══ END EMAIL ═══");
     return true;
   }
 

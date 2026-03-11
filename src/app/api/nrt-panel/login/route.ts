@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { compare } from "bcryptjs";
-import { createHash } from "crypto";
+import { createHash, randomInt } from "crypto";
 import { db } from "@/db/index";
 import { adminUsers, adminMfaCodes } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     }
 
     // ── Generate 6-digit MFA code ──
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const code = String(randomInt(100000, 1000000));
     const codeHash = createHash("sha256").update(code).digest("hex");
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 

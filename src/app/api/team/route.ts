@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "crypto";
 import { z } from "zod";
 import { db } from "@/db/index";
 import { users, merchants, auditLogs } from "@/db/schema";
+import { MS_WEEK } from "@/lib/constants";
 import { eq, sql } from "drizzle-orm";
 import { getAppUrl } from "@/lib/env";
 import {
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
     // Generate invite token
     const rawToken = randomBytes(48).toString("hex");
     const hashedToken = createHash("sha256").update(rawToken).digest("hex");
-    const inviteExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const inviteExpiresAt = new Date(Date.now() + MS_WEEK);
 
     // Create user with pending status
     const [newUser] = await db
