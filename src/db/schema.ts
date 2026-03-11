@@ -141,12 +141,6 @@ export const customers = pgTable(
 
     isOpposed: boolean("is_opposed").notNull().default(false), // Art. 9
 
-    // CRM fields
-    tags: text("tags"),                                        // JSON array: ["vip", "fidele", "suspect"]
-    status: text("status").notNull().default("active"),        // active | inactive | blacklisted
-    source: text("source").notNull().default("api"),           // crm | youcan | api
-    address: text("address"),                                  // Default shipping address
-
     firstSeen: timestamp("first_seen").notNull().defaultNow(),
     lastSeen: timestamp("last_seen").notNull().defaultNow(),
     retentionExpiresAt: timestamp("retention_expires_at"), // Art. 3e
@@ -156,33 +150,6 @@ export const customers = pgTable(
       table.merchantId,
       table.phoneHash
     ),
-    index("customers_merchant_status_idx").on(table.merchantId, table.status),
-  ]
-);
-
-// ═══════════════════════════════════════════════════════════
-// CUSTOMER NOTES — CRM interaction history
-// ═══════════════════════════════════════════════════════════
-export const customerNotes = pgTable(
-  "customer_notes",
-  {
-    id: serial("id").primaryKey(),
-    merchantId: integer("merchant_id")
-      .notNull()
-      .references(() => merchants.id, { onDelete: "cascade" }),
-    customerId: integer("customer_id")
-      .notNull()
-      .references(() => customers.id, { onDelete: "cascade" }),
-
-    content: text("content").notNull(),
-    type: text("type").notNull().default("note"), // note | call | delivery_update
-    createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
-
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-  },
-  (table) => [
-    index("customer_notes_customer_idx").on(table.customerId),
-    index("customer_notes_merchant_idx").on(table.merchantId),
   ]
 );
 
@@ -253,9 +220,6 @@ export const orders = pgTable(
 
     // Search
     searchIndex: text("search_index"),
-
-    // Source — how the order entered the system
-    source: text("source").notNull().default("api"), // youcan | api | crm
 
     // Test orders (excluded from all stats)
     isTest: boolean("is_test").notNull().default(false),

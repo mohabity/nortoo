@@ -53,8 +53,7 @@
     "compliance": "Compliance",
     "home": "Home",
     "more": "More",
-    "guide": "Guide",
-    "crm": "Customers"
+    "guide": "Guide"
   },
   "header": {
     "searchPlaceholder": "Search for an order..."
