@@ -10,7 +10,6 @@ import {
   MoreHorizontal,
   Shield,
   BookOpen,
-  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -20,7 +19,6 @@ import { useTranslation } from "@/i18n/provider";
 const navItems = [
   { href: "/dashboard", labelKey: "nav.home", icon: LayoutDashboard },
   { href: "/dashboard/orders", labelKey: "nav.orders", icon: ShoppingCart },
-  { href: "/dashboard/crm", labelKey: "nav.crm", icon: Users },
   { href: "/dashboard/analytics", labelKey: "nav.analytics", icon: BarChart3 },
   { href: "/dashboard/settings", labelKey: "nav.settings", icon: Settings },
 ];
