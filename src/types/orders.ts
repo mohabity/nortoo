@@ -17,6 +17,7 @@ export interface OrderRow {
   scoreExplanation?: string | null;
   reviewDeadline?: string | null;
   escalationPriority?: number | null;
+  source?: string | null;
   createdAt: string;
 }
 

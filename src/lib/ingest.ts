@@ -57,6 +57,7 @@ export interface IngestParams {
   shippingAddress?: string;
   orderHour: number;
   isTest?: boolean;
+  source?: "youcan" | "api" | "crm";
 }
 
 export interface IngestResult {
@@ -144,6 +145,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
       merchantId, merchant, ref, externalId, customerName, last4,
       productName, total, currency, shippingCity, shippingAddress,
       isTest: params.isTest ?? false,
+      source: params.source ?? "api",
     });
   }
 
@@ -169,6 +171,7 @@ export async function processIncomingOrder(params: IngestParams): Promise<Ingest
     productName, resolvedProductId, productCategory, productPrice, quantity,
     total, currency, shippingCity, shippingAddress, geoData,
     scored, phoneListOverride, merchant, isTest: params.isTest ?? false,
+    source: params.source ?? "api",
   });
 
   // ── 6. Record metrics (non-blocking, skip test orders) ──
@@ -254,6 +257,7 @@ async function handleOpposedOrder(params: {
   shippingCity?: string;
   shippingAddress?: string;
   isTest: boolean;
+  source: "youcan" | "api" | "crm";
 }): Promise<IngestResult> {
   const now = new Date();
   const [insertedOrder] = await db
@@ -277,6 +281,7 @@ async function handleOpposedOrder(params: {
       pipelineStatus: "needs_review",
       pipelineProcessedAt: now,
       merchantNotifiedAt: now,
+      source: params.source ?? "api",
       isTest: params.isTest,
       retentionExpiresAt: retentionDate(params.merchant.dataRetentionMonths),
     })
@@ -617,6 +622,7 @@ async function saveOrder(params: {
   phoneListOverride: PhoneListOverride | null;
   merchant: IngestParams["merchant"];
   isTest: boolean;
+  source: "youcan" | "api" | "crm";
 }): Promise<{
   orderId: number;
   pipelineResult: ReturnType<typeof executePipeline>;
@@ -668,6 +674,7 @@ async function saveOrder(params: {
         total: params.total,
         customerPhoneLast4: params.last4,
       }),
+      source: params.source ?? "api",
       isTest: params.isTest,
       retentionExpiresAt: retentionDate(params.merchant.dataRetentionMonths),
     })

@@ -10,6 +10,7 @@ import {
   Settings,
   Shield,
   BookOpen,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -19,6 +20,7 @@ import { useBilling } from "@/components/billing-context";
 const navItems = [
   { href: "/dashboard", labelKey: "nav.overview", icon: LayoutDashboard },
   { href: "/dashboard/orders", labelKey: "nav.orders", icon: ShoppingCart },
+  { href: "/dashboard/crm", labelKey: "nav.crm", icon: Users },
   { href: "/dashboard/analytics", labelKey: "nav.analytics", icon: BarChart3 },
   { href: "/dashboard/settings", labelKey: "nav.settings", icon: Settings },
   { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
