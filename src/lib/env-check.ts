@@ -5,7 +5,7 @@
 
 const REQUIRED_VARS = [
   "DATABASE_URL",
-  "NEXTAUTH_SECRET",
+  "AUTH_SECRET",
 ] as const;
 
 const RECOMMENDED_VARS = [
