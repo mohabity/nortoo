@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { type ComponentType, useEffect, useState, useCallback } from "react";
 import {
   X,
   Loader2,
@@ -71,7 +71,7 @@ interface Props {
   onUpdate: () => void;
 }
 
-const DELIVERY_STATUS_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
+const DELIVERY_STATUS_ICON: Record<string, ComponentType<{ className?: string }>> = {
   pending: Clock,
   shipped: Truck,
   delivered: CheckCircle,

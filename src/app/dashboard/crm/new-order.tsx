@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ComponentType, useState } from "react";
 import { X, Loader2, ShieldCheck, AlertTriangle, Ban, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/i18n/provider";
@@ -25,7 +25,7 @@ interface ScoringResult {
   pipelineStatus: string;
 }
 
-const DECISION_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
+const DECISION_CONFIG: Record<string, { icon: ComponentType<{ className?: string }>; color: string; bg: string }> = {
   ship: { icon: CheckCircle, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
   verify: { icon: ShieldCheck, color: "text-amber-700", bg: "bg-amber-50 border-amber-200" },
   flag: { icon: AlertTriangle, color: "text-orange-700", bg: "bg-orange-50 border-orange-200" },
