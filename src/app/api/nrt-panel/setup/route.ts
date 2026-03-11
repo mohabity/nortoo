@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
-import { createHash } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
 import { db } from "@/db/index";
 import { adminUsers, auditLogs } from "@/db/schema";
 import { count } from "drizzle-orm";
@@ -71,7 +71,10 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-    if (!setupKey || setupKey !== secret) {
+    const keyBuf = Buffer.from(setupKey ?? "", "utf-8");
+    const secretBuf = Buffer.from(secret, "utf-8");
+    const keyValid = keyBuf.length === secretBuf.length && timingSafeEqual(keyBuf, secretBuf);
+    if (!setupKey || !keyValid) {
       return NextResponse.json(
         { error: "Clé de configuration invalide." },
         { status: 401 }

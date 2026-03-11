@@ -114,6 +114,16 @@ export async function middleware(request: NextRequest) {
   try {
     const token = await getToken({ req: request });
     if (token) {
+      // Rate limit authenticated API calls (30 req/min per merchant)
+      if (pathname.startsWith("/api/") && token.merchantId) {
+        const rlOk = await checkApiRateLimit(String(token.merchantId));
+        if (!rlOk) {
+          return NextResponse.json(
+            { error: "Trop de requêtes. Réessayez dans quelques secondes." },
+            { status: 429 }
+          );
+        }
+      }
       return NextResponse.next();
     }
   } catch {
@@ -142,6 +152,25 @@ export async function middleware(request: NextRequest) {
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("redirect", pathname);
   return NextResponse.redirect(loginUrl);
+}
+
+// ── Edge-compatible rate limiting (in-memory fallback for middleware) ──
+const apiRateLimits = new Map<string, { count: number; resetAt: number }>();
+const API_RATE_LIMIT_MAX = 30;
+const API_RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+
+function checkApiRateLimit(merchantId: string): boolean {
+  const key = `api:${merchantId}`;
+  const now = Date.now();
+  const entry = apiRateLimits.get(key);
+
+  if (!entry || now > entry.resetAt) {
+    apiRateLimits.set(key, { count: 1, resetAt: now + API_RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  entry.count++;
+  return entry.count <= API_RATE_LIMIT_MAX;
 }
 
 /**

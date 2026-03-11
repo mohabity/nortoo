@@ -339,7 +339,7 @@ export async function GET(request: NextRequest) {
     const cookieName = isSecure
       ? "__Secure-authjs.session-token"
       : "authjs.session-token";
-    const maxAge = 30 * 24 * 60 * 60; // 30 days
+    const maxAge = 7 * 24 * 60 * 60; // 7 days
 
     const sessionToken = await encode({
       salt: cookieName,
