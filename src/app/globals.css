@@ -65,4 +65,87 @@
   .snap-start {
     scroll-snap-align: start;
   }
+
+  /* ═══ Landing page animations ═══ */
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-12px); }
+  }
+
+  @keyframes float-reverse {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(12px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(0, 229, 160, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(0, 229, 160, 0.6); }
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-reverse {
+    animation: float-reverse 7s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2.5s ease-in-out infinite;
+  }
+
+  .animate-gradient-text {
+    background: linear-gradient(90deg, #00E5A0, #8B5CF6, #00E5A0);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 4s ease-in-out infinite;
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.6s ease-out forwards;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  .animation-delay-400 {
+    animation-delay: 400ms;
+  }
+  .animation-delay-600 {
+    animation-delay: 600ms;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
 }
