@@ -21,6 +21,7 @@ import { AdminApprovalRequest } from "@/emails/AdminApprovalRequest";
 import { AdminInvite } from "@/emails/AdminInvite";
 import { LoginCode } from "@/emails/LoginCode";
 import { TrialReminder } from "@/emails/TrialReminder";
+import { TicketNotification } from "@/emails/TicketNotification";
 
 interface EmailPayload {
   to: string;
@@ -354,4 +355,33 @@ export async function buildTrialReminderEmail(
   const html = await render(element);
   const text = await render(element, { plainText: true });
   return { subject: t(locale, "trialReminder.subject", { daysRemaining }), html, text };
+}
+
+// ═══════════════════════════════════════════════════════════
+// TICKET NOTIFICATION — sent to support@nortoo.ma on new ticket
+// ═══════════════════════════════════════════════════════════
+
+interface TicketEmailData {
+  ticketId: number;
+  subject: string;
+  description: string;
+  category: string;
+  priority: string;
+  merchantName: string;
+  merchantEmail: string;
+}
+
+export async function buildTicketNotificationEmail(
+  data: TicketEmailData,
+  locale: Locale = "fr",
+) {
+  const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://app.nortoo.ma"}/nrt-panel/tickets`;
+  const element = React.createElement(TicketNotification, { ...data, adminUrl, locale });
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+  return {
+    subject: t(locale, "ticket.subject", { id: data.ticketId, subject: data.subject }),
+    html,
+    text,
+  };
 }

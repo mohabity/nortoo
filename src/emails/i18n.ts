@@ -576,6 +576,28 @@ const emailDict = {
     fr: "Choisir un plan →",
     en: "Choose a plan →",
   },
+
+  // ── Ticket Notification ──
+  "ticket.subject": {
+    fr: "Nouveau ticket #{id} — {subject}",
+    en: "New ticket #{id} — {subject}",
+  },
+  "ticket.preview": {
+    fr: "Nouveau ticket de support #{id}",
+    en: "New support ticket #{id}",
+  },
+  "ticket.heading": {
+    fr: "Nouveau ticket de support",
+    en: "New support ticket",
+  },
+  "ticket.body": {
+    fr: "Le marchand {merchantName} ({merchantEmail}) a ouvert un nouveau ticket.",
+    en: "Merchant {merchantName} ({merchantEmail}) has opened a new ticket.",
+  },
+  "ticket.cta": {
+    fr: "Voir dans le backoffice →",
+    en: "View in backoffice →",
+  },
 } as const satisfies Record<string, { fr: string; en: string }>;
 
 // ─────────────────────────────────────────────────────────────

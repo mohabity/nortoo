@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db/index";
-import { supportTickets, auditLogs } from "@/db/schema";
+import { supportTickets, auditLogs, merchants } from "@/db/schema";
 import { eq, and, desc, sql, count } from "drizzle-orm";
 import { getMerchantId } from "@/lib/merchant";
 import { auth } from "@/auth";
+import { sendEmail, buildTicketNotificationEmail } from "@/lib/email";
 
 const PER_PAGE = 10;
 
@@ -108,6 +109,39 @@ export async function POST(request: Request) {
       targetId: String(ticket.id),
       details: JSON.stringify({ subject, category, priority }),
     });
+
+    // Notify admin (email + WhatsApp) — fire-and-forget
+    const [merchant] = await db
+      .select({ name: merchants.name, email: merchants.email })
+      .from(merchants)
+      .where(eq(merchants.id, merchantId));
+
+    if (merchant) {
+      // Email notification to support
+      buildTicketNotificationEmail({
+        ticketId: ticket.id,
+        subject,
+        description,
+        category,
+        priority,
+        merchantName: merchant.name ?? "Marchand",
+        merchantEmail: merchant.email ?? "",
+      }).then((email) =>
+        sendEmail({
+          to: process.env.SUPPORT_EMAIL ?? "support@nortoo.ma",
+          ...email,
+        })
+      ).catch(() => {/* non-blocking */});
+
+      // WhatsApp notification
+      const waNumber = process.env.ADMIN_WHATSAPP_NUMBER;
+      if (waNumber) {
+        const waText = `🎫 Nouveau ticket #${ticket.id}\n📋 ${subject}\n🏪 ${merchant.name ?? "Marchand"} (${merchant.email})\n📁 ${category} · ${priority}\n\n${description.slice(0, 200)}`;
+        const waUrl = `https://api.whatsapp.com/send?phone=${waNumber}&text=${encodeURIComponent(waText)}`;
+        // Log the WhatsApp URL for manual notification (no WhatsApp Business API yet)
+        console.log(`[ticket-notify] WhatsApp: ${waUrl}`);
+      }
+    }
 
     return NextResponse.json({ data: ticket }, { status: 201 });
   } catch {
