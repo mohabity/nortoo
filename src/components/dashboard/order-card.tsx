@@ -9,6 +9,7 @@ import { PipelineBadge } from "./pipeline-badge";
 import { highlightText } from "@/lib/highlight";
 import { useTranslation } from "@/i18n/provider";
 import { formatCurrency } from "@/lib/i18n-utils";
+import { getTranslatedSummary } from "@/lib/translate-explanation";
 import type { OrderRow } from "./order-table";
 
 interface OrderCardProps {
@@ -194,13 +195,7 @@ export function OrderCard({
           {/* Explanation summary */}
           {order.scoreExplanation && (
             <p className="mt-1.5 text-[11px] text-fog line-clamp-1">
-              {(() => {
-                try {
-                  return JSON.parse(order.scoreExplanation).summary;
-                } catch {
-                  return null;
-                }
-              })()}
+              {getTranslatedSummary(order.fraudScore, order.scoreExplanation, t)}
             </p>
           )}
         </div>

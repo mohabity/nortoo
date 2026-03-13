@@ -1,5 +1,5 @@
 /**
- * Score Explanation — Human-readable French explanations of fraud scores.
+ * Score Explanation — Human-readable explanations of fraud scores.
  *
  * Pure synchrone function. Zero DB calls, zero dependencies.
  * Converts technical scoring factors into merchant-friendly phrases.
@@ -11,6 +11,10 @@ export interface ScoreExplanation {
   tip: string | null;
   emoji: string;
   confidenceLabel: string;
+  /** i18n key for the score-range intro (e.g. "reliable", "needsVerification") */
+  introKey: string;
+  /** Rule keys of the top 2 factors (for translated summary) */
+  topRuleKeys: string[];
 }
 
 /** Emoji prefix per rule family */
@@ -67,13 +71,13 @@ const RULE_EMOJI: Record<string, string> = {
   OPPOSITION: "\uD83D\uDEAB",
 };
 
-/** Score range → emoji + intro phrase */
-function getScoreRange(score: number): { emoji: string; intro: string } {
-  if (score <= 20) return { emoji: "\uD83D\uDFE2", intro: "Commande fiable" };
-  if (score <= 40) return { emoji: "\uD83D\uDFE1", intro: "Commande plut\u00F4t s\u00FBre" };
-  if (score <= 60) return { emoji: "\uD83D\uDFE0", intro: "Commande \u00E0 v\u00E9rifier" };
-  if (score <= 80) return { emoji: "\uD83D\uDD34", intro: "Risque \u00E9lev\u00E9 d\u00E9tect\u00E9" };
-  return { emoji: "\u26D4", intro: "Commande tr\u00E8s risqu\u00E9e" };
+/** Score range → emoji + intro phrase + i18n key */
+function getScoreRange(score: number): { emoji: string; intro: string; introKey: string } {
+  if (score <= 20) return { emoji: "\uD83D\uDFE2", intro: "Commande fiable", introKey: "reliable" };
+  if (score <= 40) return { emoji: "\uD83D\uDFE1", intro: "Commande plut\u00F4t s\u00FBre", introKey: "probablySafe" };
+  if (score <= 60) return { emoji: "\uD83D\uDFE0", intro: "Commande \u00E0 v\u00E9rifier", introKey: "needsVerification" };
+  if (score <= 80) return { emoji: "\uD83D\uDD34", intro: "Risque \u00E9lev\u00E9 d\u00E9tect\u00E9", introKey: "highRisk" };
+  return { emoji: "\u26D4", intro: "Commande tr\u00E8s risqu\u00E9e", introKey: "veryRisky" };
 }
 
 /** Decision → actionable tip */
@@ -103,7 +107,7 @@ export function generateExplanation(
   factors: { rule: string; points: number; reason: string }[],
   confidence: number
 ): ScoreExplanation {
-  const { emoji, intro } = getScoreRange(score);
+  const { emoji, intro, introKey } = getScoreRange(score);
 
   // Filter out R0_BASE (noise), sort by |points| desc, keep top 4
   const significant = factors
@@ -139,5 +143,19 @@ export function generateExplanation(
     tip: getTip(decision),
     emoji,
     confidenceLabel: getConfidenceLabel(confidence),
+    introKey,
+    topRuleKeys: significant.slice(0, 2).map((f) => f.rule),
   };
+}
+
+/**
+ * Score range → i18n intro key (for client-side translation).
+ * Mirrors the server-side getScoreRange logic.
+ */
+export function getScoreIntroKey(score: number): { emoji: string; introKey: string } {
+  if (score <= 20) return { emoji: "\uD83D\uDFE2", introKey: "reliable" };
+  if (score <= 40) return { emoji: "\uD83D\uDFE1", introKey: "probablySafe" };
+  if (score <= 60) return { emoji: "\uD83D\uDFE0", introKey: "needsVerification" };
+  if (score <= 80) return { emoji: "\uD83D\uDD34", introKey: "highRisk" };
+  return { emoji: "\u26D4", introKey: "veryRisky" };
 }
