@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/provider";
 import { SimulationPanel } from "./SimulationPanel";
 import { FeatureGate } from "@/components/feature-gate";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import type { BaseTabProps } from "../types";
 
 export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
@@ -142,8 +143,9 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate">
+                  <p className="text-sm font-medium text-slate inline-flex items-center gap-1">
                     {t("settings.scoring.verifyThreshold")}
+                    <HelpTooltip textKey="tooltips.threshold.verify" guideSection="parametres" />
                   </p>
                   <p className="text-xs text-mist">
                     {t("settings.scoring.verifyHint")}
@@ -167,8 +169,9 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate">
+                  <p className="text-sm font-medium text-slate inline-flex items-center gap-1">
                     {t("settings.scoring.flagThreshold")}
+                    <HelpTooltip textKey="tooltips.threshold.flag" guideSection="parametres" />
                   </p>
                   <p className="text-xs text-mist">
                     {t("settings.scoring.flagHint")}
@@ -192,8 +195,9 @@ export function ScoringTab({ settings, onRefresh, onToast }: BaseTabProps) {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate">
+                  <p className="text-sm font-medium text-slate inline-flex items-center gap-1">
                     {t("settings.scoring.blockThreshold")}
+                    <HelpTooltip textKey="tooltips.threshold.block" guideSection="parametres" />
                   </p>
                   <p className="text-xs text-mist">
                     {t("settings.scoring.blockHint")}

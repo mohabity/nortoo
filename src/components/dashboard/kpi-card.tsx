@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { type LucideIcon } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 interface KpiCardProps {
   title: string;
@@ -8,6 +9,8 @@ interface KpiCardProps {
   changeType?: "positive" | "negative" | "neutral";
   icon: LucideIcon;
   iconColor?: string;
+  tooltipKey?: string;
+  guideSection?: string;
 }
 
 export function KpiCard({
@@ -17,11 +20,16 @@ export function KpiCard({
   changeType = "neutral",
   icon: Icon,
   iconColor = "text-mint",
+  tooltipKey,
+  guideSection,
 }: KpiCardProps) {
   return (
     <div className="rounded bg-white border border-silk shadow-[0_2px_8px_rgba(0,0,0,.06)] p-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-fog">{title}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-medium text-fog">{title}</p>
+          {tooltipKey && <HelpTooltip textKey={tooltipKey} guideSection={guideSection} />}
+        </div>
         <Icon className={cn("h-5 w-5", iconColor)} />
       </div>
       <div className="mt-3">
