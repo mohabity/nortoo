@@ -1466,5 +1466,60 @@
     "orders": "orders",
     "delivered": "delivered",
     "recentCustomers": "Recent customers"
+  },
+  "pres": {
+    "tagline": "COD Anti-Fraud Scoring · Morocco",
+    "problem": {
+      "title": "of COD orders fail in Morocco",
+      "subtitle": "Financial losses, wasted logistics, ghost customers",
+      "returns": "Returned parcels",
+      "losses": "Financial losses",
+      "margin": "Reduced margins"
+    },
+    "solution": {
+      "title": "nortoo scores each order from 0 to 100"
+    },
+    "flow": {
+      "order": "Order",
+      "webhook": "Webhook",
+      "scoring": "Scoring",
+      "decision": "Decision"
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "subtitle": "One-click integration — every order is analyzed in real time before shipping"
+    },
+    "scoring": {
+      "title": "24 rules, 38 checks",
+      "subtitle": "A comprehensive scoring engine that analyzes every aspect of the order"
+    },
+    "rules": {
+      "reliable": "Reliable customer",
+      "repeat": "Repeat offender",
+      "new": "New customer",
+      "extreme": "Extreme amount",
+      "zone": "Risk zone",
+      "phone": "Suspicious phone",
+      "night": "Late-night order",
+      "address": "Incomplete address"
+    },
+    "dashboard": {
+      "title": "Real-time dashboard",
+      "orders": "Orders",
+      "shipped": "Shipped",
+      "blocked": "Blocked",
+      "rtoRate": "RTO Rate"
+    },
+    "stats": {
+      "rtoReduction": "less RTO",
+      "rules": "scoring rules",
+      "realtime": "real-time scoring"
+    },
+    "cta": {
+      "title": "Ready to reduce your RTOs?",
+      "subtitle": "Start for free and score your first orders in minutes",
+      "button": "Get started for free",
+      "trial": "Free trial · No credit card required"
+    }
   }
 }
