@@ -1460,6 +1460,11 @@
     "addAnother": "New order",
     "viewOrder": "View order",
     "error": "Scoring error",
-    "networkError": "Network error — check your connection"
+    "networkError": "Network error — check your connection",
+    "lookingUp": "Looking up customer...",
+    "knownCustomer": "Known customer",
+    "orders": "orders",
+    "delivered": "delivered",
+    "recentCustomers": "Recent customers"
   }
 }
