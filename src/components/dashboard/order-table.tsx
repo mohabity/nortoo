@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { deliveryLabel, cn } from "@/lib/utils";
 import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
@@ -8,6 +8,7 @@ import { PipelineBadge } from "./pipeline-badge";
 import { highlightText } from "@/lib/highlight";
 import { useTranslation } from "@/i18n/provider";
 import { formatCurrency } from "@/lib/i18n-utils";
+import { Countdown } from "@/components/ui/countdown";
 import type { OrderRow } from "@/types/orders";
 import {
   Table,
@@ -19,45 +20,6 @@ import {
 } from "@/components/ui/table";
 
 export type { OrderRow } from "@/types/orders";
-
-function CountdownBadge({ deadline }: { deadline: string }) {
-  const { t } = useTranslation();
-  const [remaining, setRemaining] = useState("");
-  const [isOverdue, setIsOverdue] = useState(false);
-
-  useEffect(() => {
-    function update() {
-      const diff = new Date(deadline).getTime() - Date.now();
-      if (diff <= 0) {
-        setRemaining(t("time.expired"));
-        setIsOverdue(true);
-        return;
-      }
-      setIsOverdue(false);
-      const mins = Math.floor(diff / 60000);
-      if (mins >= 60) {
-        const h = Math.floor(mins / 60);
-        const m = mins % 60;
-        setRemaining(`${h}h${m > 0 ? m.toString().padStart(2, "0") : ""}`);
-      } else {
-        setRemaining(`${mins}min`);
-      }
-    }
-    update();
-    const iv = setInterval(update, 30000);
-    return () => clearInterval(iv);
-  }, [deadline, t]);
-
-  return (
-    <span
-      className={`text-[10px] font-mono font-medium ${
-        isOverdue ? "text-rose" : "text-amber"
-      }`}
-    >
-      {remaining}
-    </span>
-  );
-}
 
 interface OrderTableProps {
   orders: OrderRow[];
@@ -388,7 +350,7 @@ export function OrderTable({
                     <PipelineBadge status={order.pipelineStatus} size="sm" />
                     {order.pipelineStatus === "needs_review" &&
                       order.reviewDeadline && (
-                        <CountdownBadge deadline={order.reviewDeadline} />
+                        <Countdown deadline={order.reviewDeadline} />
                       )}
                   </div>
                 </TableCell>
