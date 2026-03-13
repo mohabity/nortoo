@@ -4,7 +4,6 @@
 
 nortoo (No RTO) est une **plateforme de scoring anti-fraude** pour le e-commerce COD (Cash-on-Delivery) au Maroc. 30-50% des commandes COD echouent → nortoo score chaque commande 0-100 et decide LESQUELLES expedier et lesquelles bloquer.
 
-نو ر.ت.و — زيرو رتور
 
 ## Architecture
 
@@ -56,7 +55,6 @@ Base 25 → Client fiable -20/-10 → Recidiviste +30/+15 → Nouveau +10 → Mo
 - Icone : N stylise dans carre mint arrondi `<path d="M6 18V6l12 12V6"/>`
 - Nom toujours en minuscules : nortoo
 - Tagline FR : "Scoring anti-fraude COD · Maroc"
-- Tagline arabe : "نو ر.ت.و — زيرو رتور"
 
 ## API Key
 

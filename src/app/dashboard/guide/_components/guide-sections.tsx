@@ -32,7 +32,7 @@ export function GuideSections() {
       {/* ── 1. Bienvenue ────────────────────────────────── */}
       <GuideSection id="bienvenue" title="Bienvenue sur nortoo" icon={BookOpen}>
         <p>
-          <strong>nortoo</strong> (No RTO — نو ر.ت.و — زيرو رتور) est une plateforme de scoring anti-fraude
+          <strong>nortoo</strong> (No RTO) est une plateforme de scoring anti-fraude
           pour le e-commerce COD (Cash-on-Delivery) au Maroc.
         </p>
         <p>
