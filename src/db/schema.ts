@@ -931,6 +931,33 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
 }));
 
 
+// ═══════════════════════════════════════════════════════════
+// SUPPORT TICKETS — Système de tickets intégré
+// ═══════════════════════════════════════════════════════════
+export const supportTickets = pgTable(
+  "support_tickets",
+  {
+    id: serial("id").primaryKey(),
+    merchantId: integer("merchant_id")
+      .notNull()
+      .references(() => merchants.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "set null" }),
+    subject: text("subject").notNull(),
+    description: text("description").notNull(),
+    category: text("category").notNull().default("other"),
+    priority: text("priority").notNull().default("normal"),
+    status: text("status").notNull().default("open"),
+    resolvedAt: timestamp("resolved_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("tickets_merchant_status_idx").on(table.merchantId, table.status),
+  ]
+);
+
 export const adminUsersRelations = relations(adminUsers, ({ many }) => ({
   mfaCodes: many(adminMfaCodes),
 }));

@@ -54,7 +54,8 @@
     "home": "Accueil",
     "more": "Plus",
     "guide": "Guide",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "support": "Support"
   },
   "header": {
     "searchPlaceholder": "Rechercher une commande..."
@@ -1560,6 +1561,53 @@
       "integration": "Intégration",
       "account": "Compte",
       "data": "Données"
+    }
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Gérez vos tickets de support",
+    "bubble": {
+      "title": "Besoin d'aide ?",
+      "whatsapp": "Contacter sur WhatsApp",
+      "whatsappHint": "Réponse en moins de 2h",
+      "newTicket": "Créer un ticket",
+      "ticketHint": "Suivi dans votre dashboard"
+    },
+    "form": {
+      "subject": "Sujet",
+      "subjectPlaceholder": "Résumez votre problème...",
+      "description": "Description",
+      "descriptionPlaceholder": "Décrivez votre problème en détail...",
+      "category": "Catégorie",
+      "priority": "Priorité",
+      "submit": "Envoyer",
+      "success": "Ticket créé avec succès",
+      "error": "Erreur lors de la création du ticket"
+    },
+    "status": {
+      "open": "Ouvert",
+      "in_progress": "En cours",
+      "resolved": "Résolu",
+      "closed": "Fermé"
+    },
+    "priority": {
+      "low": "Basse",
+      "normal": "Normale",
+      "high": "Haute"
+    },
+    "categories": {
+      "scoring": "Scoring",
+      "orders": "Commandes",
+      "integration": "Intégration",
+      "billing": "Facturation",
+      "other": "Autre"
+    },
+    "empty": "Aucun ticket",
+    "close": "Fermer le ticket",
+    "kpi": {
+      "open": "Ouverts",
+      "inProgress": "En cours",
+      "resolved": "Résolus"
     }
   }
 }

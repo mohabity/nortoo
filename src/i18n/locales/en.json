@@ -54,7 +54,8 @@
     "home": "Home",
     "more": "More",
     "guide": "Guide",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "support": "Support"
   },
   "header": {
     "searchPlaceholder": "Search for an order..."
@@ -1560,6 +1561,53 @@
       "integration": "Integration",
       "account": "Account",
       "data": "Data"
+    }
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Manage your support tickets",
+    "bubble": {
+      "title": "Need help?",
+      "whatsapp": "Contact on WhatsApp",
+      "whatsappHint": "Response within 2 hours",
+      "newTicket": "Create a ticket",
+      "ticketHint": "Track it in your dashboard"
+    },
+    "form": {
+      "subject": "Subject",
+      "subjectPlaceholder": "Summarize your issue...",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe your issue in detail...",
+      "category": "Category",
+      "priority": "Priority",
+      "submit": "Submit",
+      "success": "Ticket created successfully",
+      "error": "Error creating ticket"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "priority": {
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High"
+    },
+    "categories": {
+      "scoring": "Scoring",
+      "orders": "Orders",
+      "integration": "Integration",
+      "billing": "Billing",
+      "other": "Other"
+    },
+    "empty": "No tickets",
+    "close": "Close ticket",
+    "kpi": {
+      "open": "Open",
+      "inProgress": "In Progress",
+      "resolved": "Resolved"
     }
   }
 }
