@@ -20,7 +20,6 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ScoreBadge } from "./score-badge";
 import { DecisionBadge } from "./decision-badge";
 import { PipelineBadge } from "./pipeline-badge";
 import { riskLabel, deliveryLabel, scoreColorClass } from "@/lib/utils";
@@ -29,8 +28,11 @@ import { useTranslation } from "@/i18n/provider";
 import { formatDate, formatCurrency } from "@/lib/i18n-utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/use-permissions";
-import type { OrderDetail, ScoringFactor, CustomerData } from "@/types/orders";
-import { translateExplanation } from "@/lib/translate-explanation";
+import type { OrderDetail } from "@/types/orders";
+
+import { ScoringDetails } from "./order-slide-over/scoring-details";
+import { CustomerHistory } from "./order-slide-over/customer-history";
+import { OverrideSection } from "./order-slide-over/override-section";
 
 // ── Helpers ──
 
@@ -108,12 +110,6 @@ export function OrderSlideOver({
   const { can } = usePermissions();
   const { t, locale } = useTranslation();
 
-  // Override state
-  const [overrideOpen, setOverrideOpen] = useState(false);
-  const [overrideDecision, setOverrideDecision] = useState<string>("");
-  const [overrideReason, setOverrideReason] = useState("");
-  const [overrideSubmitting, setOverrideSubmitting] = useState(false);
-
   const fetchOrder = useCallback(async () => {
     if (!orderId) return;
     setLoading(true);
@@ -147,36 +143,8 @@ export function OrderSlideOver({
   useEffect(() => {
     if (open && orderId) {
       fetchOrder();
-      // Reset override state when opening new order
-      setOverrideOpen(false);
-      setOverrideReason("");
-      setOverrideDecision("");
     }
   }, [open, orderId, fetchOrder]);
-
-  async function handleOverride() {
-    if (!overrideDecision || !orderId) return;
-    setOverrideSubmitting(true);
-    try {
-      const res = await fetch(`/api/orders/${orderId}/override`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          decision: overrideDecision,
-          reason: overrideReason.trim() || undefined,
-        }),
-      });
-      if (res.ok) {
-        setOverrideOpen(false);
-        setOverrideReason("");
-        setOverrideDecision("");
-        fetchOrder();
-        onOverrideSuccess();
-      }
-    } finally {
-      setOverrideSubmitting(false);
-    }
-  }
 
   const effectiveDecision = order?.overrideDecision ?? order?.decision ?? "";
   const isMobile = useIsMobile();
@@ -330,7 +298,6 @@ export function OrderSlideOver({
                       </span>
                     </div>
                   )}
-                  {/* Progress bar for needs_review orders */}
                   {order.pipelineStatus === "needs_review" && order.reviewDeadline && order.pipelineProcessedAt && (
                     <EscalationProgress
                       start={order.pipelineProcessedAt}
@@ -356,122 +323,18 @@ export function OrderSlideOver({
               </div>
             )}
 
-            {/* ── D. Scoring Factors ── */}
-            {order.scoringFactors.length > 0 && (
-              <div className="mx-6 mt-4">
-                <h3 className="text-sm font-semibold text-midnight font-display mb-2">
-                  {t("components.orderSlideOver.scoringAnalysis")}
-                </h3>
-                <div className="rounded-lg border border-silk overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-snow/50">
-                        <th className="px-3 py-2 text-left font-medium text-fog text-xs">{t("components.orderSlideOver.rule")}</th>
-                        <th className="px-3 py-2 text-center font-medium text-fog text-xs w-[60px]">{t("components.orderSlideOver.points")}</th>
-                        <th className="px-3 py-2 text-left font-medium text-fog text-xs">{t("components.orderSlideOver.reason")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {order.scoringFactors.map((factor) => (
-                        <tr key={factor.rule} className="border-t border-silk">
-                          <td className="px-3 py-2 font-mono text-xs text-slate">
-                            {factor.rule}
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            <span
-                              className={
-                                factor.points > 0
-                                  ? "font-mono font-bold text-rose text-xs"
-                                  : factor.points < 0
-                                  ? "font-mono font-bold text-mint-deep text-xs"
-                                  : "font-mono text-mist text-xs"
-                              }
-                            >
-                              {factor.points > 0
-                                ? `+${factor.points}`
-                                : factor.points === 0
-                                ? "—"
-                                : factor.points}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-xs text-fog">
-                            {(() => {
-                              const translated = t(`scoring.rules.${factor.rule}`);
-                              return translated.startsWith("scoring.rules.") ? factor.reason : translated;
-                            })()}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="border-t-2 border-silk bg-snow">
-                        <td className="px-3 py-2 font-mono font-bold text-midnight text-xs">{t("components.orderSlideOver.total")}</td>
-                        <td className="px-3 py-2 text-center">
-                          <ScoreBadge score={order.fraudScore} size="sm" />
-                        </td>
-                        <td className="px-3 py-2"></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-[11px] text-mist mt-1.5">
-                  {order.scoringVersion ?? "v1.0"} — {t("components.orderSlideOver.confidence", { value: Math.round(order.confidence * 100) })}
-                </p>
-              </div>
-            )}
+            {/* ── D. Scoring Analysis ── */}
+            <ScoringDetails
+              scoringFactors={order.scoringFactors}
+              fraudScore={order.fraudScore}
+              decision={order.decision}
+              confidence={order.confidence}
+              scoringVersion={order.scoringVersion}
+              t={t}
+              locale={locale}
+            />
 
-            {/* ── D bis. Explanation Card (translated at render time) ── */}
-            {(() => {
-              const colorClass =
-                order.fraudScore <= 30
-                  ? "bg-mint-light/50 border-mint/20"
-                  : order.fraudScore <= 65
-                  ? "bg-sun-light/50 border-sun/20"
-                  : order.fraudScore <= 85
-                  ? "bg-coral-light/50 border-coral/20"
-                  : "bg-violet-light/50 border-violet/20";
-
-              if (order.scoringFactors.length === 0) {
-                return (
-                  <div className="mx-6 mt-4 rounded-lg border border-silk bg-snow p-3">
-                    <p className="text-xs text-mist italic">
-                      {t("components.orderSlideOver.noAnalysis")}
-                    </p>
-                  </div>
-                );
-              }
-
-              const expl = translateExplanation(
-                order.fraudScore,
-                order.decision,
-                order.scoringFactors,
-                order.confidence,
-                t,
-              );
-
-              return (
-                <div className={`mx-6 mt-4 rounded-lg border p-4 ${colorClass}`}>
-                  <p className="text-sm font-medium text-midnight">
-                    {expl.summary}
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {expl.factors.map((f: string, i: number) => (
-                      <li key={i} className="text-xs text-slate">
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  {expl.tip && (
-                    <p className="mt-2 text-xs font-medium text-fog italic">
-                      {expl.tip}
-                    </p>
-                  )}
-                  <p className="mt-1.5 text-[10px] text-mist">
-                    {t("components.orderSlideOver.confidence", { value: expl.confidenceLabel })}
-                  </p>
-                </div>
-              );
-            })()}
-
-            {/* ── D. Order Info ── */}
+            {/* ── E. Order Info ── */}
             <div className="mx-6 mt-4">
               <h3 className="text-sm font-semibold text-midnight font-display mb-2">
                 {t("components.orderSlideOver.order")}
@@ -538,110 +401,20 @@ export function OrderSlideOver({
               </div>
             </div>
 
-            {/* ── E. Customer History ── */}
+            {/* ── F. Customer History ── */}
             {order.customer && (
-              <div className="mx-6 mt-4">
-                <h3 className="text-sm font-semibold text-midnight font-display mb-2">
-                  {t("components.orderSlideOver.clientHistory")}
-                </h3>
-                <div className="rounded-lg border border-silk bg-snow p-4">
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <p className="font-mono text-xl font-bold text-midnight">
-                        {order.customer.totalOrders}
-                      </p>
-                      <p className="text-[11px] text-mist">{t("components.orderSlideOver.historyOrders")}</p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-xl font-bold text-mint-deep">
-                        {order.customer.successfulOrders}
-                      </p>
-                      <p className="text-[11px] text-mist">{t("components.orderSlideOver.historySuccess")}</p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-xl font-bold text-rose">
-                        {order.customer.failedOrders}
-                      </p>
-                      <p className="text-[11px] text-mist">{t("components.orderSlideOver.historyFailures")}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CustomerHistory customer={order.customer} t={t} />
             )}
 
-            {/* ── F. Override Buttons (orders:write only) ── */}
-            {can("orders:write") && <div className="mx-6 mt-4 mb-6">
-              {!overrideOpen ? (
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-mint text-mint-deep hover:bg-mint/10"
-                    onClick={() => {
-                      setOverrideDecision("ship");
-                      setOverrideOpen(true);
-                    }}
-                  >
-                    {t("components.orderSlideOver.forceShip")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-violet text-violet hover:bg-violet/10"
-                    onClick={() => {
-                      setOverrideDecision("block");
-                      setOverrideOpen(true);
-                    }}
-                  >
-                    {t("components.orderSlideOver.block")}
-                  </Button>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-silk bg-snow p-4 space-y-3">
-                  <p className="text-sm font-medium text-midnight">
-                    {t("components.orderSlideOver.overrideAction")}{" "}
-                    <DecisionBadge decision={overrideDecision} size="sm" />
-                  </p>
-                  <div>
-                    <label className="text-xs text-fog">
-                      {t("components.orderSlideOver.overrideReasonLabel")}
-                    </label>
-                    <textarea
-                      value={overrideReason}
-                      onChange={(e) => setOverrideReason(e.target.value)}
-                      placeholder={t("components.orderSlideOver.overrideReasonPlaceholder")}
-                      className="mt-1 w-full rounded-md border border-silk bg-white px-3 py-2 text-sm placeholder:text-mist focus:outline-none focus:ring-2 focus:ring-mint/30"
-                      rows={2}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      disabled={overrideSubmitting}
-                      onClick={handleOverride}
-                    >
-                      {overrideSubmitting && (
-                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      )}
-                      {t("common.confirm")}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setOverrideOpen(false);
-                        setOverrideReason("");
-                      }}
-                    >
-                      {t("common.cancel")}
-                    </Button>
-                  </div>
-                </div>
-              )}
-              <p className="text-[11px] text-mist mt-2">
-                {t("components.orderSlideOver.overrideAuditNote")}
-              </p>
-            </div>}
+            {/* ── G. Override Actions ── */}
+            {can("orders:write") && (
+              <OverrideSection
+                orderId={order.id}
+                onOverrideSuccess={onOverrideSuccess}
+                onRefetch={fetchOrder}
+                t={t}
+              />
+            )}
           </div>
         )}
       </SheetContent>
