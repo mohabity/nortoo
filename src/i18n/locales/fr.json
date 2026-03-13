@@ -1571,7 +1571,9 @@
       "whatsapp": "Contacter sur WhatsApp",
       "whatsappHint": "Réponse en moins de 2h",
       "newTicket": "Créer un ticket",
-      "ticketHint": "Suivi dans votre dashboard"
+      "ticketHint": "Suivi dans votre dashboard",
+      "faq": "Consulter la FAQ",
+      "faqHint": "Réponses aux questions fréquentes"
     },
     "form": {
       "subject": "Sujet",
@@ -1602,6 +1604,7 @@
       "billing": "Facturation",
       "other": "Autre"
     },
+    "faqBanner": "Consultez d'abord la FAQ — vous y trouverez peut-être votre réponse",
     "empty": "Aucun ticket",
     "close": "Fermer le ticket",
     "kpi": {
