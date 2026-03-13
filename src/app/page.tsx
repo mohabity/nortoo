@@ -58,7 +58,7 @@ export default function Home() {
       <nav className="border-b border-white/10 px-6 py-4 sticky top-0 bg-[#0B0F1A]/80 backdrop-blur-xl z-50">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
-            <img src="/nortoo-logo.png" alt="nortoo" className="h-7 w-auto" />
+            <img src="/nortoo-logo.png" alt="nortoo" className="h-7 w-auto brightness-0 invert" />
           </a>
           <div className="hidden md:flex items-center gap-6 text-sm text-white/50">
             <a href="#features" className="hover:text-white transition">{t("landing.nav.features")}</a>
@@ -424,7 +424,7 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <img src="/nortoo-logo.png" alt="nortoo" className="h-6 w-auto" />
+                <img src="/nortoo-logo.png" alt="nortoo" className="h-6 w-auto brightness-0 invert" />
               </div>
               <p className="text-xs text-white/40 leading-relaxed">
                 {t("landing.footer.description")}
