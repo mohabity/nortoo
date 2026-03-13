@@ -1520,6 +1520,12 @@
       "subtitle": "Commencez gratuitement et scorez vos premières commandes en quelques minutes",
       "button": "Commencer gratuitement",
       "trial": "Essai gratuit · Aucune carte requise"
+    },
+    "controls": {
+      "play": "Lecture",
+      "pause": "Pause",
+      "replay": "Rejouer",
+      "fullscreen": "Plein écran"
     }
   }
 }
