@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, X, ExternalLink, Ticket } from "lucide-react";
+import Link from "next/link";
+import { MessageCircle, X, ExternalLink, Ticket, HelpCircle } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -81,6 +82,25 @@ export function SupportBubble() {
           <div className="mt-6 space-y-4">
             {!showForm ? (
               <>
+                {/* FAQ option */}
+                <Link
+                  href="/dashboard/faq"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-4 p-4 rounded-sm border border-silk hover:bg-snow transition-colors"
+                >
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-violet-bg text-violet shrink-0">
+                    <HelpCircle className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-midnight">
+                      {t("support.bubble.faq")}
+                    </p>
+                    <p className="text-xs text-fog">
+                      {t("support.bubble.faqHint")}
+                    </p>
+                  </div>
+                </Link>
+
                 {/* WhatsApp option */}
                 <a
                   href={whatsappUrl}

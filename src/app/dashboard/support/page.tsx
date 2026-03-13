@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Headphones,
+  HelpCircle,
   Clock,
   CheckCircle2,
   Loader2,
@@ -126,6 +128,17 @@ export default function SupportPage() {
           {t("support.bubble.newTicket")}
         </Button>
       </div>
+
+      {/* FAQ banner */}
+      <Link
+        href="/dashboard/faq"
+        className="flex items-center gap-3 p-3 rounded-sm border border-silk bg-violet-bg/30 hover:bg-violet-bg/50 transition-colors"
+      >
+        <HelpCircle className="h-5 w-5 text-violet shrink-0" />
+        <p className="text-sm text-slate">
+          <span className="font-medium">{t("support.faqBanner")}</span>
+        </p>
+      </Link>
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-3">
