@@ -1520,6 +1520,12 @@
       "subtitle": "Start for free and score your first orders in minutes",
       "button": "Get started for free",
       "trial": "Free trial · No credit card required"
+    },
+    "controls": {
+      "play": "Play",
+      "pause": "Pause",
+      "replay": "Replay",
+      "fullscreen": "Fullscreen"
     }
   }
 }
