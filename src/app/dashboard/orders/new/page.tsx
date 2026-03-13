@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,6 +16,7 @@ import {
   XCircle,
   ShieldAlert,
   Plus,
+  Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,12 +35,53 @@ interface ScoringResult {
   reviewDeadline: string | null;
 }
 
+interface CustomerLookup {
+  found: boolean;
+  name?: string;
+  city?: string;
+  phoneLast4?: string;
+  totalOrders?: number;
+  successfulOrders?: number;
+  failedOrders?: number;
+  lastAddress?: string | null;
+}
+
+interface RecentPhone {
+  phone: string;
+  name: string;
+  city: string;
+  last4: string;
+  address?: string;
+}
+
 const DECISION_CONFIG = {
   ship: { icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" },
   verify: { icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
   flag: { icon: ShieldAlert, color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-200" },
   block: { icon: XCircle, color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-200" },
 } as const;
+
+const STORAGE_KEY = "nortoo_recent_phones";
+const MAX_RECENT = 10;
+
+function getRecentPhones(): RecentPhone[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentPhone(entry: RecentPhone) {
+  try {
+    const existing = getRecentPhones().filter((p) => p.last4 !== entry.last4);
+    const updated = [entry, ...existing].slice(0, MAX_RECENT);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // localStorage unavailable
+  }
+}
 
 export default function NewManualOrderPage() {
   const { t } = useTranslation();
@@ -57,7 +99,69 @@ export default function NewManualOrderPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScoringResult | null>(null);
 
+  // Customer lookup state
+  const [lookupResult, setLookupResult] = useState<CustomerLookup | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const lookupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Recent customers chips
+  const [recentPhones, setRecentPhones] = useState<RecentPhone[]>([]);
+  const [showRecent, setShowRecent] = useState(true);
+
+  // Load recent phones from localStorage on mount
+  useEffect(() => {
+    setRecentPhones(getRecentPhones());
+  }, []);
+
   const canSubmit = phone.trim().length >= 5 && parseFloat(total) > 0;
+
+  // Debounced customer lookup
+  const lookupCustomer = useCallback(async (phoneValue: string) => {
+    if (phoneValue.trim().length < 5) {
+      setLookupResult(null);
+      return;
+    }
+
+    setLookupLoading(true);
+    try {
+      const res = await fetch(`/api/customers/lookup?phone=${encodeURIComponent(phoneValue.trim())}`);
+      const data: CustomerLookup = await res.json();
+      setLookupResult(data);
+
+      // Auto-fill empty fields if customer found
+      if (data.found) {
+        setCustomerName((prev) => prev || data.name || "");
+        setCity((prev) => prev || data.city || "");
+        setAddress((prev) => prev || data.lastAddress || "");
+      }
+    } catch {
+      // Silent fail — don't block the form
+    } finally {
+      setLookupLoading(false);
+    }
+  }, []);
+
+  function handlePhoneChange(value: string) {
+    setPhone(value);
+    setLookupResult(null);
+    setShowRecent(!value);
+
+    if (lookupTimerRef.current) clearTimeout(lookupTimerRef.current);
+
+    if (value.trim().length >= 5) {
+      lookupTimerRef.current = setTimeout(() => lookupCustomer(value), 600);
+    }
+  }
+
+  function handleSelectRecent(recent: RecentPhone) {
+    setPhone(recent.phone);
+    setCustomerName(recent.name || "");
+    setCity(recent.city || "");
+    setAddress(recent.address || "");
+    setShowRecent(false);
+    // Trigger lookup for this phone
+    lookupCustomer(recent.phone);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,6 +193,16 @@ export default function NewManualOrderPage() {
       }
 
       setResult(data);
+
+      // Save to recent phones for chips
+      const digits = phone.trim().replace(/\D/g, "");
+      saveRecentPhone({
+        phone: phone.trim(),
+        name: customerName.trim(),
+        city: city.trim(),
+        last4: digits.slice(-4),
+        address: address.trim() || undefined,
+      });
     } catch {
       setError(t("manualOrder.networkError"));
     } finally {
@@ -106,6 +220,9 @@ export default function NewManualOrderPage() {
     setQuantity("");
     setResult(null);
     setError(null);
+    setLookupResult(null);
+    setShowRecent(true);
+    setRecentPhones(getRecentPhones());
   }
 
   // ── Result view ──
@@ -248,13 +365,57 @@ export default function NewManualOrderPage() {
               </label>
               <input
                 type="tel"
+                inputMode="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => handlePhoneChange(e.target.value)}
                 placeholder="0612345678"
                 className="w-full rounded-sm border border-silk bg-white px-3 py-2.5 text-sm text-midnight placeholder:text-mist focus:border-mint focus:outline-none focus:ring-2 focus:ring-mint/20"
                 required
                 autoFocus
               />
+
+              {/* Customer lookup badge */}
+              {lookupLoading && (
+                <div className="mt-1.5 flex items-center gap-1.5 text-xs text-fog">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {t("manualOrder.lookingUp")}
+                </div>
+              )}
+              {lookupResult?.found && !lookupLoading && (
+                <div className={`mt-1.5 flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1.5 ${
+                  (lookupResult.failedOrders ?? 0) > (lookupResult.successfulOrders ?? 0)
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-emerald-50 text-emerald-700"
+                }`}>
+                  <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+                  <span>
+                    {t("manualOrder.knownCustomer")} — {lookupResult.totalOrders} {t("manualOrder.orders")}, {lookupResult.successfulOrders} {t("manualOrder.delivered")}
+                  </span>
+                </div>
+              )}
+
+              {/* Recent customers chips */}
+              {showRecent && recentPhones.length > 0 && !phone && (
+                <div className="mt-2">
+                  <p className="text-xs text-fog mb-1.5 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {t("manualOrder.recentCustomers")}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {recentPhones.slice(0, 5).map((r) => (
+                      <button
+                        key={r.last4}
+                        type="button"
+                        onClick={() => handleSelectRecent(r)}
+                        className="inline-flex items-center gap-1 rounded-full border border-silk bg-snow px-3 py-1.5 text-xs text-slate hover:border-mint hover:bg-mint/5 transition-colors"
+                      >
+                        <span className="text-fog">••{r.last4}</span>
+                        {r.name && <span className="font-medium">{r.name}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Total */}
@@ -265,6 +426,7 @@ export default function NewManualOrderPage() {
               </label>
               <input
                 type="number"
+                inputMode="decimal"
                 value={total}
                 onChange={(e) => setTotal(e.target.value)}
                 placeholder="349"
@@ -361,6 +523,7 @@ export default function NewManualOrderPage() {
               </label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="1"
@@ -378,12 +541,12 @@ export default function NewManualOrderPage() {
           </div>
         )}
 
-        {/* Submit */}
+        {/* Submit — larger on mobile */}
         <Button
           type="submit"
           size="lg"
           disabled={!canSubmit || submitting}
-          className="w-full"
+          className="w-full py-3.5 text-base md:py-2.5 md:text-sm"
         >
           {submitting ? (
             <>

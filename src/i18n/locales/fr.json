@@ -1460,6 +1460,11 @@
     "addAnother": "Nouvelle commande",
     "viewOrder": "Voir la commande",
     "error": "Erreur lors du scoring",
-    "networkError": "Erreur réseau — vérifiez votre connexion"
+    "networkError": "Erreur réseau — vérifiez votre connexion",
+    "lookingUp": "Recherche du client...",
+    "knownCustomer": "Client connu",
+    "orders": "commandes",
+    "delivered": "livrées",
+    "recentCustomers": "Clients récents"
   }
 }
