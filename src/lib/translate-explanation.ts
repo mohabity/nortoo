@@ -101,3 +101,66 @@ export function translateExplanation(
 
   return { summary, factors: humanFactors, tip, emoji, confidenceLabel };
 }
+
+/**
+ * Lightweight translated summary for list views (order table / card).
+ * Works with just the score + stored scoreExplanation JSON (no raw factors needed).
+ * Uses `introKey` and `topRuleKeys` if present, otherwise falls back gracefully.
+ */
+export function getTranslatedSummary(
+  score: number,
+  scoreExplanationJson: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!scoreExplanationJson) return "\u2014";
+
+  let stored: { summary?: string; emoji?: string; introKey?: string; topRuleKeys?: string[] };
+  try {
+    stored = JSON.parse(scoreExplanationJson);
+  } catch {
+    return "\u2014";
+  }
+
+  // Determine intro key: use stored key if available, derive from score otherwise
+  let introKey: string;
+  let emoji: string;
+  if (stored.introKey) {
+    introKey = stored.introKey;
+    emoji = stored.emoji ?? "";
+  } else {
+    if (score <= 20) { introKey = "reliable"; emoji = "\uD83D\uDFE2"; }
+    else if (score <= 40) { introKey = "probablySafe"; emoji = "\uD83D\uDFE1"; }
+    else if (score <= 60) { introKey = "needsVerification"; emoji = "\uD83D\uDFE0"; }
+    else if (score <= 80) { introKey = "highRisk"; emoji = "\uD83D\uDD34"; }
+    else { introKey = "veryRisky"; emoji = "\u26D4"; }
+  }
+
+  const intro = t(`scoring.explanation.${introKey}`);
+
+  // Translate top rule keys if available (new orders)
+  if (stored.topRuleKeys && stored.topRuleKeys.length > 0) {
+    const reasons = stored.topRuleKeys
+      .map((key) => {
+        const translated = t(`scoring.rules.${key}`);
+        if (translated.startsWith("scoring.rules.")) return null;
+        return translated.toLowerCase();
+      })
+      .filter(Boolean)
+      .join(", ");
+
+    if (reasons) {
+      const full = `${emoji} ${intro} \u2014 ${reasons}`;
+      return full.length > 120 ? full.slice(0, 117) + "\u2026" : full;
+    }
+  }
+
+  // Fallback for old orders: translated intro + original reason text after " — "
+  const dashIdx = stored.summary?.indexOf(" \u2014 ");
+  if (dashIdx !== undefined && dashIdx >= 0 && stored.summary) {
+    const originalReasons = stored.summary.slice(dashIdx + 3);
+    const full = `${emoji} ${intro} \u2014 ${originalReasons}`;
+    return full.length > 120 ? full.slice(0, 117) + "\u2026" : full;
+  }
+
+  return `${emoji} ${intro}`;
+}

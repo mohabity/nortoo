@@ -8,6 +8,7 @@ import { PipelineBadge } from "./pipeline-badge";
 import { highlightText } from "@/lib/highlight";
 import { useTranslation } from "@/i18n/provider";
 import { formatCurrency } from "@/lib/i18n-utils";
+import { getTranslatedSummary } from "@/lib/translate-explanation";
 import { Countdown } from "@/components/ui/countdown";
 import type { OrderRow } from "@/types/orders";
 import {
@@ -298,15 +299,7 @@ export function OrderTable({
                 </TableCell>
                 <TableCell className="overflow-hidden">
                   <p className="text-xs text-fog truncate">
-                    {order.scoreExplanation
-                      ? (() => {
-                          try {
-                            return JSON.parse(order.scoreExplanation).summary;
-                          } catch {
-                            return "\u2014";
-                          }
-                        })()
-                      : "\u2014"}
+                    {getTranslatedSummary(order.fraudScore, order.scoreExplanation, t)}
                   </p>
                 </TableCell>
                 <TableCell>
