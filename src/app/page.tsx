@@ -64,10 +64,6 @@ export default function Home() {
             <a href="#features" className="hover:text-[#0B0F1A] transition">{t("landing.nav.features")}</a>
             <a href="#pricing" className="hover:text-[#0B0F1A] transition">{t("landing.nav.pricing")}</a>
             <a href="#faq" className="hover:text-[#0B0F1A] transition">{t("landing.nav.faq")}</a>
-            <span className="w-px h-4 bg-[#E2E8F0]" />
-            <a href="/privacy" className="hover:text-[#0B0F1A] transition">{t("landing.footer.privacy")}</a>
-            <a href="/terms" className="hover:text-[#0B0F1A] transition">{t("landing.footer.terms")}</a>
-            <a href="/data-rights" className="hover:text-[#0B0F1A] transition">{t("landing.footer.dataRights")}</a>
             <LanguageSwitcher />
             <a href={`${APP_URL}/login?lang=${locale}`} className="hover:text-[#0B0F1A] transition">{t("landing.nav.signIn")}</a>
             <a
@@ -118,17 +114,6 @@ export default function Home() {
             <a href="#faq" className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition" onClick={() => setMobileMenuOpen(false)}>
               {t("landing.nav.faq")}
             </a>
-            <div className="pt-2 border-t border-[#E2E8F0]">
-              <a href="/privacy" className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition" onClick={() => setMobileMenuOpen(false)}>
-                {t("landing.footer.privacy")}
-              </a>
-              <a href="/terms" className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition" onClick={() => setMobileMenuOpen(false)}>
-                {t("landing.footer.terms")}
-              </a>
-              <a href="/data-rights" className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition" onClick={() => setMobileMenuOpen(false)}>
-                {t("landing.footer.dataRights")}
-              </a>
-            </div>
             <div className="pt-2 border-t border-[#E2E8F0]">
               <a href={`${APP_URL}/login?lang=${locale}`} className="block py-2.5 text-sm text-[#64748B] hover:text-[#0B0F1A] transition" onClick={() => setMobileMenuOpen(false)}>
                 {t("landing.nav.signIn")}
