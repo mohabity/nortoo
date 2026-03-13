@@ -1527,5 +1527,22 @@
       "replay": "Rejouer",
       "fullscreen": "Plein écran"
     }
+  },
+  "tooltips": {
+    "helpLabel": "Aide",
+    "learnMore": "En savoir plus \u2192",
+    "kpi.savings": "Estimation des commandes frauduleuses bloquées, basée sur le montant moyen des retours.",
+    "kpi.avgScore": "Score moyen de risque sur vos commandes récentes. Plus bas = meilleur.",
+    "kpi.deliveryRate": "Pourcentage de commandes expédiées et livrées avec succès.",
+    "kpi.blocked": "Nombre de commandes bloquées automatiquement par le scoring.",
+    "score.explanation": "Score de risque 0-100. Plus le score est élevé, plus la probabilité de fraude est forte.",
+    "score.decisionHeader": "EXPÉDIER (0-30) · VÉRIFIER (31-65) · SIGNALER (66-85) · BLOQUER (86-100). Seuils configurables dans Paramètres.",
+    "threshold.verify": "Score à partir duquel les commandes passent en vérification manuelle.",
+    "threshold.flag": "Score à partir duquel les commandes sont signalées comme suspectes.",
+    "threshold.block": "Score à partir duquel les commandes sont automatiquement bloquées.",
+    "analytics.savings": "Total économisé en bloquant les commandes à haut risque sur la période.",
+    "analytics.rtoRate": "Taux de retour actuel comparé à la période précédente.",
+    "analytics.deliveryRate": "Taux de livraison réussie pour les commandes expédiées.",
+    "analytics.roi": "Retour sur investissement : économies réalisées divisées par le coût de l'abonnement."
   }
 }

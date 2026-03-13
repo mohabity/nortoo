@@ -10,6 +10,7 @@ import { useTranslation } from "@/i18n/provider";
 import { formatCurrency } from "@/lib/i18n-utils";
 import { getTranslatedSummary } from "@/lib/translate-explanation";
 import { Countdown } from "@/components/ui/countdown";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import type { OrderRow } from "@/types/orders";
 import {
   Table,
@@ -214,7 +215,10 @@ export function OrderTable({
             </TableHead>
           )}
           <TableHead className="text-center relative" style={headStyle("score")}>
-            {t("orders.table.score")}
+            <span className="inline-flex items-center gap-1 justify-center">
+              {t("orders.table.score")}
+              <HelpTooltip textKey="tooltips.score.explanation" guideSection="scoring" side="bottom" />
+            </span>
             <ResizeHandle onResize={(d) => handleColResize("score", d)} onReset={() => handleColReset("score")} />
           </TableHead>
           <TableHead className="relative" style={headStyle("analysis")}>
@@ -238,7 +242,10 @@ export function OrderTable({
             <ResizeHandle onResize={(d) => handleColResize("amount", d)} onReset={() => handleColReset("amount")} />
           </TableHead>
           <TableHead className="text-center relative" style={headStyle("decision")}>
-            {t("orders.table.decision")}
+            <span className="inline-flex items-center gap-1 justify-center">
+              {t("orders.table.decision")}
+              <HelpTooltip textKey="tooltips.score.decisionHeader" guideSection="decisions" side="bottom" />
+            </span>
             <ResizeHandle onResize={(d) => handleColResize("decision", d)} onReset={() => handleColReset("decision")} />
           </TableHead>
           <TableHead className="text-center relative" style={headStyle("pipeline")}>

@@ -320,6 +320,8 @@ function KpiGrid({
           changeType={savings ? (savings.deltaPercent >= 0 ? "positive" : "negative") : "neutral"}
           icon={Coins}
           iconColor="text-amber"
+          tooltipKey="tooltips.kpi.savings"
+          guideSection="scoring"
         />
       </div>
       <div className="min-w-[240px] snap-start lg:min-w-0">
@@ -330,6 +332,8 @@ function KpiGrid({
           changeType={stats?.changeScore !== undefined ? (stats.changeScore <= 0 ? "positive" : "negative") : "neutral"}
           icon={TrendingUp}
           iconColor="text-mint"
+          tooltipKey="tooltips.kpi.avgScore"
+          guideSection="scoring"
         />
       </div>
       <div className="min-w-[240px] snap-start lg:min-w-0">
@@ -340,6 +344,8 @@ function KpiGrid({
           changeType={stats?.changeDelivery !== undefined ? (stats.changeDelivery >= 0 ? "positive" : "negative") : "neutral"}
           icon={Truck}
           iconColor="text-mint"
+          tooltipKey="tooltips.kpi.deliveryRate"
+          guideSection="bienvenue"
         />
       </div>
       <div className="min-w-[240px] snap-start lg:min-w-0">
@@ -350,6 +356,8 @@ function KpiGrid({
           changeType="neutral"
           icon={ShieldAlert}
           iconColor="text-violet"
+          tooltipKey="tooltips.kpi.blocked"
+          guideSection="scoring"
         />
       </div>
     </div>

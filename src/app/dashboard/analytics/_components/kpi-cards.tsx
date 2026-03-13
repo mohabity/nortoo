@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/i18n/provider";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { formatCurrency, formatNumber } from "@/lib/i18n-utils";
 import type { SavingsApiData } from "@/types/analytics";
 
@@ -43,7 +44,10 @@ export function KpiCards({
       {/* Economies estimees */}
       <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-fog">{t("analytics.kpi.savings")}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-fog">{t("analytics.kpi.savings")}</p>
+            <HelpTooltip textKey="tooltips.analytics.savings" guideSection="analytique" />
+          </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-amber-bg">
             <Coins className="h-4.5 w-4.5 text-amber" />
           </div>
@@ -62,7 +66,10 @@ export function KpiCards({
       {/* Taux RTO actuel */}
       <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-fog">{t("analytics.kpi.rtoRate")}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-fog">{t("analytics.kpi.rtoRate")}</p>
+            <HelpTooltip textKey="tooltips.analytics.rtoRate" guideSection="analytique" />
+          </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-rose-bg">
             <TrendingDown className="h-4.5 w-4.5 text-rose" />
           </div>
@@ -88,7 +95,10 @@ export function KpiCards({
       {/* Taux de livraison */}
       <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-fog">{t("analytics.kpi.deliveryRate")}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-fog">{t("analytics.kpi.deliveryRate")}</p>
+            <HelpTooltip textKey="tooltips.analytics.deliveryRate" guideSection="analytique" />
+          </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-mint-bg">
             <Truck className="h-4.5 w-4.5 text-mint-deep" />
           </div>
@@ -114,7 +124,10 @@ export function KpiCards({
       {/* ROI nortoo */}
       <div className="min-w-[240px] snap-start lg:min-w-0 rounded-[18px] border border-silk bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,.06)]">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-fog">{t("analytics.kpi.roi")}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-fog">{t("analytics.kpi.roi")}</p>
+            <HelpTooltip textKey="tooltips.analytics.roi" guideSection="analytique" />
+          </div>
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-violet-bg">
             <Flame className="h-4.5 w-4.5 text-violet" />
           </div>
