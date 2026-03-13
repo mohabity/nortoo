@@ -1466,5 +1466,60 @@
     "orders": "commandes",
     "delivered": "livrées",
     "recentCustomers": "Clients récents"
+  },
+  "pres": {
+    "tagline": "Scoring anti-fraude COD · Maroc",
+    "problem": {
+      "title": "des commandes COD échouent au Maroc",
+      "subtitle": "Pertes financières, logistique gaspillée, clients fantômes",
+      "returns": "Colis retournés",
+      "losses": "Pertes financières",
+      "margin": "Marges réduites"
+    },
+    "solution": {
+      "title": "nortoo score chaque commande de 0 à 100"
+    },
+    "flow": {
+      "order": "Commande",
+      "webhook": "Webhook",
+      "scoring": "Scoring",
+      "decision": "Décision"
+    },
+    "howItWorks": {
+      "title": "Comment ça marche",
+      "subtitle": "Intégration en un clic — chaque commande est analysée en temps réel avant expédition"
+    },
+    "scoring": {
+      "title": "24 règles, 38 vérifications",
+      "subtitle": "Un moteur de scoring complet qui analyse chaque aspect de la commande"
+    },
+    "rules": {
+      "reliable": "Client fiable",
+      "repeat": "Récidiviste",
+      "new": "Nouveau client",
+      "extreme": "Montant extrême",
+      "zone": "Zone à risque",
+      "phone": "Téléphone suspect",
+      "night": "Commande nocturne",
+      "address": "Adresse incomplète"
+    },
+    "dashboard": {
+      "title": "Tableau de bord temps réel",
+      "orders": "Commandes",
+      "shipped": "Expédiées",
+      "blocked": "Bloquées",
+      "rtoRate": "Taux RTO"
+    },
+    "stats": {
+      "rtoReduction": "de RTO en moins",
+      "rules": "règles de scoring",
+      "realtime": "scoring temps réel"
+    },
+    "cta": {
+      "title": "Prêt à réduire vos RTO ?",
+      "subtitle": "Commencez gratuitement et scorez vos premières commandes en quelques minutes",
+      "button": "Commencer gratuitement",
+      "trial": "Essai gratuit · Aucune carte requise"
+    }
   }
 }

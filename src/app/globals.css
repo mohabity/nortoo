@@ -157,6 +157,12 @@
     background-size: 60px 60px;
   }
 
+  /* ═══ Presentation page animations ═══ */
+
+  .pres-draw-stroke path {
+    transition: stroke-dashoffset 1.5s ease-out 0.3s;
+  }
+
   .grid-pattern-light {
     background-image:
       linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
