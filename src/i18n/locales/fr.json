@@ -53,7 +53,8 @@
     "compliance": "Conformité",
     "home": "Accueil",
     "more": "Plus",
-    "guide": "Guide"
+    "guide": "Guide",
+    "faq": "FAQ"
   },
   "header": {
     "searchPlaceholder": "Rechercher une commande..."
@@ -1544,5 +1545,21 @@
     "analytics.rtoRate": "Taux de retour actuel comparé à la période précédente.",
     "analytics.deliveryRate": "Taux de livraison réussie pour les commandes expédiées.",
     "analytics.roi": "Retour sur investissement : économies réalisées divisées par le coût de l'abonnement."
+  },
+  "faq": {
+    "title": "Questions fréquentes",
+    "subtitle": "Trouvez rapidement une réponse à vos questions",
+    "searchPlaceholder": "Rechercher une question...",
+    "noResults": "Aucun résultat pour cette recherche",
+    "allCategories": "Tout",
+    "showDarija": "Darija",
+    "goToPage": "Voir la page →",
+    "categories": {
+      "scoring": "Scoring",
+      "orders": "Commandes",
+      "integration": "Intégration",
+      "account": "Compte",
+      "data": "Données"
+    }
   }
 }

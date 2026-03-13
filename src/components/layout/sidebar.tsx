@@ -10,6 +10,7 @@ import {
   Settings,
   Shield,
   BookOpen,
+  HelpCircle,
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/dashboard/settings", labelKey: "nav.settings", icon: Settings },
   { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
   { href: "/dashboard/guide", labelKey: "nav.guide", icon: BookOpen },
+  { href: "/dashboard/faq", labelKey: "nav.faq", icon: HelpCircle },
 ];
 
 export function Sidebar() {
