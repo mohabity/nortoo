@@ -11,6 +11,7 @@ import { ReportBanner } from "@/components/dashboard/report-banner";
 import { PlanBanner } from "@/components/plan-banner";
 import { BillingProvider } from "@/components/billing-context";
 import { ToastProvider } from "@/components/ui/toast";
+import { SupportBubble } from "@/components/layout/support-bubble";
 
 export default function DashboardLayout({
   children,
@@ -40,6 +41,7 @@ export default function DashboardLayout({
             </Suspense>
             <ToastProvider>
               <main className="px-4 py-4 pb-24 lg:p-6 lg:pb-6">{children}</main>
+              <SupportBubble />
             </ToastProvider>
           </div>
           <BottomNav />
