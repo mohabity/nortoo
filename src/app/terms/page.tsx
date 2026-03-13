@@ -8,18 +8,18 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#0B0F1A] text-[#E2E8F0]">
+    <div className="min-h-screen bg-white text-[#1E293B]">
       {/* Header */}
-      <header className="border-b border-[#1E293B] px-6 py-4">
+      <header className="border-b border-[#E2E8F0] px-6 py-4 sticky top-0 bg-white/80 backdrop-blur-xl z-50">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-white">
-            nortoo<span className="text-[#00E5A0]">.</span>
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/nortoo-logo.png" alt="nortoo" className="h-6 w-auto" />
           </Link>
-          <nav className="flex gap-4 text-sm text-[#94A3B8]">
-            <Link href="/privacy" className="hover:text-white transition">
+          <nav className="flex gap-4 text-sm text-[#64748B]">
+            <Link href="/privacy" className="hover:text-[#0B0F1A] transition">
               Confidentialité
             </Link>
-            <Link href="/data-rights" className="hover:text-white transition">
+            <Link href="/data-rights" className="hover:text-[#0B0F1A] transition">
               Mes données
             </Link>
           </nav>
@@ -27,16 +27,16 @@ export default function TermsPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="text-3xl font-bold text-white mb-2">
+        <h1 className="text-3xl font-bold text-[#0B0F1A] mb-2">
           Conditions Générales d&apos;Utilisation
         </h1>
-        <p className="text-sm text-[#64748B] mb-10">
+        <p className="text-sm text-[#94A3B8] mb-10">
           Dernière mise à jour : mars 2026
         </p>
 
-        <div className="space-y-8 text-[#CBD5E1] leading-relaxed text-[0.95rem]">
+        <div className="space-y-8 text-[#475569] leading-relaxed text-[0.95rem]">
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">1. Objet</h2>
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">1. Objet</h2>
             <p>
               Les présentes Conditions Générales d&apos;Utilisation (CGU)
               régissent l&apos;accès et l&apos;utilisation de la plateforme
@@ -47,7 +47,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               2. Éditeur du Service
             </h2>
             <p>
@@ -57,7 +57,7 @@ export default function TermsPage() {
               Contact :{" "}
               <a
                 href="mailto:hello@nortoo.ma"
-                className="text-[#00E5A0] hover:underline"
+                className="text-[#059669] hover:underline"
               >
                 hello@nortoo.ma
               </a>
@@ -65,7 +65,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               3. Acceptation des CGU
             </h2>
             <p>
@@ -78,26 +78,26 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               4. Description du Service
             </h2>
             <p>nortoo fournit :</p>
             <ul className="mt-2 space-y-1 ml-4">
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Un scoring automatique de chaque commande COD (score 0-100)
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Des recommandations de décision (expédier, vérifier, signaler,
                 bloquer)
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Un dashboard de suivi avec statistiques anti-fraude
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 La possibilité d&apos;ajuster les seuils de scoring
               </li>
             </ul>
-            <p className="mt-3 text-sm text-[#64748B]">
+            <p className="mt-3 text-sm text-[#94A3B8]">
               Le score est une aide à la décision. nortoo ne garantit pas la
               détection de 100% des fraudes et n&apos;est pas responsable des
               décisions prises par le marchand.
@@ -105,26 +105,26 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               5. Obligations du marchand
             </h2>
             <p>Le marchand s&apos;engage à :</p>
             <ul className="mt-2 space-y-1 ml-4">
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Fournir des informations exactes lors de l&apos;inscription
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Ne pas contourner les mécanismes de sécurité du Service
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Respecter la Loi 09-08 relative à la protection des données
                 personnelles de ses propres clients
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Informer ses clients que leurs données sont traitées par un
                 sous-traitant (nortoo) à des fins de vérification anti-fraude
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Notifier nortoo dans les meilleurs délais de toute faille de
                 sécurité dont il a connaissance
               </li>
@@ -132,27 +132,27 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               6. Obligations de nortoo
             </h2>
             <p>nortoo s&apos;engage à :</p>
             <ul className="mt-2 space-y-1 ml-4">
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Traiter les données uniquement pour les finalités définies
                 (scoring anti-fraude)
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Ne pas vendre, louer ou transférer les données à des tiers
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Mettre en œuvre des mesures de sécurité conformes à l&apos;état
                 de l&apos;art
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Notifier le marchand en cas de violation de données dans un
                 délai de 72 heures
               </li>
-              <li className="before:content-['→'] before:mr-2 before:text-[#00E5A0]">
+              <li className="before:content-['→'] before:mr-2 before:text-[#059669]">
                 Respecter la durée de conservation définie dans la politique de
                 confidentialité
               </li>
@@ -160,7 +160,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               7. Secret professionnel (Art. 26, Loi 09-08)
             </h2>
             <p>
@@ -172,7 +172,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               8. Plans et tarification
             </h2>
             <p>
@@ -183,7 +183,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               9. Limitation de responsabilité
             </h2>
             <p>
@@ -201,7 +201,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               10. Résiliation
             </h2>
             <p>
@@ -209,7 +209,7 @@ export default function TermsPage() {
               dashboard ou en contactant{" "}
               <a
                 href="mailto:hello@nortoo.ma"
-                className="text-[#00E5A0] hover:underline"
+                className="text-[#059669] hover:underline"
               >
                 hello@nortoo.ma
               </a>
@@ -219,18 +219,18 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-[#0B0F1A] mb-3">
               11. Droit applicable
             </h2>
             <p>
               Les présentes CGU sont régies par le{" "}
-              <strong className="text-white">droit marocain</strong>. Tout
+              <strong className="text-[#0B0F1A]">droit marocain</strong>. Tout
               litige sera soumis à la juridiction compétente de Casablanca,
               Maroc.
             </p>
             <p className="mt-2">
               En matière de protection des données personnelles, la{" "}
-              <strong className="text-white">Loi n° 09-08</strong>{" "}
+              <strong className="text-[#0B0F1A]">Loi n° 09-08</strong>{" "}
               s&apos;applique.
             </p>
           </section>
@@ -238,17 +238,17 @@ export default function TermsPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#1E293B] px-6 py-6 mt-12">
-        <div className="max-w-3xl mx-auto flex justify-between text-sm text-[#64748B]">
+      <footer className="border-t border-[#E2E8F0] px-6 py-6 mt-12">
+        <div className="max-w-3xl mx-auto flex justify-between text-sm text-[#94A3B8]">
           <span>© {new Date().getFullYear()} nortoo</span>
           <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-white transition">
+            <Link href="/privacy" className="hover:text-[#0B0F1A] transition">
               Confidentialité
             </Link>
-            <Link href="/terms" className="text-[#00E5A0]">
+            <Link href="/terms" className="text-[#059669] font-medium">
               CGU
             </Link>
-            <Link href="/data-rights" className="hover:text-white transition">
+            <Link href="/data-rights" className="hover:text-[#0B0F1A] transition">
               Mes données
             </Link>
           </div>
