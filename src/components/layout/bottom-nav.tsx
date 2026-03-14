@@ -11,6 +11,7 @@ import {
   Shield,
   BookOpen,
   HelpCircle,
+  Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -28,6 +29,7 @@ const moreItems = [
   { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
   { href: "/dashboard/guide", labelKey: "nav.guide", icon: BookOpen },
   { href: "/dashboard/faq", labelKey: "nav.faq", icon: HelpCircle },
+  { href: "/dashboard/support", labelKey: "nav.support", icon: Headphones },
 ];
 
 export function BottomNav() {
