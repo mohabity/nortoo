@@ -70,6 +70,7 @@ export function AdminHeader() {
                 { href: "/nrt-panel/merchants", label: "Merchants" },
                 { href: "/nrt-panel/invoices", label: "Factures" },
                 { href: "/nrt-panel/coupons", label: "Coupons" },
+                { href: "/nrt-panel/tickets", label: "Tickets" },
                 { href: "/nrt-panel/audit-logs", label: "Audit Logs" },
                 { href: "/nrt-panel/admins", label: "Admins" },
               ].map(({ href, label }) => (
