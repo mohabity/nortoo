@@ -12,9 +12,11 @@ import {
   BookOpen,
   HelpCircle,
   Headphones,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useTranslation } from "@/i18n/provider";
 
@@ -84,6 +86,18 @@ export function BottomNav() {
               </Link>
             );
           })}
+          <div className="border-t border-silk">
+            <button
+              onClick={() => {
+                setMoreOpen(false);
+                signOut({ callbackUrl: "/login" });
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              {t("common.logout")}
+            </button>
+          </div>
         </div>
       )}
 
