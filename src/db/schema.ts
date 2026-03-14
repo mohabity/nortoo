@@ -958,6 +958,26 @@ export const supportTickets = pgTable(
   ]
 );
 
+// ═══════════════════════════════════════════════════════════
+// TICKET REPLIES — Réponses / thread sur les tickets support
+// ═══════════════════════════════════════════════════════════
+export const ticketReplies = pgTable(
+  "ticket_replies",
+  {
+    id: serial("id").primaryKey(),
+    ticketId: integer("ticket_id")
+      .notNull()
+      .references(() => supportTickets.id, { onDelete: "cascade" }),
+    senderType: text("sender_type").notNull(), // "admin" | "merchant"
+    senderName: text("sender_name").notNull(),
+    message: text("message").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("ticket_replies_ticket_idx").on(table.ticketId),
+  ]
+);
+
 export const adminUsersRelations = relations(adminUsers, ({ many }) => ({
   mfaCodes: many(adminMfaCodes),
 }));

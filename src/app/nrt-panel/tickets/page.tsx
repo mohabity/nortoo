@@ -10,6 +10,7 @@ import {
   Clock,
   AlertCircle,
   Search,
+  Send,
 } from "lucide-react";
 import { formatDH } from "@/lib/utils";
 
@@ -25,6 +26,15 @@ interface AdminTicket {
   merchantId: number;
   merchantName: string | null;
   merchantEmail: string | null;
+}
+
+interface TicketReply {
+  id: number;
+  ticketId: number;
+  senderType: "admin" | "merchant";
+  senderName: string;
+  message: string;
+  createdAt: string;
 }
 
 interface Meta {
@@ -60,6 +70,12 @@ export default function AdminTicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<AdminTicket | null>(null);
   const [updating, setUpdating] = useState(false);
 
+  // Reply state
+  const [replies, setReplies] = useState<TicketReply[]>([]);
+  const [replyText, setReplyText] = useState("");
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [sendingReply, setSendingReply] = useState(false);
+
   const fetchTickets = useCallback(
     async (page = 1) => {
       setLoading(true);
@@ -86,6 +102,43 @@ export default function AdminTicketsPage() {
   useEffect(() => {
     fetchTickets(1);
   }, [fetchTickets]);
+
+  // Fetch replies when a ticket is selected
+  useEffect(() => {
+    if (!selectedTicket) {
+      setReplies([]);
+      setReplyText("");
+      return;
+    }
+    const fetchReplies = async () => {
+      setLoadingReplies(true);
+      const res = await fetch(`/api/nrt-panel/tickets/${selectedTicket.id}/replies`);
+      if (res.ok) {
+        const json = await res.json();
+        setReplies(json.data ?? []);
+      }
+      setLoadingReplies(false);
+    };
+    fetchReplies();
+  }, [selectedTicket?.id]);
+
+  const sendReply = async () => {
+    if (!selectedTicket || !replyText.trim()) return;
+    setSendingReply(true);
+    const res = await fetch(`/api/nrt-panel/tickets/${selectedTicket.id}/replies`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: replyText.trim() }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      setReplies((prev) => [...prev, json.data]);
+      setReplyText("");
+      // Refresh ticket list to pick up status change
+      await fetchTickets(meta.page);
+    }
+    setSendingReply(false);
+  };
 
   const updateStatus = async (id: number, status: string) => {
     setUpdating(true);
@@ -279,7 +332,7 @@ export default function AdminTicketsPage() {
           onClick={() => setSelectedTicket(null)}
         >
           <div
-            className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto"
+            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6 space-y-4">
@@ -336,8 +389,80 @@ export default function AdminTicketsPage() {
                 </p>
               </div>
 
+              {/* Replies thread */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Conversation
+                </h3>
+                {loadingReplies ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  </div>
+                ) : replies.length === 0 ? (
+                  <p className="text-xs text-gray-400 py-2">
+                    Aucune réponse pour le moment
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-[30vh] overflow-y-auto">
+                    {replies.map((r) => (
+                      <div
+                        key={r.id}
+                        className={`p-3 rounded-md text-sm ${
+                          r.senderType === "admin"
+                            ? "bg-emerald-50 border-l-2 border-emerald-400 ml-6"
+                            : "bg-gray-50 border-l-2 border-gray-300 mr-6"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-gray-700">
+                            {r.senderName}
+                            <span className="ml-1 text-gray-400 font-normal">
+                              ({r.senderType === "admin" ? "Admin" : "Marchand"})
+                            </span>
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {formatDate(r.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 whitespace-pre-wrap">
+                          {r.message}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Reply form */}
+                <div className="flex gap-2">
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Écrire une réponse..."
+                    rows={2}
+                    className="flex-1 px-3 py-2 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        sendReply();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={sendReply}
+                    disabled={sendingReply || !replyText.trim()}
+                    className="self-end px-3 py-2 rounded-md bg-mint text-white text-sm font-medium hover:bg-mint/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  >
+                    {sendingReply ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Répondre
+                  </button>
+                </div>
+              </div>
+
               {/* Status actions */}
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap border-t border-gray-100 pt-4">
                 {selectedTicket.status !== "in_progress" && (
                   <button
                     onClick={() =>
