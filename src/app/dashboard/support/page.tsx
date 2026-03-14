@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Headphones,
@@ -10,6 +10,7 @@ import {
   Loader2,
   Plus,
   X,
+  Send,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,15 @@ import { useTranslation } from "@/i18n/provider";
 import { useToast } from "@/components/ui/toast";
 import { useTickets, type SupportTicket } from "@/hooks/use-tickets";
 import { TicketForm } from "./_components/ticket-form";
+
+interface TicketReply {
+  id: number;
+  ticketId: number;
+  senderType: "admin" | "merchant";
+  senderName: string;
+  message: string;
+  createdAt: string;
+}
 
 const statusFilters = ["all", "open", "in_progress", "resolved", "closed"] as const;
 
@@ -66,6 +76,55 @@ export default function SupportPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [closing, setClosing] = useState(false);
+
+  // Reply state
+  const [replies, setReplies] = useState<TicketReply[]>([]);
+  const [replyText, setReplyText] = useState("");
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [sendingReply, setSendingReply] = useState(false);
+
+  // Fetch replies when a ticket is selected
+  useEffect(() => {
+    if (!selectedTicket) {
+      setReplies([]);
+      setReplyText("");
+      return;
+    }
+    const fetchReplies = async () => {
+      setLoadingReplies(true);
+      const res = await fetch(`/api/support/tickets/${selectedTicket.id}/replies`);
+      if (res.ok) {
+        const json = await res.json();
+        setReplies(json.data ?? []);
+      }
+      setLoadingReplies(false);
+    };
+    fetchReplies();
+  }, [selectedTicket?.id]);
+
+  const sendReply = async () => {
+    if (!selectedTicket || !replyText.trim()) return;
+    setSendingReply(true);
+    try {
+      const res = await fetch(`/api/support/tickets/${selectedTicket.id}/replies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: replyText.trim() }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setReplies((prev) => [...prev, json.data]);
+        setReplyText("");
+      } else {
+        const json = await res.json().catch(() => ({}));
+        addToast({ type: "error", message: json.error ?? t("common.error") });
+      }
+    } catch {
+      addToast({ type: "error", message: t("common.error") });
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
   const handleCreate = async (data: {
     subject: string;
@@ -109,6 +168,16 @@ export default function SupportPage() {
       month: "short",
       year: "numeric",
     });
+
+  const formatDateTime = (d: string) =>
+    new Date(d).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const canReply = selectedTicket && (selectedTicket.status === "open" || selectedTicket.status === "in_progress");
 
   return (
     <div className="space-y-6">
@@ -296,6 +365,80 @@ export default function SupportPage() {
                   <p className="text-sm text-slate whitespace-pre-wrap">
                     {selectedTicket.description}
                   </p>
+                </div>
+
+                {/* Replies thread */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-midnight">
+                    Conversation
+                  </h3>
+                  {loadingReplies ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin text-mist" />
+                    </div>
+                  ) : replies.length === 0 ? (
+                    <p className="text-xs text-fog py-2">
+                      Aucune réponse pour le moment
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-[35vh] overflow-y-auto">
+                      {replies.map((r) => (
+                        <div
+                          key={r.id}
+                          className={`p-3 rounded-sm text-sm ${
+                            r.senderType === "admin"
+                              ? "bg-mint/5 border-l-2 border-mint mr-4"
+                              : "bg-snow border-l-2 border-silk ml-4"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-midnight">
+                              {r.senderName}
+                              <span className="ml-1 text-fog font-normal">
+                                ({r.senderType === "admin" ? "Support" : "Vous"})
+                              </span>
+                            </span>
+                            <span className="text-xs text-fog">
+                              {formatDateTime(r.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-slate whitespace-pre-wrap">
+                            {r.message}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Reply form */}
+                  {canReply && (
+                    <div className="flex gap-2">
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Écrire une réponse..."
+                        rows={2}
+                        className="flex-1 px-3 py-2 rounded-sm border border-silk text-sm text-slate focus:outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint resize-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                            sendReply();
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={sendReply}
+                        disabled={sendingReply || !replyText.trim()}
+                        size="sm"
+                        className="self-end"
+                      >
+                        {sendingReply ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {selectedTicket.resolvedAt && (
