@@ -151,8 +151,8 @@ export async function POST(request: Request) {
     response.cookies.set(ADMIN_COOKIE_NAME, createAdminToken(admin.id, secret), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24, // 24 hours
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
       path: "/",
     });
 

@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual, randomBytes } from "crypto";
 import { apiLimiter, safeLimit, getClientIp } from "@/lib/rate-limit";
 import { MS_DAY } from "@/lib/constants";
 
-const ADMIN_TOKEN_MAX_AGE_MS = MS_DAY; // 24 hours
+const ADMIN_TOKEN_MAX_AGE_MS = MS_DAY * 7; // 7 days
 
 // ═══════════════════════════════════════════════════════════
 // Admin Authentication — Individual accounts + email MFA
