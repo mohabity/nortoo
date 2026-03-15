@@ -1160,7 +1160,7 @@
       "getStarted": "Get started"
     },
     "hero": {
-      "badge": "Law 09-08 compliant · EU-hosted data",
+      "badge": "EU-hosted data · Anti-fraud scoring",
       "titleLine1": "Stop COD fraud,",
       "titleLine2": "ship with confidence.",
       "subtitle": "30-50% of COD orders fail in Morocco. nortoo scores each order from 0 to 100 and tells you which ones to ship — whether you sell on YouCan, WhatsApp, Instagram or elsewhere.",
@@ -1195,8 +1195,6 @@
       "integrationDesc": "Automatic webhook with YouCan, or add your orders manually. Works for all COD merchants.",
       "embeddedSignup": "Multi-platform",
       "embeddedSignupDesc": "YouCan, WhatsApp, Instagram, marketplaces — nortoo adapts to your sales channel.",
-      "compliance": "Law 09-08 compliant",
-      "complianceDesc": "SHA-256 hashed phones, audit log, access/deletion rights, CNDP.",
       "reports": "Reports & exports",
       "reportsDesc": "Weekly email report, CSV export, monthly PDF report."
     },
@@ -1228,12 +1226,10 @@
       "a1": "Each COD order is analyzed by 24+ rules: customer history, amount, city, address, time of day, and more. The result is a score from 0 (safe) to 100 (suspicious). You set the decision thresholds.",
       "q2": "Does nortoo work without YouCan?",
       "a2": "Yes. If you use YouCan, integration is automatic via webhook. Otherwise, you can add your orders manually from the dashboard — ideal for WhatsApp, Instagram or any other channel.",
-      "q3": "Is my data protected?",
-      "a3": "Absolutely. nortoo is compliant with Law 09-08. Phone numbers are SHA-256 hashed, data is hosted in the EU (Frankfurt), and a full audit log tracks every action.",
-      "q4": "Can I customize the thresholds?",
-      "a4": "Yes. From the dashboard, you can adjust SHIP/VERIFY/FLAG/BLOCK thresholds, activate sector presets, and even customize each rule's weight (Pro+ plan).",
-      "q5": "How is the service billed?",
-      "a5": "By monthly bank transfer. An invoice is automatically generated with 20% VAT. The 30-day trial is completely free, no credit card required."
+      "q3": "Can I customize the thresholds?",
+      "a3": "Yes. From the dashboard, you can adjust SHIP/VERIFY/FLAG/BLOCK thresholds, activate sector presets, and even customize each rule's weight (Pro+ plan).",
+      "q4": "How is the service billed?",
+      "a4": "By monthly bank transfer. An invoice is automatically generated with 20% VAT. The 30-day trial is completely free, no credit card required."
     },
     "cta": {
       "title": "Ready to reduce your RTO?",
@@ -1249,18 +1245,18 @@
       "privacy": "Privacy",
       "dataRights": "My data",
       "copyright": "nortoo · COD fraud scoring · Morocco",
-      "hosted": "EU-hosted data (Frankfurt) · Law 09-08 compliant"
+      "hosted": "EU-hosted data (Frankfurt)"
     }
   },
   "onboarding": {
-    "consentLabel": "I agree to the processing of my data in accordance with Law 09-08",
+    "consentLabel": "I agree to the processing of my data in accordance with our privacy policy",
     "consentRequired": "You must agree to data processing to continue",
     "consentPrivacyLink": "View our privacy policy",
     "skipStep": "Skip this step →",
     "connectLater": "You can connect your store later from Settings",
     "stepCounter": "Step {step}/{total}",
     "skipAll": "Skip setup →",
-    "hostedInEU": "Data hosted in 🇪🇺 Frankfurt — Loi 09-08 compliant",
+    "hostedInEU": "Data hosted in 🇪🇺 Frankfurt",
     "welcome": {
       "title": "Welcome to nortoo",
       "titleWithName": "Welcome to nortoo, {name}!",
@@ -1351,7 +1347,7 @@
       "withYoucan": "Sign up with YouCan",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in",
-      "footer": "Data hosted in 🇪🇺 Frankfurt — Law 09-08 compliant",
+      "footer": "Data hosted in 🇪🇺 Frankfurt",
       "backToHome": "Back",
       "errors": {
         "nameMinLength": "Name must be at least 2 characters",
@@ -1387,7 +1383,7 @@
       "withYoucan": "Sign in with YouCan",
       "noAccount": "Don't have an account?",
       "register": "Create an account",
-      "footer": "Data hosted in 🇪🇺 Frankfurt — Law 09-08 compliant",
+      "footer": "Data hosted in 🇪🇺 Frankfurt",
       "backToHome": "Back",
       "errors": {
         "invalidEmail": "Enter a valid email address",
@@ -1416,7 +1412,7 @@
         "generic": "An error occurred",
         "network": "Server connection error"
       },
-      "hostedInEU": "Data hosted in 🇪🇺 Frankfurt — Loi 09-08 compliant"
+      "hostedInEU": "Data hosted in 🇪🇺 Frankfurt"
     },
     "resetPassword": {
       "tagline": "Anti-Fraud RTO Intelligence",
@@ -1437,7 +1433,7 @@
         "generic": "An error occurred",
         "network": "Server connection error"
       },
-      "hostedInEU": "Data hosted in 🇪🇺 Frankfurt — Loi 09-08 compliant"
+      "hostedInEU": "Data hosted in 🇪🇺 Frankfurt"
     }
   },
   "manualOrder": {

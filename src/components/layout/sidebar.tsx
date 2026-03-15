@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   BarChart3,
   Settings,
-  Shield,
   BookOpen,
   HelpCircle,
   Headphones,
@@ -24,7 +23,6 @@ const navItems = [
   { href: "/dashboard/orders", labelKey: "nav.orders", icon: ShoppingCart },
   { href: "/dashboard/analytics", labelKey: "nav.analytics", icon: BarChart3 },
   { href: "/dashboard/settings", labelKey: "nav.settings", icon: Settings },
-  { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
   { href: "/dashboard/guide", labelKey: "nav.guide", icon: BookOpen },
   { href: "/dashboard/faq", labelKey: "nav.faq", icon: HelpCircle },
   { href: "/dashboard/support", labelKey: "nav.support", icon: Headphones },
@@ -47,7 +45,6 @@ export function Sidebar() {
   const filteredNavItems = navItems.filter((item) => {
     if (item.href === "/dashboard/analytics") return can("analytics:read");
     if (item.href === "/dashboard/settings") return can("settings:read");
-    if (item.href === "/dashboard/compliance") return can("compliance:read");
     return true;
   });
 

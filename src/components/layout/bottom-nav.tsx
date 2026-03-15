@@ -8,7 +8,6 @@ import {
   BarChart3,
   Settings,
   MoreHorizontal,
-  Shield,
   BookOpen,
   HelpCircle,
   Headphones,
@@ -28,7 +27,6 @@ const navItems = [
 ];
 
 const moreItems = [
-  { href: "/dashboard/compliance", labelKey: "nav.compliance", icon: Shield },
   { href: "/dashboard/guide", labelKey: "nav.guide", icon: BookOpen },
   { href: "/dashboard/faq", labelKey: "nav.faq", icon: HelpCircle },
   { href: "/dashboard/support", labelKey: "nav.support", icon: Headphones },
@@ -48,7 +46,6 @@ export function BottomNav() {
   });
 
   const filteredMoreItems = moreItems.filter((item) => {
-    if (item.href === "/dashboard/compliance") return can("compliance:read");
     return true;
   });
 
