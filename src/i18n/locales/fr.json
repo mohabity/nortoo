@@ -1160,7 +1160,7 @@
       "getStarted": "Commencer"
     },
     "hero": {
-      "badge": "Conforme Loi 09-08 · Données hébergées en UE",
+      "badge": "Données hébergées en UE · Scoring anti-fraude",
       "titleLine1": "Bloquez la fraude COD,",
       "titleLine2": "expédiez en confiance.",
       "subtitle": "30 à 50% des commandes COD échouent au Maroc. nortoo score chaque commande de 0 à 100 et vous dit lesquelles expédier — que vous vendiez sur YouCan, WhatsApp, Instagram ou ailleurs.",
@@ -1195,8 +1195,6 @@
       "integrationDesc": "Webhook automatique avec YouCan, ou ajoutez vos commandes manuellement. Fonctionne pour tous les marchands COD.",
       "embeddedSignup": "Multi-plateforme",
       "embeddedSignupDesc": "YouCan, WhatsApp, Instagram, marketplaces — nortoo s'adapte à votre canal de vente.",
-      "compliance": "Conforme Loi 09-08",
-      "complianceDesc": "Téléphones hashés SHA-256, audit log, droits d'accès/suppression, CNDP.",
       "reports": "Rapports & exports",
       "reportsDesc": "Rapport hebdomadaire par email, export CSV, rapport PDF mensuel."
     },
@@ -1228,12 +1226,10 @@
       "a1": "Chaque commande COD est analysée par plus de 24 règles : historique client, montant, ville, adresse, heure, etc. Le résultat est un score de 0 (sûr) à 100 (suspect). Vous définissez les seuils de décision.",
       "q2": "Est-ce que nortoo fonctionne sans YouCan ?",
       "a2": "Oui. Si vous utilisez YouCan, l'intégration est automatique via webhook. Sinon, vous pouvez ajouter vos commandes manuellement depuis le dashboard — idéal pour les vendeurs WhatsApp, Instagram ou tout autre canal.",
-      "q3": "Mes données sont-elles protégées ?",
-      "a3": "Absolument. nortoo est conforme à la Loi 09-08. Les téléphones sont hashés SHA-256, les données sont hébergées en UE (Frankfurt), et un audit log traçant chaque action est tenu.",
-      "q4": "Puis-je personnaliser les seuils ?",
-      "a4": "Oui. Depuis le dashboard, vous pouvez ajuster les seuils SHIP/VERIFY/FLAG/BLOCK, activer des presets par secteur, et même personnaliser le poids de chaque règle (plan Pro+).",
-      "q5": "Comment est facturé le service ?",
-      "a5": "Par virement bancaire mensuel. Une facture est générée automatiquement avec TVA 20%. L'essai de 30 jours est totalement gratuit, sans carte bancaire."
+      "q3": "Puis-je personnaliser les seuils ?",
+      "a3": "Oui. Depuis le dashboard, vous pouvez ajuster les seuils SHIP/VERIFY/FLAG/BLOCK, activer des presets par secteur, et même personnaliser le poids de chaque règle (plan Pro+).",
+      "q4": "Comment est facturé le service ?",
+      "a4": "Par virement bancaire mensuel. Une facture est générée automatiquement avec TVA 20%. L'essai de 30 jours est totalement gratuit, sans carte bancaire."
     },
     "cta": {
       "title": "Prêt à réduire votre RTO ?",
@@ -1249,18 +1245,18 @@
       "privacy": "Confidentialité",
       "dataRights": "Mes données",
       "copyright": "nortoo · Scoring anti-fraude COD · Maroc",
-      "hosted": "Données hébergées en UE (Frankfurt) · Conforme Loi 09-08"
+      "hosted": "Données hébergées en UE (Frankfurt)"
     }
   },
   "onboarding": {
-    "consentLabel": "J'accepte le traitement de mes données conformément à la Loi 09-08",
+    "consentLabel": "J'accepte le traitement de mes données conformément à notre politique de confidentialité",
     "consentRequired": "Vous devez accepter le traitement des données pour continuer",
     "consentPrivacyLink": "Voir notre politique de confidentialité",
     "skipStep": "Passer cette étape →",
     "connectLater": "Vous pourrez connecter votre boutique plus tard depuis Paramètres",
     "stepCounter": "Étape {step}/{total}",
     "skipAll": "Passer la configuration →",
-    "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08",
+    "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt",
     "welcome": {
       "title": "Bienvenue sur nortoo",
       "titleWithName": "Bienvenue sur nortoo, {name} !",
@@ -1351,7 +1347,7 @@
       "withYoucan": "S'inscrire avec YouCan",
       "hasAccount": "Déjà un compte ?",
       "signIn": "Se connecter",
-      "footer": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08",
+      "footer": "Données hébergées en 🇪🇺 Frankfurt",
       "backToHome": "Retour",
       "errors": {
         "nameMinLength": "Le nom doit contenir au moins 2 caractères",
@@ -1387,7 +1383,7 @@
       "withYoucan": "Se connecter avec YouCan",
       "noAccount": "Pas encore de compte ?",
       "register": "Créer un compte",
-      "footer": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08",
+      "footer": "Données hébergées en 🇪🇺 Frankfurt",
       "backToHome": "Retour",
       "errors": {
         "invalidEmail": "Entrez une adresse email valide",
@@ -1416,7 +1412,7 @@
         "generic": "Une erreur est survenue",
         "network": "Erreur de connexion au serveur"
       },
-      "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08"
+      "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt"
     },
     "resetPassword": {
       "tagline": "Anti-Fraude RTO Intelligence",
@@ -1437,7 +1433,7 @@
         "generic": "Une erreur est survenue",
         "network": "Erreur de connexion au serveur"
       },
-      "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt — Conforme Loi 09-08"
+      "hostedInEU": "Données hébergées en 🇪🇺 Frankfurt"
     }
   },
   "manualOrder": {

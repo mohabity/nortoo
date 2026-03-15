@@ -7,7 +7,6 @@ import {
   Plug,
   BarChart3,
   Zap,
-  Lock,
   FileText,
   ChevronRight,
   Check,
@@ -133,10 +132,6 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#00E5A0]/5 rounded-full blur-3xl" />
 
         <div className="relative max-w-4xl mx-auto text-center z-10">
-          <div className="inline-flex items-center gap-2 glass-light text-[#0B0F1A]/80 text-xs font-semibold px-4 py-2 rounded-full mb-8">
-            <Lock className="w-3.5 h-3.5 text-[#059669]" />
-            {t("landing.hero.badge")}
-          </div>
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-black text-[#0B0F1A] leading-tight mb-6">
             {t("landing.hero.titleLine1")}<br />
             <span className="animate-gradient-text">{t("landing.hero.titleLine2")}</span>
@@ -233,9 +228,8 @@ export default function Home() {
               { icon: <BarChart3 className="w-5 h-5" />, title: t("landing.features.dashboard"), desc: t("landing.features.dashboardDesc"), span: "" },
               { icon: <Zap className="w-5 h-5" />, title: t("landing.features.decisions"), desc: t("landing.features.decisionsDesc"), span: "" },
               { icon: <Plug className="w-5 h-5" />, title: t("landing.features.integration"), desc: t("landing.features.integrationDesc"), span: "md:col-span-2" },
-              { icon: <Lock className="w-5 h-5" />, title: t("landing.features.compliance"), desc: t("landing.features.complianceDesc"), span: "" },
               { icon: <FileText className="w-5 h-5" />, title: t("landing.features.reports"), desc: t("landing.features.reportsDesc"), span: "" },
-              { icon: <Smartphone className="w-5 h-5" />, title: t("landing.features.embeddedSignup"), desc: t("landing.features.embeddedSignupDesc"), span: "" },
+              { icon: <Smartphone className="w-5 h-5" />, title: t("landing.features.embeddedSignup"), desc: t("landing.features.embeddedSignupDesc"), span: "md:col-span-2" },
             ].map((f, i) => (
               <div
                 key={f.title}
@@ -376,7 +370,6 @@ export default function Home() {
               { q: t("landing.faq.q2"), a: t("landing.faq.a2") },
               { q: t("landing.faq.q3"), a: t("landing.faq.a3") },
               { q: t("landing.faq.q4"), a: t("landing.faq.a4") },
-              { q: t("landing.faq.q5"), a: t("landing.faq.a5") },
             ].map((item) => (
               <details
                 key={item.q}
