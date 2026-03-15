@@ -1529,19 +1529,27 @@
   "tooltips": {
     "helpLabel": "Help",
     "learnMore": "Learn more \u2192",
-    "kpi.savings": "Estimated savings from blocking fraudulent orders, based on average return costs.",
-    "kpi.avgScore": "Average risk score across your recent orders. Lower is better.",
-    "kpi.deliveryRate": "Percentage of orders shipped and successfully delivered.",
-    "kpi.blocked": "Number of orders automatically blocked by the scoring engine.",
-    "score.explanation": "Risk score from 0-100. The higher the score, the higher the fraud probability.",
-    "score.decisionHeader": "SHIP (0-30) · VERIFY (31-65) · FLAG (66-85) · BLOCK (86-100). Thresholds are configurable in Settings.",
-    "threshold.verify": "Score above which orders require manual verification.",
-    "threshold.flag": "Score above which orders are flagged as suspicious.",
-    "threshold.block": "Score above which orders are automatically blocked.",
-    "analytics.savings": "Total savings from blocking high-risk orders over the selected period.",
-    "analytics.rtoRate": "Current return rate compared to the previous period.",
-    "analytics.deliveryRate": "Successful delivery rate for shipped orders.",
-    "analytics.roi": "Return on investment: savings divided by subscription cost."
+    "kpi": {
+      "savings": "Estimated savings from blocking fraudulent orders, based on average return costs.",
+      "avgScore": "Average risk score across your recent orders. Lower is better.",
+      "deliveryRate": "Percentage of orders shipped and successfully delivered.",
+      "blocked": "Number of orders automatically blocked by the scoring engine."
+    },
+    "score": {
+      "explanation": "Risk score from 0-100. The higher the score, the higher the fraud probability.",
+      "decisionHeader": "SHIP (0-30) · VERIFY (31-65) · FLAG (66-85) · BLOCK (86-100). Thresholds are configurable in Settings."
+    },
+    "threshold": {
+      "verify": "Score above which orders require manual verification.",
+      "flag": "Score above which orders are flagged as suspicious.",
+      "block": "Score above which orders are automatically blocked."
+    },
+    "analytics": {
+      "savings": "Total savings from blocking high-risk orders over the selected period.",
+      "rtoRate": "Current return rate compared to the previous period.",
+      "deliveryRate": "Successful delivery rate for shipped orders.",
+      "roi": "Return on investment: savings divided by subscription cost."
+    }
   },
   "faq": {
     "title": "Frequently Asked Questions",
