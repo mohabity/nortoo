@@ -15,7 +15,7 @@ import { useTranslation } from "@/i18n/provider";
 import { useToast } from "@/components/ui/toast";
 import { TicketForm } from "@/app/dashboard/support/_components/ticket-form";
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "212600000000";
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "212708525505";
 
 export function SupportBubble() {
   const { t } = useTranslation();
