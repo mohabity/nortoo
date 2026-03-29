@@ -28,7 +28,6 @@ const ALL_TABLES = [
   // Leaf tables (no dependents)
   "ticket_replies",
   "admin_mfa_codes",
-  "user_mfa_codes",
   "coupon_redemptions",
   "notifications",
   "webhook_queue",
@@ -86,12 +85,27 @@ async function purge() {
 
   console.log("\n🗑️  Purge en cours...\n");
 
+  // Query existing tables to avoid errors on missing tables
+  const existing = await sql(`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
+  const existingSet = new Set(existing.map((r: { tablename: string }) => r.tablename));
+  const tables = ALL_TABLES.filter((t) => existingSet.has(t));
+  const skipped = ALL_TABLES.filter((t) => !existingSet.has(t));
+
+  if (skipped.length > 0) {
+    console.log(`⏭️  Tables absentes (ignorées): ${skipped.join(", ")}\n`);
+  }
+
+  if (tables.length === 0) {
+    console.log("Aucune table à purger.");
+    return;
+  }
+
   // TRUNCATE all tables in a single statement with CASCADE
   // This is atomic and handles FK constraints
-  const tableList = ALL_TABLES.join(", ");
+  const tableList = tables.join(", ");
   await sql(`TRUNCATE TABLE ${tableList} CASCADE`);
 
-  console.log(`✅ ${ALL_TABLES.length} tables vidées.`);
+  console.log(`✅ ${tables.length} tables vidées.`);
   console.log("\nBase de données clean. Prêt pour repartir de zéro.");
 }
 

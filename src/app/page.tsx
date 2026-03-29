@@ -432,6 +432,7 @@ export default function Home() {
                 <li><a href="#features" className="hover:text-[#059669] transition">{t("landing.nav.features")}</a></li>
                 <li><a href="#pricing" className="hover:text-[#059669] transition">{t("landing.nav.pricing")}</a></li>
                 <li><a href="#faq" className="hover:text-[#059669] transition">{t("landing.nav.faq")}</a></li>
+                <li><a href="/docs" className="hover:text-[#059669] transition">{t("landing.footer.docs")}</a></li>
               </ul>
             </div>
             <div>
