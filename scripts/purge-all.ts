@@ -87,7 +87,7 @@ async function purge() {
 
   // Query existing tables to avoid errors on missing tables
   const existing = await sql(`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
-  const existingSet = new Set(existing.map((r: { tablename: string }) => r.tablename));
+  const existingSet = new Set(existing.map((r: Record<string, any>) => r.tablename as string));
   const tables = ALL_TABLES.filter((t) => existingSet.has(t));
   const skipped = ALL_TABLES.filter((t) => !existingSet.has(t));
 
