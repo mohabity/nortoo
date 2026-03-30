@@ -25,7 +25,7 @@ export function useOnboardingWizard() {
   const connected = searchParams.get("connected");
 
   const [state, setState] = useState<OnboardingState | null>(null);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(connected === "true" ? 3 : 1);
   const [direction, setDirection] = useState<"left" | "right">("left");
   const [animating, setAnimating] = useState(false);
   const [loading, setLoading] = useState(true);
