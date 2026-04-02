@@ -5,7 +5,7 @@ import { customers, dataRightsRequests } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPhone } from "@/lib/hash";
 import { sendEmail, buildDataRightsConfirmationEmail, buildDataRightsNotificationEmail } from "@/lib/email";
-import { authLimiter, getClientIp, isRateLimitConfigured } from "@/lib/rate-limit";
+import { authLimiter, getClientIp, safeLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/data-rights/submit
@@ -39,9 +39,9 @@ function addBusinessDays(date: Date, days: number): Date {
 export async function POST(request: NextRequest) {
   try {
     // ── Rate limit by IP (5 req/hour) ──
-    if (isRateLimitConfigured()) {
+    {
       const ip = getClientIp(request);
-      const { success, reset } = await authLimiter.limit(`data-rights:${ip}`);
+      const { success, reset } = await safeLimit(authLimiter, `data-rights:${ip}`);
       if (!success) {
         const retryAfter = Math.ceil((reset - Date.now()) / 1000);
         return NextResponse.json(

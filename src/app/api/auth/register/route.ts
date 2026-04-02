@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { generateApiKey } from "@/lib/api-key";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { buildWelcomeEmail, sendEmail } from "@/lib/email";
-import { authLimiter, getClientIp, isRateLimitConfigured } from "@/lib/rate-limit";
+import { authLimiter, getClientIp, isRateLimitConfigured, safeLimit } from "@/lib/rate-limit";
 import { getAppUrl } from "@/lib/env";
 import type { Locale } from "@/i18n/types";
 
@@ -32,9 +32,9 @@ const registerSchema = z.object({
  */
 export async function POST(request: Request) {
   // ── Rate limiting ──
-  if (isRateLimitConfigured()) {
+  {
     const ip = getClientIp(request);
-    const { success, reset } = await authLimiter.limit(`register:${ip}`);
+    const { success, reset } = await safeLimit(authLimiter, `register:${ip}`);
     if (!success) {
       const retryAfter = Math.ceil((reset - Date.now()) / 1000);
       return NextResponse.json(
