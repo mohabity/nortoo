@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { extractApiKey, validateApiKey } from "@/lib/api-key";
-import { webhookLimiter, isRateLimitConfigured } from "@/lib/rate-limit";
+import { webhookLimiter, safeLimit } from "@/lib/rate-limit";
 import { enqueueWebhook, processWebhook } from "@/lib/webhook-processor";
 import { QuotaExceededError } from "@/lib/quota";
 import { MAX_BODY_SIZE } from "@/lib/constants";
@@ -55,8 +55,8 @@ export async function POST(request: Request) {
     }
 
     // ── Rate limiting per API key ──
-    if (isRateLimitConfigured()) {
-      const { success, reset } = await webhookLimiter.limit(`wh:${apiKey.slice(0, 16)}`);
+    {
+      const { success, reset } = await safeLimit(webhookLimiter, `wh:${apiKey.slice(0, 16)}`);
       if (!success) {
         const retryAfter = Math.ceil((reset - Date.now()) / 1000);
         return NextResponse.json(
